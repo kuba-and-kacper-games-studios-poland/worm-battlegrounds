@@ -1,0 +1,40 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_ButtonSound",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Button" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"ClickSound_Name": { "String": "Button_Click" },
+					"ClickSound_Volume": { "Float64": 1 },
+					"ClickSound_SoundGroup": { "String": "UI" },
+					"ClickSound_PlaybackSpeed": { "Float64": 1 },
+					"ClickSound_TimePosition": { "Float64": 0 },
+					"ClickSound_PitchMin": { "Float64": 1 },
+					"ClickSound_PitchMax": { "Float64": 1 },
+
+					"HoverSound_Name": { "String": "Button_Hover" },
+					"HoverSound_Volume": { "Float64": 1 },
+					"HoverSound_SoundGroup": { "String": "UI" },
+					"HoverSound_PlaybackSpeed": { "Float64": 1 },
+					"HoverSound_TimePosition": { "Float64": 0 },
+					"HoverSound_PitchMin": { "Float64": 1 },
+					"HoverSound_PitchMax": { "Float64": 1 }
+				}
+			},
+			"Children": []
+		}
+	]
+}

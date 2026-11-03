@@ -1,0 +1,29 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_PlatformScale",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Platform" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Utils_DesktopScale": { "Float64": 0 },
+					"Utils_MobileScale": { "Float64": 0 },
+					"Utils_ConsoleScale": { "Float64": 0 },
+					"Utils_VRScale": { "Float64": 0 }
+				}
+			},
+			"Children": []
+		}
+	]
+}

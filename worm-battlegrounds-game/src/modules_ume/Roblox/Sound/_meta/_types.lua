@@ -1,0 +1,34 @@
+--- @class Sound_Params
+---
+--- # General #
+---
+--- @field Name string
+--- @field Volume number
+--- @field SoundTableIndex number
+--- @field Sequential boolean
+---
+--- # Placement #
+---
+--- @field Location Instance | Vector3 | CFrame
+--- @field FallbackPosition Vector3
+--- @field SoundGroup string
+---
+--- # Playback #
+---
+--- @field AutoPlay boolean
+--- @field AutoRemove boolean
+--- @field Looped boolean
+--- @field PlaybackSpeed number
+--- @field TimePosition number
+---
+--- # Roll Off #
+---
+--- @field RollOffMin number
+--- @field RollOffMax number
+--- @field RollOffMode Enum.RollOffMode
+---
+--- # Pitch #
+---
+--- @field PitchMin number
+--- @field PitchMax number
+local _sound_Params = {}

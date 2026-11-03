@@ -1,0 +1,26 @@
+{
+	"ClassName": "Configuration",
+	"Name": "WidgetManager_TogglePart",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "WidgetManager" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"WidgetManager_WidgetName": { "String": "" }
+				}
+			},
+			"Children": []
+		}
+	]
+}

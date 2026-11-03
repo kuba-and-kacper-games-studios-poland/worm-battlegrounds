@@ -1,0 +1,31 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_MoveChildTo",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Moving" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Utils_RemoveAfterMove": { "Bool": true }
+				}
+			},
+			"Children": [
+				{
+					"ClassName": "ObjectValue",
+					"Name": "Utils_Destination"
+				}
+			]
+		}
+	]
+}

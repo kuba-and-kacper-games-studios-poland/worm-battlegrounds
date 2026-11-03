@@ -1,0 +1,29 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_UITextSizeConstraint",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Scaler" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Utils_DesktopSize": { "NumberRange": [0, 0] },
+					"Utils_MobileSize": { "NumberRange": [0, 0] },
+					"Utils_ConsoleSize": { "NumberRange": [0, 0] },
+					"Utils_VRSize": { "NumberRange": [0, 0] }
+				}
+			},
+			"Children": []
+		}
+	]
+}

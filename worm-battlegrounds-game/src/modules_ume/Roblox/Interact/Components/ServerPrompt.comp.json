@@ -1,0 +1,31 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Interact_ServerPrompt",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Interact" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Interact_ModuleName": { "String": "" },
+					"Interact_Function": { "String": "" },
+					"Interact_Delay": { "Float64": 0.25 },
+					"Interact_PassPlayer": { "Bool": false },
+					"Interact_PassPlayerPos": { "Float64": 1 },
+					"Interact_MaxDistance": { "Float64": 8 }
+				}
+			},
+			"Children": []
+		}
+	]
+}

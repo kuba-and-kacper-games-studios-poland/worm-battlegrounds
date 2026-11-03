@@ -1,0 +1,58 @@
+{
+	"name": "worm-battlegrounds-game",
+	"tree": {
+		"$className": "DataModel",
+
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"GameMode": {
+				"$className": "Configuration",
+				"$path": "src/core/game_mode/server"
+			},
+			"Actors": {
+				"$className": "Configuration",
+				"$path": "src/actors/server"
+			},
+			"Instance": {
+				"$className": "Model",
+				"$path": "src/core/game_instance",
+				"$properties": {
+					"ModelStreamingMode": "Atomic"
+				},
+				"Modules": {
+					"$className": "Sparkles",
+					"$path": "src/modules"
+				},
+				"Modules_Ume": {
+					"$className": "Sparkles",
+					"$path": "src/modules_ume"
+				},
+				"Libs": {
+					"$className": "Tool",
+					"$path": "src/libs"
+				},
+				"GlobalData": {
+					"$className": "WorldModel",
+					"$path": "src/global_data"
+				}
+			}
+		},
+		"ServerStorage": {
+			"$className": "ServerStorage",
+			"TagListPlus": {
+				"$className": "Folder",
+				"$path": "src/other/TagListPlus.model.json"
+			}
+		},
+		"StarterPlayer": {
+			"$className": "StarterPlayer",
+			"StarterPlayerScripts": {
+				"$className": "StarterPlayerScripts",
+				"GameMode": {
+					"$className": "Configuration",
+					"$path": "src/core/game_mode/client"
+				}
+			}
+		}
+	}
+}

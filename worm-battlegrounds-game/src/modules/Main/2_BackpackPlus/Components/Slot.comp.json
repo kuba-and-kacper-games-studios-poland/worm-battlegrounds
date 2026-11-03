@@ -1,0 +1,24 @@
+{
+	"ClassName": "Configuration",
+	"Name": "BackpackPlus_Slot",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "BackpackPlus" },
+			"ShowInGui": { "Bool": false }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {}
+			},
+			"Children": []
+		}
+	]
+}

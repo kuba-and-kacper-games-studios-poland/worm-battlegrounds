@@ -1,0 +1,27 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Interact_Prompt",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": false },
+			"Group": { "String": "Interact" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Interact_Style": { "String": "" },
+					"Interact_Mappings": { "String": "" }
+				}
+			},
+			"Children": []
+		}
+	]
+}

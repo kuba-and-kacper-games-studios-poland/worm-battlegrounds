@@ -1,0 +1,30 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_VisibleOnMarketplace",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Marketplace" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Utils_ProductName": { "String": "" },
+					"Utils_InfoType": { "String": "GamePass" },
+
+					"Utils_ShowIfMissing": { "Bool": true },
+					"Utils_CheckForGroup": { "Bool": false }
+				}
+			},
+			"Children": []
+		}
+	]
+}

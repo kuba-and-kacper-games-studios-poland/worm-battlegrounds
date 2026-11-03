@@ -1,0 +1,39 @@
+{
+	"ClassName": "Configuration",
+	"Name": "GLC_S_Dummy",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "GlobalLeaderboard_Controller" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"GLC_LeaderboardName": { "String": "" },
+					"GLC_Scope": { "String": "" },
+					"GLC_IsAscending": { "Bool": false },
+					"GLC_PageSize": { "Float64": 50 },
+					"GLC_PlaceId": { "Float64": 1 },
+
+					"GLC_DataDisplayType": { "String": "Standard" },
+					"GLC_ConvertValue": { "Bool": false },
+
+					"GLC_IsR15": { "Bool": true },
+					"GLC_DummyScale": { "Float64": 1 },
+					"GLC_InsertPlaceholderDummy": { "Bool": true },
+
+					"GLC_Client_AnimationId": { "Float64": 0 }
+				}
+			},
+			"Children": []
+		}
+	]
+}

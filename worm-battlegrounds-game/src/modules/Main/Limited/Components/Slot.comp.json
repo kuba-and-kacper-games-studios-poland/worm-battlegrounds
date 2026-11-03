@@ -1,0 +1,27 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Limited_Slot",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Limited" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Limited_Id": { "String": "" },
+					"Limited_CustomFormat": { "String": "" }
+				}
+			},
+			"Children": []
+		}
+	]
+}

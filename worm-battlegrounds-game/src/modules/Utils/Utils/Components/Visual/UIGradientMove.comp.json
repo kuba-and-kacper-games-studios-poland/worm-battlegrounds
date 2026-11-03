@@ -1,0 +1,26 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_UIGradientMove",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Visual" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Utils_MoveSpeed": { "Float64": 1 }
+				}
+			},
+			"Children": []
+		}
+	]
+}

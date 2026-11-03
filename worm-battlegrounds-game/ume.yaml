@@ -1,0 +1,9 @@
+# ume.yaml: settings for ume's tools (UmeSync, ume-vscode). Paths are relative to this folder.
+component:
+  extractDirectory: src/other    # TagList+ registry: <dir>/<name>.model.json
+  extractedFilename: TagListPlus
+types:
+  extractDirectory: src/other    # merged *.d.lua: <dir>/<name>.d.lua
+  extractedFilename: types
+# general:
+#   username: Nari               # optional; overrides each person's UmeSync nickname

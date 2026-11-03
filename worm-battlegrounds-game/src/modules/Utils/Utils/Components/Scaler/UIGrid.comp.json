@@ -1,0 +1,29 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_UIGrid",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Scaler" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Utils_RowAmount": { "Float64": 10 },
+
+					"Utils_XScale": { "Float64": 1 },
+					"Utils_YScale": { "Float64": 1 }
+				}
+			},
+			"Children": []
+		}
+	]
+}

@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+
+*.rbxm binary
+*.rbxl binary
+*.png binary
+
+# Libs/Mirror is copied byte for byte from the paired game repo
+src/engine/Libs/Mirror/** -text

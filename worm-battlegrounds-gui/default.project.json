@@ -1,0 +1,19 @@
+{
+	"name": "worm-battlegrounds-gui",
+	"tree": {
+		"$className": "DataModel",
+
+		"ServerStorage": {
+			"$className": "ServerStorage",
+			"UmeGui": {
+				"$path": "src/engine",
+				"Themes": {
+					"$path": "src/themes"
+				},
+				"Guis": {
+					"$path": "src/guis"
+				}
+			}
+		}
+	}
+}

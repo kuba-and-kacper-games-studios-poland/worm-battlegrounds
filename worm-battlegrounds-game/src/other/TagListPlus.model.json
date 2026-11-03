@@ -1,0 +1,1926 @@
+{
+    "ClassName": "Folder",
+    "Children": [
+        {
+            "ClassName": "Configuration",
+            "Name": "BackpackPlus_FavoriteButton",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "BackpackPlus"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "BackpackPlus_FilterButton",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "BackpackPlus"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "BackpackPlus_FilterCategory": {
+                                "String": ""
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "BackpackPlus_Slot",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "BackpackPlus"
+                    },
+                    "ShowInGui": {
+                        "Bool": false
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "BackpackPlus_Slot_ViewportMotion",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "BackpackPlus"
+                    },
+                    "ShowInGui": {
+                        "Bool": false
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Currency_Slot",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Currency"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Currency_Name": {
+                                "String": ""
+                            },
+                            "Currency_CustomFormat": {
+                                "String": ""
+                            },
+                            "Currency_SpawnOrbs": {
+                                "Bool": false
+                            }
+                        }
+                    },
+                    "Children": [
+                        {
+                            "ClassName": "ObjectValue",
+                            "Name": "Currency_UIScale"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Limited_Slot",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Limited"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Limited_Id": {
+                                "String": ""
+                            },
+                            "Limited_CustomFormat": {
+                                "String": ""
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "WidgetManager_TogglePart",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "WidgetManager"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "WidgetManager_WidgetName": {
+                                "String": ""
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Friends_Controller_BoostText",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Friends_Controller"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "GLC_Dummy",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "GlobalLeaderboard_Controller"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "GLC_Client_AnimationId": {
+                                "Float64": 0
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "GLC_S_Dummy",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "GlobalLeaderboard_Controller"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "GLC_LeaderboardName": {
+                                "String": ""
+                            },
+                            "GLC_Scope": {
+                                "String": ""
+                            },
+                            "GLC_IsAscending": {
+                                "Bool": false
+                            },
+                            "GLC_PageSize": {
+                                "Float64": 50
+                            },
+                            "GLC_PlaceId": {
+                                "Float64": 1
+                            },
+                            "GLC_DataDisplayType": {
+                                "String": "Standard"
+                            },
+                            "GLC_ConvertValue": {
+                                "Bool": false
+                            },
+                            "GLC_IsR15": {
+                                "Bool": true
+                            },
+                            "GLC_DummyScale": {
+                                "Float64": 1
+                            },
+                            "GLC_InsertPlaceholderDummy": {
+                                "Bool": true
+                            },
+                            "GLC_Client_AnimationId": {
+                                "Float64": 0
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "GLC_S_Leaderboard",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "GlobalLeaderboard_Controller"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "GLC_LeaderboardName": {
+                                "String": ""
+                            },
+                            "GLC_Scope": {
+                                "String": ""
+                            },
+                            "GLC_IsAscending": {
+                                "Bool": false
+                            },
+                            "GLC_PageSize": {
+                                "Float64": 50
+                            },
+                            "GLC_DataDisplayType": {
+                                "String": "Standard"
+                            },
+                            "GLC_ConvertValue": {
+                                "Bool": false
+                            },
+                            "GLC_IsPlayerLeaderboards": {
+                                "Bool": true
+                            }
+                        }
+                    },
+                    "Children": [
+                        {
+                            "ClassName": "ObjectValue",
+                            "Name": "GLC_Container"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "HideOnPlay",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "HideOnPlay"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "S_HideOnPlay",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "HideOnPlay"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Rarity_Gradient",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Rarity"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Rarity_Rarity": {
+                                "String": "Common"
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_ButtonKey",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Button"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_GamepadKey": {
+                                "String": ""
+                            },
+                            "Utils_KeyboardKey": {
+                                "String": ""
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_ButtonScale",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Button"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_HoverScale": {
+                                "Float64": 1.04
+                            },
+                            "Utils_ClickScale": {
+                                "Float64": 0.95
+                            },
+                            "Utils_ScaleAnimation": {
+                                "String": "Default"
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_ButtonSound",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Button"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "ClickSound_Name": {
+                                "String": "Button_Click"
+                            },
+                            "ClickSound_Volume": {
+                                "Float64": 1
+                            },
+                            "ClickSound_SoundGroup": {
+                                "String": "UI"
+                            },
+                            "ClickSound_PlaybackSpeed": {
+                                "Float64": 1
+                            },
+                            "ClickSound_TimePosition": {
+                                "Float64": 0
+                            },
+                            "ClickSound_PitchMin": {
+                                "Float64": 1
+                            },
+                            "ClickSound_PitchMax": {
+                                "Float64": 1
+                            },
+                            "HoverSound_Name": {
+                                "String": "Button_Hover"
+                            },
+                            "HoverSound_Volume": {
+                                "Float64": 1
+                            },
+                            "HoverSound_SoundGroup": {
+                                "String": "UI"
+                            },
+                            "HoverSound_PlaybackSpeed": {
+                                "Float64": 1
+                            },
+                            "HoverSound_TimePosition": {
+                                "Float64": 0
+                            },
+                            "HoverSound_PitchMin": {
+                                "Float64": 1
+                            },
+                            "HoverSound_PitchMax": {
+                                "Float64": 1
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_ButtonTransform",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Button"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_ButtonTransform_EnableScale": {
+                                "Bool": true
+                            },
+                            "Utils_ButtonTransform_EnablePosition": {
+                                "Bool": false
+                            },
+                            "Utils_ButtonTransform_EnableRotation": {
+                                "Bool": false
+                            },
+                            "Utils_ButtonTransform_HoverScale": {
+                                "Float64": 1.04
+                            },
+                            "Utils_ButtonTransform_ClickScale": {
+                                "Float64": 0.95
+                            },
+                            "Utils_ButtonTransform_HoverPosition": {
+                                "UDim2": [
+                                    [
+                                        0,
+                                        0
+                                    ],
+                                    [
+                                        0,
+                                        0
+                                    ]
+                                ]
+                            },
+                            "Utils_ButtonTransform_ClickPosition": {
+                                "UDim2": [
+                                    [
+                                        0,
+                                        0
+                                    ],
+                                    [
+                                        0,
+                                        0
+                                    ]
+                                ]
+                            },
+                            "Utils_ButtonTransform_HoverRotation": {
+                                "Float64": 0
+                            },
+                            "Utils_ButtonTransform_ClickRotation": {
+                                "Float64": 0
+                            },
+                            "Utils_Hover": {
+                                "Bool": false
+                            },
+                            "Utils_HoverOnHover": {
+                                "Bool": true
+                            },
+                            "Utils_HoverOnClick": {
+                                "Bool": false
+                            },
+                            "Utils_HoverOffset": {
+                                "UDim2": [
+                                    [
+                                        0,
+                                        0
+                                    ],
+                                    [
+                                        0,
+                                        0
+                                    ]
+                                ]
+                            },
+                            "Utils_HoverSpeed": {
+                                "Float64": 1
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_PriceTag",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Marketplace"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_ProductName": {
+                                "String": ""
+                            },
+                            "Utils_InfoType": {
+                                "String": "GamePass"
+                            },
+                            "Utils_CustomFormat": {
+                                "String": ""
+                            },
+                            "Utils_InsertRobuxIcon": {
+                                "Bool": true
+                            },
+                            "Utils_ForceGamePassCheck": {
+                                "Bool": false
+                            },
+                            "Utils_CustomGamePassName": {
+                                "String": ""
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_VisibleOnMarketplace",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Marketplace"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_ProductName": {
+                                "String": ""
+                            },
+                            "Utils_InfoType": {
+                                "String": "GamePass"
+                            },
+                            "Utils_ShowIfMissing": {
+                                "Bool": true
+                            },
+                            "Utils_CheckForGroup": {
+                                "Bool": false
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_HideOnPlatform",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Platform"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_DesktopVisibility": {
+                                "Bool": true
+                            },
+                            "Utils_MobileVisibility": {
+                                "Bool": true
+                            },
+                            "Utils_ConsoleVisibility": {
+                                "Bool": true
+                            },
+                            "Utils_VRVisibility": {
+                                "Bool": true
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_PlatformScale",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Platform"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_DesktopScale": {
+                                "Float64": 0
+                            },
+                            "Utils_MobileScale": {
+                                "Float64": 0
+                            },
+                            "Utils_ConsoleScale": {
+                                "Float64": 0
+                            },
+                            "Utils_VRScale": {
+                                "Float64": 0
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_PlatformSize",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Platform"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_DesktopSize": {
+                                "UDim2": [
+                                    [
+                                        0,
+                                        0
+                                    ],
+                                    [
+                                        0,
+                                        0
+                                    ]
+                                ]
+                            },
+                            "Utils_MobileSize": {
+                                "UDim2": [
+                                    [
+                                        0,
+                                        0
+                                    ],
+                                    [
+                                        0,
+                                        0
+                                    ]
+                                ]
+                            },
+                            "Utils_ConsoleSize": {
+                                "UDim2": [
+                                    [
+                                        0,
+                                        0
+                                    ],
+                                    [
+                                        0,
+                                        0
+                                    ]
+                                ]
+                            },
+                            "Utils_VRSize": {
+                                "UDim2": [
+                                    [
+                                        0,
+                                        0
+                                    ],
+                                    [
+                                        0,
+                                        0
+                                    ]
+                                ]
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_SlicedImage",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Scaler"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_UIGrid",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Scaler"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_RowAmount": {
+                                "Float64": 10
+                            },
+                            "Utils_XScale": {
+                                "Float64": 1
+                            },
+                            "Utils_YScale": {
+                                "Float64": 1
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_UIStroke-Billboard",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Scaler"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_UIStroke",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Scaler"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_UITextSizeConstraint",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Scaler"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_DesktopSize": {
+                                "NumberRange": [
+                                    0,
+                                    0
+                                ]
+                            },
+                            "Utils_MobileSize": {
+                                "NumberRange": [
+                                    0,
+                                    0
+                                ]
+                            },
+                            "Utils_ConsoleSize": {
+                                "NumberRange": [
+                                    0,
+                                    0
+                                ]
+                            },
+                            "Utils_VRSize": {
+                                "NumberRange": [
+                                    0,
+                                    0
+                                ]
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_MoveChildTo",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Moving"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_RemoveAfterMove": {
+                                "Bool": true
+                            }
+                        }
+                    },
+                    "Children": [
+                        {
+                            "ClassName": "ObjectValue",
+                            "Name": "Utils_Destination"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_MoveTo",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Moving"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": [
+                        {
+                            "ClassName": "ObjectValue",
+                            "Name": "Utils_Destination"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_UIGradientMove",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Visual"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_MoveSpeed": {
+                                "Float64": 1
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_UIHover",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Visual"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_HoverOffset": {
+                                "UDim2": [
+                                    [
+                                        0,
+                                        0
+                                    ],
+                                    [
+                                        0,
+                                        0
+                                    ]
+                                ]
+                            },
+                            "Utils_HoverSpeed": {
+                                "Float64": 1
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_UIShake",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Visual"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_Shake": {
+                                "Bool": false
+                            },
+                            "Utils_ShakeIntensity": {
+                                "Float64": 10
+                            },
+                            "Utils_ShakeFadeTime": {
+                                "Float64": 0.5
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Utils_UISpin",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Utils - Visual"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Utils_SpinSpeed": {
+                                "Float64": 1
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Interact_ClientArea",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Interact"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Interact_ModuleName": {
+                                "String": ""
+                            },
+                            "Interact_Function": {
+                                "String": ""
+                            },
+                            "Interact_Delay": {
+                                "Float64": 0.25
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Interact_ServerArea",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Interact"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Interact_ModuleName": {
+                                "String": ""
+                            },
+                            "Interact_Function": {
+                                "String": ""
+                            },
+                            "Interact_Delay": {
+                                "Float64": 0.25
+                            },
+                            "Interact_PassPlayer": {
+                                "Bool": false
+                            },
+                            "Interact_PassPlayerPos": {
+                                "Float64": 1
+                            },
+                            "Interact_MaxDistance": {
+                                "Float64": 8
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Interact_Button",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": false
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": false
+                    },
+                    "Group": {
+                        "String": "Interact"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Interact_ModuleName": {
+                                "String": ""
+                            },
+                            "Interact_Function": {
+                                "String": ""
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Interact_Prompt",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": false
+                    },
+                    "Group": {
+                        "String": "Interact"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Interact_Style": {
+                                "String": ""
+                            },
+                            "Interact_Mappings": {
+                                "String": ""
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "Interact_ServerPrompt",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "Interact"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {
+                            "Interact_ModuleName": {
+                                "String": ""
+                            },
+                            "Interact_Function": {
+                                "String": ""
+                            },
+                            "Interact_Delay": {
+                                "Float64": 0.25
+                            },
+                            "Interact_PassPlayer": {
+                                "Bool": false
+                            },
+                            "Interact_PassPlayerPos": {
+                                "Float64": 1
+                            },
+                            "Interact_MaxDistance": {
+                                "Float64": 8
+                            }
+                        }
+                    },
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ClassName": "Configuration",
+            "Name": "UserInterface_PreventHiding",
+            "Properties": {
+                "Attributes": {
+                    "AutoAddAttributes": {
+                        "Bool": true
+                    },
+                    "AutoRemoveAttributes": {
+                        "Bool": true
+                    },
+                    "AutoAddObjectValues": {
+                        "Bool": true
+                    },
+                    "AutoRemoveObjectValues": {
+                        "Bool": true
+                    },
+                    "Group": {
+                        "String": "UserInterface"
+                    },
+                    "ShowInGui": {
+                        "Bool": true
+                    }
+                }
+            },
+            "Children": [
+                {
+                    "ClassName": "Configuration",
+                    "Name": "Default",
+                    "Properties": {
+                        "Attributes": {}
+                    },
+                    "Children": []
+                }
+            ]
+        }
+    ]
+}

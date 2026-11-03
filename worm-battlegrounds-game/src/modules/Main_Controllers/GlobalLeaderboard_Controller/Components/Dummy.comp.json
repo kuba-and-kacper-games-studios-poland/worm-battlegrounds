@@ -1,0 +1,26 @@
+{
+	"ClassName": "Configuration",
+	"Name": "GLC_Dummy",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "GlobalLeaderboard_Controller" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"GLC_Client_AnimationId": { "Float64": 0 }
+				}
+			},
+			"Children": []
+		}
+	]
+}

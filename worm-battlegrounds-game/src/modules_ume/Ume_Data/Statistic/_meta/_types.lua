@@ -1,0 +1,19 @@
+--- @class Statistic_Statistic
+---
+--- # Default #
+---
+--- @field DefaultValue string
+---
+--- # Limits #
+---
+--- @field MinValue string
+--- @field RespectMinValue boolean
+--- @field MaxValue string
+--- @field RespectMaxValue boolean
+---
+--- # Updates #
+---
+--- @field ServerUpdate boolean
+--- @field ServerUpdateIndividual boolean
+--- @field ClientUpdate boolean
+local _statistics_Statistic = {}

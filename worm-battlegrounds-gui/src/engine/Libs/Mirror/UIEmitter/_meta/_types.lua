@@ -1,0 +1,476 @@
+--%%%%%%%%%%%%%%%%%%%% Aliases
+
+--- @alias UmeGui_UIEmitter_EmissionShape
+---| "Point"
+---| "Rectangle"
+---| "Circle"
+
+--- @alias UmeGui_UIEmitter_AttractToSpace
+---| "Container"
+---| "Absolute"
+
+--- @alias UmeGui_UIEmitter_SizeSpace
+---| "Offset"
+---| "Scale"
+
+--- @alias UmeGui_UIEmitter_FlipbookMode
+---| "Loop" @ Cycles frames from first to last repeatedly
+---| "OneShot" @ Plays once and holds the final frame
+---| "PingPong" @ Plays forward then backward repeatedly
+---| "Random" @ Picks a random frame each step
+
+--- @alias UmeGui_UIEmitter_NumberValue number | NumberRange | NumberSequence | table
+
+--- @alias UmeGui_UIEmitter_SpawnNumber number | NumberRange | table
+
+--%%%%%%%%%%%%%%%%%%%% Constructor Params
+
+--- @class UmeGui_UIEmitter_Params
+---
+--- # Placement #
+---
+--- @field Parent GuiObject
+--- @field Container GuiObject?
+--- @field EmitterPosition UDim2 | Vector2?
+--- @field EmissionArea number | Vector2? @ Container-relative scale; 1, 1 fills the container
+--- @field EmissionShape UmeGui_UIEmitter_EmissionShape?
+---
+--- # Appearance #
+---
+--- @field Texture string?
+--- @field ZIndex number?
+--- @field Squash UmeGui_UIEmitter_NumberValue?
+--- @field Color Color3 | ColorSequence?
+--- @field Size UmeGui_UIEmitter_NumberValue?
+--- @field SizeSpace UmeGui_UIEmitter_SizeSpace?
+--- @field SizeScale number | NumberRange | table?
+--- @field AspectRatio number?
+--- @field Transparency UmeGui_UIEmitter_NumberValue?
+--- @field TransparencyScale number | NumberRange | table?
+--- @field Properties { [string]: any }?
+---
+--- # Flipbook #
+---
+--- @field FlipbookImageSize Vector2?
+--- @field FlipbookGridX number?
+--- @field FlipbookGridY number?
+--- @field FlipbookFPS UmeGui_UIEmitter_SpawnNumber?
+--- @field FlipbookStartRandom boolean?
+--- @field FlipbookMode UmeGui_UIEmitter_FlipbookMode?
+---
+--- # Motion #
+---
+--- @field Velocity UmeGui_UIEmitter_NumberValue | Vector2?
+--- @field InitialVelocity (spawnAbsolutePoint: Vector2) -> Vector2?
+--- @field Speed UmeGui_UIEmitter_NumberValue?
+--- @field Direction Vector2 | table?
+--- @field Gravity Vector2 | Vector3 | table?
+--- @field Acceleration Vector2 | Vector3 | table?
+--- @field Drag UmeGui_UIEmitter_NumberValue?
+--- @field SpreadAngle UmeGui_UIEmitter_NumberValue?
+--- @field Rotation UmeGui_UIEmitter_NumberValue?
+--- @field RotationSpeed UmeGui_UIEmitter_NumberValue?
+--- @field FaceMovementDirection boolean?
+---
+--- # Shake #
+---
+--- @field ShakeSpeed UmeGui_UIEmitter_NumberValue?
+--- @field ShakeDirectionChanges number | NumberRange | table?
+--- @field ShakeDirectionBlendDuration UmeGui_UIEmitter_NumberValue?
+--- @field ShakeLockVertical boolean?
+--- @field HorizontalDrift UmeGui_UIEmitter_NumberValue?
+---
+--- # Orbit #
+---
+--- @field OrbitSpeed UmeGui_UIEmitter_NumberValue?
+--- @field OrbitRadius UmeGui_UIEmitter_NumberValue?
+--- @field OrbitRadiusScale UmeGui_UIEmitter_NumberValue?
+---
+--- # Attraction #
+---
+--- @field AttractTo UDim2 | Vector2 | GuiObject | ((container: GuiObject) -> (UDim2 | Vector2 | GuiObject | nil))
+--- @field AttractToSpace UmeGui_UIEmitter_AttractToSpace?
+--- @field AttractAfter number | NumberRange | table?
+--- @field AttractStrength UmeGui_UIEmitter_NumberValue?
+--- @field AttractMaxSpeed UmeGui_UIEmitter_NumberValue?
+--- @field AttractStopOnArrive boolean?
+--- @field AttractDestroyOnArrive boolean?
+--- @field AttractLiveFromEmitter boolean?
+--- @field AttractPauseAtProgress number | NumberRange | table?
+--- @field AttractPauseMaxTime number | NumberRange | table?
+--- @field AttractReleaseDuration number | NumberRange | table?
+--- @field AttractArriveOnlyWhenPaused boolean?
+--- @field AttractArriveRadius UmeGui_UIEmitter_NumberValue?
+--- @field AttractOnArrive ((particle: GuiObject) -> ())?
+---
+--- # Lifetime #
+---
+--- @field Lifetime number | NumberRange | table?
+--- @field LifeTime number | NumberRange | table?
+---
+--- # Emission #
+---
+--- @field Rate number?
+--- @field MaxParticles number?
+--- @field CullOffscreen boolean?
+--- @field InitialParticles number?
+--- @field InitialAgeProgress number | NumberRange | table?
+--- @field InitialSpawnPerStep number?
+local _umeLibraryUiEmitterParams = {}
+
+--%%%%%%%%%%%%%%%%%%%% Instance API
+
+--- @class UmeGui_UIEmitter_Instance
+--- @field Emit (self: UmeGui_UIEmitter_Instance, count: number | nil, spawnAbsolutePoint: Vector2 | nil) -> ()
+--- @field Play (self: UmeGui_UIEmitter_Instance) -> ()
+--- @field Prewarm (self: UmeGui_UIEmitter_Instance, count: number) -> ()
+--- @field Stop (self: UmeGui_UIEmitter_Instance) -> ()
+--- @field Clear (self: UmeGui_UIEmitter_Instance) -> ()
+--- @field Destroy (self: UmeGui_UIEmitter_Instance) -> ()
+local _umeLibraryUiEmitterInstance = {}
+
+--%%%%%%%%%%%%%%%%%%%% Compiled Config
+
+--- @class UmeGui_UIEmitter_CompiledConfig
+---
+--- # Placement #
+---
+--- @field Parent GuiObject
+--- @field Container GuiObject
+--- @field EmitterPosition UDim2 | Vector2?
+--- @field EmissionArea Vector2 @ Container-relative scale
+--- @field EmissionShape string @ Lowercased: "point", "rectangle", or "circle"
+---
+--- # Appearance #
+---
+--- @field Texture string
+--- @field ZIndex number
+--- @field Squash UmeGui_UIEmitter_NumberValue
+--- @field Color ColorSequence
+--- @field Size UmeGui_UIEmitter_NumberValue
+--- @field SizeSpace string @ Lowercased: "offset" or "scale"
+--- @field SizeScale UmeGui_UIEmitter_SpawnNumber?
+--- @field AspectRatio number?
+--- @field Transparency UmeGui_UIEmitter_NumberValue
+--- @field TransparencyScale UmeGui_UIEmitter_SpawnNumber?
+--- @field Properties { [string]: any }
+---
+--- # Flipbook #
+---
+--- @field FlipbookImageSize Vector2?
+--- @field FlipbookGridX number?
+--- @field FlipbookGridY number?
+--- @field FlipbookFPS UmeGui_UIEmitter_SpawnNumber?
+--- @field FlipbookStartRandom boolean
+--- @field FlipbookMode string @ Lowercased: "loop", "oneshot", "pingpong", or "random"
+--- @field FlipbookCellSize Vector2? @ Derived from image size and grid
+--- @field FlipbookFrameCount number? @ Derived from grid
+---
+--- # Motion #
+---
+--- @field Velocity UmeGui_UIEmitter_NumberValue | Vector2
+--- @field InitialVelocity ((spawnAbsolutePoint: Vector2) -> Vector2)?
+--- @field Speed UmeGui_UIEmitter_NumberValue?
+--- @field Direction Vector2 | table
+--- @field Gravity Vector2 | table
+--- @field Drag UmeGui_UIEmitter_NumberValue
+--- @field SpreadAngle UmeGui_UIEmitter_NumberValue
+--- @field Rotation UmeGui_UIEmitter_NumberValue
+--- @field RotationSpeed UmeGui_UIEmitter_NumberValue
+--- @field FaceMovementDirection boolean
+---
+--- # Shake #
+---
+--- @field ShakeSpeed UmeGui_UIEmitter_NumberValue?
+--- @field ShakeDirectionChanges UmeGui_UIEmitter_SpawnNumber?
+--- @field ShakeDirectionBlendDuration UmeGui_UIEmitter_NumberValue?
+--- @field ShakeLockVertical boolean
+--- @field HorizontalDrift UmeGui_UIEmitter_NumberValue?
+---
+--- # Orbit #
+---
+--- @field OrbitSpeed UmeGui_UIEmitter_NumberValue?
+--- @field OrbitRadius UmeGui_UIEmitter_NumberValue?
+--- @field OrbitRadiusScale UmeGui_UIEmitter_NumberValue?
+---
+--- # Attraction #
+---
+--- @field AttractTo UDim2 | Vector2 | GuiObject | ((container: GuiObject) -> (UDim2 | Vector2 | GuiObject | nil)) | nil
+--- @field AttractToSpace string @ Lowercased: "container" or "absolute"
+--- @field AttractAfter UmeGui_UIEmitter_SpawnNumber
+--- @field AttractStrength UmeGui_UIEmitter_NumberValue
+--- @field AttractMaxSpeed UmeGui_UIEmitter_NumberValue
+--- @field AttractStopOnArrive boolean
+--- @field AttractDestroyOnArrive boolean
+--- @field AttractLiveFromEmitter boolean
+--- @field AttractPauseAtProgress UmeGui_UIEmitter_SpawnNumber?
+--- @field AttractPauseMaxTime UmeGui_UIEmitter_SpawnNumber?
+--- @field AttractReleaseDuration UmeGui_UIEmitter_SpawnNumber?
+--- @field AttractArriveOnlyWhenPaused boolean
+--- @field AttractArriveRadius UmeGui_UIEmitter_NumberValue
+--- @field AttractOnArrive ((particle: GuiObject) -> ())?
+---
+--- # Lifetime #
+---
+--- @field Lifetime UmeGui_UIEmitter_SpawnNumber
+---
+--- # Emission #
+---
+--- @field Rate number
+--- @field MaxParticles number
+--- @field CullOffscreen boolean
+--- @field InitialParticles number
+--- @field InitialAgeProgress UmeGui_UIEmitter_SpawnNumber?
+--- @field InitialSpawnPerStep number?
+---
+--- # Derived #
+---
+--- @field _arriveOnlyWhenPausedDerived boolean @ True when AttractArriveOnlyWhenPaused was defaulted, not set
+local _umeLibraryUiEmitterCompiledConfig = {}
+
+--%%%%%%%%%%%%%%%%%%%% Curves
+
+--- @alias UmeGui_UIEmitter_NumberSource number | UmeGui_UIEmitter_NumberCurve @ Sampled per particle; a curve when the value varies over lifetime
+
+--- @alias UmeGui_UIEmitter_VectorValue Vector3 | UmeGui_UIEmitter_VectorSource
+
+--- @class UmeGui_UIEmitter_NumberCurve
+---
+--- # Keypoints #
+---
+--- @field Times { number }
+--- @field Values { number }
+--- @field Envelopes { number }?
+--- @field Count number
+---
+--- # Shortcut #
+---
+--- @field Constant number? @ Set when every keypoint shares one value and no envelope
+local _umeLibraryUiEmitterNumberCurve = {}
+
+--- @class UmeGui_UIEmitter_ColorCurve
+---
+--- # Keypoints #
+---
+--- @field Times { number }
+--- @field R { number }
+--- @field G { number }
+--- @field B { number }
+--- @field Count number
+---
+--- # Shortcut #
+---
+--- @field Constant Color3? @ Set when every keypoint shares one color
+local _umeLibraryUiEmitterColorCurve = {}
+
+--- @class UmeGui_UIEmitter_VectorSource
+---
+--- # Axes #
+---
+--- @field X UmeGui_UIEmitter_NumberSource
+--- @field Y UmeGui_UIEmitter_NumberSource
+local _umeLibraryUiEmitterVectorSource = {}
+
+--- @class UmeGui_UIEmitter_VelocitySource
+---
+--- # General #
+---
+--- @field Kind "Vector" | "Directional"
+---
+--- # Vector #
+---
+--- @field Value UmeGui_UIEmitter_VectorValue?
+---
+--- # Directional #
+---
+--- @field Speed UmeGui_UIEmitter_NumberSource?
+--- @field Direction UmeGui_UIEmitter_VectorValue?
+--- @field SpreadAngle UmeGui_UIEmitter_NumberSource?
+--- @field SpreadRoll number? @ Fixed random roll so spread stays stable over lifetime
+local _umeLibraryUiEmitterVelocitySource = {}
+
+--- @class UmeGui_UIEmitter_OrbitRadiusSource
+---
+--- # General #
+---
+--- @field Mode "Scale" | "Offset"
+--- @field Value UmeGui_UIEmitter_NumberSource
+local _umeLibraryUiEmitterOrbitRadiusSource = {}
+
+--%%%%%%%%%%%%%%%%%%%% Internal
+
+--- @class UmeGui_UIEmitter_Plan
+--- @field HasTexture boolean
+--- @field ClassName "Frame" | "ImageLabel"
+--- @field SizeOffset boolean
+--- @field ColorCurve UmeGui_UIEmitter_ColorCurve
+--- @field VelocityKind "Vector" | "Range" | "Directional"
+--- @field VelocityDynamic boolean @ True when velocity has a lifetime curve
+--- @field VelocityConstant Vector3?
+--- @field FlipbookEnabled boolean
+--- @field SpawnPosition UDim2 | Vector2?
+--- @field Properties { { any } } @ { propertyName, value } pairs without Position
+--- @field FailedProperties { [string]: boolean }
+local _umeLibraryUiEmitterPlan = {}
+
+--- @class UmeGui_UIEmitter_State
+---
+--- # Config #
+---
+--- @field _config UmeGui_UIEmitter_CompiledConfig
+--- @field _plan UmeGui_UIEmitter_Plan
+--- @field _frame UmeGui_UIEmitter_Frame
+---
+--- # Lifecycle #
+---
+--- @field _destroyed boolean
+--- @field _playing boolean
+--- @field _failures number @ Consecutive failed scheduler steps
+---
+--- # Scheduler #
+---
+--- @field _active boolean
+--- @field _listed boolean @ Still present in the scheduler list
+---
+--- # Emission #
+---
+--- @field _spawnAccumulator number
+--- @field _cullTimer number
+--- @field _initialWarmStartStarted boolean
+--- @field _initialSpawnRemaining number
+--- @field _warnedAttractTo boolean
+---
+--- # Particles #
+---
+--- @field _particles { UmeGui_UIEmitter_Entry }
+--- @field _pool { [string]: { UmeGui_UIEmitter_Entry } } @ Hidden reusable entries keyed by ClassName
+--- @field _poolCount number
+--- @field _poolLimit number
+local _umeLibraryUiEmitterState = {}
+
+--- @class UmeGui_UIEmitter_Entry
+---
+--- # General #
+---
+--- @field Particle GuiObject
+--- @field Constraint UIAspectRatioConstraint?
+--- @field HasTexture boolean
+--- @field VisualStatic boolean @ Visuals never change after spawn
+---
+--- # Lifetime #
+---
+--- @field Age number
+--- @field Elapsed number
+--- @field Lifetime number
+--- @field NominalLifetime number
+--- @field ReleaseStartAge number?
+---
+--- # Motion #
+---
+--- @field Position Vector3 @ Parent-local pixels
+--- @field Velocity Vector3
+--- @field VelocitySource UmeGui_UIEmitter_VelocitySource?
+--- @field Gravity Vector3
+--- @field GravitySource UmeGui_UIEmitter_VectorSource?
+--- @field Drag number
+--- @field DragSource UmeGui_UIEmitter_NumberCurve?
+---
+--- # Appearance #
+---
+--- @field Color UmeGui_UIEmitter_ColorCurve
+--- @field Size UmeGui_UIEmitter_NumberSource
+--- @field SizeOffset boolean
+--- @field SizeScale number
+--- @field AspectRatio number?
+--- @field Squash UmeGui_UIEmitter_NumberSource
+--- @field Transparency UmeGui_UIEmitter_NumberSource
+--- @field TransparencyScale number
+--- @field Rotation number
+--- @field RotationSource UmeGui_UIEmitter_NumberSource
+--- @field RotationSpeedSource UmeGui_UIEmitter_NumberSource
+--- @field RotationOffset number
+--- @field RotationStatic boolean
+--- @field FaceMovementDirection boolean
+---
+--- # Written Values #
+---
+--- @field LastSize number?
+--- @field LastSquash number?
+--- @field SizeKeyX number?
+--- @field SizeKeyY number?
+--- @field LastTransparency number?
+--- @field LastRed number?
+--- @field LastGreen number?
+--- @field LastBlue number?
+--- @field LastRotation number?
+--- @field PixelX number?
+--- @field PixelY number?
+---
+--- # Shake #
+---
+--- @field ShakeSpeed UmeGui_UIEmitter_NumberSource?
+--- @field ShakeHorizontalSign number?
+--- @field ShakeHorizontalBlend number?
+--- @field ShakeTargetSign number?
+--- @field ShakeBlendStart number?
+--- @field ShakeBlendStartAge number?
+--- @field ShakeDirectionBlendDuration UmeGui_UIEmitter_NumberSource?
+--- @field ShakeChangeTimes { number }?
+--- @field ShakeChangeIndex number?
+--- @field ShakeLockVertical boolean?
+--- @field BaseHorizontalSpeed number?
+--- @field HorizontalDrift UmeGui_UIEmitter_NumberSource?
+--- @field HorizontalDriftSign number
+--- @field UpSpeed number?
+---
+--- # Orbit #
+---
+--- @field OrbitSpeed UmeGui_UIEmitter_NumberSource?
+--- @field OrbitDirection number
+--- @field OrbitRadius number?
+--- @field OrbitRadiusSource UmeGui_UIEmitter_OrbitRadiusSource?
+--- @field OrbitAngle number?
+---
+--- # Flipbook #
+---
+--- @field FlipbookEnabled boolean
+--- @field FlipbookFPS number?
+--- @field FlipbookMode string?
+--- @field FlipbookGridX number?
+--- @field FlipbookCellSize Vector2?
+--- @field FlipbookFrameCount number?
+--- @field FlipbookFrame number
+--- @field FlipbookFrameTimer number
+--- @field FlipbookDirection number
+--- @field FlipbookStopped boolean
+---
+--- # Attraction #
+---
+--- @field AttractAfter number
+--- @field AttractStrength UmeGui_UIEmitter_NumberSource
+--- @field AttractMaxSpeed UmeGui_UIEmitter_NumberSource
+--- @field AttractArriveRadius UmeGui_UIEmitter_NumberSource
+--- @field AttractStopOnArrive boolean
+--- @field AttractDestroyOnArrive boolean
+--- @field AttractLiveFromEmitter boolean
+--- @field AttractOnArrive ((particle: GuiObject) -> ())?
+--- @field AttractArrived boolean
+--- @field AttractStopped boolean
+--- @field AttractPauseAtProgress number?
+--- @field AttractPauseMaxTime number?
+--- @field AttractPauseHoldTime number
+--- @field AttractReleaseDuration number?
+--- @field AttractArriveOnlyWhenPaused boolean
+--- @field AttractLifecycleReleased boolean
+local _umeLibraryUiEmitterEntry = {}
+
+--- @class UmeGui_UIEmitter_Frame
+--- @field ParentAbsolutePosition Vector2
+--- @field ParentAbsoluteSize Vector2
+--- @field SpawnPoint Vector2 @ Absolute spawn origin
+--- @field SpawnArea Vector2 @ Emission area in pixels
+--- @field CullMin Vector3 @ Container rect in Parent-local pixels
+--- @field CullMax Vector3
+--- @field OrbitCenter Vector3
+--- @field OrbitHalfMin number
+local _umeLibraryUiEmitterFrame = {}

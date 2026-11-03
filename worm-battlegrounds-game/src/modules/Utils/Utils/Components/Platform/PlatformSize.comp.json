@@ -1,0 +1,49 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_PlatformSize",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Platform" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Utils_DesktopSize": {
+						"UDim2": [
+							[0, 0],
+							[0, 0]
+						]
+					},
+					"Utils_MobileSize": {
+						"UDim2": [
+							[0, 0],
+							[0, 0]
+						]
+					},
+					"Utils_ConsoleSize": {
+						"UDim2": [
+							[0, 0],
+							[0, 0]
+						]
+					},
+					"Utils_VRSize": {
+						"UDim2": [
+							[0, 0],
+							[0, 0]
+						]
+					}
+				}
+			},
+			"Children": []
+		}
+	]
+}

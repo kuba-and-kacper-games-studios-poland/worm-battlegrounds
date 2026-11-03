@@ -1,0 +1,26 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Rarity_Gradient",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Rarity" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Rarity_Rarity": { "String": "Common" }
+				}
+			},
+			"Children": []
+		}
+	]
+}

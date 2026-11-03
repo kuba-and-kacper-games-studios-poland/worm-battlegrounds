@@ -1,0 +1,12 @@
+--- @class DoEvery_EventTable
+---
+--- # General #
+---
+--- @field Signal Signal
+--- @field Interval number
+---
+--- # Timing #
+---
+--- @field CurrentTime number
+--- @field LastFiredAt number
+local _doEvery_EventTable = {}

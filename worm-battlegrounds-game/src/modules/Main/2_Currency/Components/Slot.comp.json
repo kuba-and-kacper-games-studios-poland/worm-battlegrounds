@@ -1,0 +1,34 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Currency_Slot",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Currency" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Currency_Name": { "String": "" },
+					"Currency_CustomFormat": { "String": "" },
+					"Currency_ShortFrom": { "Float64": 0 },
+					"Currency_SpawnOrbs": { "Bool": false }
+				}
+			},
+			"Children": [
+				{
+					"ClassName": "ObjectValue",
+					"Name": "Currency_UIScale"
+				}
+			]
+		}
+	]
+}

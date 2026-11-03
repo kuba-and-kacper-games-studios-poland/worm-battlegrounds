@@ -1,0 +1,39 @@
+{
+	"ClassName": "Configuration",
+	"Name": "GLC_S_Leaderboard",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "GlobalLeaderboard_Controller" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"GLC_LeaderboardName": { "String": "" },
+					"GLC_Scope": { "String": "" },
+					"GLC_IsAscending": { "Bool": false },
+					"GLC_PageSize": { "Float64": 50 },
+
+					"GLC_DataDisplayType": { "String": "Standard" },
+					"GLC_ConvertValue": { "Bool": false },
+
+					"GLC_IsPlayerLeaderboards": { "Bool": true }
+				}
+			},
+			"Children": [
+				{
+					"ClassName": "ObjectValue",
+					"Name": "GLC_Container"
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,27 @@
+{
+	"ClassName": "Configuration",
+	"Name": "Utils_ButtonKey",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "Utils - Button" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"Utils_GamepadKey": { "String": "" },
+					"Utils_KeyboardKey": { "String": "" }
+				}
+			},
+			"Children": []
+		}
+	]
+}

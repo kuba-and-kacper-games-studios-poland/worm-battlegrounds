@@ -1,0 +1,26 @@
+{
+	"ClassName": "Configuration",
+	"Name": "BackpackPlus_FilterButton",
+	"Properties": {
+		"Attributes": {
+			"AutoAddAttributes": { "Bool": true },
+			"AutoRemoveAttributes": { "Bool": true },
+			"AutoAddObjectValues": { "Bool": true },
+			"AutoRemoveObjectValues": { "Bool": true },
+			"Group": { "String": "BackpackPlus" },
+			"ShowInGui": { "Bool": true }
+		}
+	},
+	"Children": [
+		{
+			"ClassName": "Configuration",
+			"Name": "Default",
+			"Properties": {
+				"Attributes": {
+					"BackpackPlus_FilterCategory": { "String": "" }
+				}
+			},
+			"Children": []
+		}
+	]
+}
