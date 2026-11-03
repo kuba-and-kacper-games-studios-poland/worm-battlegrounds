@@ -56,6 +56,38 @@ questions:
     status: resolved
     answer: "No"
     decided: 2026-11-03
+  - id: premium-power
+    text: "Worm Battlegrounds' premium crate costs 250 diamonds (bought with Robux) and drops only Rare, Epic and Legendary weapons, which are stronger in matches against other players. Research on Roblox PvP games (RIVALS, Jujutsu Shenanigans, Blade Ball) finds the line players draw is money that changes who wins; all 11 crate weapons can also be won from the 100-coin weapon crate. What should the premium crate sell?"
+    options: ["Keep it: Rare, Epic and Legendary weapons with better odds", "Weapons only from coin crates; the premium crate sells cosmetics instead (skins, weapon skins, emotes)", "Keep it, and say on the game page that every weapon can also be won with coins"]
+  - id: shiny-boosts
+    text: "In Worm Battlegrounds, 10 copies of an item make it shiny: shiny weapons deal +5% damage and shiny utilities get a small boost (a Bandage heals 45 instead of 40). Diamond crates, bought with Robux, collect copies faster, so paying players reach those boosts first in matches against other players. Should shiny items keep a gameplay boost?"
+    options: ["Keep the boosts", "Shiny is a look only, for weapons and utilities like for skins", "Shiny adds a cosmetic extra (a trail or an explosion color) instead of a boost"]
+  - id: restricted-regions
+    text: "Worm Battlegrounds' diamond crates (premium, utility and skin) are paid random items. Roblox requires a check (PolicyService) for players where these are restricted, as in Belgium, the Netherlands, the UK, Australia and Brazil (where under-18s can't open them), or the game can be removed. What do those players get instead of the diamond crates?"
+    options: ["The diamond crates are hidden; the coin crates stay", "They buy one chosen item directly for diamonds, at its average crate cost", "They see the crates with a message that buying isn't available in their region"]
+  - id: bot-coins
+    text: "In Worm Battlegrounds, bots fill the empty spots of a public match when its 30-second timer ends, and they count as players for coins. A player alone in a public 8-player lobby can beat 7 bots and earn 150 coins for 1st place, more than a Hard win against AI pays (60). How should bot-filled public matches pay?"
+    options: ["Bots in public matches play at Hard, so 1st place stays earned", "Places pay as if only the real players were there (1 player and 7 bots pays like a 2-player match)", "Keep it as it is"]
+suggestions:
+  - id: diamond-bonus
+    text: "Every Worm Battlegrounds diamond pack gives the same diamonds per Robux except the Vault (+11%). In Roblox games the largest currency pack gives a median 27% more per Robux than the smallest, and RIVALS, Blox Fruits and Murder Mystery 2 give 48–73%. Make the bonus grow with the pack: Handful 250 for 99, Pouch 525 for 199, Bag 1,100 for 399, Chest 1,750 for 599, Vault 3,000 for 899 (about +5%, +9%, +16%, +32%)?"
+    options: [Yes, Later, No]
+  - id: honest-labels
+    text: "Worm Battlegrounds' Vault shows a crossed-out 999 Robux beside its 899 price, and every crate's 10-pack says '10% off' forever. Since April 2026 Roblox bans crossed-out prices that were never charged and discounts that never end. Show these as bonuses instead ('+11% diamonds' on the Vault, '10 crates for the price of 9' on 10-packs)?"
+    options: [Yes, No]
+  - id: starter-pack
+    text: "Most Roblox games sell a one-time starter pack (median 79 Robux; PvP games 49–67), shown once after the tutorial with a real time window. Worm Battlegrounds has none. Add one for 99 Robux, offered once per account for 72 hours after the tutorial crate: an exclusive starter worm skin plus 500 diamonds, with every item listed?"
+    options: [Yes, Later, No]
+  - id: gift-copies
+    text: "294 of 491 top Roblox games let players buy an item as a gift for someone else, at the same price. Let Worm Battlegrounds players buy the game passes (Slot 4, Slot 5, Double Coins, VIP) and diamond packs as gifts for a player in their party or match?"
+    options: [Yes, Later, No]
+  - id: rewarded-ad
+    text: "Roblox's rewarded video ads let a player choose to watch a short ad for a small fixed reward, and pay the game for it; one game's earnings rose 40%+. They only show to players 13 and older, and the game needs 2,000 visitors a month. Where should Worm Battlegrounds offer one?"
+    options: ["On the results screen: watch to double that match's coins, up to 3 times a day", "In the loadout: watch to try one weapon you don't own for one match", "No ads"]
+  - id: cosmetics
+    text: "Roblox PvP games earn most from looks that don't change who wins: weapon skins, kill effects and victory effects (100–199 Robux), emotes. Worm Battlegrounds sells worm skins and coin emotes only. Which cosmetics should its shop add? Pick every one."
+    multiple: true
+    options: ["Weapon skins (a gold Bazooka, a candy Grenade)", "Gravestones left where a worm is knocked out", "Explosion colors and projectile trails", "Victory dances on the results screen", "Emotes sold for Robux beside the coin ones"]
 ---
 
 Worm Battlegrounds has two currencies and three crates, all on the right side of the [[Lobby]].

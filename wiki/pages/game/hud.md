@@ -43,6 +43,18 @@ suggestions:
     status: resolved
     answer: "A number and a bar above each worm's head"
     decided: 2026-11-03
+  - id: knockout-moment
+    text: "On Roblox, ring-outs are the PvP moment players clip and share, and a Worm Battlegrounds worm knocked into water or lava or off the map is one. When that happens, slow the match screen's camera to half speed for 1 second on the falling worm, with a splash or sizzle sound sting, for every player?"
+    options: [Yes, Later, No]
+  - id: best-shot-replay
+    text: "Worm Battlegrounds' results screen lists each match's best shot as a stat. Play the best shot back as a 5-second replay on the results screen, before the placings, so the match ends on its funniest moment?"
+    options: [Yes, Later, No]
+  - id: quick-chat
+    text: "Since January 2026, Roblox players need an age check to chat, so many players in a Worm Battlegrounds match can't type. Add a free quick-chat wheel on the match screen with 6 preset lines ('Nice shot!', 'Oops', 'GG', 'Watch this', 'Missed!', 'Help!') shown above the worm?"
+    options: [Yes, Later, No]
+  - id: win-streak
+    text: "RIVALS shows each player's win streak in its lobby, and players chase it. Show a Worm Battlegrounds player's win streak beside their name in the waiting room and above their worm during a match, once it reaches 3 public wins in a row?"
+    options: [Yes, Later, No]
 ---
 
 The match screen keeps the battlefield clear: a row of round buttons at the top left, and the player's loadout along

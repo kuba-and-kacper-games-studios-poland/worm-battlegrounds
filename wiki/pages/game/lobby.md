@@ -68,6 +68,18 @@ suggestions:
     status: resolved
     answer: "No"
     decided: 2026-11-03
+  - id: beginner-match
+    text: "The Worm Battlegrounds lobby shows 3 public matches at a time, open to everyone, so a player in their first matches can land against level-80 players with Legendary weapons and 5 loadout slots. RIVALS keeps a Beginner 2v2 and a practice range for that reason. Keep one of the 3 public matches for players below level 10 (bots fill its empty spots as usual)?"
+    options: [Yes, Later, No]
+  - id: tutorial-ringout
+    text: "Worm Battlegrounds' tutorial match is a 1v1 against a bot where two hits knock it out. Research on Roblox games says a player should see one memorable moment in their first 5 minutes, and a worm flying into water is this game's. Make the tutorial's second hit throw the bot into the water, with a slow-motion splash?"
+    options: [Yes, Later, No]
+  - id: party-bonus
+    text: "Worm Battlegrounds parties hold up to 4 friends. Fish It! and Fix My Phone! pay +10% for each friend in the server, and Roblox's recommendations count days played with friends. Give each player +10% coins for every party friend in the same public match, up to +30%?"
+    options: [Yes, Later, No]
+  - id: group-reward
+    text: "Many Roblox games give a one-time reward for joining their Roblox group (Break and Steal an Egg gives a free Legendary egg), which also grows the group that update news reaches. Give Worm Battlegrounds players one free skin crate, once, for joining the game's group?"
+    options: [Yes, Later, No]
 ---
 
 The lobby is the first thing a player sees. Its panels sit on a **flat illustrated background**. It follows the layout of Roworld's lobby (a central panel for playing,

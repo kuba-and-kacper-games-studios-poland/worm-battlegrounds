@@ -29,6 +29,9 @@ questions:
     status: resolved
     answer: "15 seconds"
     decided: 2026-11-03
+  - id: sudden-death-start
+    text: "Worm Battlegrounds' sudden death starts after 10 rounds. With 15-second turns plus the shot's flight, a round of 8 players takes about 2½–3 minutes, so an 8-player match on The Big Mashup can run 25 minutes or more before the water rises, while a 2-player match takes about 7. Roblox PvP sessions last about 11–14 minutes. When should sudden death start?"
+    options: ["After 10 rounds, whatever the number of players", "After 8 minutes of match time, whatever the round", "After fewer rounds the more players there are: 10 rounds at 2 players, 6 at 4, 5 at 6, 4 at 8"]
   - id: after-shot
     text: "A Worm Battlegrounds turn gives the player 15 seconds to aim and fire. After the shot, does the worm get a few seconds to move to cover (Worms gives 3), or does the turn end at once?"
     options: ["3 seconds to move after the shot", "The turn ends at once"]
@@ -59,6 +62,12 @@ suggestions:
     status: resolved
     answer: "One worm each"
     decided: 2026-11-03
+  - id: supply-drops
+    text: "Worm Battlegrounds matches have nothing that changes from round to round besides the wind. Every 3 rounds, drop a supply crate by parachute onto a random spot of the map: the worm that walks into it gets one free use of a random weapon or 25 health. It gives players a reason to move, a comeback chance for whoever is behind, and races to film. Add supply drops?"
+    options: [Yes, Later, No]
+  - id: update-slot
+    text: "Worm Battlegrounds is decided to launch with no limited-time events or weekly featured modes. For the updates after launch, Roblox games that release on the same weekday and hour every time, announced a week ahead as a Roblox Experience Event, get their biggest player peaks then; 53% of tracked events start on a Saturday, most between 14:00 and 21:00 UTC. Pick a fixed release slot for Worm Battlegrounds' updates now?"
+    options: ["Saturday 16:00 UTC, every update", "Friday evening in Europe", "No fixed slot: release when ready"]
 ---
 
 Every match has 2, 4, 6 or 8 players, as a free-for-all deathmatch or a team deathmatch. Matches are round based,

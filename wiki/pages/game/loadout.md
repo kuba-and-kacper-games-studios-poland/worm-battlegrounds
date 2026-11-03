@@ -39,6 +39,9 @@ suggestions:
     status: resolved
     answer: "Every slot different"
     decided: 2026-11-03
+  - id: slots-by-level
+    text: "Worm Battlegrounds' loadout slots 4 and 5 are decided: each one is bought with Robux (149 and 299) or unlocked with coins (2,500 and 6,000). A player with 5 slots brings 2 more weapons or utilities into a match than one with 3, and Roblox PvP players count paid advantages like that against a game. Also unlock slot 4 for free at level 20 and slot 5 at level 40, so every regular player reaches 5 slots without paying?"
+    options: [Yes, Later, No]
 ---
 
 Weapons and utilities share one inventory. Before a match, the player picks what to take in the loadout, which sits

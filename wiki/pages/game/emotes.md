@@ -14,6 +14,10 @@ questions:
   - id: emote-list
     text: "Worm Battlegrounds has 9 emotes: Wave from the start, then Thumbs up, Laugh, Dance, Flex, Taunt, Cry, Backflip and Victory Trumpet bought with coins. Keep these 9, or one line per emote you'd change?"
     options: ["Keep all 9", "Change some (write which)"]
+suggestions:
+  - id: knockout-emote
+    text: "In Roblox fighting games, an emote right after a knockout is the taunt kids read at once and the punchline of shared clips. Let each Worm Battlegrounds player pick one owned emote that their worm plays by itself whenever their shot knocks out another worm (it doesn't count toward the 5-second emote limit)?"
+    options: [Yes, Later, No]
 ---
 
 Emotes are short animations with a silly voice line. They're **bought with coins**, never from a crate: the player

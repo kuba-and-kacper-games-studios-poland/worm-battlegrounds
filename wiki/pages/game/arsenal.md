@@ -73,6 +73,9 @@ suggestions:
     status: resolved
     answer: "Yes"
     decided: 2026-11-03
+  - id: early-access
+    text: "Jujutsu Shenanigans keeps every fighter free except the newest, sold as Early Access (345 Robux) until it goes free about 5 months later, and players praise it for that. Release Worm Battlegrounds' new weapons after launch the same way: buyable with Robux for the first months, then added to the coin weapon crate for everyone?"
+    options: [Yes, Later, No]
 ---
 
 ## Weapons
