@@ -57,6 +57,9 @@ questions:
     status: resolved
     answer: "Use the proposal"
     decided: 2026-11-03
+  - id: speed-stamina
+    text: "Worm Battlegrounds' Speed potion makes the worm move faster for the turn, but walking is capped by a stamina bar of about 20 studs a turn, so moving faster alone only saves a few seconds of a 15-second turn. Should the Speed potion also stretch the stamina bar?"
+    options: ["Faster, and 50% more stamina (about 30 studs)", "Faster only, the same 20 studs", "Double the stamina instead of moving faster"]
 suggestions:
   - id: hadoken-name
     text: "'Hadoken' is a Capcom (Street Fighter) trademark. Should Worm Battlegrounds' energy-blast weapon get its own name, like Ki Blast, Power Wave or Fist Blast, to stay clear of trouble on Roblox?"

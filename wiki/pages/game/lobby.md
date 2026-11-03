@@ -55,6 +55,18 @@ questions:
     status: resolved
     answer: ["The map", "Deathmatch or teams", "Number of players"]
     decided: 2026-11-03
+  - id: solo-middle
+    text: "Worm Battlegrounds' Play solo difficulties were answered as Easy, Normal and Hard, but the Lobby and Currencies & crates pages call the middle one Medium. Which name does the middle difficulty button show?"
+    options: ["Medium", "Normal"]
+  - id: custom-teams
+    text: "A Worm Battlegrounds custom lobby lets its creator pick the map, deathmatch or teams, and the number of players (2, 4, 6 or 8). When the creator picks teams, how are the players split?"
+    options: ["Always two equal teams: 2v2, 3v3 or 4v4", "Teams of two: 2v2, 2v2v2 or 2v2v2v2", "The creator also picks the team size"]
+  - id: custom-bots
+    text: "A Worm Battlegrounds custom lobby can start before every spot is filled (say 3 friends in a 4-player lobby). Custom matches pay no coins either way. What happens to the empty spots?"
+    options: ["Bots at Medium fill them", "The match starts with only the friends who joined", "The creator picks bots or no bots"]
+  - id: party-too-big
+    text: "A Worm Battlegrounds party holds up to 4 friends and always plays on one team, but a Duo match's teams hold 2. What happens when a party of 3 or 4 presses Join on a Duo match?"
+    options: ["The party can't join Duo matches", "The party splits across two teams of the same match"]
 suggestions:
   - id: worm-preview
     text: "Show the player's equipped worm skin in the middle of the Worm Battlegrounds lobby, standing behind the match list and playing its idle animation, so a new skin from the skin crate is seen right away?"

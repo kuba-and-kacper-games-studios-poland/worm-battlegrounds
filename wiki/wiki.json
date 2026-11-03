@@ -8,7 +8,9 @@
   "order": 0,
   "pinned": [
     "Build brief",
-    "The game"
+    "The game",
+    "Implementation plan",
+    "Roadmap"
   ],
   "collections": {
     "sketches": {

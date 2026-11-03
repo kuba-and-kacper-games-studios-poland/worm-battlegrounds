@@ -24,6 +24,9 @@ questions:
     status: resolved
     answer: ["Chat", "Voice chat mute"]
     decided: 2026-11-03
+  - id: rematch-map
+    text: "Worm Battlegrounds' results screen has a Rematch button that plays again with the same players on the same server. Does the rematch replay the same map, or a new random map that fits the same number of players?"
+    options: ["The same map", "A new random map of the same size"]
 suggestions:
   - id: turn-banner
     text: "Show whose turn it is at the top middle of the Worm Battlegrounds match screen, with that player's name, team color and the 15-second timer, so everyone knows who's shooting?"

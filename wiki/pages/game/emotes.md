@@ -14,6 +14,9 @@ questions:
   - id: emote-list
     text: "Worm Battlegrounds has 9 emotes: Wave from the start, then Thumbs up, Laugh, Dance, Flex, Taunt, Cry, Backflip and Victory Trumpet bought with coins. Keep these 9, or one line per emote you'd change?"
     options: ["Keep all 9", "Change some (write which)"]
+  - id: emote-shop
+    text: "Worm Battlegrounds' 8 coin emotes need a place to be bought, but the lobby only shows the emotes a player owns, behind the smiley button above the loadout. Where are they bought?"
+    options: ["A + at the end of the lobby's emote row opens an emote shop window", "In the crates panel on the right, beside the skin crate", "Locked emotes show in the emote row with their price and level, and tapping one buys it"]
 suggestions:
   - id: knockout-emote
     text: "In Roblox fighting games, an emote right after a knockout is the taunt kids read at once and the punchline of shared clips. Let each Worm Battlegrounds player pick one owned emote that their worm plays by itself whenever their shot knocks out another worm (it doesn't count toward the 5-second emote limit)?"

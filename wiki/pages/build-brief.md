@@ -85,6 +85,9 @@ currency bar, loadout presets, and similar) are **up to the scripter**: build th
 
 ## Suggested build order
 
+The full plan, module by module on the ume framework, is the [[Implementation plan]]; its [[Roadmap]] splits these
+steps into 14 phases.
+
 1. **Core match:** a 2D studded map, one worm each, movement with stamina, jumping, turns, the Bazooka, block
    destruction, knockback, water.
 2. **Aiming on every device:** mouse and touch drag, controller stick and power bar.

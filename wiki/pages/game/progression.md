@@ -30,6 +30,9 @@ questions:
     status: resolved
     answer: "Level 25: Prisoner. Level 50: FBI. Level 100: Wizard (grey)"
     decided: 2026-11-03
+  - id: xp-matches
+    text: "Every Worm Battlegrounds match gives 100 XP. Custom lobbies pay no coins so friends can't farm them, but XP from custom lobbies still unlocks the level skins and emotes. Which matches give XP?"
+    options: ["Public and solo matches only", "Every match, custom lobbies included (not the tutorial)"]
 suggestions:
   - id: weapon-mastery
     text: "RIVALS gives every weapon its own kills track, with rewards from the 5th kill up to finishers at 20,000–40,000 kills, so long-time players always have a goal that never changes match balance. Give each Worm Battlegrounds weapon a mastery track: at 10, 50, 250 and 1,000 knockouts it gives a cosmetic (a badge, then a gold trim, then a knockout effect, then a title)?"
