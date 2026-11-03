@@ -1,0 +1,20 @@
+{
+  "mode": "dark",
+  "colors": {
+    "bg": "#15121f",
+    "surface": "#1d1a2b",
+    "raised": "#272338",
+    "border": "#3b3552",
+    "muted": "#aaa4c0",
+    "accent": "#ff8a3d",
+    "accent2": "#8fe04a",
+    "accent3": "#5cc8ff"
+  },
+  "radius": "large",
+  "border": "thick",
+  "shadow": "hard",
+  "font": {
+    "body": "sans",
+    "heading": "grotesk"
+  }
+}

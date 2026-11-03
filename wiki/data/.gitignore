@@ -1,0 +1,7 @@
+# Shiori (ADR-0014): data/ is committed with the wiki, except this PC's own files.
+machine.json
+wiki.db-wal
+wiki.db-shm
+*.tmp
+cache/
+export/

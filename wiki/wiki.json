@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "id": "worms-roblox",
+  "title": "Worm Battlegrounds",
+  "tagline": "Turn-based artillery chaos: Roworld × GunBound × Worms",
+  "icon": "target",
+  "cover": "cover.svg",
+  "order": 0,
+  "pinned": [
+    "Build brief",
+    "The game"
+  ],
+  "collections": {
+    "sketches": {
+      "title": "Sketches",
+      "item": "Sketch"
+    }
+  },
+  "public": {
+    "tagline": "The player's guide to Worm Battlegrounds",
+    "pages": [
+      "game/**"
+    ],
+    "front": "game",
+    "banner": "/assets/worm-skins.png",
+    "privateFields": [
+      "Script",
+      "Asset id"
+    ]
+  }
+}

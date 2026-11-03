@@ -9,6 +9,7 @@ sync into.
 | `worm-battlegrounds-game/` | The game's code, on the ume framework | its `AGENTS.md` and `.claude/rules/` |
 | `worm-battlegrounds-gui/` | The game's guis, on UmeGui, styled by the `WormBattlegrounds` theme | its `AGENTS.md` and `.claude/rules/` |
 | `worm-battlegrounds.rbxl` | The place both projects sync into | |
+| `wiki/` | The game's Shiori wiki: the design, the player's guide under `pages/game/` | `wiki/AGENTS.md`, only when asked to change it |
 
 The folders' `AGENTS.md`, `CLAUDE.md` and rules are the framework's and name no game: they say `<name>-game`,
 `<name>-gui` and `<Game>`. Here `<name>` is `worm-battlegrounds` and `<Game>` is `WormBattlegrounds`. This file and `CLAUDE.md` are the
@@ -23,6 +24,7 @@ The game's own decisions (how it uses ume and ume-gui, and its gui look) are in
 - Framework-owned folders and files are replaced when the game takes a newer ume or ume-gui, so a change there is
   lost. Which they are, and how to update: `family/family.md` (Boundaries, Updating) in either folder. The rest is the
   game's own.
+- Don't change the wiki unless asked: write what changed in `wiki/journal/`, one entry per change (`wiki/JOURNAL.md`).
 
 ## Studio
 

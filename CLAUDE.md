@@ -4,6 +4,8 @@
 
 @worm-battlegrounds-game/.claude/rules/game/practices.md
 
+@wiki/JOURNAL.md
+
 ## Claude Code notes
 
 - A folder's `CLAUDE.md` loads once you read a file in it, but its `.claude/rules/` and skills load only in a session
