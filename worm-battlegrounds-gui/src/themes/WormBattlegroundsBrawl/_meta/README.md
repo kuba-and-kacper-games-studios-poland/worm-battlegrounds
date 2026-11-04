@@ -126,7 +126,8 @@ A slanted banner behind a big title, from the first Brawl options; no gui uses i
 
 - `Icons.lua` and `Skins.lua` are written by the kit's build script, made outside this repo (the game home's
   `assets/_inbox/ui_kit_brawl/`: `skins.py` and `banners.py` draw the SVGs, `build.py` renders them). `Skins.lua`
-  holds each sliced skin's `SliceCenter` in its PNG's pixels. Until the owner approves the kit and it's uploaded, its
-  pictures are local previews: `rbxasset://textures/wb_brawlpreview/<name>_<hash>.png`, files in Studio's own content
-  folder that only this PC's Studio shows. After the upload each line becomes an `rbxassetid://`.
+  holds each sliced skin's `SliceCenter` in its PNG's pixels. The kit was uploaded on 2026-11-04: every `Icons.lua`
+  line is an `rbxassetid://`. A rebuild writes local previews (`rbxasset://textures/wb_brawlpreview/…`, which only
+  the PC that built them shows) until the changed pictures are uploaded and the ids put back (the kit's README →
+  Uploading).
 - No `Gamepad.lua`: the theme uses System's gamepad icons.
