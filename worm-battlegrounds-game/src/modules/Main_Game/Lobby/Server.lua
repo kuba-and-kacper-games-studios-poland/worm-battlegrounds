@@ -96,12 +96,14 @@ function Module._onPlayerAdded(player: Player)
 
 	--[[ Tutorial ]]
 
-	-- Studio can't teleport, so it skips the tutorial match and goes on to the lobby's part
-	if not I.Tutorial.IsMatchDone(player) and I.S.RunService:IsStudio() then
-		I.Tutorial.CompleteMatch(player)
-	elseif not I.Tutorial.IsMatchDone(player) then
-		I.MatchBoard.Launch({ player }, "Solo", "Deathmatch", 2, _settings.TUTORIAL_MAP, _settings.TUTORIAL_DIFFICULTY, true)
-		return
+	-- The Lobby map alone in Studio can't start the tutorial match, so it goes on to the lobby's part
+	if not I.Tutorial.IsMatchDone(player) then
+		if I.MatchBoard.Launch({ player }, "Solo", "Deathmatch", 2, _settings.TUTORIAL_MAP, _settings.TUTORIAL_DIFFICULTY, true) then
+			return
+		end
+		if I.S.RunService:IsStudio() then
+			I.Tutorial.CompleteMatch(player)
+		end
 	end
 
 	--[[ Rejoin ]]

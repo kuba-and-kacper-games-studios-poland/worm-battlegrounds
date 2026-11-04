@@ -5,7 +5,8 @@ with a narrow `FOV`, so the arena reads as flat. It follows a flying shot (parts
 while the player's `CameraFollowsShot` setting is on, else the active worm (its `Active` attribute), else the local
 player's worm, else the arena's middle, and stays inside the arena's bounds. Players pan by dragging with the right
 mouse button, two fingers on touch, or the right stick while LT is held; the pan resets when the camera follows
-another worm. It locks the FOV_Controller while it runs. It creates no remotes, Topics or saved data.
+another worm. It locks the FOV_Controller while it runs. While the player isn't in the match (the `InMatch` Player
+attribute, on the Studio map's lobby) it gives Roblox's camera back. It creates no remotes, Topics or saved data.
 
 | | |
 | --- | --- |

@@ -12,6 +12,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Roster = require(script.Parent:FindFirstChild("Roster")) --- @type Match_Server_Roster
+local Connection = require(script.Parent:FindFirstChild("Connection")) --- @type Match_Server_Connection
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -55,8 +56,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	Opens the rematch vote for REMATCH_SECONDS, or until every player still here voted, and returns the players who
-	voted and are still here.
+	Opens the rematch vote for REMATCH_SECONDS, or until every player still in the match voted, and returns the
+	players who voted and are still here.
 ]]
 --- @return { Player }
 function Module.Run()
@@ -70,7 +71,7 @@ function Module.Run()
 	--[[ Waiting ]]
 
 	local deadline: number = os.clock() + _settings.REMATCH_SECONDS
-	while os.clock() < deadline and Module._getVoteCount() < #I.S.Players:GetPlayers() do
+	while os.clock() < deadline and Module._getVoteCount() < #Connection.GetPlayersInMatch() do
 		task.wait(0.25)
 	end
 

@@ -84,8 +84,11 @@ local _config = {
 	--- @type { [number]: Ume_PlaceLoader_PlaceSettings }
 	PlaceConfigs = {
 		[game.PlaceId] = {
-			-- In Studio, the Workspace attribute Ume_StudioMapId ("Match") boots a match to test without teleports
-			DefaultMapId = (game:GetService("RunService"):IsStudio() and workspace:GetAttribute("Ume_StudioMapId")) or "Lobby",
+			--[[
+				In Studio the Studio map plays the lobby and its matches in one server, since Studio can't teleport; the
+				Workspace attribute Ume_StudioMapId ("Lobby" or "Match") boots one map alone instead
+			]]
+			DefaultMapId = if game:GetService("RunService"):IsStudio() then workspace:GetAttribute("Ume_StudioMapId") or "Studio" else "Lobby",
 			LobbyId = "UmeLobby",
 
 			MapConfigs = {
@@ -166,6 +169,47 @@ local _config = {
 						"Main_Controllers",
 					},
 					DisabledModules = concat(ALWAYS_OFF, LOBBY_ONLY),
+					LoadingOrder = {},
+
+					-- Other
+					ReturnPlaceId = nil,
+				},
+				["Studio"] = {
+					-- Data
+					ProfileStoreName = "UmeTesting_-1",
+					LeaderboardStoreName = "UmeTesting_-1",
+
+					-- Accessibility
+					VRSupport = false,
+
+					-- Directories
+					GameDirs = {
+						Workspace_Ume = { "Default", "Lobby", "Match" },
+						ReplicatedStorage_Ume = { "Default", "Lobby", "Match" },
+						ServerStorage_Ume = { "Default", "Lobby", "Match" },
+
+						StarterGui = { "Default", "Lobby", "Match" },
+						StarterPack = { "Default", "Lobby", "Match" },
+						StarterPlayer = { "Default", "Lobby", "Match" },
+
+						Assets = { "Default", "Shared", "Lobby", "Match" },
+						SAssets = { "Default", "Lobby", "Match" },
+					},
+
+					-- Modules
+					ModulesDirs = {
+						-- Ume
+						"Ume",
+						"Ume_Data",
+						"Roblox",
+
+						-- Game
+						"Utils",
+						"Main",
+						"Main_Game",
+						"Main_Controllers",
+					},
+					DisabledModules = ALWAYS_OFF,
 					LoadingOrder = {},
 
 					-- Other

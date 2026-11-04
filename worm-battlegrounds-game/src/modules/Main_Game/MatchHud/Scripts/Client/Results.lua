@@ -64,6 +64,7 @@ function Module.Start()
 	I.Interact.OnPress(elems["Rematch"], Module._voteRematch)
 	I.Interact.OnPress(elems["Lobby"], Module._goToLobby)
 	I.Topic.Subscribe("Match_PhaseChanged", Module._onPhaseChanged)
+	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._onMoved)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -155,9 +156,19 @@ function Module._tick()
 	local left: number = math.max(math.ceil(endsAt - I.S.Workspace:GetServerTimeNow()), 0)
 	local votes: number = matchFolder:GetAttribute("RematchVotes") or 0
 
+	--[[ Counting ]]
+
+	-- The players still in the match (the Studio map's lobby shares the server)
+	local playing: number = 0
+	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
+		if player:GetAttribute("InMatch") then
+			playing += 1
+		end
+	end
+
 	--[[ Applying ]]
 
-	elems["RematchText"].Text = (if voted then "Voted" else "Rematch") .. `  {votes} / {#I.S.Players:GetPlayers()}  0:{string.format("%02d", left)}`
+	elems["RematchText"].Text = (if voted then "Voted" else "Rematch") .. `  {votes} / {playing}  0:{string.format("%02d", left)}`
 end
 
 --%%%%%%%%%%%%%%%%%%%% Vote Rematch
@@ -196,6 +207,35 @@ function Module._onPhaseChanged(phase: string)
 		return
 	end
 
+	--[[ Closing ]]
+
+	Module._close()
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Moved
+
+--[[
+	Closes the results when the player goes back to the Studio map's lobby, where the match keeps going without them.
+]]
+function Module._onMoved()
+	--[[ Checks ]]
+
+	-- Check if the player left the match
+	if I.S.Players.LocalPlayer:GetAttribute("InMatch") then
+		return
+	end
+
+	--[[ Closing ]]
+
+	Module._close()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Close
+
+--[[
+	Closes the results and stops their rematch countdown.
+]]
+function Module._close()
 	--[[ Closing ]]
 
 	if tickConnection then

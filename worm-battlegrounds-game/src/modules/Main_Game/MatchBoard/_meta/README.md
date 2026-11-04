@@ -5,12 +5,13 @@ a party leader joins a row for the whole party, and a row starts when it's full,
 with two or more players in it, or when `VOTE_FRACTION` of its players vote to start early. A started row is replaced
 by a fresh one. **Solo** starts a match against bots at a chosen difficulty (one player only), and **Custom** makes a
 room that friends are invited into and its owner starts. Launching builds the match's teams (parties stay together),
-writes the match's metadata and teleports everyone to a reserved server of the Match map.
+writes the match's metadata and teleports everyone to a reserved server of the Match map. On the Studio map (the
+lobby and the match on one Studio server) it hands the match to `I.Match.Host` instead, and refuses while one plays.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/MatchBoard` |
-| Runs on | Server, Client · Lobby map |
+| Runs on | Server, Client · Lobby map, Studio map |
 | Exposes | `I.MatchBoard` (server) |
 | Uses | `I.Party`, `I.Loadout`, `I.Teleport`, `I.Notify`, `I.Friends` (client), `I.WidgetManager`, `I.DoEvery` |
 
@@ -21,7 +22,7 @@ writes the match's metadata and teleports everyone to a reserved server of the M
 | `Server.lua` | Starts the three server handlers; the `I` table |
 | `Scripts/Server/Rows.lua` | Public and custom rows: joining, leaving, votes, timers, publishing them as `Configuration`s |
 | `Scripts/Server/Custom.lua` | Custom rooms: creating, inviting, answering, starting, leaving |
-| `Scripts/Server/Launch.lua` | Teams, metadata and the teleport; solo matches |
+| `Scripts/Server/Launch.lua` | Teams, metadata and the teleport (on the Studio map, `I.Match.Host`); solo matches |
 | `Client.lua` | Starts the three client handlers |
 | `Scripts/Client/Board.lua` | The `MatchBoard` panel: rows, the waiting room, votes and timers |
 | `Scripts/Client/Solo.lua` | The `SoloSetup` widget |
@@ -35,7 +36,7 @@ writes the match's metadata and teleports everyone to a reserved server of the M
 
 | Function | Returns | What it does |
 | --- | --- | --- |
-| `Launch(players, kind, mode, size, mapId, difficulty, tutorial?)` | `boolean` | Builds the teams and metadata and teleports the players. In Studio it only prints and notifies |
+| `Launch(players, kind, mode, size, mapId, difficulty, tutorial?)` | `boolean` | Builds the teams and metadata and teleports the players. On the Studio map it starts the match on this server; on the Lobby map alone in Studio it only prints and notifies |
 | `GetMap(size: number)` | `string` | A map from `MAP_POOL` that holds that many worms |
 
 ## Network
@@ -69,6 +70,7 @@ Rows are `Configuration`s in `ReplicatedStorage.Ume.MatchBoard`, one per row, wi
 | Key | Default | What |
 | --- | --- | --- |
 | `MATCH_PLACE_ID`, `TELEPORT_GUI` | this place, `"TeleportGui"` | Where matches run, the teleport screen |
+| `STUDIO_MAP` | `"Studio"` | The map where matches start on the lobby's own server |
 | `ROW_SECONDS` | `30` | A row's countdown once someone joins |
 | `VOTE_FRACTION` | `2 / 3` | Share of a row's players whose votes start it |
 | `DEATHMATCH_SIZES` | `{ 2, 4, 6, 8 }` | The deathmatch rows |

@@ -60,6 +60,7 @@ function Module.Start()
 	--[[ Connections ]]
 
 	I.OnLoaded(I.Priority.Replicator, Module._connectReplicator)
+	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refresh)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization
@@ -93,17 +94,18 @@ end
 
 --[[
 	Shows the step that waits: the hint and an arrow over the tutorial crate, then over the loadout; nothing once the
-	tutorial is done.
+	tutorial is done, or while the player is in a match (the Studio map plays both on one server).
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
 
+	local inLobby: boolean = not I.S.Players.LocalPlayer:GetAttribute("InMatch")
 	local hint: string? = nil
 	target = nil
-	if moduleRep and moduleRep:GetAttribute("CrateReady") then
+	if inLobby and moduleRep and moduleRep:GetAttribute("CrateReady") then
 		hint = "Crate"
 		target = elems["TutorialCrate"]
-	elseif moduleRep and moduleRep:GetAttribute("EquipReady") then
+	elseif inLobby and moduleRep and moduleRep:GetAttribute("EquipReady") then
 		hint = "Equip"
 		target = elems["Slots"]
 	end

@@ -26,6 +26,9 @@ local random: Random = Random.new()
 -- Each participant's landing spot along X, by id
 local drops = {} --- @type { [string]: number }
 
+-- Whether the Studio map's lobby handed over a match that hasn't finished
+local hosted: boolean = false
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -64,41 +67,56 @@ end
 
 --[[
 	Runs the match: waits for its players, plays it to the end, then plays it again with whoever voted for a rematch
-	while the rest go back to the lobby. The server empties when nobody votes.
+	while the rest go back to the lobby. A match server empties when nobody votes; the Studio map clears the arena and
+	waits for its lobby's next match.
 ]]
 function Module._mainLoop()
-	--[[ Waiting ]]
+	repeat
+		--[[ Waiting ]]
 
-	--- @type Match_Metadata
-	local metadata = Roster.GetMetadata()
-	matchFolder:SetAttribute("Kind", metadata.Kind)
-	matchFolder:SetAttribute("Mode", metadata.Mode)
-	matchFolder:SetAttribute("MapId", metadata.MapId)
-	Module.SetPhase("Waiting")
-	Roster.WaitForPlayers(matchFolder)
-
-	--[[ Playing ]]
-
-	while true do
-		Module.Play()
-
-		-- The tutorial match always goes back to the lobby, after the results
-		local voters = Rematch.Run() --- @type { Player }
-		if metadata.Kind == "Tutorial" then
-			voters = {}
+		-- The Studio map's lobby hands over each match
+		while Connection.IsStudioMap() and not hosted do
+			task.wait(0.2)
 		end
-		local leaving = {} --- @type { Player }
-		for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
-			if not table.find(voters, player) then
-				table.insert(leaving, player)
+
+		--- @type Match_Metadata
+		local metadata = Roster.GetMetadata()
+		matchFolder:SetAttribute("Kind", metadata.Kind)
+		matchFolder:SetAttribute("Mode", metadata.Mode)
+		matchFolder:SetAttribute("MapId", metadata.MapId)
+		Module.SetPhase("Waiting")
+		Roster.WaitForPlayers(matchFolder)
+
+		--[[ Playing ]]
+
+		while true do
+			Module.Play()
+
+			-- The tutorial match always goes back to the lobby, after the results
+			local voters = Rematch.Run() --- @type { Player }
+			if metadata.Kind == "Tutorial" then
+				voters = {}
 			end
+			local leaving = {} --- @type { Player }
+			for _index: number, player: Player in ipairs(Connection.GetPlayersInMatch()) do
+				if not table.find(voters, player) then
+					table.insert(leaving, player)
+				end
+			end
+			Connection.SendToLobby(leaving)
+			if #voters == 0 then
+				break
+			end
+			Roster.SetRematch(voters)
 		end
-		Connection.SendToLobby(leaving)
-		if #voters == 0 then
-			break
-		end
-		Roster.SetRematch(voters)
-	end
+
+		--[[ Clearing ]]
+
+		I.Worms.Clear()
+		Roster.Clear()
+		Module.SetPhase("Waiting")
+		hosted = false
+	until not Connection.IsStudioMap()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -138,6 +156,11 @@ function Module.Play()
 	Module._drop()
 	Module._land()
 	while not Placement.IsOver() do
+		-- The Studio map drops a match every player left, so its lobby can start another
+		if Connection.IsStudioMap() and #Connection.GetPlayersInMatch() == 0 then
+			Module.SetPhase("Ended")
+			return
+		end
 		Turns.RunTurn()
 	end
 
@@ -150,6 +173,35 @@ function Module.Play()
 	end
 	Module.SetPhase("Ended")
 	I.Topic.Publish("Match_Ended", placements, Stats.Get(), metadata)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Host
+
+--[[
+	**SERVER** |
+	Plays a match the Studio map's lobby hands over, on this server: its players leave the lobby's screens for the
+	match's. Refused anywhere but the Studio map, and while another match plays. Returns whether it started.
+]]
+--- @param players { Player }
+--- @param metadata Match_Metadata
+--- @return boolean
+function Module.Host(players, metadata)
+	--[[ Checks ]]
+
+	-- Check if this server can take a match now
+	if not Connection.IsStudioMap() or hosted then
+		return false
+	end
+
+	--[[ Hosting ]]
+
+	Roster.SetMetadata(metadata)
+	Connection.Bring(players)
+	hosted = true
+
+	--[[ Returning ]]
+
+	return true
 end
 
 --%%%%%%%%%%%%%%%%%%%% Set Phase

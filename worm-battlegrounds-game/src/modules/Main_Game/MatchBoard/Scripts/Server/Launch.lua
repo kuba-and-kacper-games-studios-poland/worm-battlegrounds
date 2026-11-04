@@ -45,8 +45,9 @@ end
 --[[
 	**SERVER** |
 	Sends players to a new match server: puts them on teams (each party on one team, then the solo players), builds the
-	match's metadata and teleports them together. Studio can't teleport: it prints the metadata instead. Players who
-	couldn't go are told so. Returns whether the teleport started.
+	match's metadata and teleports them together. The Studio map plays the match on this server instead; the Lobby
+	map alone in Studio, which can't teleport, prints the metadata. Players who couldn't go are told so. Returns
+	whether the match started.
 ]]
 --- @param players { Player }
 --- @return boolean
@@ -95,11 +96,21 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 		Roster = roster,
 	}
 
+	--[[ Studio Map ]]
+
+	if I.Config.PlaceLoader.MapId == _settings.STUDIO_MAP then
+		if I.Match.Host(players, metadata) then
+			return true
+		end
+		Module._tell(players, "A Studio match is still running: wait for it to end.")
+		return false
+	end
+
 	--[[ Studio ]]
 
 	if I.S.RunService:IsStudio() then
 		print(`[{_localName}::{script.Name}]: Studio can't teleport - the match would be:`, metadata)
-		Module._tell(players, "Matches start in a published place (Studio printed the match).")
+		Module._tell(players, "Matches start in a published place or on the Studio map (Studio printed the match).")
 		return false
 	end
 

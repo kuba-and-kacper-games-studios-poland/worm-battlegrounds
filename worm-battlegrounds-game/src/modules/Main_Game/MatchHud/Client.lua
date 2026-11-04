@@ -24,6 +24,12 @@ local TouchControls = require(_scripts:FindFirstChild("Client"):FindFirstChild("
 local Results = require(_scripts:FindFirstChild("Client"):FindFirstChild("Results")) --- @type MatchHud_Client_Results
 local TopBar = require(_scripts:FindFirstChild("Client"):FindFirstChild("TopBar")) --- @type MatchHud_Client_TopBar
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
+
+--[[ General ]]
+
+local moduleGui: ScreenGui
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -46,17 +52,32 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
-	local gui: ScreenGui = I.UserInterface.UI[_settings.GUI_NAME]
-	gui.Enabled = true
+	moduleGui = I.UserInterface.UI[_settings.GUI_NAME]
+	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshShown)
+	Module._refreshShown()
 
-	Turn.Start(gui)
-	Panels.Start(gui)
-	LoadoutBar.Start(gui)
-	Aim.Start(gui)
-	KillFeed.Start(gui)
-	TouchControls.Start(gui)
+	Turn.Start(moduleGui)
+	Panels.Start(moduleGui)
+	LoadoutBar.Start(moduleGui)
+	Aim.Start(moduleGui)
+	KillFeed.Start(moduleGui)
+	TouchControls.Start(moduleGui)
 	Results.Start()
 	TopBar.Start()
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Refresh Shown
+
+--[[
+	Shows the HUD while the player is in the match: always on a match server, and on the Studio map once its lobby
+	starts one.
+]]
+function Module._refreshShown()
+	--[[ Applying ]]
+
+	moduleGui.Enabled = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

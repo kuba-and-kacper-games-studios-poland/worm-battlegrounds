@@ -1,16 +1,21 @@
 # Match
 
-The match's rules on a match server. It reads the match's metadata (sent by MatchBoard with the teleport; in Studio,
-`STUDIO_METADATA`), waits for the players, seats them and fills the rest with bots, then plays: the drop (each player
+The match's rules on a match server. It reads the match's metadata (sent by MatchBoard with the teleport; on the
+Studio map, handed over through `I.Match.Host`; on the Match map alone in Studio, `STUDIO_METADATA`), waits for the players, seats them and fills the rest with bots, then plays: the drop (each player
 picks where their worm lands), the landing, then turns (`TURN_SECONDS` each, with wind) until one team is left, with
 sudden death from `SUDDEN_DEATH_ROUND`. Then it ends the match (MatchRewards pays and shows Results), runs the rematch
 vote and sends everyone who didn't vote to the lobby. A player who drops out keeps their seat for `REJOIN_SECONDS`
 and can come back from the lobby; a player who leaves is knocked out.
 
+**The Studio map** (`STUDIO_MAP`) runs the lobby and the match on one server, since Studio can't teleport. The match
+waits for the lobby to call `Host`, plays with the players it names, then sends them back to the lobby's screens
+(the `InMatch` Player attribute) instead of teleporting, clears the worms and waits for the next one. A match every
+player left stops at the next turn. One match plays at a time.
+
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Match` |
-| Runs on | Server, Client · Match map |
+| Runs on | Server, Client · Match map, Studio map |
 | Exposes | `I.Match` (server, client) |
 | Uses | `I.Worms`, `I.Combat`, `I.Bots`, `I.Arena`, `I.Loadout`, `I.Cosmetics`, `I.Team`, `I.Player`, `I.Config.Metadata`, `I.TeleportExternal` |
 | Saves | `Profile.Match` (writes `Rejoin` when a player drops) |
@@ -25,7 +30,7 @@ and can come back from the lobby; a player who leaves is knocked out.
 | `Scripts/Server/Turns.lua` | Turn order, the timer, wind, rounds, sudden death |
 | `Scripts/Server/Placement.lua` | Knockout order and the final places |
 | `Scripts/Server/Stats.lua` | Damage, knockouts, rounds and best shot per participant |
-| `Scripts/Server/Connection.lua` | Leaving, dropping out, rejoining, sending players to the lobby |
+| `Scripts/Server/Connection.lua` | Leaving, dropping out, rejoining, sending players to the lobby, the `InMatch` attribute |
 | `Scripts/Server/Rematch.lua` | The rematch vote |
 | `Client.lua` | Match state for other client modules |
 | `Scripts/Client/DropPicker.lua` | Picking the drop point |
@@ -38,6 +43,11 @@ and can come back from the lobby; a player who leaves is knocked out.
 
 | Function | Returns | What it does |
 | --- | --- | --- |
+| `Play()` | | Plays one match on this server (the main loop calls it) |
+| `Host(players, metadata)` | `boolean` | Studio map only: plays a match the lobby hands over, with these players. `false` while another plays |
+| `GetParticipant(participantId)`, `GetParticipantOf(player)` | `Match_Participant?` | A participant by id, or a player's |
+| `GetParticipants()` | `{ Match_Participant }` | Everyone in the match, in roster order |
+| `GetMetadata()` | `Match_Metadata` | The match this server plays |
 | `GetActive()` | `string?` | The active participant's id |
 | `GetPhase()` | `string` | `Waiting`, `Drop`, `Landing`, `Turn`, `Flight`, `Settle` or `Ended` |
 | `GetWind()` | `number` | The wind, −`WIND_MAX` to `WIND_MAX` |
@@ -87,6 +97,7 @@ and can come back from the lobby; a player who leaves is knocked out.
 | Profile | `Match.Rejoin` | `{ PlaceId, AccessCode, Until }` written when a player drops (the lobby reads it) |
 | `ReplicatedStorage.Ume.Match` | `Kind`, `Mode`, `MapId`, `Phase`, `ActiveId`, `TurnEndsAt`, `Wind`, `Round`, `SuddenDeath`, `Arrived`, `Expected`, `DropMinX`, `DropMaxX`, `DropY`, `DropEndsAt`, `RematchVotes`, `RematchEndsAt` | The match's state for every client |
 | `…Match.Participants.<id>` | `DisplayName`, `UserId`, `Team`, `Color`, `IsBot`, `Connected`, `Out` | One `Configuration` per participant |
+| `Player` attribute | `InMatch` | `true` while the player is in the match: everyone on a match server, those `Host` brought on the Studio map. Lobby and match screens follow it |
 
 ## Settings
 
@@ -99,7 +110,8 @@ and can come back from the lobby; a player who leaves is knocked out.
 | `SUDDEN_DEATH_ROUND`, `SUDDEN_DEATH_RISE` | `10`, `4` | When the water starts rising, and by how much a round |
 | `REJOIN_SECONDS`, `REMATCH_SECONDS` | `60`, `20` | How long a dropped seat waits; the rematch vote |
 | `TEAM_SIZES`, `TEAMS`, `FFA_COLORS` | | Teams by mode, team names and colours, deathmatch colours |
-| `STUDIO_METADATA`, `STUDIO_WAIT`, `STUDIO_LOADOUT` | | Studio's stand-in match, wait and loadout |
+| `STUDIO_MAP` | `"Studio"` | The map that runs the lobby and its matches on one server |
+| `STUDIO_METADATA`, `STUDIO_WAIT`, `STUDIO_LOADOUT` | | The Match map alone in Studio: its stand-in match and wait; the loadout of a Studio player with an empty one |
 
 ## In the place
 

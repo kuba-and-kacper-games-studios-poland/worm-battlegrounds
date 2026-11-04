@@ -16,6 +16,9 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --- @type Match_Metadata
 local metadata = nil
 
+-- Whether a lobby sent the roster (with the teleport, or through I.Match.Host on the Studio map)
+local fromLobby: boolean = false
+
 -- Every participant by id, and their ids in the order they joined the roster
 local participants = {} --- @type { [string]: Match_Participant }
 local order = {} --- @type { string }
@@ -55,8 +58,9 @@ function Module.Init(matchFolder: Folder)
 
 	--[[ Saving ]]
 
-	-- Match servers get their match from the lobby's teleport; Studio has none, so it plays STUDIO_METADATA
+	-- Match servers get their match from the lobby's teleport; the Match map alone in Studio plays STUDIO_METADATA
 	metadata = I.Config.Metadata or _settings.STUDIO_METADATA
+	fromLobby = I.Config.Metadata ~= nil
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -64,14 +68,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Wait For Players
 
 --[[
-	Waits until every player in the roster is in the server, or WAIT_FOR_PLAYERS seconds pass. In Studio, where
-	every test player plays, it waits STUDIO_WAIT seconds after the first one arrives. Writes the counts the waiting
-	overlay shows.
+	Waits until every player in the roster is in the server, or WAIT_FOR_PLAYERS seconds pass. On the Match map
+	alone in Studio, where every test player plays, it waits STUDIO_WAIT seconds after the first one arrives. Writes
+	the counts the waiting overlay shows.
 ]]
 function Module.WaitForPlayers(matchFolder: Folder)
 	--[[ Studio ]]
 
-	if not I.Config.Metadata then
+	if not fromLobby then
 		while #I.S.Players:GetPlayers() == 0 do
 			task.wait(0.2)
 		end
@@ -102,10 +106,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Build
 
 --[[
-	Makes the match's participants: the roster's players who arrived (every player in Studio), on the teams the lobby
-	gave them or the first with room, then bots for every empty place up to the match's size (a custom match drops its
-	missing players instead). Gives everyone a colour, makes the Roblox teams in team modes, and writes each
-	participant into Workspace.Ume.Match.Participants.
+	Makes the match's participants: the roster's players who arrived (every player on the Match map alone in Studio),
+	on the teams the lobby gave them or the first with room, then bots for every empty place up to the match's size
+	(a custom match drops its missing players instead). Gives everyone a colour, makes the Roblox teams in team modes,
+	and writes each participant into Workspace.Ume.Match.Participants.
 ]]
 function Module.Build()
 	--[[ Clearing ]]
@@ -118,12 +122,12 @@ function Module.Build()
 	local teamCount: number = math.max(math.floor(metadata.Size / teamSize), 1)
 	local filled = table.create(teamCount, 0) --- @type { number }
 
-	-- The players to seat, in roster order (Studio: everyone present)
+	-- The players to seat, in roster order (the Match map alone in Studio: everyone present)
 	local players = {} --- @type { Player }
 	local wanted = {} --- @type { [number]: number? }
 	if rematchPlayers then
 		players = rematchPlayers
-	elseif I.Config.Metadata then
+	elseif fromLobby then
 		--- @param entry Match_RosterEntry
 		for _index: number, entry in ipairs(metadata.Roster) do
 			local player: Player? = I.S.Players:GetPlayerByUserId(entry.UserId)
@@ -230,6 +234,20 @@ function Module.SetRematch(players)
 	--[[ Saving ]]
 
 	rematchPlayers = players
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Metadata
+
+--[[
+	Plays a match the lobby handed to this server (the Studio map): its roster seats, and no rematch players yet.
+]]
+--- @param newMetadata Match_Metadata
+function Module.SetMetadata(newMetadata)
+	--[[ Saving ]]
+
+	metadata = newMetadata
+	fromLobby = true
+	rematchPlayers = nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Set Info

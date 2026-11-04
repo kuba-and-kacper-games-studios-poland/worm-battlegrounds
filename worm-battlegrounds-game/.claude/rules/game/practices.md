@@ -59,7 +59,11 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 
 - **Two maps in one place:** `Lobby` and `Match` (`core/.../configs/place_loader.lua`). Each loads the `Default`
   folders (shared by both) plus its own, and its module list leaves out the other map's modules (`MATCH_ONLY`,
-  `LOBBY_ONLY`). In Studio the Workspace attribute `Ume_StudioMapId` picks the map a test loads.
+  `LOBBY_ONLY`).
+- **Studio plays the `Studio` map:** both maps' folders and modules on one server, since Studio can't teleport. The
+  lobby hands each match to `I.Match.Host`, and the `InMatch` Player attribute says which half a player is in: every
+  screen, camera and hint that belongs to one half follows it instead of assuming its map. A Workspace attribute
+  `Ume_StudioMapId` (`Lobby` or `Match`) tests one map alone.
 - **Placeholders until the owner provides the real thing:** developer products and game passes keep `Id = 0`; weapon
   projectiles, effects and skins other than Classic are made in code or fall back to the Classic worm. Each such spot
   has a `shortcut:` comment or a README line saying it's a placeholder. Never create products, passes or models on

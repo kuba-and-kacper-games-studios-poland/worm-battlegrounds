@@ -94,6 +94,8 @@ function Module._tick()
 
 	local phase: string = I.Match.GetPhase()
 	local myTurn: boolean = phase == "Turn" and I.Match.IsMyTurn()
+	local myShot: boolean = phase == "Flight" and I.Match.IsMyTurn()
+	local inMatch: boolean = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
 	local worm: Instance? = wormsFolder:FindFirstChild(I.Match.GetMyParticipantId())
 	local root: Instance? = worm and worm:FindFirstChild("Root")
 
@@ -104,19 +106,19 @@ function Module._tick()
 	elseif step == "Jump" and root and root:IsA("BasePart") and root.AssemblyLinearVelocity.Y > _settings.JUMP_SPEED then
 		step = "Fire"
 	end
-	if (step == "Walk" or step == "Jump" or step == "Fire") and phase == "Flight" then
+	if (step == "Walk" or step == "Jump" or step == "Fire") and myShot then
 		step = "BotTurn"
 	elseif step == "BotTurn" and phase == "Turn" and not myTurn then
 		sawBotTurn = true
 	elseif step == "BotTurn" and sawBotTurn and myTurn then
 		step = "Finish"
-	elseif step == "Finish" and phase == "Flight" then
+	elseif step == "Finish" and myShot then
 		step = "Done"
 	end
 
 	--[[ Applying ]]
 
-	moduleGui.Enabled = if step == "BotTurn" then phase == "Turn" and not myTurn else myTurn and step ~= "Done"
+	moduleGui.Enabled = inMatch and (if step == "BotTurn" then phase == "Turn" and not myTurn else myTurn and step ~= "Done")
 	elems["Text"].Text = _settings.HINTS[step] or ""
 
 	--[[ Finishing ]]

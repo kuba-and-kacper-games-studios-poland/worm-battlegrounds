@@ -7,6 +7,9 @@ local _settings = {
 	MATCH_PLACE_ID = game.PlaceId,
 	TELEPORT_GUI = "TeleportGui",
 
+	-- The map that plays the lobby and its matches in one Studio server: matches start there instead of teleporting
+	STUDIO_MAP = "Studio",
+
 	--%%%%%%%%%%%%%%%%%%%% Public Rows
 
 	-- A row starts this many seconds after its first player joins, or once VOTE_FRACTION of its players voted

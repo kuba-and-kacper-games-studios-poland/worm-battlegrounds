@@ -95,6 +95,7 @@ function Module.Init()
 		--[[ Control ]]
 
 		Play = Phases.Play,
+		Host = Phases.Host,
 
 		--[[ Methods ]]
 

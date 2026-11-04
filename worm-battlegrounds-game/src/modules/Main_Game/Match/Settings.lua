@@ -77,8 +77,14 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Studio
 
 	--[[
-		The match a Studio test plays (Studio has no lobby to send metadata): every test player joins its roster, and
-		bots fill the rest. STUDIO_WAIT is how long the server waits for test players to join before it starts.
+		The map that plays the lobby and its matches in one Studio server: the lobby hands its matches to I.Match.Host
+		instead of teleporting, and players go back to the lobby screens afterwards
+	]]
+	STUDIO_MAP = "Studio",
+
+	--[[
+		The match a Studio test of the Match map alone plays (it has no lobby to send metadata): every test player joins
+		its roster, and bots fill the rest. STUDIO_WAIT is how long the server waits for test players to join first.
 	]]
 	--- @type Match_Metadata
 	STUDIO_METADATA = {

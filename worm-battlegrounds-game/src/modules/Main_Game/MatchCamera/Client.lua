@@ -119,9 +119,21 @@ end
 
 --[[
 	Points the camera along -Z at what it follows (the active worm, else the local player's worm, else the arena's
-	middle), plus the player's pan, kept inside the arena's bounds. Nothing changes until a map is loaded.
+	middle), plus the player's pan, kept inside the arena's bounds. Nothing changes until a map is loaded, or while
+	the player is in the Studio map's lobby, which gets Roblox's camera back.
 ]]
 function Module._update(deltaTime: number)
+	--[[ Checks ]]
+
+	-- Check if the player is in the match
+	if not I.S.Players.LocalPlayer:GetAttribute("InMatch") then
+		if focus then
+			focus = nil
+			I.S.Workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+		end
+		return
+	end
+
 	--[[ Data ]]
 
 	local markers: Instance? = arenaFolder:FindFirstChild("Markers")

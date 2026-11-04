@@ -31,13 +31,29 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
-	for _index: number, guiName: string in ipairs(_settings.LOBBY_GUIS) do
-		I.UserInterface.UI[guiName].Enabled = true
-	end
+	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshGuis)
+	Module._refreshGuis()
 	I.Network.Fired("Lobby_RejoinOffer", Module._onRejoinOffer)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Refresh Guis
+
+--[[
+	Shows the lobby's screens, except while the player is in a match (the Studio map plays both on one server).
+]]
+function Module._refreshGuis()
+	--[[ Local Variables ]]
+
+	local inLobby: boolean = not I.S.Players.LocalPlayer:GetAttribute("InMatch")
+
+	--[[ Applying ]]
+
+	for _index: number, guiName: string in ipairs(_settings.LOBBY_GUIS) do
+		I.UserInterface.UI[guiName].Enabled = inLobby
+	end
+end
 
 --%%%%%%%%%%%%%%%%%%%% On Rejoin Offer
 

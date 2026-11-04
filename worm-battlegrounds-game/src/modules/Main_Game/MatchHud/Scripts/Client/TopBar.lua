@@ -14,6 +14,9 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 -- The music volume to go back to when the player unmutes
 local musicBefore: number = 0
 
+-- The top bar buttons, shown only while the player is in the match (the Studio map's lobby shares the server)
+local buttons = {} --- @type { TopBar_Button }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -46,9 +49,29 @@ function Module.Start()
 	musicButton:SetLayoutOrder(3)
 	musicButton:SetText(_settings.MUSIC_TEXT)
 	musicButton:SetCallback(Module._toggleMusic)
+
+	--[[ Connections ]]
+
+	buttons = { leaveButton, musicButton }
+	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshShown)
+	Module._refreshShown()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Refresh Shown
+
+--[[
+	Shows the buttons while the player is in the match, and hides them in the Studio map's lobby.
+]]
+function Module._refreshShown()
+	--[[ Applying ]]
+
+	--- @param button TopBar_Button
+	for _index: number, button in ipairs(buttons) do
+		button.Instance.Visible = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
+	end
+end
 
 --%%%%%%%%%%%%%%%%%%%% Ask Leave
 

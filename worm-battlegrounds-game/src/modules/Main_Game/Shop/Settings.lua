@@ -44,7 +44,7 @@ local _settings = {
 	TOP_BAR_TEXT = "SHOP",
 
 	--- @type { string }
-	TOP_BAR_MAPS = { "Lobby" },
+	TOP_BAR_MAPS = { "Lobby", "Studio" },
 }
 
 return _settings

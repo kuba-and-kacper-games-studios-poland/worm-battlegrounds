@@ -4,12 +4,14 @@ The match screen and its input. It shows whose turn it is, the timer and the win
 loadout bar (the Bazooka and the player's items, with uses and cooldowns), touch walk and jump buttons, the waiting,
 drop and knocked-out blocks, and the Results screen. Aiming is a drag back from the worm with mouse or touch (the
 direction is the angle, the length the power), or the right stick and RT on a gamepad; letting go fires. Number keys 1
-to 6, LB and RB pick a slot. It adds **Leave** and **Music** to the top bar.
+to 6, LB and RB pick a slot. It adds **Leave** and **Music** to the top bar. The HUD and those buttons show while the
+player is in the match (the `InMatch` Player attribute); on the Studio map, going back to the lobby hides them and
+closes Results.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/MatchHud` |
-| Runs on | Client · Match map |
+| Runs on | Client · Match map, Studio map |
 | Uses | `I.Match`, `I.Worms`, `I.WormControl`, `I.G_Arsenal`, `I.G_Combat`, `I.Replicator`, `I.TopBar`, `I.PlayerSettings`, `I.WidgetManager`, `ContextActionService` |
 
 ## Files

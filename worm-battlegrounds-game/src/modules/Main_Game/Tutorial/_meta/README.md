@@ -4,13 +4,15 @@ The first-time flow. A new player's first join sends them to the tutorial match 
 against the tutorial bot, which aims beside them and falls to two Bazooka hits, with hints in order (walk, jump, aim
 and fire, the bot's turn, finish it). When it ends, the match server marks it done and gives 100 coins. Back in the
 lobby, a hint and an arrow point to the tutorial crate (the Grenade and the Shotgun), then to the loadout; once both
-weapons are in it, the tutorial is done and never shows again. In Studio, which can't teleport, the lobby skips the
-match and goes straight to the crate.
+weapons are in it, the tutorial is done and never shows again. The Studio map plays the whole flow on one server; the
+Lobby map alone in Studio, which can't start the match, skips it and goes straight to the crate. The hints move on
+only on the player's own shots (the bot may play first), and each set shows only where it belongs (the `InMatch`
+Player attribute).
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Tutorial` |
-| Runs on | Server, Client · both maps |
+| Runs on | Server, Client · every map |
 | Exposes | `I.Tutorial` (server) |
 | Uses | `I.Currency`, `I.Loadout`, `I.Match` (client), `I.Replicator`, `I.Topic` |
 | Saves | `Profile.Tutorial` |
@@ -20,7 +22,7 @@ match and goes straight to the crate.
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Saved progress, the match's end, the crate, the equip step |
-| `Client.lua` | Starts the match hints on the Match map, the lobby hints elsewhere |
+| `Client.lua` | Starts the match hints on the Match map, the lobby hints on the Lobby map, both on the Studio map |
 | `Scripts/Client/MatchHints.lua` | The hints during the tutorial match |
 | `Scripts/Client/LobbyHints.lua` | The crate and equip hints and the arrow in the lobby; reports the equip step |
 | `Settings.lua` | `Tutorial_Settings` |
@@ -61,7 +63,7 @@ It listens to `Match_Ended` (Match map) and `Crates_Opened` (Lobby map) when tho
 | `MATCH_COINS` | `"100"` | Coins the tutorial match gives, the tutorial crate's price |
 | `CRATE_ID` | `"Tutorial"` | The crate the lobby offers once |
 | `STARTER_WEAPONS` | `{ "Grenade", "Shotgun" }` | What the crate gives, and what the equip step checks |
-| `MATCH_MAP`, `MATCH_KIND` | `"Match"`, `"Tutorial"` | The map the match hints run on, and the match kind |
+| `MATCH_MAP`, `LOBBY_MAP`, `MATCH_KIND` | `"Match"`, `"Lobby"`, `"Tutorial"` | The maps that run only the match hints or only the lobby hints, and the match kind |
 | `HINTS` | Walk, Jump, Fire, BotTurn, Finish, Crate, Equip | What each hint says |
 | `JUMP_SPEED` | `6` | How fast a worm must rise to count as a jump, in studs per second |
 | `HINT_GUI_NAME`, `LOBBY_GUI_NAME`, `CRATES_GUI_NAME`, `LOADOUT_GUI_NAME` | | The hint bubble, and the guis the arrow points into |

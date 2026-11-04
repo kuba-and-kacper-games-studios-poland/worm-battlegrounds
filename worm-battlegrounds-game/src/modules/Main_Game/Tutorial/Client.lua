@@ -40,10 +40,11 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
-	-- The match hints run on the Match map, the pointers on the Lobby map
-	if I.Config.PlaceLoader.MapId == _settings.MATCH_MAP then
+	-- The match hints run on the Match map, the pointers on the Lobby map, and the Studio map runs both
+	if I.Config.PlaceLoader.MapId ~= _settings.LOBBY_MAP then
 		MatchHints.Start()
-	else
+	end
+	if I.Config.PlaceLoader.MapId ~= _settings.MATCH_MAP then
 		LobbyHints.Start()
 	end
 end

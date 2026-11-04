@@ -160,6 +160,11 @@ function Module._onMatchEnded(_placements: any, _stats: any, metadata)
 	--[[ Completing ]]
 
 	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
+		-- Skip players in the lobby (the Studio map plays both on one server)
+		if not player:GetAttribute("InMatch") then
+			continue
+		end
+
 		local success: boolean
 		local result: any | string?
 		success, result = pcall(function()

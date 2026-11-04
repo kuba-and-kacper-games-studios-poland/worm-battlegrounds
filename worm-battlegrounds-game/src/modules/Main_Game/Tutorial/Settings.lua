@@ -14,8 +14,9 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Match Hints
 
-	-- The map the tutorial match is played on, and the match kind it runs as
+	-- The maps the match hints and the lobby hints run on (the Studio map runs both), and the tutorial match's kind
 	MATCH_MAP = "Match",
+	LOBBY_MAP = "Lobby",
 	MATCH_KIND = "Tutorial",
 
 	-- What each hint says, in order: walk, jump, aim and fire, the bot's turn, then finishing it

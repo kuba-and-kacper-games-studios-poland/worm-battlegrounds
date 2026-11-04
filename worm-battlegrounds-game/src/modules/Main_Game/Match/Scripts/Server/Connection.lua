@@ -64,7 +64,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Send To Lobby
 
 --[[
-	Teleports players to a public lobby (Studio can't teleport: it only says so).
+	Teleports players to a public lobby. On the Studio map they go back to the lobby on this server; on the Match map
+	alone in Studio, which can't teleport, it only says so.
 ]]
 --- @param players { Player }
 function Module.SendToLobby(players)
@@ -75,7 +76,19 @@ function Module.SendToLobby(players)
 		return
 	end
 
-	-- Studio can't teleport
+	--[[ Studio Map ]]
+
+	if Module.IsStudioMap() then
+		for _index: number, player: Player in ipairs(players) do
+			player:SetAttribute("InMatch", false)
+			I.Team.Assign(player, nil)
+		end
+		return
+	end
+
+	--[[ Checks ]]
+
+	-- Check if Studio can teleport
 	if I.S.RunService:IsStudio() then
 		print(`[{_localName}::{script.Name}]: Studio - would send ({#players}) player(s) to the lobby.`)
 		return
@@ -84,6 +97,20 @@ function Module.SendToLobby(players)
 	--[[ Teleporting ]]
 
 	I.TeleportExternal(players, I.Config.PlaceLoader.DefaultPlaceId, "TeleportGui")
+end
+
+--%%%%%%%%%%%%%%%%%%%% Bring
+
+--[[
+	Brings players from the Studio map's lobby into its match, so they see the match's screens.
+]]
+--- @param players { Player }
+function Module.Bring(players)
+	--[[ Saving ]]
+
+	for _index: number, player: Player in ipairs(players) do
+		player:SetAttribute("InMatch", true)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Leave
@@ -156,6 +183,13 @@ function Module._onPlayerAdded(player: Player)
 		profile.Data["Match"]["Rejoin"] = false
 	end
 
+	--[[ Location ]]
+
+	-- Everyone on a match server is in the match; the Studio map brings players in when its lobby starts one
+	if not Module.IsStudioMap() then
+		player:SetAttribute("InMatch", true)
+	end
+
 	--[[ Strangers ]]
 
 	-- A match server only takes the players its lobby sent
@@ -215,6 +249,38 @@ function Module._knockOutLeaver(participant)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Players In Match
+
+--[[
+	Returns the players in the match (the InMatch Player attribute): everyone on a match server, and on the Studio map
+	those its lobby brought in.
+]]
+--- @return { Player }
+function Module.GetPlayersInMatch()
+	--[[ Searching ]]
+
+	local players = {} --- @type { Player }
+	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
+		if player:GetAttribute("InMatch") then
+			table.insert(players, player)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return players
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Studio Map
+
+--[[
+	Returns whether this server is the Studio map, which plays the lobby and its matches together.
+]]
+--- @return boolean
+function Module.IsStudioMap()
+	return I.Config.PlaceLoader.MapId == _settings.STUDIO_MAP
+end
 
 --%%%%%%%%%%%%%%%%%%%% Is In Roster
 

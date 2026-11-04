@@ -118,6 +118,21 @@ with the `Ume_StudioMapId` Workspace attribute.
 
 **Rule.** `game/practices.md` → Maps and placeholders.
 
+### Studio plays the lobby and the match together (2026-11-04)
+
+**Before.** A Studio test loaded one map: the lobby printed the match it would have started, and the Match map played
+a stand-in match. The tutorial match, rows, parties and the way back to the lobby could only be tried after
+publishing.
+
+**Why it changed.** The owner wanted to play the whole game in Studio: the lobby, then a bot match, then back.
+
+**Now.** A third map, `Studio`, loads both maps' folders and modules. MatchBoard's launch calls `I.Match.Host`
+instead of teleporting, the match sends its players back with the `InMatch` Player attribute, and the lobby's
+panels, the HUD, the camera, Results, the top bar buttons and the tutorial hints follow that attribute. Studio boots
+it unless `Ume_StudioMapId` names another map.
+
+**Rule.** `game/practices.md` → Maps and placeholders.
+
 ### Placeholders, not purchases (2026-11-03)
 
 **Before.** The plan named products, passes, weapon models and particle effects that don't exist yet.
