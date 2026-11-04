@@ -1,6 +1,50 @@
 --[[
 	Place Loader Configuration.
 ]]
+
+--[[ Disabled Modules ]]
+
+-- Off on every map: the template's modules the game doesn't use
+local ALWAYS_OFF = {
+	"2_BackpackPlus",
+	"Limited",
+	"CharacterAnimation",
+	"AFKTeleport",
+	"Fall_Controller",
+	"WalkSpeed_Controller",
+	"GlobalLeaderboard_Controller",
+	"CountryCode",
+	"Friends_Controller",
+	"Group_Controller",
+	"Premium_Controller",
+	"Tool",
+} --- @type { string }
+
+-- Off on the Lobby map
+local MATCH_ONLY = { "Arena", "Worms", "WormControl", "Combat", "Match", "Bots", "MatchCamera", "MatchHud", "MatchRewards" } --- @type { string }
+
+-- Off on the Match map
+local LOBBY_ONLY = { "Lobby", "MatchBoard", "Party", "Crates" } --- @type { string }
+
+--%%%%%%%%%%%%%%%%%%%% Concat
+
+--[[
+	Returns the lists' names in one list.
+]]
+--- @param first { string }
+--- @param second { string }
+--- @return { string }
+local function concat(first, second)
+	--[[ Local Variables ]]
+
+	local names = table.clone(first) --- @type { string }
+
+	--[[ Returning ]]
+
+	table.move(second, 1, #second, #names + 1, names)
+	return names
+end
+
 --- @class Ume_Config_PlaceLoader
 local _config = {
 
@@ -40,11 +84,12 @@ local _config = {
 	--- @type { [number]: Ume_PlaceLoader_PlaceSettings }
 	PlaceConfigs = {
 		[game.PlaceId] = {
-			DefaultMapId = "Default",
+			-- In Studio, the Workspace attribute Ume_StudioMapId ("Match") boots a match to test without teleports
+			DefaultMapId = (game:GetService("RunService"):IsStudio() and workspace:GetAttribute("Ume_StudioMapId")) or "Lobby",
 			LobbyId = "UmeLobby",
 
 			MapConfigs = {
-				["Default"] = {
+				["Lobby"] = {
 					-- Data
 					ProfileStoreName = "UmeTesting_-1",
 					LeaderboardStoreName = "UmeTesting_-1",
@@ -54,16 +99,16 @@ local _config = {
 
 					-- Directories
 					GameDirs = {
-						Workspace_Ume = { "Default" },
-						ReplicatedStorage_Ume = { "Default" },
-						ServerStorage_Ume = { "Default" },
+						Workspace_Ume = { "Default", "Lobby" },
+						ReplicatedStorage_Ume = { "Default", "Lobby" },
+						ServerStorage_Ume = { "Default", "Lobby" },
 
-						StarterGui = { "Default" },
-						StarterPack = { "Default" },
-						StarterPlayer = { "Default" },
+						StarterGui = { "Default", "Lobby" },
+						StarterPack = { "Default", "Lobby" },
+						StarterPlayer = { "Default", "Lobby" },
 
-						Assets = { "Default" },
-						SAssets = { "Default" },
+						Assets = { "Default", "Shared", "Lobby" },
+						SAssets = { "Default", "Lobby" },
 					},
 
 					-- Modules
@@ -79,7 +124,48 @@ local _config = {
 						"Main_Game",
 						"Main_Controllers",
 					},
-					DisabledModules = {},
+					DisabledModules = concat(ALWAYS_OFF, MATCH_ONLY),
+					LoadingOrder = {},
+
+					-- Other
+					ReturnPlaceId = nil,
+				},
+				["Match"] = {
+					-- Data
+					ProfileStoreName = "UmeTesting_-1",
+					LeaderboardStoreName = "UmeTesting_-1",
+
+					-- Accessibility
+					VRSupport = false,
+
+					-- Directories
+					GameDirs = {
+						Workspace_Ume = { "Default", "Match" },
+						ReplicatedStorage_Ume = { "Default", "Match" },
+						ServerStorage_Ume = { "Default", "Match" },
+
+						StarterGui = { "Default", "Match" },
+						StarterPack = { "Default", "Match" },
+						StarterPlayer = { "Default", "Match" },
+
+						Assets = { "Default", "Shared", "Match" },
+						SAssets = { "Default", "Match" },
+					},
+
+					-- Modules
+					ModulesDirs = {
+						-- Ume
+						"Ume",
+						"Ume_Data",
+						"Roblox",
+
+						-- Game
+						"Utils",
+						"Main",
+						"Main_Game",
+						"Main_Controllers",
+					},
+					DisabledModules = concat(ALWAYS_OFF, LOBBY_ONLY),
 					LoadingOrder = {},
 
 					-- Other

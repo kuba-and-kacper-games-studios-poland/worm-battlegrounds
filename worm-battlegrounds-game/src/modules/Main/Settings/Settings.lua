@@ -17,6 +17,17 @@ local _settings = {
 
 			Colors = { Color3.fromRGB(230, 205, 255), Color3.fromRGB(150, 110, 255) },
 		},
+		Gameplay = {
+
+			--[[ General ]]
+
+			Text = "Gameplay",
+			LayoutOrder = 2,
+
+			--[[ Looks ]]
+
+			Colors = { Color3.fromRGB(200, 240, 244), Color3.fromRGB(52, 140, 156) },
+		},
 	},
 
 	--[[
@@ -77,6 +88,32 @@ local _settings = {
 			--[[ Sound ]]
 
 			SoundGroups = { "SFX", "UI" },
+		},
+		DamageNumbers = {
+
+			--[[ General ]]
+
+			Section = "Gameplay",
+			Text = "Damage Numbers",
+			Detail = "Numbers that pop up when a worm is hit",
+			LayoutOrder = 1,
+
+			--[[ Value ]]
+
+			Default = true,
+		},
+		CameraFollowsShot = {
+
+			--[[ General ]]
+
+			Section = "Gameplay",
+			Text = "Camera Follows the Shot",
+			Detail = "",
+			LayoutOrder = 2,
+
+			--[[ Value ]]
+
+			Default = true,
 		},
 	},
 

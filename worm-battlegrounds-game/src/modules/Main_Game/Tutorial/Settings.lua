@@ -1,0 +1,44 @@
+--- @class Tutorial_Settings
+local _settings = {
+
+	--%%%%%%%%%%%%%%%%%%%% Rewards
+
+	-- The coins a player brings back from the tutorial match, the price of the tutorial crate
+	MATCH_COINS = "100",
+
+	-- The crate the lobby offers once, and the weapons it gives, which the player then equips
+	CRATE_ID = "Tutorial",
+
+	--- @type { string }
+	STARTER_WEAPONS = { "Grenade", "Shotgun" },
+
+	--%%%%%%%%%%%%%%%%%%%% Match Hints
+
+	-- The map the tutorial match is played on, and the match kind it runs as
+	MATCH_MAP = "Match",
+	MATCH_KIND = "Tutorial",
+
+	-- What each hint says, in order: walk, jump, aim and fire, the bot's turn, then finishing it
+	--- @type { [string]: string }
+	HINTS = {
+		Walk = "Walk with A and D, or the arrow keys",
+		Jump = "Jump with Space",
+		Fire = "Drag back from your worm to aim, then let go to fire",
+		BotTurn = "The bot's turn. Watch out!",
+		Finish = "Two hits knock it out. Finish it!",
+		Crate = "Open your free crate!",
+		Equip = "Put the Grenade and the Shotgun in your loadout",
+	},
+
+	-- How fast a worm must rise, in studs per second, to count as a jump
+	JUMP_SPEED = 6,
+
+	--%%%%%%%%%%%%%%%%%%%% Gui
+
+	HINT_GUI_NAME = "TutorialHint",
+	LOBBY_GUI_NAME = "Lobby",
+	CRATES_GUI_NAME = "Crates",
+	LOADOUT_GUI_NAME = "Loadout",
+}
+
+return _settings

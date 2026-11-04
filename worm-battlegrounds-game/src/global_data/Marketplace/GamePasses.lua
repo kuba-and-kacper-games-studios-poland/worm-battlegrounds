@@ -20,5 +20,44 @@ local data = {
             CharacterReward = function(player: Player) end,
         },
     ]]
+
+	-- Placeholder Id until the owner creates the pass on the Creator Hub
+	["Slot4"] = {
+		Id = 0,
+		Version = 1,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		RewardPlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+	},
+
+	-- Placeholder Id until the owner creates the pass on the Creator Hub
+	["Slot5"] = {
+		Id = 0,
+		Version = 1,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		RewardPlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+	},
+
+	-- Placeholder Id until the owner creates the pass on the Creator Hub
+	["DoubleCoins"] = {
+		Id = 0,
+		Version = 1,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		RewardPlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+	},
+
+	-- Placeholder Id until the owner creates the pass on the Creator Hub
+	["VIP"] = {
+		Id = 0,
+		Version = 1,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		RewardPlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		SingleReward = function(player: Player)
+			I.Inventory.AddItem(player, "Skin_Vip")
+		end,
+	},
 }
 return data

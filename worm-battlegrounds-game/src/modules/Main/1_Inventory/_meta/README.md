@@ -18,7 +18,7 @@ Saved player items. **Standard** items are counted by id (`Coins: "120"`); **uni
 | `Client.lua` | The local copy of the inventory (`I.Inventory.Items`), client Topics |
 | `Global.lua` | Loads every item in `Data/Items` and caches items and categories |
 | `Settings.lua` | Categories and limits |
-| `Data/Items/*.lua` | One item per file (`Inventory_ItemData`); `Example.lua` is the template |
+| `Data/Items/<Category>/*.lua` | One item per file (`Inventory_ItemData`): the game's weapons, utilities, skins and emotes |
 | `Scripts/Server/Add.lua` | Adding standard items, adding and creating unique items |
 | `Scripts/Server/Remove.lua` | Removing items, and the checked versions clients call |
 | `Scripts/Server/Get.lua` | Reading quantities, unique items, the whole inventory |
@@ -154,7 +154,7 @@ The client can't silence Topics: a client's `sendUpdate` argument is accepted by
 
 | Key | Default | What |
 | --- | --- | --- |
-| `CATEGORIES` | `General`, `Other` | Valid categories; an unknown one becomes `Other` |
+| `CATEGORIES` | `Weapon`, `Utility`, `Skin`, `Emote`, `Other` | Valid categories; an unknown one becomes `Other` |
 | `MAX_USE_QUANTITY` | `100` | Most of one item used at once |
 | `MAX_UNIQUE_ITEMS` | `5000` | Most unique items a player holds |
 | `RECOUNT_MARGIN` | `20` | Recount unique items when fewer free slots than this remain |

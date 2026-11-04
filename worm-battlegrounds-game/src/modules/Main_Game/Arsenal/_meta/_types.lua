@@ -1,0 +1,94 @@
+--%%%%%%%%%%%%%%%%%%%% Weapons
+
+--- @class Arsenal_WeaponData
+---
+--- # General #
+---
+--- @field Name string
+--- @field Icon string
+---
+--- # Behavior #
+---
+--- @field Kind "Rocket" | "Bouncer" | "Crawler" | "Homing" | "Roller" | "Hitscan" | "Melee"
+--- @field Aim "Arc" | "Straight" | "Melee" | "Target" | "Feet"
+--- @field Wind boolean
+---
+--- # Damage #
+---
+--- @field DamageMax number
+--- @field DamageEdge number
+--- @field BlastRadius number
+--- @field Knockback "Small" | "Medium" | "High" | "VeryHigh" | "Extreme"
+---
+--- # Limits #
+---
+--- @field Uses number
+--- @field Cooldown number
+---
+--- # Launch #
+---
+--- @field MinSpeed number?
+--- @field MaxSpeed number?
+---
+--- # Extras #
+---
+--- @field Fuse number?
+--- @field Elasticity number?
+--- @field BurstOnContact boolean?
+--- @field Bomblets Arsenal_Bomblets?
+--- @field Snails Arsenal_Snails?
+--- @field Pellets number?
+--- @field PerBulletDamage number?
+--- @field Spread number?
+--- @field Range number?
+--- @field BurstInterval number?
+--- @field CrawlTime number?
+--- @field CrawlSpeed number?
+--- @field LockDelay number?
+--- @field HomingSpeed number?
+--- @field RollSpeed number?
+--- @field MaxRollTime number?
+--- @field Reach number?
+--- @field Lift number?
+--- @field Pierce boolean?
+local _arsenal_WeaponData = {}
+
+--- @class Arsenal_Bomblets
+---
+--- # General #
+---
+--- @field Count number
+--- @field DamageMax number
+--- @field DamageEdge number
+--- @field Radius number
+local _arsenal_Bomblets = {}
+
+--- @class Arsenal_Snails
+---
+--- # General #
+---
+--- @field Count number
+--- @field Hits number
+--- @field Damage number
+--- @field Radius number
+local _arsenal_Snails = {}
+
+--%%%%%%%%%%%%%%%%%%%% Utilities
+
+--- @class Arsenal_UtilityData
+---
+--- # General #
+---
+--- @field Name string
+--- @field Icon string
+---
+--- # Effect #
+---
+--- @field Effect "Heal" | "Jetpack" | "Speed" | "Parachute" | "LowGravity"
+--- @field Amount number?
+--- @field ShinyAmount number?
+---
+--- # Limits #
+---
+--- @field Uses number
+local _arsenal_UtilityData = {}

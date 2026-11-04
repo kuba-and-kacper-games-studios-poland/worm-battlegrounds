@@ -72,7 +72,6 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
-	Module._bindBackpackPlus()
 	Module._connectHints()
 end
 
@@ -96,94 +95,6 @@ function Module._indexIcons()
 			end
 		end
 	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Bind BackpackPlus
-
---[[
-	Binds the gamepad controls of BackpackPlus: the bumpers equip the previous or next toolbar Tool, D-pad up opens
-	the backpack view and B (Circle) closes it, and while it is open D-pad up and down select the category above or
-	below. While it is closed, D-pad down unequips the equipped Tool. Open and close pass the input on when they have nothing to do.
-]]
-function Module._bindBackpackPlus()
-	--[[ Toolbar ]]
-
-	I.S.ContextActionService:BindAction("Console_BackpackPrevious", function(_actionName: string, inputState: Enum.UserInputState, _inputObject: InputObject)
-		-- Skip anything but the press
-		if inputState ~= Enum.UserInputState.Begin then
-			return Enum.ContextActionResult.Pass
-		end
-
-		I.BackpackPlus.CycleToolbar(-1)
-		return Enum.ContextActionResult.Sink
-	end, false, _settings.BACKPACK_PREVIOUS)
-
-	I.S.ContextActionService:BindAction("Console_BackpackNext", function(_actionName: string, inputState: Enum.UserInputState, _inputObject: InputObject)
-		-- Skip anything but the press
-		if inputState ~= Enum.UserInputState.Begin then
-			return Enum.ContextActionResult.Pass
-		end
-
-		I.BackpackPlus.CycleToolbar(1)
-		return Enum.ContextActionResult.Sink
-	end, false, _settings.BACKPACK_NEXT)
-
-	--[[ Backpack ]]
-
-	I.S.ContextActionService:BindAction("Console_BackpackOpen", function(_actionName: string, inputState: Enum.UserInputState, _inputObject: InputObject)
-		-- Skip anything but the press, and an open or locked backpack
-		if inputState ~= Enum.UserInputState.Begin or I.BackpackPlus.GetState() or I.BackpackPlus.IsLocked() then
-			return Enum.ContextActionResult.Pass
-		end
-
-		I.BackpackPlus.Toggle()
-		return Enum.ContextActionResult.Sink
-	end, false, _settings.BACKPACK_OPEN)
-
-	I.S.ContextActionService:BindAction("Console_BackpackUnequip", function(_actionName: string, inputState: Enum.UserInputState, _inputObject: InputObject)
-		-- Skip anything but the press, an open backpack, and nothing equipped
-		if inputState ~= Enum.UserInputState.Begin or I.BackpackPlus.GetState() or not I.BackpackPlus.Unequip() then
-			return Enum.ContextActionResult.Pass
-		end
-
-		return Enum.ContextActionResult.Sink
-	end, false, _settings.BACKPACK_UNEQUIP)
-
-	I.S.ContextActionService:BindAction("Console_BackpackClose", function(_actionName: string, inputState: Enum.UserInputState, _inputObject: InputObject)
-		-- Skip anything but the press, and a closed backpack
-		if inputState ~= Enum.UserInputState.Begin or not I.BackpackPlus.GetState() then
-			return Enum.ContextActionResult.Pass
-		end
-
-		I.BackpackPlus.Toggle()
-		return Enum.ContextActionResult.Sink
-	end, false, _settings.BACKPACK_CLOSE)
-
-	--[[ Categories ]]
-
-	-- Above the keyed buttons' binds (Interact, High), so D-pad up moves the category instead of pressing the top bar's
-	-- backpack button while the backpack is open
-	local categoryPriority: number = Enum.ContextActionPriority.High.Value + 1
-
-	I.S.ContextActionService:BindActionAtPriority("Console_BackpackCategoryPrevious", function(_actionName: string, inputState: Enum.UserInputState, _inputObject: InputObject)
-		-- Skip anything but the press, and a closed backpack
-		if inputState ~= Enum.UserInputState.Begin or not I.BackpackPlus.GetState() then
-			return Enum.ContextActionResult.Pass
-		end
-
-		I.BackpackPlus.CycleCategory(-1)
-		return Enum.ContextActionResult.Sink
-	end, false, categoryPriority, _settings.BACKPACK_CATEGORY_PREVIOUS)
-
-	I.S.ContextActionService:BindActionAtPriority("Console_BackpackCategoryNext", function(_actionName: string, inputState: Enum.UserInputState, _inputObject: InputObject)
-		-- Skip anything but the press, and a closed backpack
-		if inputState ~= Enum.UserInputState.Begin or not I.BackpackPlus.GetState() then
-			return Enum.ContextActionResult.Pass
-		end
-
-		I.BackpackPlus.CycleCategory(1)
-		return Enum.ContextActionResult.Sink
-	end, false, categoryPriority, _settings.BACKPACK_CATEGORY_NEXT)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Connect Hints

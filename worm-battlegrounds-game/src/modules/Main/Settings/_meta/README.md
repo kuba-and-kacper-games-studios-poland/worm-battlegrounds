@@ -78,7 +78,7 @@ I.WidgetManager.Open("Settings")
 | Key | Default | What |
 | --- | --- | --- |
 | `SECTIONS` | `Sound` (purple) | The groups: heading `Text`, `LayoutOrder`, `Colors` (light, dark: the heading's gradient, the rows' outline and tint, a volume box's outline) |
-| `SETTINGS` | `Master` (`Default = 100`, `SoundGroups = { "Master" }`), `Music` (`Default = 50`, `SoundGroups = { "Music" }`) and `SoundEffects` (`Default = 50`, `SoundGroups = { "SFX", "UI" }`) in Sound | Every setting: its `Section`, name `Text`, `Detail` (`""` centres the name in its row), `LayoutOrder` in its group, `Default`. A boolean `Default` is a switch; a number is a volume, whose `SoundGroups` play at its value over 100, times `MASTER_VOLUME`'s over 100. A new key is a new setting: the profile template, the replicator and the window follow it |
+| `SETTINGS` | `Master` (`Default = 100`, `SoundGroups = { "Master" }`), `Music` (`Default = 50`, `SoundGroups = { "Music" }`) and `SoundEffects` (`Default = 50`, `SoundGroups = { "SFX", "UI" }`) in Sound; the game's switches `DamageNumbers` and `CameraFollowsShot` (`Default = true`) in Gameplay | Every setting: its `Section`, name `Text`, `Detail` (`""` centres the name in its row), `LayoutOrder` in its group, `Default`. A boolean `Default` is a switch; a number is a volume, whose `SoundGroups` play at its value over 100, times `MASTER_VOLUME`'s over 100. A new key is a new setting: the profile template, the replicator and the window follow it |
 | `VOLUME_MAX`, `VOLUME_STEP` | `100`, `10` | A volume's highest value, and how much one chevron press changes it |
 | `MASTER_VOLUME` | `"Master"` | The volume every other volume is multiplied by |
 | `GUI_NAME` | `"Settings"` | The widget the window is |

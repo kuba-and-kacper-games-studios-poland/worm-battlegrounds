@@ -8,7 +8,10 @@ local _settings = {
 
 		--[[ General ]]
 
-		"General",
+		"Weapon",
+		"Utility",
+		"Skin",
+		"Emote",
 
 		-- Other used for all invalid categories
 		"Other",

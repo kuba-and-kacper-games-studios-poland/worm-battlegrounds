@@ -12,14 +12,14 @@ local _settings = {
 
 			--[[ General ]]
 
-			Name = "Playtime",
+			Name = "Wins",
 			Priority = 1,
 
 			--[[ Value ]]
 
 			Source = "Statistic",
-			Key = "Playtime",
-			Format = "Time",
+			Key = "Wins",
+			Format = "Number",
 		},
 	},
 }

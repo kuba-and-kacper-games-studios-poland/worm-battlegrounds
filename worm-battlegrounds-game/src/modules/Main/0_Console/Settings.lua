@@ -1,23 +1,6 @@
 --- @class Console_Settings
 local _settings = {
 
-	--%%%%%%%%%%%%%%%%%%%% BackpackPlus
-
-	-- Equip the Tool on the previous / next occupied BackpackPlus toolbar slot
-	BACKPACK_PREVIOUS = Enum.KeyCode.ButtonL1,
-	BACKPACK_NEXT = Enum.KeyCode.ButtonR1,
-
-	-- Open the backpack view while it is closed, close it while it is open (B on Xbox, Circle on PlayStation)
-	BACKPACK_OPEN = Enum.KeyCode.DPadUp,
-	BACKPACK_CLOSE = Enum.KeyCode.ButtonB,
-
-	-- While the backpack view is open: select the category above / below
-	BACKPACK_CATEGORY_PREVIOUS = Enum.KeyCode.DPadUp,
-	BACKPACK_CATEGORY_NEXT = Enum.KeyCode.DPadDown,
-
-	-- While the backpack view is closed: unequip the equipped Tool
-	BACKPACK_UNEQUIP = Enum.KeyCode.DPadDown,
-
 	--%%%%%%%%%%%%%%%%%%%% Hints
 
 	-- Gui elements with this tag show only on Console, with their gamepad icons swapped to the player's pad

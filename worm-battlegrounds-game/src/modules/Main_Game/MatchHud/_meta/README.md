@@ -1,0 +1,54 @@
+# MatchHud
+
+The match screen and its input. It shows whose turn it is, the timer and the wind, the stamina bar, the kill feed, the
+loadout bar (the Bazooka and the player's items, with uses and cooldowns), touch walk and jump buttons, the waiting,
+drop and knocked-out blocks, and the Results screen. Aiming is a drag back from the worm with mouse or touch (the
+direction is the angle, the length the power), or the right stick and RT on a gamepad; letting go fires. Number keys 1
+to 6, LB and RB pick a slot. It adds **Leave** and **Music** to the top bar.
+
+| | |
+| --- | --- |
+| Folder | `src/modules/Main_Game/MatchHud` |
+| Runs on | Client · Match map |
+| Uses | `I.Match`, `I.Worms`, `I.WormControl`, `I.G_Arsenal`, `I.G_Combat`, `I.Replicator`, `I.TopBar`, `I.PlayerSettings`, `I.WidgetManager`, `ContextActionService` |
+
+## Files
+
+| File | What it controls |
+| --- | --- |
+| `Client.lua` | Turns the gui on and starts the handlers |
+| `Scripts/Client/Turn.lua` | Banner, timer, wind, stamina |
+| `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
+| `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys; utilities are used as soon as they're picked on the player's turn |
+| `Scripts/Client/Aim.lua` | Drag and pad aiming, the aim dots, firing, homing targets, detonating |
+| `Scripts/Client/KillFeed.lua` | Knockout lines |
+| `Scripts/Client/TouchControls.lua` | Walk and jump buttons on touch screens |
+| `Scripts/Client/Results.lua` | The Results screen, rematch votes |
+| `Scripts/Client/TopBar.lua` | The Leave and Music top bar buttons |
+| `Settings.lua` | `MatchHud_Settings` |
+
+## Network
+
+No remotes of its own. It sends Combat's `Combat_Select`, `Combat_UseUtility`, `Combat_Aim` (unreliable, 10 per
+second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Match_Rematch`; it listens to
+`Match_KnockedOut` and `Match_Results`.
+
+## Settings
+
+| Key | Default | What |
+| --- | --- | --- |
+| `GUI_NAME`, `RESULTS_GUI_NAME` | `"MatchHud"`, `"Results"` | The guis |
+| `SELECTED_COLOR`, `TILE_COLOR` | | A picked slot's face, and an unpicked one |
+| `LEAVE_TEXT`, `MUSIC_TEXT`, `LEAVE_QUESTION` | | The top bar buttons and the leave confirmation |
+| `SLOT_KEYS` | One … Six | Keys that pick slots 1 to 6 (the Bazooka first) |
+| `FEED_LINES`, `FEED_SECONDS` | `4`, `6` | Kill feed length and how long a line stays |
+| `MIN_DRAG`, `MAX_DRAG` | `24`, `260` | Drag length in pixels for no power and full power |
+| `AIM_SEND_INTERVAL` | `0.1` | How often the aim is sent to others |
+| `AIM_LINE_SECONDS`, `AIM_LINE_DOTS`, `AIM_DOT_SIZE`, `AIM_DOT_COLOR` | `0.6`, `10`, `0.35`, white | The aim dots |
+| `TARGET_COLOR` | red | The homing target marker |
+| `STICK_DEADZONE`, `PAD_POWER_SPEED` | `0.3`, `0.8` | Gamepad aiming |
+
+## In the place
+
+Puts the aim dots and the target marker in `Workspace.Ume.Combat`. Binds the CAS action `MatchHud_Slots` while the
+loadout bar shows. The Results screen hides **Rematch** after the tutorial match.

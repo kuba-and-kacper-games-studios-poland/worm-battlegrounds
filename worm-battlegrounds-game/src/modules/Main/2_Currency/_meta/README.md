@@ -1,6 +1,6 @@
 # Currency
 
-Player currencies (Cash by default), saved as BigNum strings in the profile. Only the server writes: `Add`, `Subtract` and `Set` change the saved amount, mirror it into the player's Replicator folder and publish `Currency_Changed`. The client reads those attributes and publishes the same Topic locally, and `Currency_Slot` labels show the amount, with orbs flying in on gains.
+Player currencies (the game's Coins and Diamonds), saved as BigNum strings in the profile. Only the server writes: `Add`, `Subtract` and `Set` change the saved amount, mirror it into the player's Replicator folder and publish `Currency_Changed`. The client reads those attributes and publishes the same Topic locally, and `Currency_Slot` labels show the amount, with orbs flying in on gains.
 
 | | |
 | --- | --- |
@@ -95,13 +95,13 @@ On join, a saved field that holds a whole number as a Lua number or a scientific
 
 `CURRENCIES[name]` (`Currency_CurrencySettings`):
 
-| Key | Cash | What |
+| Key | Coins / Diamonds | What |
 | --- | --- | --- |
 | `DefaultValue` | `"0"` | Amount a new player starts with |
-| `IconId` | `rbxassetid://92339054232049` | Returned by `GetCurrencyIcon` |
+| `IconId` | the local coin and diamond icons (`rbxasset://textures/wb_guipreview/…`) | Returned by `GetCurrencyIcon` |
 | `MinValue`, `RespectMinValue` | `"0"`, `true` | Floor, and whether it's enforced |
 | `MaxValue`, `RespectMaxValue` | `"0"`, `false` | Cap, and whether it's enforced |
-| `ServerUpdate`, `ServerUpdateIndividual` | `false`, `false` | Server Topics (see Network) |
+| `ServerUpdate`, `ServerUpdateIndividual` | `true`, `false` | Server Topics (see Network) |
 | `ClientUpdate`, `ClientUpdateIndividual` | `true`, `true` | Replicator attributes and client Topics |
 
 ## Components
