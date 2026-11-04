@@ -251,8 +251,8 @@ function Module._refreshCard(crateId: string)
 	local card: Frame = cards[crateId]
 	local payCoins: Frame = card:FindFirstChild("S_PayCoins", true)
 	local payDiamonds: Frame = card:FindFirstChild("S_PayDiamonds", true)
-	local coinsFace: Frame = payCoins:FindFirstChild("Face", true)
-	local diamondsFace: Frame = payDiamonds:FindFirstChild("Face", true)
+	local coinsFace: ImageLabel = payCoins:FindFirstChild("Face", true)
+	local diamondsFace: ImageLabel = payDiamonds:FindFirstChild("Face", true)
 
 	--[[ Local Variables ]]
 
@@ -271,8 +271,9 @@ function Module._refreshCard(crateId: string)
 
 	--[[ Applying ]]
 
-	coinsFace.BackgroundColor3 = if paying[crateId] == "Coins" then _settings.SELECTED_COLOR else _settings.TILE_COLOR
-	diamondsFace.BackgroundColor3 = if paying[crateId] == "Diamonds" then _settings.SELECTED_COLOR else _settings.TILE_COLOR
+	-- The paying currency's tab wears its selected skin (the gui kit's button records both skins)
+	coinsFace.Image = coinsFace:GetAttribute(if paying[crateId] == "Coins" then "Kit_SelectedImage" else "Kit_Image")
+	diamondsFace.Image = diamondsFace:GetAttribute(if paying[crateId] == "Diamonds" then "Kit_SelectedImage" else "Kit_Image")
 	card:FindFirstChild("S_Free", true).Visible = Module._isFree(crateId)
 end
 

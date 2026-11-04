@@ -110,7 +110,8 @@ function Module._onOpened(widgetName: string)
 		tile:FindFirstChild("S_Name", true).Text = item.Name
 		tile:FindFirstChild("S_Info", true).Text = Module._getInfo(row)
 		tile:FindFirstChild("S_Copies", true).Text = `{math.min(tonumber(quantity) or 0, _settings.SHINY_COPIES)} / {_settings.SHINY_COPIES}`
-		I.Rarity.ApplyLook(tile:FindFirstChild("S_Rarity", true), nil, item.Rarity)
+		tile:FindFirstChild("S_Rarity", true).Text = item.Rarity
+		tile:FindFirstChild("S_Rarity", true).TextColor3 = I.Rarity.GetLook(item.Rarity).Base
 		tile.Parent = elems["Items"]
 		I.Interact.OnPress(tile:FindFirstChild("Button"), function()
 			Module._pick(itemId)

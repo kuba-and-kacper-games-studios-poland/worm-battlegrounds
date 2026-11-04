@@ -40,7 +40,7 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | Key | Default | What |
 | --- | --- | --- |
 | `GUI_NAME`, `RESULTS_GUI_NAME` | `"MatchHud"`, `"Results"` | The guis |
-| `SELECTED_COLOR`, `TILE_COLOR` | | A picked slot's face, and an unpicked one |
+| `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENCY` | `(40, 140, 255)`, `0.2`, `(0, 0, 0)`, `0.7` | The selected loadout slot's fill (its `Body`), and the others' |
 | `LEAVE_TEXT`, `MUSIC_TEXT`, `LEAVE_QUESTION` | | The top bar buttons and the leave confirmation |
 | `SLOT_KEYS` | One … Six | Keys that pick slots 1 to 6 (the Bazooka first) |
 | `FEED_LINES`, `FEED_SECONDS` | `4`, `6` | Kill feed length and how long a line stays |

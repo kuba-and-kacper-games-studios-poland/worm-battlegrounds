@@ -79,9 +79,11 @@ local _settings = {
 	SOLO_GUI_NAME = "SoloSetup",
 	CUSTOM_GUI_NAME = "CustomLobby",
 
-	-- A picked button's face, and an unpicked one (the theme's Inverse and Tile colours)
-	SELECTED_COLOR = Color3.fromRGB(210, 240, 244),
-	TILE_COLOR = Color3.fromRGB(52, 140, 156),
+	-- A picked difficulty's or map's slot fill, and an unpicked one's (the gui kit's selected blue and its Slot)
+	SELECTED_COLOR = Color3.fromRGB(40, 140, 255),
+	SELECTED_TRANSPARENCY = 0.2,
+	TILE_COLOR = Color3.fromRGB(0, 0, 0),
+	TILE_TRANSPARENCY = 0.7,
 }
 
 return _settings

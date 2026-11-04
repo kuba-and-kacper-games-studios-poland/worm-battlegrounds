@@ -7,9 +7,11 @@ local _settings = {
 	GUI_NAME = "MatchHud",
 	RESULTS_GUI_NAME = "Results",
 
-	-- A loadout box's face while it's selected, and otherwise (the theme's Inverse and Tile colours)
-	SELECTED_COLOR = Color3.fromRGB(210, 240, 244),
-	TILE_COLOR = Color3.fromRGB(52, 140, 156),
+	-- A loadout slot's fill while it's selected, and otherwise (the gui kit's selected blue and its Slot)
+	SELECTED_COLOR = Color3.fromRGB(40, 140, 255),
+	SELECTED_TRANSPARENCY = 0.2,
+	TILE_COLOR = Color3.fromRGB(0, 0, 0),
+	TILE_TRANSPARENCY = 0.7,
 
 	--%%%%%%%%%%%%%%%%%%%% Top Bar
 

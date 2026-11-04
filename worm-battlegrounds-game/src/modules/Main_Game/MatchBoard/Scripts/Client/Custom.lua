@@ -252,12 +252,25 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Picked
 
 --[[
-	Marks a button or map choice as picked, or not.
+	Marks a button or map choice as picked, or not: a button wears its selected skin (the gui kit's button records
+	both skins), a map's slot its picked fill.
 ]]
 function Module._setPicked(holder: Instance, picked: boolean)
+	--[[ Elements ]]
+
+	local background: Frame = holder:FindFirstChild("Background", true)
+	-- A map's slot has no skin, so no Face
+	local face: ImageLabel? = background:FindFirstChild("Face", true)
+	local body: Frame = background:FindFirstChild("Body", true)
+
 	--[[ Applying ]]
 
-	holder:FindFirstChild("Background", true):FindFirstChild("Face", true).BackgroundColor3 = if picked then _settings.SELECTED_COLOR else _settings.TILE_COLOR
+	if face and face:GetAttribute("Kit_Image") then
+		face.Image = face:GetAttribute(if picked then "Kit_SelectedImage" else "Kit_Image")
+	else
+		body.BackgroundColor3 = if picked then _settings.SELECTED_COLOR else _settings.TILE_COLOR
+		body.BackgroundTransparency = if picked then _settings.SELECTED_TRANSPARENCY else _settings.TILE_TRANSPARENCY
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

@@ -144,3 +144,75 @@ passes stay at id 0, and models and effects are stand-ins.
 every skin falls back to the Classic worm, emotes show their name.
 
 **Rule.** `game/practices.md` → Maps and placeholders.
+
+### The Brawl look became a kit first (2026-11-04)
+
+**Before.** The first Brawl Stars-style options (Shop, Results, MatchBoard on `WormBattlegroundsBrawl`) restyled
+whole screens in one pass: flat frames with a lip, a top band and a drop built from Frames and UIStrokes, Fredoka
+One, royal-blue panels. The owner rejected them the same day: uneven strokes, odd buttons, text out of line, layouts
+and sizes that weren't friendly to play with.
+
+**Why it changed.** One aspect at a time, reviewed, instead of whole screens at once. A kit of primitives drawn once
+(buttons, windows, slots, reward frames, a gradient library) makes every gui match by construction, and pictures
+drawn with gradients look like the reference games where Frames and strokes couldn't.
+
+**Now.** The kit (game home `assets/_inbox/ui_kit_brawl/`: `skins.py`, `banners.py`, `build.py`) draws 9-slice SVG
+skins, renders them to 2× PNGs in Studio's content folder and writes the theme's `Icons.lua` and `Skins.lua`. The
+theme's `Slab` draws those skins; `Widget` is the Hazard plate window the owner picked; every gui has a `01_Brawl`
+option on it. The kit's rules came with it: yellow only for the next step, colours by job, things on slots, reward
+tiles only for rewards, no text under 32 px. They are the two Brawl rules in `practices.md` → Guis.
+
+### Panels got smaller on a PC and stopped overlapping (2026-11-04)
+
+**Before.** ScreenScale scaled every panel by the screen's height alone. The GUI kit's panels, drawn big for phones,
+looked oversized on a PC, and on a 4:3 or 5:4 screen the lobby's side-by-side panels (MatchBoard, Crates, Loadout)
+ran into each other. The tutorial hint sat on the Play panel, and in a match the kill feed and emote button never
+scaled, so on a 4K screen the bar grew into them.
+
+**Why it changed.** The owner asked for the guis scaled down on PCs and checked against the guis shown with them.
+
+**Now.** ScreenScale takes the smaller of height / 1080 and width / 1920. Panels are placed by screen fractions, so
+position scales along with size. The PC size comes from ume's `Utils_PlatformScale` tag (the kit tags its panels
+0.75 on Desktop), which ScreenScale multiplies in through the UIScale's `Utils_BaseScale`. A first try used an
+attribute of ScreenScale's own; the owner asked for ume's platform tags instead, since they already do per-device
+sizes. The lobby and match options were measured at PC sizes from 1024 × 768 to 3840 × 2160 and rearranged until
+nothing overlapped. Phones and tablets still overlap: the lobby's panels are taller than a phone's screen.
+
+**Rule.** `game/practices.md` → Maps and placeholders (the ScreenScale bullets).
+
+### Phones got their own sizes, from ume's platform tags (2026-11-04)
+
+**Before.** The lobby's panels were taller than a phone's screen and ran into each other, the big windows (Shop,
+Results) rose past its top, and in a match the tutorial hint covered the turn panel. The touch buttons were fixed
+pixel sizes.
+
+**Why it changed.** The owner asked for the phone layout after the PC one, using ume's platform tags for device
+sizes.
+
+**Now.** Panels hang from screen edges and corners, and on Mobile the lobby panels get their own sizes
+(`Utils_PlatformSize`) and, where content needs room, a scale of 0.9 (`Utils_PlatformScale`); Large and Screen
+windows are 0.8 and 0.78, the hint 0.55, the turn panel 0.6. The touch buttons scale like panels (the kit's `Button`
+`Screen`): sizing them by the screen's height alone left their pixel padding as it was and hid their text. Nothing
+overlaps at 7 phone, 5 tablet and 11 PC sizes.
+
+**Rule.** `game/practices.md` → Maps and placeholders (the screen and device bullets).
+
+### The kit became the game's look (2026-11-04)
+
+**Before.** The kit lived in `01_Brawl` design options beside the game's flat `WormBattlegrounds` guis. Game code
+showed a picked tab, difficulty or slot by recolouring the piece's `Face` frame, and rarity with `I.Rarity.ApplyLook`
+on outlines.
+
+**Why it changed.** The owner moved the options into the game's guis, exported them and asked for the game to work
+with them.
+
+**Now.** Every gui in `src/guis/WormBattlegrounds/` is its `01_Brawl` option. On the kit `Face` is the skin image and
+exports can't run the theme's controls, so the controls record what code needs as attributes: a button's three skins
+on its `Face` (`Kit_Image`, `Kit_SelectedImage`, `Kit_DisabledImage`), a reward tile's frame, stage and light per
+rarity on the tile (`Kit_<Rarity>_*`). Code swaps those images, fills a picked slot's `Body`, and colours rarity
+text with the rarity's `Base` colour: `ApplyLook` needs a `UIGradient` that no label has. A play test opened the
+lobby, the crate reveal, the picker, Solo, the Custom lobby and the Shop, and played a tutorial match, with no
+errors. The tutorial hint drew over windows (`DisplayOrder` 10) and covered the picker's subtitle, so it now sits
+under them.
+
+**Rule.** `game/practices.md` → Guis (the look, yellow leads the eye, picked and owned states).

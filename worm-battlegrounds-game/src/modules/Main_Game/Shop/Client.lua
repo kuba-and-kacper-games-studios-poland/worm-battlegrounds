@@ -172,6 +172,7 @@ function Module._onOpened(widgetName: string)
 		card:FindFirstChild("S_Name", true).Text = pass.Name
 		card:FindFirstChild("S_Benefits", true).Text = pass.Benefits
 		buy:FindFirstChild("ButtonText", true).Text = if owned then "OWNED" else "BUY"
+		buy:FindFirstChild("Face", true).Image = buy:FindFirstChild("Face", true):GetAttribute(if owned then "Kit_DisabledImage" else "Kit_Image")
 		card.Parent = elems["Passes"]
 		Module._showPrice(card:FindFirstChild("S_Price", true), pass.GamePass, Enum.InfoType.GamePass)
 		I.Interact.OnPress(buy:FindFirstChild("Button"), function()

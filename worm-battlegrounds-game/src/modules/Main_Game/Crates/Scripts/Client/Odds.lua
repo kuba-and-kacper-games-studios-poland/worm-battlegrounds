@@ -146,7 +146,7 @@ function Module._addRow(itemId: string, chanceText: string, order: number)
 	row:FindFirstChild("S_Name", true).Text = item.Name
 	row:FindFirstChild("S_Chance", true).Text = chanceText
 	rarity.Text = item.Rarity
-	I.Rarity.ApplyLook(rarity, nil, item.Rarity)
+	rarity.TextColor3 = I.Rarity.GetLook(item.Rarity).Base
 
 	--[[ Saving ]]
 

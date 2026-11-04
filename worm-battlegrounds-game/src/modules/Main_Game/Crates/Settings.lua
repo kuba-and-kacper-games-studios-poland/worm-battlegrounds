@@ -34,10 +34,6 @@ local _settings = {
 	GUI_NAME = "Crates",
 	ODDS_GUI_NAME = "CrateOdds",
 	OPEN_GUI_NAME = "CrateOpen",
-
-	-- The pay button's face when its currency is picked, and when it isn't
-	SELECTED_COLOR = Color3.fromRGB(210, 240, 244),
-	TILE_COLOR = Color3.fromRGB(52, 140, 156),
 }
 
 return _settings

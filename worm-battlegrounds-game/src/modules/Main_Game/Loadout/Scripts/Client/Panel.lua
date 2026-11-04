@@ -121,6 +121,7 @@ function Module._refresh()
 		local lock: Frame = box:FindFirstChild("S_Lock", true)
 		box:FindFirstChild("S_Icon", true).Image = if item then item.IconId else ""
 		box:FindFirstChild("S_Name", true).Text = if item then item.Name else "Empty"
+		box:FindFirstChild("S_Name", true).TextColor3 = if item then I.Rarity.GetLook(item.Rarity).Base else _settings.EMPTY_NAME_COLOR
 		box:FindFirstChild("S_Shiny", true).Visible = copies >= _settings.SHINY_COPIES
 		box.Visible = slot <= unlocked + 1
 		lock.Visible = slot > unlocked

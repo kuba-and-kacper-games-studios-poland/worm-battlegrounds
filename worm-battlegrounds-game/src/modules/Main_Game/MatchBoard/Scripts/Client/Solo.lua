@@ -64,8 +64,9 @@ function Module._refresh()
 	--[[ Applying ]]
 
 	for _index: number, difficulty: string in ipairs(_settings.SOLO_DIFFICULTIES) do
-		local face: Frame = elems[difficulty]:FindFirstChild("Background", true):FindFirstChild("Face", true)
-		face.BackgroundColor3 = if difficulty == picked then _settings.SELECTED_COLOR else _settings.TILE_COLOR
+		local body: Frame = elems[difficulty]:FindFirstChild("Background", true):FindFirstChild("Body", true)
+		body.BackgroundColor3 = if difficulty == picked then _settings.SELECTED_COLOR else _settings.TILE_COLOR
+		body.BackgroundTransparency = if difficulty == picked then _settings.SELECTED_TRANSPARENCY else _settings.TILE_TRANSPARENCY
 	end
 end
 

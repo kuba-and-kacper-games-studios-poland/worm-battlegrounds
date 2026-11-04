@@ -7,7 +7,7 @@ sync into.
 | Folder | What | Rules |
 | --- | --- | --- |
 | `worm-battlegrounds-game/` | The game's code, on the ume framework | its `AGENTS.md` and `.claude/rules/` |
-| `worm-battlegrounds-gui/` | The game's guis, on UmeGui, styled by the `WormBattlegrounds` theme | its `AGENTS.md` and `.claude/rules/` |
+| `worm-battlegrounds-gui/` | The game's guis, on UmeGui, styled by the `WormBattlegroundsBrawl` theme (the GUI kit, over `WormBattlegrounds`) | its `AGENTS.md` and `.claude/rules/` |
 | `worm-battlegrounds.rbxl` | The place both projects sync into | |
 | `wiki/` | The game's Shiori wiki: the design, the player's guide under `pages/game/` | `wiki/AGENTS.md`, only when asked to change it |
 
@@ -17,6 +17,12 @@ game's: change them to fit it (its names, a folder or skill it adds, a wiki).
 
 The game's own decisions (how it uses ume and ume-gui, and its gui look) are in
 `worm-battlegrounds-game/.claude/rules/game/practices.md`. They cover both folders and win over the framework's defaults.
+
+## Skills the game adds
+
+| Skill | Use when |
+| --- | --- |
+| `brawl-gui` (`worm-battlegrounds-gui/.claude/skills/brawl-gui/SKILL.md`) | Asked to make or restyle a gui in the game's GUI kit look (Brawl Stars style, the `WormBattlegroundsBrawl` theme), in the gui or as a design option |
 
 ## Working here
 

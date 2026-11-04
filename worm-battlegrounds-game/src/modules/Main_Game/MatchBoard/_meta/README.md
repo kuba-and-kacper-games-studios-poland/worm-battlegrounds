@@ -80,4 +80,4 @@ Rows are `Configuration`s in `ReplicatedStorage.Ume.MatchBoard`, one per row, wi
 | `MAPS`, `MAP_POOL` | 6 map rows; `{ "PicnicPlains" }` | Map names and sizes; the maps in rotation |
 | `SOLO_DIFFICULTIES` | Easy, Medium, Hard | Solo choices |
 | `BOARD_GUI_NAME`, `SOLO_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |
-| `SELECTED_COLOR`, `TILE_COLOR` | | A picked choice's face, and an unpicked one |
+| `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENCY` | `(40, 140, 255)`, `0.2`, `(0, 0, 0)`, `0.7` | A picked difficulty's or map's slot fill (its `Body`), and an unpicked one's. Mode and player-count buttons swap to their selected skin instead (`Kit_SelectedImage`) |

@@ -86,7 +86,6 @@ place of a roll).
 | `TUTORIAL_CRATE` | `"Tutorial"` | The hidden crate the tutorial gives once |
 | `SHAKE_SECONDS`, `SHAKE_DEGREES` | `1.2`, `12` | The reveal's shake |
 | `GUI_NAME`, `ODDS_GUI_NAME`, `OPEN_GUI_NAME` | `"Crates"`, `"CrateOdds"`, `"CrateOpen"` | The guis it drives |
-| `SELECTED_COLOR`, `TILE_COLOR` | `(210, 240, 244)`, `(52, 140, 156)` | A pay button's face when picked, and when not |
 
 ## In the place
 

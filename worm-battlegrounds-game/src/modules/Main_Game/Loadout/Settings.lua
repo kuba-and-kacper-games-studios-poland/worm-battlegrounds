@@ -34,6 +34,9 @@ local _settings = {
 	-- The lobby panel and the picker widget
 	PANEL_GUI_NAME = "Loadout",
 	PICKER_GUI_NAME = "LoadoutPicker",
+
+	-- An empty slot's name colour; a filled one takes its item's rarity colour (the gui kit's Text)
+	EMPTY_NAME_COLOR = Color3.fromRGB(255, 255, 255),
 }
 
 return _settings

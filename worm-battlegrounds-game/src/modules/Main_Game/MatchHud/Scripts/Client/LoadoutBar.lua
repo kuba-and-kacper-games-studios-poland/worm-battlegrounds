@@ -194,12 +194,13 @@ function Module._refreshBoxes()
 		local uses: number = combatRep:GetAttribute(`Uses_{itemId}`) or 0
 		local cooldown: number = combatRep:GetAttribute(`Cooldown_{itemId}`) or 0
 		local cover: Frame = box:FindFirstChild("S_Cooldown", true)
-		local face: Frame = box:FindFirstChild("Background", true):FindFirstChild("Face", true)
+		local body: Frame = box:FindFirstChild("Background", true):FindFirstChild("Body", true)
 		box:FindFirstChild("S_Uses", true).Text = if uses < 0 then "" else `×{uses}`
 		box:FindFirstChild("S_Key", true).Visible = I.Platform.Current == "Desktop"
 		cover.Visible = cooldown > 0
 		cover:FindFirstChild("S_Turns", true).Text = tostring(cooldown)
-		face.BackgroundColor3 = if itemId == selected then _settings.SELECTED_COLOR else _settings.TILE_COLOR
+		body.BackgroundColor3 = if itemId == selected then _settings.SELECTED_COLOR else _settings.TILE_COLOR
+		body.BackgroundTransparency = if itemId == selected then _settings.SELECTED_TRANSPARENCY else _settings.TILE_TRANSPARENCY
 	end
 end
 

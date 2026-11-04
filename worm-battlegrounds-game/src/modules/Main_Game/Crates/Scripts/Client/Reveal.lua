@@ -149,8 +149,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Fill Card
 
 --[[
-	Writes one result on a card: the item's picture and name, its rarity and copies, and the shiny badge when this copy
-	made it shiny.
+	Writes one result on a card: the item's picture and name, its rarity and copies, the tile's look for that rarity
+	(its frame, stage and light, which the gui kit's reward tile records), and the shiny badge when this copy made it
+	shiny.
 ]]
 --- @param result Crates_Result
 function Module._fillCard(card: Frame, result)
@@ -164,13 +165,25 @@ function Module._fillCard(card: Frame, result)
 	--[[ Elements ]]
 
 	local info: TextLabel = card:FindFirstChild("S_Info", true)
+	local face: ImageLabel = card:FindFirstChild("Face", true)
+	local rays: ImageLabel = card:FindFirstChild("Rays", true)
+	local glow: ImageLabel = card:FindFirstChild("Glow", true)
 
 	--[[ Texts ]]
 
 	card:FindFirstChild("S_Icon", true).Image = item.IconId
 	card:FindFirstChild("S_Name", true).Text = item.Name
 	info.Text = `{item.Rarity} · {math.min(result.Copies, _settings.SHINY_COPIES)}/{_settings.SHINY_COPIES}`
-	I.Rarity.ApplyLook(info, nil, item.Rarity)
+	info.TextColor3 = I.Rarity.GetLook(item.Rarity).Base
+
+	--[[ Rarity Look ]]
+
+	face.Image = card:GetAttribute(`Kit_{item.Rarity}_Frame`)
+	card:FindFirstChild("Stage", true).Image = card:GetAttribute(`Kit_{item.Rarity}_Stage`)
+	rays.Visible = card:GetAttribute(`Kit_{item.Rarity}_Glow`)
+	glow.Visible = rays.Visible
+	rays.ImageColor3 = card:GetAttribute(`Kit_{item.Rarity}_GlowColor`)
+	glow.ImageColor3 = rays.ImageColor3
 
 	--[[ Visibility ]]
 
