@@ -11,7 +11,7 @@ local _theme = {
 
 	--[[ Tokens ]]
 
-	Tokens = {},
+	Tokens = require(script:FindFirstChild("Tokens")),
 }
 
 return _theme
