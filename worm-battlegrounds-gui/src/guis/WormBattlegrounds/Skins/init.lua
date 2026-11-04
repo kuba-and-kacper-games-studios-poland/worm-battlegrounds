@@ -9,7 +9,7 @@ local _gui = {
 
 	-- Cosmetics draws it on WidgetManager_Opened as I.UserInterface.UI["Skins"]
 	Name = "Skins",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -36,7 +36,8 @@ local _gui = {
 			Style = "Fixed",
 			Children = {
 				{ Control = "Viewport", Id = "S_Preview", Text = "Classic", Subtext = "3 / 10 to shiny" },
-				{ Control = "Button", Id = "S_Equip", Text = "Equip", Style = { "Primary", "Small" } },
+				-- Blue: a grid of skins has no one next step
+				{ Control = "Button", Id = "S_Equip", Text = "Equip", Style = "Small" },
 			},
 		},
 	},

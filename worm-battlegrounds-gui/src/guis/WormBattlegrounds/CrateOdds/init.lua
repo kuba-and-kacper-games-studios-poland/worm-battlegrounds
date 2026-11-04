@@ -9,7 +9,7 @@ local _gui = {
 
 	-- Crates draws it on WidgetManager_Opened as I.UserInterface.UI["CrateOdds"]
 	Name = "CrateOdds",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -33,8 +33,9 @@ local _gui = {
 				Direction = "Horizontal",
 				Children = {
 					{ Control = "Label", Text = "Item", Grow = 1, Style = "Caption" },
-					{ Control = "Label", Text = "Rarity", Style = "Caption" },
-					{ Control = "Label", Text = "Chance", Style = "Caption" },
+					-- Fixed columns, so the rows' texts line up under them whatever code writes
+					{ Control = "Label", Text = "Rarity", Style = "Caption", Props = { Size = UDim2.fromOffset(200, 32) } },
+					{ Control = "Label", Text = "Chance", Align = "Right", Style = "Caption", Props = { Size = UDim2.fromOffset(140, 32) } },
 				},
 			},
 			-- One row per item (PREFAB | OddsRow)
@@ -53,8 +54,15 @@ local _gui = {
 			Children = {
 				{ Control = "Picture", Id = "S_Icon", Style = "Glyph" },
 				{ Control = "Label", Id = "S_Name", Text = "Grenade", Grow = 1 },
-				{ Control = "Label", Id = "S_Rarity", Text = "Rare", Style = "Dim" },
-				{ Control = "Label", Id = "S_Chance", Text = "12.5%", Style = "Strong" },
+				{ Control = "Label", Id = "S_Rarity", Text = "Rare", Style = "Dim", Props = { Size = UDim2.fromOffset(200, 36) } },
+				{
+					Control = "Label",
+					Id = "S_Chance",
+					Text = "12.5%",
+					Align = "Right",
+					Style = "Strong",
+					Props = { Size = UDim2.fromOffset(140, 36) },
+				},
 			},
 		},
 	},

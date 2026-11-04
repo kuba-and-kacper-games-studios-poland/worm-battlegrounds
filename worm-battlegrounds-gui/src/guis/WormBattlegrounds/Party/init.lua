@@ -9,7 +9,7 @@ local _gui = {
 
 	-- The Party module turns it on, on the Lobby map, as I.UserInterface.UI["Party"]
 	Name = "Party",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -21,18 +21,27 @@ local _gui = {
 		Title = "Party",
 		Screen = true,
 		Style = { "Panel", "Fixed" },
+		-- Shorter on phones and tablets, where its list scrolls instead
+		Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(460, 360) } },
 		Props = {
 			AnchorPoint = Vector2.new(0, 0),
-			Position = UDim2.fromOffset(24, 96),
-			Size = UDim2.fromOffset(400, 420),
+			Position = UDim2.fromScale(0.0125, 0.067),
+			Size = UDim2.fromOffset(500, 380),
 		},
 		Children = {
 			-- The party's players (PREFAB | Member)
 			{ Control = "Cells", Id = "U_Members" },
-			-- Invite players in this server
-			{ Control = "Button", Id = "U_Invite", Text = "Invite players" },
-			-- Roblox's friend invite prompt
-			{ Control = "Button", Id = "U_InviteFriends", Text = "Invite friends", Style = "Primary" },
+			-- Invite players in this server, or friends through Roblox's prompt: blue, the lobby's yellows are Play and a free crate
+			{
+				Control = "Stack",
+				Direction = "Horizontal",
+				Fill = true,
+				Style = "Buttons",
+				Children = {
+					{ Control = "Button", Id = "U_Invite", Text = "Invite players", Style = "Small" },
+					{ Control = "Button", Id = "U_InviteFriends", Text = "Invite friends", Style = "Small" },
+				},
+			},
 			{ Control = "Button", Id = "U_Leave", Text = "Leave party", Style = { "Danger", "Small" } },
 		},
 	},

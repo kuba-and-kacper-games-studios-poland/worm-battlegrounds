@@ -2,10 +2,12 @@
 
 The lobby's backdrop: a flat illustrated background over the whole screen, under every other gui, and the tutorial's arrow layer over it.
 
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Only the theme changes (the tutorial arrow).
+
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/Lobby"` |
-| Theme | `WormBattlegrounds` |
+| Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
 | Devices | Desktop (Mobile and Console look the same) |
 | Export | A ScreenGui named `Lobby`: `Enabled` off, `DisplayOrder` -1000, `ScreenInsets` `None` (edge to edge) |
@@ -36,5 +38,5 @@ None: it only shows.
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.95 (cards ×0.96, close ×1.06 / ×0.94), with `Button_Hover` and `Button_Click` sounds |
-| Rarity | Item cards | Outline in the rarity's colour token (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
+| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |

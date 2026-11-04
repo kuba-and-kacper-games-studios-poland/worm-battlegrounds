@@ -2,12 +2,14 @@
 
 The full-screen card shown while ume teleports players between the lobby and a match: "Heading to the match…" or "Back to the lobby…".
 
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The backdrop is the sea gradient (a `UIGradient` on a white frame); the card is 720 wide.
+
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/TeleportGui"` |
-| Theme | `WormBattlegrounds` |
+| Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
-| Devices | Desktop (Mobile and Console look the same) |
+| Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
 | Export | A ScreenGui named `TeleportGui`: `Enabled` on, `DisplayOrder` 100, `ResetOnSpawn` off, `ScreenInsets` `None` |
 
 ## Elements
@@ -37,5 +39,5 @@ None: it only shows.
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.95 (cards ×0.96, close ×1.06 / ×0.94), with `Button_Hover` and `Button_Click` sounds |
-| Rarity | Item cards | Outline in the rarity's colour token (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
+| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |

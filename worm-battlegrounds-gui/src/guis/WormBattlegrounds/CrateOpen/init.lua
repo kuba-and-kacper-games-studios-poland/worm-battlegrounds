@@ -9,7 +9,7 @@ local _gui = {
 
 	-- Crates draws it on WidgetManager_Opened as I.UserInterface.UI["CrateOpen"]
 	Name = "CrateOpen",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -57,7 +57,16 @@ local _gui = {
 						Subtext = "Rare",
 						Image = "wb-grenade",
 						Visible = false,
-						Style = "Rare",
+						-- The one reward, big: its frame grows with it, as the kit's reward tiles do
+						Style = {
+							"Rare",
+							Width = 300,
+							Height = 380,
+							Padding = 48,
+							TextSize = "Heading",
+							SubtextSize = "Body",
+							Slab = { SkinScale = 0.9 },
+						},
 						Props = {
 							AnchorPoint = Vector2.new(0.5, 0.5),
 							Position = UDim2.fromScale(0.5, 0.5),

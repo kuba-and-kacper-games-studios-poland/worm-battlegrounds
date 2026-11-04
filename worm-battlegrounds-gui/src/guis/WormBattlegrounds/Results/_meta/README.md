@@ -2,12 +2,14 @@
 
 The end of a match: every player's place in team colours, what the player earned (coins, XP, level up), their match stats, **Rematch** (votes and time left) and **Back to lobby**. It has no close button and can't be closed.
 
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Every placing is a slate card (people get cards); Rematch is the one yellow, Back to lobby blue.
+
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/Results"` |
-| Theme | `WormBattlegrounds` |
+| Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
-| Devices | Desktop (Mobile and Console look the same) |
+| Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
 | Export | A ScreenGui named `Results`: `Enabled` off, `DisplayOrder` 1, `ScreenInsets` `DeviceSafeInsets`, `PreventClosing` set after export. Root `U_Widget` (WidgetManager's shape: `S_ScreenScale`, `Bg_Bottom`, `Bg_Top`, `Content`) and `MouseLockFix` |
 
 ## Elements
@@ -44,7 +46,7 @@ The game's `MatchHud` module opens it with `I.WidgetManager.Open("Results")` whe
 
 ### Setup
 
-Export it with the Gui tool: a ScreenGui named `Results`. Then set the attribute `PreventClosing = true` on the exported ScreenGui (a gui table can't hold it): WidgetManager then opens nothing over it. Every panel with an `S_ScreenScale` is laid out for a 1080 px tall screen: its module sets the UIScale to the screen's height / 1080, ×1.3 on Mobile screens shorter than 500 px, when it shows and when the screen changes size.
+Export it with the Gui tool: a ScreenGui named `Results`. Then set the attribute `PreventClosing = true` on the exported ScreenGui (a gui table can't hold it): WidgetManager then opens nothing over it. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
 
 ### Input
 
@@ -57,5 +59,5 @@ Export it with the Gui tool: a ScreenGui named `Results`. Then set the attribute
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.95 (cards ×0.96, close ×1.06 / ×0.94), with `Button_Hover` and `Button_Click` sounds |
-| Rarity | Item cards | Outline in the rarity's colour token (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
+| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |

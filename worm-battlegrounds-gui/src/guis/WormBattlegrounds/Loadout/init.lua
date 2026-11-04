@@ -9,7 +9,7 @@ local _gui = {
 
 	-- The Loadout and Cosmetics modules turn it on, on the Lobby map, as I.UserInterface.UI["Loadout"]
 	Name = "Loadout",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -20,11 +20,13 @@ local _gui = {
 		Id = "U_Loadout",
 		Title = "Loadout",
 		Screen = true,
-		Style = { "Panel", "Fixed" },
+		-- On phones and tablets: shorter, its slots scrolling instead, and drawn at 0.9 so a whole row of slots shows
+		Style = { "Panel", "Fixed", PlatformScale = { Utils_MobileScale = 0.9 } },
+		Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(500, 420) } },
 		Props = {
 			AnchorPoint = Vector2.new(0, 1),
-			Position = UDim2.new(0, 24, 1, -24),
-			Size = UDim2.fromOffset(540, 520),
+			Position = UDim2.fromScale(0.0125, 0.978),
+			Size = UDim2.fromOffset(520, 580),
 		},
 		Children = {
 			-- The smiley expands the row of owned emotes (PREFAB | Emote); + opens the emote shop
@@ -33,7 +35,7 @@ local _gui = {
 				Id = "U_Emotes",
 				Direction = "Horizontal",
 				Style = "Fixed",
-				Props = { Size = UDim2.new(1, 0, 0, 100) },
+				Props = { Size = UDim2.new(1, 0, 0, 112) },
 				Children = {
 					{
 						Control = "Item",
@@ -62,14 +64,14 @@ local _gui = {
 			{
 				Control = "Cells",
 				Id = "U_Slots",
-				Style = "Squares",
+				Style = { "Squares", CellWidth = 128, CellHeight = 128 },
 				Children = {
 					{
 						Control = "Item",
 						Id = "S_Bazooka",
 						Text = "Bazooka",
 						Image = "wb-bazooka",
-						Style = "Square",
+						Style = { "Square", Padding = "XS" },
 						Props = { LayoutOrder = -1 },
 					},
 				},
@@ -87,7 +89,7 @@ local _gui = {
 			Control = "Item",
 			Parent = "U_Slots",
 			Text = "Empty",
-			Style = "Square",
+			Style = { "Square", Padding = "XS" },
 			Children = {
 				-- Shown on a shiny item (10 copies)
 				{
@@ -96,14 +98,15 @@ local _gui = {
 					Text = "Shiny",
 					Visible = false,
 					Style = { "Small", "Strong", "Warning", "Outlined" },
-					Props = { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -6) },
+					Props = { AnchorPoint = Vector2.new(0, 0), Position = UDim2.fromOffset(8, 4) },
 				},
 				-- Covers slots 4 and 5 until they're unlocked
 				{
 					Control = "Box",
 					Id = "S_Lock",
 					Visible = false,
-					Style = "Fixed",
+					-- A darker slot over the item, so the lock reads on its own
+					Style = { "Fixed", Slab = { FillTransparency = 0.2, Fade = 0 } },
 					Props = {
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.fromScale(0.5, 0.5),

@@ -10,8 +10,8 @@ local _gui = {
 	-- A template: Worms clones it over every worm's head
 	Name = "WormTag",
 	Kind = "Billboard",
-	Theme = "WormBattlegrounds",
-	Preview = { Width = 220, Height = 170 },
+	Theme = "WormBattlegroundsBrawl",
+	Preview = { Width = 240, Height = 200 },
 
 	--[[ Tree ]]
 
@@ -33,7 +33,7 @@ local _gui = {
 						Align = "Center",
 						Style = "None",
 						Children = {
-							{ Control = "Label", Id = "S_Timer", Text = "15", Style = "Heading" },
+							{ Control = "Label", Id = "S_Timer", Text = "15", Style = "Strong" },
 							{ Control = "Picture", Image = "chevron-small-down", Style = "Glyph" },
 						},
 					},

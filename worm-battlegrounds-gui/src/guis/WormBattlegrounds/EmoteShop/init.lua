@@ -9,7 +9,7 @@ local _gui = {
 
 	-- Cosmetics draws it on WidgetManager_Opened as I.UserInterface.UI["EmoteShop"]
 	Name = "EmoteShop",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -48,8 +48,10 @@ local _gui = {
 							},
 						},
 						{ Control = "Label", Id = "S_Price", Text = "500 coins", Style = "Coin" },
-						{ Control = "Button", Id = "S_Buy", Text = "Buy", AutoWidth = true, Style = "Primary" },
-						{ Control = "Label", Id = "S_Owned", Text = "Owned", Visible = false, Style = "Success" },
+						-- A price, so green: a list has no one next step
+						{ Control = "Button", Id = "S_Buy", Text = "Buy", AutoWidth = true, Style = "Price" },
+						-- What the player owns turns grey
+						{ Control = "Label", Id = "S_Owned", Text = "Owned", Visible = false, Style = "Muted" },
 					},
 				},
 			},

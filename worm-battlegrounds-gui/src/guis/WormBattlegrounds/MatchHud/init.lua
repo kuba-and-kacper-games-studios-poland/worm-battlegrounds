@@ -9,7 +9,7 @@ local _gui = {
 
 	-- The MatchHud module turns it on, on the Match map, as I.UserInterface.UI["MatchHud"]
 	Name = "MatchHud",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 	Devices = { "Desktop", "Mobile", "Console" },
 
@@ -29,10 +29,11 @@ local _gui = {
 				Control = "Box",
 				Id = "U_Turn",
 				Screen = true,
-				Style = "Panel",
+				-- Smaller on phones and tablets, so the tutorial hint fits under it
+				Style = { "Hud", PlatformScale = { Utils_MobileScale = 0.6 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0),
-					Position = UDim2.new(0.5, 0, 0, 12),
+					Position = UDim2.fromScale(0.5, 0.011),
 					Size = UDim2.fromOffset(480, 0),
 				},
 				Children = {
@@ -51,16 +52,20 @@ local _gui = {
 					},
 				},
 			},
-			-- Top right: a line per knockout (PREFAB | FeedLine)
+			-- Top right, under the top bar: a line per knockout (PREFAB | FeedLine)
 			{
 				Control = "Cells",
 				Id = "U_KillFeed",
 				Scroll = false,
 				Style = "Fixed",
+				Tags = { Utils_PlatformScale = { Utils_DesktopScale = 0.75, Utils_MobileScale = 0.8, Utils_ConsoleScale = 1, Utils_VRScale = 1 } },
 				Props = {
 					AnchorPoint = Vector2.new(1, 0),
-					Position = UDim2.new(1, -24, 0, 24),
+					Position = UDim2.fromScale(0.9875, 0.067),
 					Size = UDim2.fromOffset(560, 320),
+				},
+				Children = {
+					{ Primitive = "UIScale", Id = "S_ScreenScale" },
 				},
 			},
 
@@ -71,11 +76,11 @@ local _gui = {
 				Control = "Box",
 				Id = "U_LoadoutBar",
 				Screen = true,
-				Style = "Panel",
+				Style = "Hud",
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 1),
-					Position = UDim2.new(0.5, 0, 1, -12),
-					Size = UDim2.fromOffset(640, 0),
+					Position = UDim2.fromScale(0.5, 0.989),
+					Size = UDim2.fromOffset(720, 0),
 				},
 				Children = {
 					{
@@ -97,7 +102,7 @@ local _gui = {
 								Direction = "Horizontal",
 								Scroll = false,
 								Style = "Fixed",
-								Props = { Size = UDim2.fromOffset(540, 106) },
+								Props = { Size = UDim2.fromOffset(640, 120) },
 							},
 							{
 								Control = "Label",
@@ -116,10 +121,11 @@ local _gui = {
 				Control = "Box",
 				Id = "U_Stamina",
 				Screen = true,
-				Style = "Panel",
+				Style = "Hud",
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 1),
-					Position = UDim2.new(0.5, 0, 1, -180),
+					-- High enough to clear the bar on a phone, where panels are biggest for the screen
+					Position = UDim2.fromScale(0.5, 0.79),
 					Size = UDim2.fromOffset(420, 0),
 				},
 				Children = {
@@ -130,18 +136,19 @@ local _gui = {
 				Control = "Item",
 				Id = "U_EmoteButton",
 				Image = "wb-smiley",
+				Screen = true,
 				Style = "Small",
-				Props = { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, -380, 1, -24) },
+				Props = { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.21, 0.978) },
 			},
 			-- Bottom right: the shot's power and angle while aiming
 			{
 				Control = "Box",
 				Id = "U_Power",
 				Screen = true,
-				Style = "Panel",
+				Style = "Hud",
 				Props = {
 					AnchorPoint = Vector2.new(1, 1),
-					Position = UDim2.new(1, -24, 1, -24),
+					Position = UDim2.fromScale(0.9875, 0.978),
 					Size = UDim2.fromOffset(320, 0),
 				},
 				Children = {
@@ -149,7 +156,7 @@ local _gui = {
 					{ Control = "Label", Id = "S_Angle", Text = "Angle 45°", Align = "Center", Style = "Heading" },
 				},
 			},
-			-- Phones and tablets: walk and jump buttons (aiming is a drag)
+			-- Phones and tablets: walk and jump buttons (aiming is a drag), each scaled with the screen
 			{
 				Primitive = "Frame",
 				Id = "U_Touch",
@@ -171,31 +178,34 @@ local _gui = {
 						Control = "Button",
 						Id = "S_Left",
 						Text = "&lt;",
+						Screen = true,
 						Props = {
 							AnchorPoint = Vector2.new(0, 1),
-							Position = UDim2.new(0, 24, 1, -140),
-							Size = UDim2.fromOffset(110, 110),
+							Position = UDim2.fromScale(0.0125, 0.8),
+							Size = UDim2.fromOffset(120, 112),
 						},
 					},
 					{
 						Control = "Button",
 						Id = "S_Right",
 						Text = "&gt;",
+						Screen = true,
 						Props = {
 							AnchorPoint = Vector2.new(0, 1),
-							Position = UDim2.new(0, 150, 1, -140),
-							Size = UDim2.fromOffset(110, 110),
+							Position = UDim2.fromScale(0.11, 0.8),
+							Size = UDim2.fromOffset(120, 112),
 						},
 					},
 					{
 						Control = "Button",
 						Id = "S_Jump",
 						Text = "Jump",
-						Style = "Primary",
+						Style = "Large",
+						Screen = true,
 						Props = {
 							AnchorPoint = Vector2.new(1, 1),
-							Position = UDim2.new(1, -24, 1, -200),
-							Size = UDim2.fromOffset(130, 110),
+							Position = UDim2.fromScale(0.9875, 0.73),
+							Size = UDim2.fromOffset(160, 112),
 						},
 					},
 				},
@@ -208,6 +218,7 @@ local _gui = {
 				Primitive = "Frame",
 				Id = "U_EmoteWheel",
 				Visible = false,
+				Tags = { Utils_PlatformScale = { Utils_DesktopScale = 0.75, Utils_MobileScale = 1, Utils_ConsoleScale = 1, Utils_VRScale = 1 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundTransparency = 1,
@@ -224,10 +235,10 @@ local _gui = {
 				Id = "U_Drop",
 				Screen = true,
 				Visible = false,
-				Style = "Panel",
+				Style = { "Hud", PlatformScale = { Utils_MobileScale = 0.6 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0),
-					Position = UDim2.new(0.5, 0, 0, 12),
+					Position = UDim2.fromScale(0.5, 0.011),
 					Size = UDim2.fromOffset(480, 0),
 				},
 				Children = {
@@ -279,7 +290,7 @@ local _gui = {
 				Id = "U_Waiting",
 				Screen = true,
 				Visible = false,
-				Style = "Panel",
+				Style = "Hud",
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					Position = UDim2.fromScale(0.5, 0.5),
@@ -329,7 +340,8 @@ local _gui = {
 					Control = "Box",
 					Id = "S_Cooldown",
 					Visible = false,
-					Style = "Fixed",
+					-- A darker slot over the item, so the turns left read on their own
+					Style = { "Fixed", Slab = { FillTransparency = 0.2, Fade = 0 } },
 					Props = {
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.fromScale(0.5, 0.5),

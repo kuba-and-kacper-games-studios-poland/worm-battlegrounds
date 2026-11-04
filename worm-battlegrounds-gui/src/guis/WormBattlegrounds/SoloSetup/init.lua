@@ -9,7 +9,7 @@ local _gui = {
 
 	-- MatchBoard draws it on WidgetManager_Opened as I.UserInterface.UI["SoloSetup"]
 	Name = "SoloSetup",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -27,16 +27,16 @@ local _gui = {
 				Align = "Center",
 				Style = "Dim",
 			},
-			-- One card per difficulty: the picked one is selected, its Subtext the coins a win pays
+			-- One slot per difficulty, the bot's picture over it: the picked one is selected, its Subtext the coins a win pays
 			{
 				Control = "Stack",
 				Direction = "Horizontal",
 				Align = "Center",
 				Style = "Loose",
 				Children = {
-					{ Control = "Item", Id = "S_Easy", Text = "Easy", Subtext = "Win: 20 coins", Style = "Uncommon" },
-					{ Control = "Item", Id = "S_Medium", Text = "Medium", Subtext = "Win: 35 coins", Style = "Rare" },
-					{ Control = "Item", Id = "S_Hard", Text = "Hard", Subtext = "Win: 60 coins", Style = "Epic" },
+					{ Control = "Item", Id = "S_Easy", Text = "Easy", Subtext = "Win: 20 coins", Image = "wb-bot", Style = "Difficulty" },
+					{ Control = "Item", Id = "S_Medium", Text = "Medium", Subtext = "Win: 35 coins", Image = "wb-bot", Style = "Difficulty" },
+					{ Control = "Item", Id = "S_Hard", Text = "Hard", Subtext = "Win: 60 coins", Image = "wb-bot", Style = "Difficulty" },
 				},
 			},
 			{

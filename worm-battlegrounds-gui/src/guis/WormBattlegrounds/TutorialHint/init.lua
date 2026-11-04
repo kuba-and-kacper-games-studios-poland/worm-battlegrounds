@@ -9,21 +9,25 @@ local _gui = {
 
 	-- The Tutorial module turns it on and places the bubble, as I.UserInterface.UI["TutorialHint"]
 	Name = "TutorialHint",
-	Theme = "WormBattlegrounds",
-	Screen = { DisplayOrder = 10, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
+	Theme = "WormBattlegroundsBrawl",
+	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
 
-	-- A speech bubble beside the element or spot it points at; the arrow turns toward it
+	--[[
+		A speech bubble at the top middle, under a match's turn panel and above the lobby's Play panel; the arrow
+		turns toward what it points at
+	]]
 	Root = {
 		Control = "Box",
 		Id = "U_Hint",
 		Screen = true,
-		Style = "Panel",
+		-- Smaller on phones and tablets, so it fits between the turn panel and the lobby's Play panel there too
+		Style = { "Panel", PlatformScale = { Utils_MobileScale = 0.55 } },
 		Props = {
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(0.5, 0.35),
-			Size = UDim2.fromOffset(440, 0),
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.fromScale(0.5, 0.18),
+			Size = UDim2.fromOffset(640, 0),
 		},
 		Children = {
 			{

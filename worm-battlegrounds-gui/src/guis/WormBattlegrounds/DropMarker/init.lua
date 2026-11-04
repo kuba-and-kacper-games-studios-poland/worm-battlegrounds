@@ -10,8 +10,8 @@ local _gui = {
 	-- A template: Match clones it over each player's chosen landing spot in the drop phase
 	Name = "DropMarker",
 	Kind = "Billboard",
-	Theme = "WormBattlegrounds",
-	Preview = { Width = 200, Height = 90 },
+	Theme = "WormBattlegroundsBrawl",
+	Preview = { Width = 240, Height = 100 },
 
 	--[[ Tree ]]
 

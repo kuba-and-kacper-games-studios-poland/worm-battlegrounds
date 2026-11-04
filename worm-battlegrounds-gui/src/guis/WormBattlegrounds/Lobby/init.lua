@@ -9,7 +9,7 @@ local _gui = {
 
 	-- The Lobby module turns it on, on the Lobby map, as I.UserInterface.UI["Lobby"]
 	Name = "Lobby",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	-- Under every other gui, over the whole screen
 	Screen = { DisplayOrder = -1000, Enabled = false, ScreenInsets = Enum.ScreenInsets.None },
 

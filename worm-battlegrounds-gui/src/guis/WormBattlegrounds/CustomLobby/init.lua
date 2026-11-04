@@ -9,7 +9,7 @@ local _gui = {
 
 	-- MatchBoard draws it on WidgetManager_Opened as I.UserInterface.UI["CustomLobby"]
 	Name = "CustomLobby",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -24,7 +24,8 @@ local _gui = {
 			{
 				Control = "Box",
 				Id = "U_Create",
-				Style = "Fixed",
+				-- A page of the window, not a slot of its own: the maps sit on the slots
+				Style = { "Fixed", Padding = 0, Slab = { Fill = "" } },
 				Children = {
 					{ Control = "Label", Text = "Map", Style = "Heading" },
 					-- The 6 maps (PREFAB | MapChoice); the picked one is selected
@@ -41,8 +42,9 @@ local _gui = {
 								Text = "Deathmatch",
 								AutoWidth = true,
 								Selected = true,
+								Style = "Tab",
 							},
-							{ Control = "Button", Id = "S_Teams", Text = "Teams", AutoWidth = true },
+							{ Control = "Button", Id = "S_Teams", Text = "Teams", AutoWidth = true, Style = "Tab" },
 						},
 					},
 					{
@@ -51,10 +53,11 @@ local _gui = {
 						Style = "Buttons",
 						Children = {
 							{ Control = "Label", Text = "Players", Style = "Heading" },
-							{ Control = "Button", Id = "S_Players2", Text = "2", AutoWidth = true, Selected = true },
-							{ Control = "Button", Id = "S_Players4", Text = "4", AutoWidth = true },
-							{ Control = "Button", Id = "S_Players6", Text = "6", AutoWidth = true },
-							{ Control = "Button", Id = "S_Players8", Text = "8", AutoWidth = true },
+							-- Tabs: slate at rest, the picked one blue
+							{ Control = "Button", Id = "S_Players2", Text = "2", AutoWidth = true, Selected = true, Style = "Tab" },
+							{ Control = "Button", Id = "S_Players4", Text = "4", AutoWidth = true, Style = "Tab" },
+							{ Control = "Button", Id = "S_Players6", Text = "6", AutoWidth = true, Style = "Tab" },
+							{ Control = "Button", Id = "S_Players8", Text = "8", AutoWidth = true, Style = "Tab" },
 						},
 					},
 					{ Control = "Button", Id = "S_Create", Text = "Create lobby", Style = "Primary" },
@@ -64,7 +67,7 @@ local _gui = {
 				Control = "Box",
 				Id = "U_Room",
 				Visible = false,
-				Style = "Fixed",
+				Style = { "Fixed", Padding = 0, Slab = { Fill = "" } },
 				Children = {
 					{
 						Control = "Label",
@@ -126,7 +129,7 @@ local _gui = {
 					Id = "S_Invite",
 					Text = "Invite",
 					AutoWidth = true,
-					Style = { "Primary", "Small" },
+					Style = "Small",
 				},
 			},
 		},

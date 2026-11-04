@@ -2,11 +2,13 @@
 
 A damage number that rises and fades where a worm is hit (only with the Damage numbers setting on).
 
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Billboard 160 × 80 (was 140 × 64) for the bigger Display text.
+
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/DamagePop"` |
 | Kind | Billboard |
-| Theme | `WormBattlegrounds` |
+| Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
 | Devices | Desktop (Mobile and Console look the same) |
 | Export | A BillboardGui named `DamagePop` (a template) |
@@ -36,5 +38,5 @@ None: it only shows.
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.95 (cards ×0.96, close ×1.06 / ×0.94), with `Button_Hover` and `Button_Click` sounds |
-| Rarity | Item cards | Outline in the rarity's colour token (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
+| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |

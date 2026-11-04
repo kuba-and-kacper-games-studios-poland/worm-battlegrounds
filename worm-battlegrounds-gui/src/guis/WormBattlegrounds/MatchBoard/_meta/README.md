@@ -2,12 +2,14 @@
 
 The lobby's middle panel. Before joining: **Play solo**, the 3 open public matches, and **Custom lobby**. After joining a public match the waiting room takes its place: the match, the countdown, the players, **Vote to start** and **Leave match**.
 
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Play solo is the large yellow button, the screen's main one; open matches are purple event cards (a picture, mode, the map in green, players and timer) with a blue Join, since a list of matches has no one next step. The panel is 720 wide so it fits between Party and Crates, and hangs from the bottom (bottom-centre, its foot level with Loadout's) so the tutorial hint fits above it. On phones and tablets it's 560 × 600 at scale 0.9 and the "Public matches" heading hides (`Utils_HideOnPlatform`), so a whole match card shows.
+
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/MatchBoard"` |
-| Theme | `WormBattlegrounds` |
+| Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
-| Devices | Desktop (Mobile and Console look the same) |
+| Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
 | Export | A ScreenGui named `MatchBoard`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` |
 
 ## Elements
@@ -51,7 +53,7 @@ The game's `MatchBoard` module: it turns the ScreenGui on on the Lobby map, refr
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchBoard`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1080 px tall screen: its module sets the UIScale to the screen's height / 1080, ×1.3 on Mobile screens shorter than 500 px, when it shows and when the screen changes size.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchBoard`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
 
 ### Input
 
@@ -64,5 +66,5 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.95 (cards ×0.96, close ×1.06 / ×0.94), with `Button_Hover` and `Button_Click` sounds |
-| Rarity | Item cards | Outline in the rarity's colour token (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
+| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |

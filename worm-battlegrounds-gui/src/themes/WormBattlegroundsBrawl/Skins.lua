@@ -1,0 +1,57 @@
+--[[
+	Created By: 	Nari
+]]
+
+-- Written by the kit's build script: each skin's 9-slice centre in its PNG's pixels (2x the SVG)
+--- @type { [string]: Rect }
+local _skins = {
+	["wb-skin-btn_yellow"] = Rect.new(48, 48, 144, 128),
+	["wb-skin-mini_yellow"] = Rect.new(40, 40, 72, 68),
+	["wb-skin-btn_blue"] = Rect.new(48, 48, 144, 128),
+	["wb-skin-mini_blue"] = Rect.new(40, 40, 72, 68),
+	["wb-skin-btn_green"] = Rect.new(48, 48, 144, 128),
+	["wb-skin-mini_green"] = Rect.new(40, 40, 72, 68),
+	["wb-skin-btn_red"] = Rect.new(48, 48, 144, 128),
+	["wb-skin-mini_red"] = Rect.new(40, 40, 72, 68),
+	["wb-skin-btn_purple"] = Rect.new(48, 48, 144, 128),
+	["wb-skin-mini_purple"] = Rect.new(40, 40, 72, 68),
+	["wb-skin-btn_slate"] = Rect.new(48, 48, 144, 128),
+	["wb-skin-mini_slate"] = Rect.new(40, 40, 72, 68),
+	["wb-skin-btn_grey"] = Rect.new(48, 48, 144, 128),
+	["wb-skin-mini_grey"] = Rect.new(40, 40, 72, 68),
+	["wb-skin-slant_yellow_144"] = Rect.new(86, 142, 134, 146),
+	["wb-skin-slant_yellow_112"] = Rect.new(76, 110, 124, 114),
+	["wb-skin-slant_yellow_96"] = Rect.new(72, 94, 120, 98),
+	["wb-skin-slant_blue_144"] = Rect.new(86, 142, 134, 146),
+	["wb-skin-slant_blue_112"] = Rect.new(76, 110, 124, 114),
+	["wb-skin-slant_blue_96"] = Rect.new(72, 94, 120, 98),
+	["wb-skin-slant_green_144"] = Rect.new(86, 142, 134, 146),
+	["wb-skin-slant_green_112"] = Rect.new(76, 110, 124, 114),
+	["wb-skin-slant_green_96"] = Rect.new(72, 94, 120, 98),
+	["wb-skin-slant_red_144"] = Rect.new(86, 142, 134, 146),
+	["wb-skin-slant_red_112"] = Rect.new(76, 110, 124, 114),
+	["wb-skin-slant_red_96"] = Rect.new(72, 94, 120, 98),
+	["wb-skin-slant_purple_144"] = Rect.new(86, 142, 134, 146),
+	["wb-skin-slant_purple_112"] = Rect.new(76, 110, 124, 114),
+	["wb-skin-slant_purple_96"] = Rect.new(72, 94, 120, 98),
+	["wb-skin-slant_grey_144"] = Rect.new(86, 142, 134, 146),
+	["wb-skin-slant_grey_112"] = Rect.new(76, 110, 124, 114),
+	["wb-skin-slant_grey_96"] = Rect.new(72, 94, 120, 98),
+	["wb-skin-card_slate"] = Rect.new(48, 48, 144, 132),
+	["wb-skin-card_blue"] = Rect.new(48, 48, 144, 132),
+	["wb-skin-card_purple"] = Rect.new(48, 48, 144, 132),
+	["wb-skin-card_gold"] = Rect.new(48, 48, 144, 132),
+	["wb-skin-frame_window"] = Rect.new(64, 64, 192, 192),
+	["wb-skin-header_sea"] = Rect.new(40, 40, 152, 184),
+	["wb-skin-frame_gold"] = Rect.new(60, 60, 132, 132),
+	["wb-skin-frame_silver"] = Rect.new(60, 60, 132, 132),
+	["wb-skin-chip_silver"] = Rect.new(40, 40, 104, 68),
+	["wb-skin-well_dark"] = Rect.new(36, 40, 92, 92),
+	["wb-skin-pill_dark"] = Rect.new(72, 60, 104, 84),
+	["wb-skin-bar_cyan"] = Rect.new(44, 40, 76, 48),
+	["wb-skin-dot_red"] = Rect.new(54, 54, 58, 58),
+	["wb-skin-banner_yellow"] = Rect.new(90, 158, 138, 162),
+	["wb-skin-border_orange"] = Rect.new(88, 88, 168, 168),
+}
+
+return _skins

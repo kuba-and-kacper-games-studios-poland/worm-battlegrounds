@@ -9,7 +9,7 @@ local _gui = {
 
 	-- The Crates module turns it on, on the Lobby map, as I.UserInterface.UI["Crates"]
 	Name = "Crates",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -20,11 +20,13 @@ local _gui = {
 		Id = "U_Crates",
 		Title = "Crates",
 		Screen = true,
-		Style = { "Panel", "Fixed" },
+		-- On phones and tablets: shorter, its list scrolling instead, and drawn at 0.9 so the buttons keep their room
+		Style = { "Panel", "Fixed", PlatformScale = { Utils_MobileScale = 0.9 } },
+		Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(520, 820) } },
 		Props = {
-			AnchorPoint = Vector2.new(1, 0.5),
-			Position = UDim2.new(1, -24, 0.55, 0),
-			Size = UDim2.fromOffset(540, 880),
+			AnchorPoint = Vector2.new(1, 1),
+			Position = UDim2.fromScale(0.9875, 0.978),
+			Size = UDim2.fromOffset(560, 900),
 		},
 		Children = {
 			-- The new player's free crate (Grenade and Shotgun), shown once by Tutorial in place of the list
@@ -59,7 +61,10 @@ local _gui = {
 	--[[ Prefabs ]]
 
 	Templates = {
-		-- One crate: picture, name, the price in each currency it takes (the selected one pays), Open, Open 10, Details
+		--[[
+			One crate on a slot: picture and name, then which currency pays (the selected tab), then Open, Open 10 and
+			Details. Prices are green; the window's one yellow is the tutorial's free crate
+		]]
 		["PREFAB | CrateCard"] = {
 			Control = "Box",
 			Parent = "U_CrateList",
@@ -68,7 +73,7 @@ local _gui = {
 					Control = "Stack",
 					Direction = "Horizontal",
 					Children = {
-						{ Control = "Picture", Id = "S_Picture" },
+						{ Control = "Picture", Id = "S_Picture", Style = { "Icon", Width = 128, Height = 128 } },
 						{
 							Control = "Stack",
 							Grow = 1,
@@ -83,59 +88,31 @@ local _gui = {
 									Visible = false,
 									Style = { "Small", "Success" },
 								},
-								{
-									Control = "Stack",
-									Direction = "Horizontal",
-									Style = "Buttons",
-									Children = {
-										{
-											Control = "Button",
-											Id = "S_PayCoins",
-											Text = "100 coins",
-											AutoWidth = true,
-											Selected = true,
-											Style = "Small",
-										},
-										{
-											Control = "Button",
-											Id = "S_PayDiamonds",
-											Text = "200 diamonds",
-											AutoWidth = true,
-											Style = "Small",
-										},
-									},
-								},
-								{
-									Control = "Stack",
-									Direction = "Horizontal",
-									Style = "Buttons",
-									Children = {
-										{
-											Control = "Button",
-											Id = "S_Open",
-											Text = "Open",
-											AutoWidth = true,
-											Style = { "Primary", "Small" },
-										},
-										{
-											Control = "Button",
-											Id = "S_Open10",
-											Text = "Open 10",
-											AutoWidth = true,
-											Style = { "Primary", "Small" },
-										},
-										-- The odds, required before buying (opens CrateOdds)
-										{
-											Control = "Button",
-											Id = "S_Details",
-											Text = "Details",
-											AutoWidth = true,
-											Style = "Small",
-										},
-									},
-								},
 							},
 						},
+					},
+				},
+				-- The currency that pays: a tab each, the picked one blue
+				{
+					Control = "Stack",
+					Direction = "Horizontal",
+					Fill = true,
+					Style = "Buttons",
+					Children = {
+						{ Control = "Button", Id = "S_PayCoins", Text = "100 coins", Selected = true, Style = { "Tab", "Small" } },
+						{ Control = "Button", Id = "S_PayDiamonds", Text = "200 diamonds", Style = { "Tab", "Small" } },
+					},
+				},
+				{
+					Control = "Stack",
+					Direction = "Horizontal",
+					Fill = true,
+					Style = "Buttons",
+					Children = {
+						{ Control = "Button", Id = "S_Open", Text = "Open", Style = { "Price", "Small" } },
+						{ Control = "Button", Id = "S_Open10", Text = "Open 10", Style = { "Price", "Small" } },
+						-- The odds, required before buying (opens CrateOdds)
+						{ Control = "Button", Id = "S_Details", Text = "Details", Style = "Small" },
 					},
 				},
 			},

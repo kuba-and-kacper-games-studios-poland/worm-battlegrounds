@@ -2,12 +2,14 @@
 
 The lobby's right panel: the 4 crates (weapon, premium, utility, skin), each with its prices, **Open**, **Open 10** and **Details**; the free tutorial crate; and the **Skins** button showing the equipped skin.
 
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Each crate card has three rows: the picture and name, the currencies as tabs (slate, the paying one blue), then Open and Open 10 in green (prices) and Details in blue. The panel is 560 wide, so it clears Play on tablets, and hangs from the bottom-right corner. On phones and tablets it's 520 × 820 at scale 0.9, its list scrolling. The tutorial's free crate keeps the one yellow.
+
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/Crates"` |
-| Theme | `WormBattlegrounds` |
+| Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
-| Devices | Desktop (Mobile and Console look the same) |
+| Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
 | Export | A ScreenGui named `Crates`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` |
 
 ## Elements
@@ -43,7 +45,7 @@ The game's `Crates` module (cards, the tutorial crate, opening), `Cosmetics` (`U
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Crates`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1080 px tall screen: its module sets the UIScale to the screen's height / 1080, ×1.3 on Mobile screens shorter than 500 px, when it shows and when the screen changes size. Prices are read live and odds shown before buying (Roblox's paid random items rules).
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Crates`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size. Prices are read live and odds shown before buying (Roblox's paid random items rules).
 
 ### Input
 
@@ -56,5 +58,6 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Crate
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.95 (cards ×0.96, close ×1.06 / ×0.94), with `Button_Hover` and `Button_Click` sounds |
-| Rarity | Item cards | Outline in the rarity's colour token (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
+| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |
+| Paying currency | `CrateCard` › `S_PayCoins`, `S_PayDiamonds` › `Face` | The paying one wears its `Kit_SelectedImage` (blue), the other its `Kit_Image` (slate); Crates' `Panel` |

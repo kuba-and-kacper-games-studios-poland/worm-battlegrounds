@@ -10,8 +10,8 @@ local _gui = {
 	-- A template: Worms clones it where a worm is hit, rises and fades it (only with the DamageNumbers setting on)
 	Name = "DamagePop",
 	Kind = "Billboard",
-	Theme = "WormBattlegrounds",
-	Preview = { Width = 140, Height = 64 },
+	Theme = "WormBattlegroundsBrawl",
+	Preview = { Width = 160, Height = 80 },
 
 	--[[ Tree ]]
 

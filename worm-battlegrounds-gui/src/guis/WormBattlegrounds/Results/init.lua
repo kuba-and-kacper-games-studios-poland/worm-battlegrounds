@@ -9,7 +9,7 @@ local _gui = {
 
 	-- MatchHud opens it at the end of a match, as I.UserInterface.UI["Results"]
 	Name = "Results",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -103,6 +103,8 @@ local _gui = {
 		["PREFAB | Placing"] = {
 			Control = "Box",
 			Parent = "U_Placings",
+			-- A person, so a slate card (the kit keeps cards for people and places)
+			Style = "Card",
 			Children = {
 				{
 					Control = "Stack",

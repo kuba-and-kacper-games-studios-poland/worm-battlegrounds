@@ -9,7 +9,7 @@ local _gui = {
 
 	-- Loadout draws it on WidgetManager_Opened as I.UserInterface.UI["LoadoutPicker"]
 	Name = "LoadoutPicker",
-	Theme = "WormBattlegrounds",
+	Theme = "WormBattlegroundsBrawl",
 	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
@@ -29,7 +29,7 @@ local _gui = {
 				Style = "Dim",
 			},
 			-- Owned items (PREFAB | ItemTile); items already in another slot are greyed out
-			{ Control = "Cells", Id = "U_Items", Style = "Grid" },
+			{ Control = "Cells", Id = "U_Items", Style = { "Grid", CellWidth = 240, CellHeight = 240 } },
 			{ Control = "Button", Id = "S_Empty", Text = "Empty slot", Style = "Danger" },
 		},
 	},
@@ -60,7 +60,7 @@ local _gui = {
 					Props = {
 						AnchorPoint = Vector2.new(1, 0),
 						Position = UDim2.new(1, -10, 0, 6),
-						Size = UDim2.fromScale(0.5, 0),
+						Size = UDim2.new(0.5, 0, 0, 32),
 					},
 				},
 			},

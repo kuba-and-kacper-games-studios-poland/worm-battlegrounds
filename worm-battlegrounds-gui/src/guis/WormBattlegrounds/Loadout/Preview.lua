@@ -22,10 +22,21 @@ local ITEMS = {
 	{ "Black hole grenade", "Legendary" },
 }
 
+-- Each rarity's colour, as the Rarity module's looks have them (Base); game code writes it on the item's name
+--- @type { [string]: Color3 }
+local RARITY_COLORS = {
+	Common = Color3.fromHex("CDD5DF"),
+	Uncommon = Color3.fromHex("8CEB2E"),
+	Rare = Color3.fromHex("26C6FF"),
+	Epic = Color3.fromHex("A64DFF"),
+	Legendary = Color3.fromHex("FFB51F"),
+}
+
 --[[ Screen ]]
 
--- The screen height the guis are laid out for, and the boost on short Mobile screens, as ume's Settings module's
+-- The screen size the guis are laid out for, and the boost on short Mobile screens, as ume's Settings module's
 local DESIGN_HEIGHT: number = 1080
+local DESIGN_WIDTH: number = 1920
 local SMALL_SCREEN: number = 500
 local MOBILE_BOOST: number = 1.3
 
@@ -60,7 +71,8 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the 5 slots, locking those past the unlocked count, and the row of owned emotes.
+	Fills the 5 slots, locking those past the unlocked count, each name in its rarity's colour, and the row of owned
+	emotes.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -72,13 +84,15 @@ function Module.Apply(preview)
 
 	--- @param item { string }
 	for _index: number, item in ipairs(ITEMS) do
-		table.insert(slotItems, { Text = item[1], Image = Module._getIcon(item[1]), Style = { "Square", item[2] } })
+		table.insert(slotItems, { Text = item[1], Image = Module._getIcon(item[1]), Style = "Square" })
 	end
 
 	local slots = preview.Fill("PREFAB | Slot", slotItems) --- @type { UmeGui_Subview }
 
 	--- @param slot UmeGui_Subview
 	for index: number, slot in ipairs(slots) do
+		local name: TextLabel = slot.Root.Instance:FindFirstChild("S_Name", true)
+		name.TextColor3 = RARITY_COLORS[ITEMS[index][2]]
 		slot:Get("S_Lock").Instance.Visible = index > preview.Values.S_Unlocked
 		slot:Get("S_Price").SetText(if index == 4 then "2,500 coins or 149 R$" else "6,000 coins or 299 R$")
 		slot:Get("S_Shiny").Instance.Visible = index == 1 and preview.Values.S_Shiny
@@ -96,15 +110,18 @@ end
 --%%%%%%%%%%%%%%%%%%%% Apply Screen Scale
 
 --[[
-	Scales every panel to the previewed screen as the game's modules do: its height over the design height, bigger on
-	short Mobile screens.
+	Scales every panel to the previewed screen as the game's modules do: its height over the design height (or its
+	width over the design width on a narrower screen), bigger on short Mobile screens, times each panel's device scale.
 ]]
 --- @param preview UmeGui_Preview
 function Module._applyScreenScale(preview)
 	--[[ Local Variables ]]
 
 	local height: number = Workspace.CurrentCamera.ViewportSize.Y
-	local scale: number = height / DESIGN_HEIGHT
+	local width: number = Workspace.CurrentCamera.ViewportSize.X
+
+	-- A screen narrower than the layout scales by its width, so side-by-side panels still fit
+	local scale: number = math.min(height / DESIGN_HEIGHT, width / DESIGN_WIDTH)
 
 	-- Boost short touch screens so the buttons stay big enough to tap
 	if preview.Device == "Mobile" and height < SMALL_SCREEN then
@@ -115,7 +132,9 @@ function Module._applyScreenScale(preview)
 
 	for _index: number, descendant: Instance in ipairs(preview.View.Root:GetDescendants()) do
 		if descendant:IsA("UIScale") and descendant.Name == "S_ScreenScale" then
-			descendant.Scale = scale
+			-- Times the panel's scale for the previewed device (its Utils_PlatformScale tag), as ScreenScale does
+			local deviceScale: number = descendant.Parent:GetAttribute(`Utils_{preview.Device}Scale`) or 0
+			descendant.Scale = scale * (if deviceScale == 0 then 1 else deviceScale)
 		end
 	end
 end
