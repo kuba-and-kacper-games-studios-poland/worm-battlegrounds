@@ -42,10 +42,11 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   `Body` fill, a rarity is a text colour (`I.Rarity.GetLook(rarity).Base`), and a reward tile takes its rarity's
   frame, stage and light from its `Kit_<Rarity>_*` attributes. Exports can't run the theme's controls, so code reads
   what the controls recorded (the theme's README → Button, Item).
-- **Pictures drawn for the game stay local until the owner approves them:** the kit (the game home's
+- **Pictures drawn for the game stay local until the owner approves them:** a kit (the game home's
   `assets/_inbox/ui_kit_brawl/`) renders them into Studio's content folder (`rbxasset://textures/wb_brawlpreview/…`)
-  and writes the theme's `Icons.lua` and `Skins.lua`. Nothing is uploaded to Roblox before the owner says so, so
-  players see them only after that upload.
+  and writes the theme's `Icons.lua` and `Skins.lua`. Nothing is uploaded to Roblox before the owner says so; then
+  the pictures get PrepKit's pixel-fix, are uploaded, and `Icons.lua` points at their `rbxassetid://` ids. The GUI
+  kit is uploaded (2026-11-04); the first kit's item, emote and skin pictures (`wb_guipreview`) are still local.
 - **The game's guis are built from the theme's controls** (`WormBattlegroundsBrawl`, over `WormBattlegrounds`),
   never from raw `Primitive` nodes holding their own colours and sizes (as ume-gui's System guis are): `Widget` for
   every WidgetManager widget, `Box` for panels and cards, `Item` for item cards, `Cells` for lists and grids code
