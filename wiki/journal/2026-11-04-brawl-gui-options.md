@@ -78,10 +78,10 @@ Code: `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENC
 `Reveal.lua`.
 
 **How to check.** Play the place: the lobby, the crate reveal, the loadout picker, Solo, the Custom lobby and the
-Shop open with the kit look and no errors (checked in a play test on 2026-11-04, PC 1881 × 1050). The pictures are
-local previews, so only Studio on this PC shows them until they're uploaded.
+Shop open with the kit look and no errors (checked in a play test on 2026-11-04, PC 1881 × 1050). The kit's 86
+pictures were uploaded the same day (theme `Icons.lua`, all `rbxassetid://`) and draw the same in a play test.
 
 **For the wiki.** Guis → "How every gui is made" → The theme (the kit's look, Londrina Solid, colour by job, slots
-versus reward tiles, how picked and owned show), the guis' pages' pictures, and a History line. Still unsure: the
-kit's pictures aren't uploaded yet (they need the owner's yes), and the option folders
+versus reward tiles, how picked and owned show), the guis' pages' pictures, and a History line. Still unsure:
+the item, emote and skin pictures from the first kit are still local previews, and the option folders
 (`src/guis/WormBattlegrounds-<Gui>/`) are still on disk, uncommitted, until the owner removes them.
