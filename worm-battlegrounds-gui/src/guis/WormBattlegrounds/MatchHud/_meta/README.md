@@ -83,4 +83,5 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 | --- | --- | --- |
 | Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
 | Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |
+| No icon picture | `BarSlot` › `S_Icon` | The game adds a ViewportFrame `S_Model` filling the icon, with the weapon's 3D model side-on (MatchHud's `MODEL_*` settings) |
 | Selected item | `BarSlot` › `Body` | Fill rgb(40, 140, 255) at 0.2 transparency when selected, else black at 0.7 (MatchHud's `SELECTED_*` and `TILE_*` settings) |
