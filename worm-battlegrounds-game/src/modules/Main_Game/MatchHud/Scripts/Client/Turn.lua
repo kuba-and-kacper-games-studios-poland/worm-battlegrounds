@@ -50,6 +50,7 @@ function Module.Start(gui: ScreenGui)
 
 	matchFolder = I.Match.GetFolder()
 	matchFolder:GetAttributeChangedSignal("Wind"):Connect(Module._refreshWind)
+	matchFolder:GetAttributeChangedSignal("TurnOrder"):Connect(Module._refresh)
 	I.Topic.Subscribe("Match_PhaseChanged", Module._refresh)
 	I.Topic.Subscribe("Match_TurnStarted", Module._refresh)
 	I.Topic.Subscribe("Match_MyTurn", Module._refresh)
@@ -61,8 +62,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the turn panel while turns run, the banner and the stamina bar on the player's own turn, and ticks the
-	timer only while the panel shows.
+	Shows the turn panel while turns run, the stamina bar on the player's own turn, and the banner on it ("Your
+	turn!") or, on other worms' turns, how many turns until the player's own; ticks the timer only while it shows.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -70,11 +71,16 @@ function Module._refresh()
 	local phase: string = I.Match.GetPhase()
 	local inTurns: boolean = phase == "Turn" or phase == "Flight" or phase == "Settle"
 	local myTurn: boolean = I.Match.IsMyTurn()
+	local turnsLeft: number? = if myTurn then nil else Module._getTurnsLeft()
+
+	--[[ Banner ]]
+
+	elems["Banner"].Visible = myTurn or turnsLeft ~= nil
+	elems["Banner"].Text = if myTurn then "Your turn!" elseif turnsLeft == 1 then "You're next!" else `Your turn in {turnsLeft} turns`
 
 	--[[ Visibility ]]
 
 	elems["Turn"].Visible = inTurns
-	elems["Banner"].Visible = myTurn
 	elems["Stamina"].Visible = myTurn and phase == "Turn"
 
 	--[[ Ticking ]]
@@ -133,6 +139,32 @@ function Module._tick()
 	local share: number = math.clamp((mine:GetAttribute("Stamina") or 0) / I.Settings["WormControl"].STAMINA_STUDS, 0, 1)
 	elems["StaminaFill"].Size = UDim2.fromScale(share, 1)
 	elems["StaminaStatus"].Text = `{math.round(share * 100)}%`
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Turns Left
+
+--[[
+	How many turns come before the player's own, counting the one playing now (1 when they're next), from the
+	match's `TurnOrder`. Nil when their worm can't play.
+]]
+--- @return number?
+function Module._getTurnsLeft()
+	--[[ Data ]]
+
+	local mine: Model? = I.Worms.GetMine()
+
+	--[[ Checks ]]
+
+	-- Check if the player's worm is still in play
+	if not mine or not mine:GetAttribute("Alive") then
+		return nil
+	end
+
+	--[[ Returning ]]
+
+	return table.find(string.split(matchFolder:GetAttribute("TurnOrder") or "", ","), mine.Name)
 end
 
 return Module

@@ -99,14 +99,16 @@ function Module.Reset()
 
 	matchFolder:SetAttribute("Round", 1)
 	matchFolder:SetAttribute("SuddenDeath", false)
+	matchFolder:SetAttribute("TurnOrder", "")
 end
 
 --%%%%%%%%%%%%%%%%%%%% Run Turn
 
 --[[
 	Plays the next turn: picks the next worm (team by team), starts a new round when the order wrapped, raises the
-	liquid in sudden death, rolls the wind, hands the worm to its player (or its bot), waits for a shot or the timer,
-	takes the worm back, waits for the shot and then the arena to settle, and knocks out every worm left at 0 health.
+	liquid in sudden death, rolls the wind, tells every client who plays after it (`TurnOrder`), hands the worm to
+	its player (or its bot), waits for a shot or the timer, takes the worm back, waits for the shot and then the
+	arena to settle, and knocks out every worm left at 0 health.
 ]]
 function Module.RunTurn()
 	--[[ Round ]]
@@ -145,6 +147,7 @@ function Module.RunTurn()
 	shotResolved = false
 	model:SetAttribute("Active", true)
 	matchFolder:SetAttribute("Wind", random:NextInteger(-_settings.WIND_MAX, _settings.WIND_MAX))
+	matchFolder:SetAttribute("TurnOrder", table.concat(Module._getUpcoming(), ","))
 	matchFolder:SetAttribute("ActiveId", participantId)
 	matchFolder:SetAttribute("TurnEndsAt", I.S.Workspace:GetServerTimeNow() + _settings.TURN_SECONDS)
 	setPhase("Turn")
@@ -253,34 +256,72 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Next
 
 --[[
-	Returns who plays next: the next team in order that still has a worm who can play, and the next such worm in
-	that team. Worms out of the match and players who dropped are skipped. Nil when nobody can play.
+	Returns who plays next, moving the order on: the next team in order that still has a worm who can play, and the
+	next such worm in that team. Nil when nobody can play.
 ]]
 --- @return string?
 function Module._getNext()
 	--[[ Searching ]]
 
-	for _try: number = 1, #teams do
-		--- @type Match_Team
-		local team = teams[teamIndex]
-		teamIndex += 1
-		if teamIndex > #teams then
-			teamIndex = 1
-			roundPending = true
-		end
+	local participantId: string?
+	local wrapped: boolean
+	participantId, teamIndex, wrapped = Module._findNext(teams, teamIndex)
+	if wrapped then
+		roundPending = true
+	end
 
-		for _member: number = 1, #team.Members do
-			local id: string = team.Members[team.Next]
-			team.Next = team.Next % #team.Members + 1
+	--[[ Returning ]]
+
+	return participantId
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Upcoming
+
+--[[
+	Returns every worm that can play, in the order its next turn comes after the one playing now, walking a copy of
+	the turn order so the real one doesn't move.
+]]
+--- @return { string }
+function Module._getUpcoming()
+	--[[ Local Variables ]]
+
+	local order = {} --- @type { Match_Team }
+	local index: number = teamIndex
+	local upcoming = {} --- @type { string }
+	local playable: number = 0
+	local steps: number = 0
+
+	--- @param team Match_Team
+	for _index: number, team in ipairs(teams) do
+		table.insert(order, { Team = team.Team, Members = team.Members, Next = team.Next })
+		for _member: number, id: string in ipairs(team.Members) do
 			if Module._canPlay(id) then
-				return id
+				playable += 1
 			end
+		end
+		steps += #team.Members * #teams
+	end
+
+	--[[ Walking ]]
+
+	-- A worm already listed comes up again before a bigger team's last members, so walk until each one came up
+	for _step: number = 1, steps do
+		if #upcoming >= playable then
+			break
+		end
+		local participantId: string?
+		participantId, index = Module._findNext(order, index)
+		if not participantId then
+			break
+		end
+		if not table.find(upcoming, participantId) then
+			table.insert(upcoming, participantId)
 		end
 	end
 
 	--[[ Returning ]]
 
-	return nil
+	return upcoming
 end
 
 --%%%%%%%%%%%%%%%%%%%% Can Play
@@ -298,6 +339,47 @@ function Module._canPlay(participantId: string)
 	--[[ Returning ]]
 
 	return participant ~= nil and not participant.Out and model ~= nil and model:GetAttribute("Alive") == true and (participant.IsBot or participant.Connected)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Find Next
+
+--[[
+	Walks a turn order from a team's index to the next worm who can play, moving each team's `Next` on as it goes.
+	Returns that worm (nil when nobody can play), the index to start from next time, and whether it wrapped past the
+	last team.
+]]
+--- @param order { Match_Team }
+--- @return string?
+--- @return number
+--- @return boolean
+function Module._findNext(order, index: number)
+	--[[ Local Variables ]]
+
+	local wrapped: boolean = false
+
+	--[[ Searching ]]
+
+	for _try: number = 1, #order do
+		--- @type Match_Team
+		local team = order[index]
+		index += 1
+		if index > #order then
+			index = 1
+			wrapped = true
+		end
+
+		for _member: number = 1, #team.Members do
+			local id: string = team.Members[team.Next]
+			team.Next = team.Next % #team.Members + 1
+			if Module._canPlay(id) then
+				return id, index, wrapped
+			end
+		end
+	end
+
+	--[[ Returning ]]
+
+	return nil, index, wrapped
 end
 
 return Module

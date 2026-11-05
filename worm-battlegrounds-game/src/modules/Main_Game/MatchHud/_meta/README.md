@@ -19,7 +19,7 @@ closes Results.
 | File | What it controls |
 | --- | --- |
 | `Client.lua` | Turns the gui on while the player is in a match (and the `HIDDEN_IN_MATCH` guis off), and starts the handlers |
-| `Scripts/Client/Turn.lua` | Banner, timer, wind, stamina |
+| `Scripts/Client/Turn.lua` | Banner ("Your turn!", or on other worms' turns "You're next!" / "Your turn in N turns" from Match's `TurnOrder`), timer, wind, stamina |
 | `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
 | `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys; utilities are used as soon as they're picked on the player's turn. A weapon with no icon picture shows its 3D model in its box instead (`I.G_Arsenal.GetModel`, in a ViewportFrame `S_Model` over `S_Icon`) |
 | `Scripts/Client/Aim.lua` | Drag and pad aiming, the aim dots, firing (with the `Combat_Fire` haptic tick), homing targets, detonating; the dots of another worm's aim (a player's or a bot's) while it aims |

@@ -17,7 +17,7 @@ The match screen: whose turn, the timer and the wind at the top; the kill feed a
 | Element | Control | What game code does with it |
 | --- | --- | --- |
 | `U_Turn` | Box (`Panel`) | Top middle. Has `S_ScreenScale` |
-| `U_Turn` › `S_Banner` | Label (`Title`) | "Your turn!", only on the player's own turn |
+| `U_Turn` › `S_Banner` | Label (`Title`) | "Your turn!" on the player's own turn; on other worms' turns "You're next!" or "Your turn in 3 turns"; hidden once their worm is out |
 | `U_Turn` › `S_Timer` | Label (`Display`) | The 15-second turn timer |
 | `U_Turn` › `S_WindArrow` | Picture (`Glyph`) | Rotated to the wind's direction |
 | `U_Turn` › `S_Wind` | Label (`Heading`) | "Wind 4" (0 to 10) |
