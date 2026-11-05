@@ -3,7 +3,9 @@
 Shooting. The active worm's client picks an item, aims and fires; the server checks it's their turn and they can use
 it, then runs the weapon's behaviour (rockets, bouncers, crawlers, homing missiles, rollers, hitscan guns, melee),
 carves craters with Arena, damages and knocks back worms, and tells Match when the shot is fired and when everything
-has settled. Utilities heal or change how the worm moves. Uses and cooldowns are counted per match.
+has settled. Utilities heal or change how the worm moves. Uses and cooldowns are counted per match. Every client
+puts the active worm's weapon in its hands during its turn, on the camera's side, turned to its aim, and draws each
+shot in flight as its weapon's model.
 
 | | |
 | --- | --- |
@@ -23,7 +25,9 @@ has settled. Utilities heal or change how the worm moves. Uses and cooldowns are
 | `Scripts/Server/Blast.lua` | Explosions: craters, damage, knockback |
 | `Scripts/Server/Behaviors/*.lua` | One file per `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee) and the Spider Bomb's snails |
 | `Global.lua` | Launch velocity, wind and arc prediction, shared with the aim dots and bots |
-| `Client.lua` | Explosion and tracer effects (placeholders) |
+| `Client.lua` | Explosion and tracer effects (placeholders); starts the client handler |
+| `Scripts/Client/Flight.lua` | Shots in flight drawn as their weapon's model (`GetProjectileModel`) over the hidden placeholder part: rockets and missiles along their flight, thrown and rolled weapons turning with the part, the spider bomb upright facing its crawl. Bomblets, snails and weapons without a model keep the placeholder |
+| `Scripts/Client/Held.lua` | The active worm's held weapon: a copy of its model in `Workspace.Ume.Combat`, on the camera's side, turned to its aim |
 | `Settings.lua` | `Combat_Settings` |
 
 ## API
@@ -34,6 +38,7 @@ has settled. Utilities heal or change how the worm moves. Uses and cooldowns are
 | --- | --- | --- |
 | `Fire(participantId, itemId, angle, power, target?)` | `boolean` | Fires an item for a participant (players through the remote, bots directly) |
 | `UseUtility(participantId, itemId)` | `boolean` | Uses a utility |
+| `ShowAim(participantId, itemId?, angle, power)` | | Shows a worm's aim to every player (`AimAngle`, `AimPower`, `AimTime`; `HeldItem` when `itemId` is given). The aim remote and bots use it |
 | `Detonate(participantId)` | | Sets off a rolling Black Hole Grenade early |
 | `Explode(center, radius, itemId, sourceId?, shiny?, damageMax, damageEdge, knockback)` | | A blast |
 | `Hit(participantId, damage, velocityChange, itemId, sourceId?, position)` | | Damages and pushes one worm |
@@ -65,7 +70,7 @@ has settled. Utilities heal or change how the worm moves. Uses and cooldowns are
   target for homing weapons. Rate limit 2 per second.
 - `Combat_UseUtility @ (player: Player, itemId: string)`
 - `Combat_Detonate @ (player: Player)`
-- `Combat_Aim @ (player: Player, angle: number, power: number)` (unreliable)
+- `Combat_Aim @ (player: Player, angle: number, power: number)` (unreliable): the active player's aim while they aim, shown to everyone through `ShowAim`
 
 **Send: RemoteEvents**
 
@@ -79,6 +84,7 @@ has settled. Utilities heal or change how the worm moves. Uses and cooldowns are
 | --- | --- | --- |
 | Replicator `Combat` | `Slots`, `Uses_<item>`, `Cooldown_<item>` | The player's items (comma-separated), uses left and turns of cooldown left |
 | Worm attributes | `HeldItem`, `AimAngle`, `AimPower`, `Facing` | What other clients draw |
+| Worm attribute | `AimTime` | The server time of the latest aim update (0 once the shot is fired): clients draw a worm's aim line and turn its held weapon while it keeps changing |
 | Worm attribute | `DamageTaken` | Damage multiplier (the tutorial bot's 3) |
 | Projectile parts | `Projectile` | Marks a part MatchCamera may follow |
 
@@ -94,7 +100,10 @@ has settled. Utilities heal or change how the worm moves. Uses and cooldowns are
 | `BOMBLET_SPEED` | `{ 20, 40 }` | Cluster bomblets' speeds |
 | `SNAIL_SPEED`, `SNAIL_BITE`, `SNAIL_LIFETIME` | `6`, `0.3`, `6` | Spider Bomb snails |
 | `CONTACT_DISTANCE`, `ROLL_HOP_SPEED`, `MELEE_BOX` | `2.5`, `22`, `4` | Contact bursts, rollers, melee reach |
-| `PROJECTILE_COLORS`, `PROJECTILE_SIZE` | | Placeholder projectile looks |
+| `HELD_FORWARD`, `HELD_HEIGHT`, `HELD_DEPTH` | `0.8`, `-0.3`, `1.5` | Where the active worm holds its weapon, from its ball's centre: along its aim, up, and toward the camera |
+| `HELD_TURN_SPEED` | `14` | How quickly the held weapon turns to a new aim |
+| `PROJECTILE_COLORS`, `PROJECTILE_SIZE` | | Placeholder projectile looks (the server's parts; hidden on clients under a model) |
+| `PROJECTILE_STAND_INS` | `{ Bazooka = "HomingMissile" }` | Shots drawn as another weapon's projectile model until their own exists (placeholder) |
 
 ## In the place
 

@@ -48,7 +48,26 @@ local _settings = {
 	-- The box a melee swing checks in front of the worm, in studs on each side
 	MELEE_BOX = 4,
 
+	--%%%%%%%%%%%%%%%%%%%% Held Weapon
+
+	--[[
+		Where the active worm holds its weapon, from its ball's center: HELD_FORWARD studs along its aim, HELD_HEIGHT up
+		and HELD_DEPTH toward the camera (+Z), so the weapon is always on the side players see; it turns to a new aim at
+		HELD_TURN_SPEED (higher is snappier)
+	]]
+	HELD_FORWARD = 0.8,
+	HELD_HEIGHT = -0.3,
+	HELD_DEPTH = 1.5,
+	HELD_TURN_SPEED = 14,
+
 	--%%%%%%%%%%%%%%%%%%%% Placeholders
+
+	--[[
+		shortcut: weapons whose shot flies as another weapon's projectile model until the studio makes their own (the
+		Bazooka's rocket as the homing missile's missile)
+	]]
+	--- @type { [string]: string }
+	PROJECTILE_STAND_INS = { Bazooka = "HomingMissile" },
 
 	-- shortcut: projectiles are plain neon parts in these colours until the real models exist
 	--- @type { [string]: Color3 }

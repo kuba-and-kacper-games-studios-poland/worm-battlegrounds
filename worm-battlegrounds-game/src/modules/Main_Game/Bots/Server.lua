@@ -145,15 +145,53 @@ function Module.TakeTurn(participantId: string)
 		power = math.clamp(power * (1 + random:NextNumber(-_settings.MISS_POWER, _settings.MISS_POWER)), 0, 1)
 	end
 
-	--[[ Firing ]]
+	--[[ Aiming ]]
 
-	-- The turn may have run out while the bot solved its shot
-	if I.Match.GetActive() ~= participantId or I.Match.GetPhase() ~= "Turn" then
+	-- Everyone watches the bot take aim; the turn may run out meanwhile
+	if not Module._showAim(participantId, itemId, angle, power) then
 		return
 	end
+
+	--[[ Firing ]]
+
 	if not I.Combat.Fire(participantId, itemId, angle, power, aimAt) then
 		I.Combat.Fire(participantId, "Bazooka", angle, power)
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Show Aim
+
+--[[
+	Holds the weapon and swings the bot's aim from level toward its shot over AIM_TIME, shown to every player like a
+	player's aim. Returns whether it's still the bot's turn at the end.
+]]
+--- @return boolean
+function Module._showAim(participantId: string, itemId: string, angle: number, power: number)
+	--[[ Local Variables ]]
+
+	local startAngle: number = if math.cos(angle) < 0 then math.pi else 0
+	local started: number = os.clock()
+
+	--[[ Aiming ]]
+
+	while true do
+		-- The turn may have run out while the bot solved or aimed
+		if I.Match.GetActive() ~= participantId or I.Match.GetPhase() ~= "Turn" then
+			return false
+		end
+
+		local progress: number = math.min(1, (os.clock() - started) / _settings.AIM_TIME)
+		local eased: number = 1 - (1 - progress) ^ 3
+		I.Combat.ShowAim(participantId, itemId, startAngle + (angle - startAngle) * eased, _settings.AIM_START_POWER + (power - _settings.AIM_START_POWER) * eased)
+		if progress >= 1 then
+			break
+		end
+		task.wait(_settings.AIM_STEP)
+	end
+
+	--[[ Returning ]]
+
+	return true
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

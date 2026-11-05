@@ -6,6 +6,15 @@
 local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "Combat"
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
+
+local _scripts: Folder = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Held = require(_scripts:FindFirstChild("Client"):FindFirstChild("Held")) --- @type Combat_Client_Held
+local Flight = require(_scripts:FindFirstChild("Client"):FindFirstChild("Flight")) --- @type Combat_Client_Flight
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 -- Where client-made effects go
@@ -36,6 +45,8 @@ function Module.Start()
 	effectsFolder = I.Dirs.UmeWorkspace:WaitForChild(_localName)
 	I.Network.Fired("Combat_Explosion", Module._onExplosion)
 	I.Network.Fired("Combat_Tracer", Module._onTracer)
+	Held.Start()
+	Flight.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control

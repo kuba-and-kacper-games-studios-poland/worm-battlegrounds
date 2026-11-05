@@ -63,6 +63,13 @@ local _settings = {
 	-- How often the player's aim is sent to the other players while they aim, in seconds
 	AIM_SEND_INTERVAL = 0.1,
 
+	--[[
+		Another worm's aim line shows while its aim keeps arriving (none for AIM_SHOW_GRACE seconds hides it), eased
+		toward each update at AIM_SMOOTHING (higher is snappier)
+	]]
+	AIM_SHOW_GRACE = 0.4,
+	AIM_SMOOTHING = 15,
+
 	-- The aim line: how many seconds of the path it shows, as how many placeholder dots
 	AIM_LINE_SECONDS = 0.6,
 	AIM_LINE_DOTS = 10,

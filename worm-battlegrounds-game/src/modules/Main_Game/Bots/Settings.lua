@@ -30,9 +30,17 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Turns
 
-	-- A bot thinks for a random time between these before it fires, in seconds
+	-- A bot thinks for a random time between these before it takes aim, in seconds
 	--- @type { number }
-	THINK_TIME = { 1.5, 3 },
+	THINK_TIME = { 2.5, 4 },
+
+	--[[
+		Then it holds its weapon and swings its aim from level to its shot over AIM_TIME seconds (sent every AIM_STEP,
+		power starting at AIM_START_POWER), shown to every player, and fires
+	]]
+	AIM_TIME = 1.5,
+	AIM_STEP = 0.1,
+	AIM_START_POWER = 0.3,
 
 	-- How often each difficulty's shot lands where it aimed (the rest miss on purpose)
 	--- @type { [string]: number }

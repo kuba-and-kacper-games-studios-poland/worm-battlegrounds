@@ -141,11 +141,9 @@ function Module._onAim(player: Player, angle: number, power: number)
 		return
 	end
 
-	--[[ Saving ]]
+	--[[ Showing ]]
 
-	local model: Model = I.Worms.Get(`P_{player.UserId}`)
-	model:SetAttribute("AimAngle", angle)
-	model:SetAttribute("AimPower", math.clamp(power, 0, 1))
+	Module.ShowAim(`P_{player.UserId}`, nil, angle, power)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -197,6 +195,9 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 	I.WormControl.EndTurn(participantId)
 	root:FindFirstChild("Upright").CFrame = CFrame.lookAlong(Vector3.zero, Vector3.xAxis * facing)
 	model:SetAttribute("Facing", facing)
+
+	-- The shot is away: everyone's aim line for it goes
+	model:SetAttribute("AimTime", 0)
 
 	--- @type Combat_Shot
 	local shot = {
@@ -280,6 +281,35 @@ function Module.UseUtility(participantId: string, itemId: string)
 	--[[ Returning ]]
 
 	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Show Aim
+
+--[[
+	**SERVER** |
+	Shows a worm's aim to every player: its angle and power, stamped with the server time (AimTime) so clients draw
+	its aim line while the stamps keep coming. `itemId`, when given, is the weapon it holds.
+]]
+function Module.ShowAim(participantId: string, itemId: string?, angle: number, power: number)
+	--[[ Data ]]
+
+	local model: Model? = I.Worms.Get(participantId)
+
+	--[[ Checks ]]
+
+	-- Check if the worm is still in play
+	if not model then
+		return
+	end
+
+	--[[ Saving ]]
+
+	if itemId then
+		model:SetAttribute("HeldItem", itemId)
+	end
+	model:SetAttribute("AimAngle", angle)
+	model:SetAttribute("AimPower", math.clamp(power, 0, 1))
+	model:SetAttribute("AimTime", I.S.Workspace:GetServerTimeNow())
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

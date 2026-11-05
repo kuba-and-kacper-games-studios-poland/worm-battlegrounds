@@ -30,3 +30,18 @@ local _combat_Shot = {}
 ---
 --- @field Run (shot: Combat_Shot) -> ()
 local _combat_Behavior = {}
+
+--%%%%%%%%%%%%%%%%%%%% Client
+
+--- @class Combat_FlyingShot
+---
+--- # Look #
+---
+--- @field Model Model
+--- @field Kind string
+---
+--- # Motion #
+---
+--- @field Last Vector3
+--- @field Facing number
+local _combat_FlyingShot = {}

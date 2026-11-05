@@ -303,3 +303,17 @@ each column, so worms start on both storeys, and keeps spots apart by distance, 
 there's ground under its pivot (a part-built prop's trunk). Rules: Worms → "A worm starts standing on land", Arena →
 "Props break under blasts".
 
+### Held weapons, and everyone sees the aim (2026-11-05)
+
+**Before.** Worms held nothing: the weapon picked in the loadout bar was only an attribute (`HeldItem`). The aim line
+showed only on the aiming player's screen; the others got `AimAngle` and `AimPower` and drew nothing from them, and
+bots fired 1.5 to 3 seconds into their turn without any visible aim.
+
+**Why it changed.** The owner asked for worms to hold their weapon where players can see it, toward the camera, for
+the aim line to show for everyone when one player aims, and for bots to shoot slower.
+
+**Now.** Combat's client `Held` handler puts a copy of the active worm's weapon model in its hands during its turn,
+1.5 studs toward the camera, turned to its aim. Combat's `ShowAim` stamps each aim update with the server time
+(`AimTime`), and MatchHud's `Aim` draws any other worm's line while the stamps keep coming. Bots think 2.5 to 4
+seconds, then hold their weapon and swing their aim to the shot over 1.5 seconds before they fire. Rules: Worms →
+"The active worm holds its weapon on the camera's side", "Everyone sees the active worm aim".

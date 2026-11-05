@@ -38,6 +38,12 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **A worm starts standing on land unless its player places it:** bots and players who don't place start on
   `I.Arena.GetLandSpots` (on top of the ground on any storey, never over liquid); only a spot a player placed is
   dropped onto with the parachute.
+- **The active worm holds its weapon on the camera's side** (+Z, in front of its body), turned to its aim, so every
+  player sees it; it's drawn by each client from the worm's `HeldItem` (Combat's `Held` handler), never welded on
+  the server.
+- **Everyone sees the active worm aim:** its aim line shows on every screen while it aims, players' and bots' alike,
+  from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots take aim visibly before
+  they fire.
 - **A walking worm has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 

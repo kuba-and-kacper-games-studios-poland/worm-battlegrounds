@@ -22,7 +22,7 @@ closes Results.
 | `Scripts/Client/Turn.lua` | Banner, timer, wind, stamina |
 | `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
 | `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys; utilities are used as soon as they're picked on the player's turn. A weapon with no icon picture shows its 3D model in its box instead (`I.G_Arsenal.GetModel`, in a ViewportFrame `S_Model` over `S_Icon`) |
-| `Scripts/Client/Aim.lua` | Drag and pad aiming, the aim dots, firing, homing targets, detonating |
+| `Scripts/Client/Aim.lua` | Drag and pad aiming, the aim dots, firing, homing targets, detonating; the dots of another worm's aim (a player's or a bot's) while it aims |
 | `Scripts/Client/KillFeed.lua` | Knockout lines |
 | `Scripts/Client/TouchControls.lua` | Walk and jump buttons on touch screens |
 | `Scripts/Client/Results.lua` | The Results screen, rematch votes |
@@ -48,6 +48,7 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | `FEED_LINES`, `FEED_SECONDS` | `4`, `6` | Kill feed length and how long a line stays |
 | `MIN_DRAG`, `MAX_DRAG` | `24`, `260` | Drag length in pixels for no power and full power |
 | `AIM_SEND_INTERVAL` | `0.1` | How often the aim is sent to others |
+| `AIM_SHOW_GRACE`, `AIM_SMOOTHING` | `0.4`, `15` | Another worm's aim dots show while its aim keeps arriving (none for this long hides them), eased toward each update |
 | `AIM_LINE_SECONDS`, `AIM_LINE_DOTS`, `AIM_DOT_SIZE`, `AIM_DOT_COLOR` | `0.6`, `10`, `0.35`, white | The aim dots |
 | `TARGET_COLOR` | red | The homing target marker |
 | `STICK_DEADZONE`, `PAD_POWER_SPEED` | `0.3`, `0.8` | Gamepad aiming |

@@ -77,6 +77,7 @@ function Module.Init()
 
 		Fire = Fire.Fire,
 		UseUtility = Fire.UseUtility,
+		ShowAim = Fire.ShowAim,
 		Detonate = Roller.Detonate,
 		Explode = Blast.Explode,
 		Hit = Blast.Hit,

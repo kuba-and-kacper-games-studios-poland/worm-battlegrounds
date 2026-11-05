@@ -32,6 +32,14 @@ local stepConnection: RBXScriptConnection?
 -- The item the player last fired, so a click while it rolls blows up a black hole grenade
 local firedItem: string? = nil
 
+--[[ Others' Aim ]]
+
+-- The worm whose aim line this player watches (the active one, while its aim keeps arriving), and the aim drawn
+local watched: Model? = nil
+local watchedAngle: number = 0
+local watchedPower: number = 0
+local watchConnection: RBXScriptConnection?
+
 --[[ Look ]]
 
 local dots = {} --- @type { Part }
@@ -102,6 +110,13 @@ function Module.Start(gui: ScreenGui)
 	I.S.UserInputService.InputChanged:Connect(Module._onInputChanged)
 	I.S.UserInputService.InputEnded:Connect(Module._onInputEnded)
 	I.Topic.Subscribe("Match_MyTurn", Module._onMyTurn)
+
+	-- Every worm's aim (players' and bots'), to draw its line for this player too
+	local wormsFolder: Instance = I.Dirs.UmeWorkspace:WaitForChild("Worms")
+	wormsFolder.ChildAdded:Connect(Module._watchWorm)
+	for _index: number, model: Instance in ipairs(wormsFolder:GetChildren()) do
+		Module._watchWorm(model)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -156,6 +171,7 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 		return
 	end
 
+	Module._stopWatching()
 	mode = if press then "Drag" else "Pad"
 	pressPosition = Vector2.new(input.Position.X, input.Position.Y)
 	padStart = os.clock()
@@ -243,7 +259,7 @@ function Module._step()
 
 	--[[ Aim Line ]]
 
-	Module._drawLine()
+	Module._drawLine(I.Worms.GetMine(), LoadoutBar.GetSelected(), angle, power)
 
 	--[[ Sending ]]
 
@@ -256,30 +272,29 @@ end
 --%%%%%%%%%%%%%%%%%%%% Draw Line
 
 --[[
-	Places the aim line's dots along the first part of the shot's path: an arc for thrown and launched weapons,
+	Places the aim line's dots along the first part of a worm's shot path: an arc for thrown and launched weapons,
 	a straight line for guns and melee weapons.
 ]]
-function Module._drawLine()
-	--[[ Data ]]
+function Module._drawLine(model: Model?, itemId: string, aimAngle: number, aimPower: number)
+	--[[ Checks ]]
 
-	local mine: Model? = I.Worms.GetMine()
-	if not mine or not mine.PrimaryPart then
+	-- Check if the worm is still in play
+	if not model or not model.PrimaryPart then
 		return
 	end
 
 	--[[ Local Variables ]]
 
-	local itemId: string = LoadoutBar.GetSelected()
 	local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
-	local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
-	local origin: Vector3 = mine.PrimaryPart.Position + direction * (I.Settings["Worms"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP)
+	local direction: Vector3 = Vector3.new(math.cos(aimAngle), math.sin(aimAngle), 0)
+	local origin: Vector3 = model.PrimaryPart.Position + direction * (I.Settings["Worms"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP)
 	local points = {} --- @type { Vector3 }
 
 	--[[ Calculating ]]
 
 	if row.Aim == "Arc" or row.Aim == "Target" then
 		local step: number = _settings.AIM_LINE_SECONDS / _settings.AIM_LINE_DOTS
-		points = I.G_Combat.PredictArc(origin, I.G_Combat.GetLaunchVelocity(itemId, angle, power), 0, _settings.AIM_LINE_SECONDS, step)
+		points = I.G_Combat.PredictArc(origin, I.G_Combat.GetLaunchVelocity(itemId, aimAngle, aimPower), 0, _settings.AIM_LINE_SECONDS, step)
 	else
 		local reach: number = row.Range or row.Reach or 20
 		for index: number = 1, _settings.AIM_LINE_DOTS do
@@ -362,6 +377,102 @@ function Module._onMyTurn(myTurn: boolean)
 	targetMarker.Transparency = 1
 	if myTurn then
 		firedItem = nil
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Watch Worm
+
+--[[
+	Listens for a worm's aim stamps (AimTime, which the server sets with each aim update, players' and bots').
+]]
+function Module._watchWorm(model: Instance)
+	--[[ Connections ]]
+
+	model:GetAttributeChangedSignal("AimTime"):Connect(function()
+		Module._onOtherAim(model)
+	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Other Aim
+
+--[[
+	Another worm aims: starts drawing its aim line for this player. This player's own worm draws its line as they aim.
+]]
+function Module._onOtherAim(model: Model)
+	--[[ Checks ]]
+
+	-- Skip this player's own worm, and a shot just fired (AimTime 0)
+	if model == I.Worms.GetMine() or (model:GetAttribute("AimTime") or 0) == 0 then
+		return
+	end
+
+	--[[ Saving ]]
+
+	if watched ~= model then
+		watched = model
+		watchedAngle = model:GetAttribute("AimAngle") or 0
+		watchedPower = model:GetAttribute("AimPower") or 0
+	end
+
+	--[[ Connections ]]
+
+	if not watchConnection then
+		watchConnection = I.S.RunService.RenderStepped:Connect(Module._watchStep)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Watch Step
+
+--[[
+	Draws the watched worm's aim line, eased toward its latest aim, until its aim stops arriving or the player aims.
+]]
+function Module._watchStep(deltaTime: number)
+	--[[ Checks ]]
+
+	-- Check if the watched worm still aims, with a weapon that has a line
+	local model: Model? = watched
+	local itemId: string? = model and model:GetAttribute("HeldItem")
+	local fresh: boolean = model ~= nil and model.Parent ~= nil and I.S.Workspace:GetServerTimeNow() - (model:GetAttribute("AimTime") or 0) <= _settings.AIM_SHOW_GRACE
+	if mode or not fresh or not itemId or I.G_Arsenal.Get(itemId).Aim == "Feet" then
+		Module._stopWatching()
+		return
+	end
+
+	--[[ Easing ]]
+
+	local alpha: number = 1 - math.exp(-_settings.AIM_SMOOTHING * deltaTime)
+	local turn: number = ((model:GetAttribute("AimAngle") - watchedAngle + math.pi) % (2 * math.pi)) - math.pi
+	watchedAngle += turn * alpha
+	watchedPower += (model:GetAttribute("AimPower") - watchedPower) * alpha
+
+	--[[ Drawing ]]
+
+	Module._drawLine(model, itemId, watchedAngle, watchedPower)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Stop Watching
+
+--[[
+	Stops drawing another worm's aim line and hides it.
+]]
+function Module._stopWatching()
+	--[[ Checks ]]
+
+	-- Check if a line is being watched
+	if not watchConnection then
+		return
+	end
+
+	--[[ Saving ]]
+
+	watchConnection:Disconnect()
+	watchConnection = nil
+	watched = nil
+
+	--[[ Hiding ]]
+
+	for _index: number, dot: Part in ipairs(dots) do
+		dot.Transparency = 1
 	end
 end
 

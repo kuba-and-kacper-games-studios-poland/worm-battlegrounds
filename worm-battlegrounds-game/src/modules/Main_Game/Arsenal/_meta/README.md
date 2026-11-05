@@ -56,8 +56,9 @@ Models are authored in `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/`, which 
 `ReplicatedStorage.Ume.Assets` (`I.Dirs.Assets`) when the game starts. Each is a Model named after its weapon row, with
 a `RootPart` (its PrimaryPart: anchored, hidden at start) the mesh parts are welded to; the meshes don't collide, query
 or touch and are massless. The model faces +X from its RootPart, as worms do, and sits at the grip of a held weapon
-or the centre of a thrown one. The loadout bar shows a weapon's model in its box when the weapon has no icon picture; Combat still draws its
-placeholder projectiles.
+or the centre of a thrown one. The loadout bar shows a weapon's model in its box when the weapon has no icon picture; Combat's clients
+put it in the active worm's hands and fly each shot as `GetProjectileModel` (the Bazooka's rocket as the homing
+missile's missile until it has its own).
 
 | Instance | What |
 | --- | --- |

@@ -23,12 +23,19 @@ local focus: Vector3? = nil
 local pan: Vector3 = Vector3.zero
 local followed: PVInstance? = nil
 
+--[[ Zoom ]]
+
+-- How far from the plane the player wants the camera, and how far it is now (easing toward it)
+local zoomGoal: number = _settings.DISTANCE
+local zoom: number = _settings.DISTANCE
+
 --[[ Input ]]
 
 local dragging: boolean = false
 local lastMouse: Vector2 = Vector2.zero
 local stickPan: Vector2 = Vector2.zero
 local lastTouchPan: Vector2 = Vector2.zero
+local pinchStart: number = _settings.DISTANCE
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -65,7 +72,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Connections
 
 --[[
-	Wires the pan inputs: dragging with the right mouse button, two fingers on touch, LT with the right stick.
+	Wires the pan inputs (dragging with the right mouse button, two fingers on touch, LT with the right stick) and the
+	zoom inputs (the mouse wheel, a pinch).
 ]]
 function Module._createConnections()
 	--[[ Mouse ]]
@@ -88,9 +96,13 @@ function Module._createConnections()
 
 	--[[ Moves ]]
 
-	-- A free mouse reports no Delta, so drags are measured from its positions
-	I.S.UserInputService.InputChanged:Connect(function(input: InputObject)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+	-- A free mouse reports no Delta, so drags are measured from its positions; the wheel zooms unless a gui scrolls
+	I.S.UserInputService.InputChanged:Connect(function(input: InputObject, processed: boolean)
+		if input.UserInputType == Enum.UserInputType.MouseWheel then
+			if not processed then
+				Module._zoomTo(zoomGoal * (1 - input.Position.Z * _settings.ZOOM_STEP))
+			end
+		elseif dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local mouse: Vector2 = Vector2.new(input.Position.X, input.Position.Y)
 			Module._panBy(mouse - lastMouse)
 			lastMouse = mouse
@@ -110,6 +122,17 @@ function Module._createConnections()
 		end
 		Module._panBy(translation - lastTouchPan)
 		lastTouchPan = translation
+	end)
+
+	-- Spreading two fingers zooms in, pinching them zooms out
+	I.S.UserInputService.TouchPinch:Connect(function(_touches: { Vector2 }, scale: number, _velocity: number, state: Enum.UserInputState, processed: boolean)
+		if processed or scale <= 0 then
+			return
+		end
+		if state == Enum.UserInputState.Begin then
+			pinchStart = zoomGoal
+		end
+		Module._zoomTo(pinchStart / scale)
 	end)
 end
 
@@ -158,6 +181,9 @@ function Module._update(deltaTime: number)
 		pan += Vector3.new(stickPan.X, stickPan.Y, 0) * _settings.STICK_PAN_SPEED * deltaTime
 	end
 
+	-- Ease the zoom first, so the bounds clamp the view at its new size
+	zoom += (zoomGoal - zoom) * (1 - math.exp(-_settings.ZOOM_SPEED * deltaTime))
+
 	local center: Vector3 = if target then target:GetPivot().Position else bounds.Position
 	local goal: Vector3 = Module._getClamped(center + pan, bounds, camera)
 	pan = goal - Vector3.new(center.X, center.Y, goal.Z)
@@ -167,7 +193,18 @@ function Module._update(deltaTime: number)
 
 	camera.CameraType = Enum.CameraType.Scriptable
 	camera.FieldOfView = _settings.FOV
-	camera.CFrame = CFrame.lookAt(focus + Vector3.zAxis * _settings.DISTANCE, focus)
+	camera.CFrame = CFrame.lookAt(focus + Vector3.zAxis * zoom, focus)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Zoom To
+
+--[[
+	Sets how far from the plane the player wants the camera, kept between ZOOM_MIN and ZOOM_MAX.
+]]
+function Module._zoomTo(distance: number)
+	--[[ Saving ]]
+
+	zoomGoal = math.clamp(distance, _settings.ZOOM_MIN, _settings.ZOOM_MAX)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Pan By
@@ -254,11 +291,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Half Height
 
 --[[
-	Returns half the height of the view on the plane, in studs.
+	Returns half the height of the view on the plane at the current zoom, in studs.
 ]]
 --- @return number
 function Module._getHalfHeight()
-	return _settings.DISTANCE * math.tan(math.rad(_settings.FOV / 2))
+	return zoom * math.tan(math.rad(_settings.FOV / 2))
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning
