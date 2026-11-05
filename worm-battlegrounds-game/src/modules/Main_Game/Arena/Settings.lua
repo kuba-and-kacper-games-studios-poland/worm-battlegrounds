@@ -61,7 +61,16 @@ local _settings = {
 	-- How far under a prop's base (a tree, a bush, a rock) the ground may be before the prop falls, in studs
 	PROP_SUPPORT_DEPTH = 1.5,
 
-	-- How fast a blast throws a prop it reaches, in studs per second, and the most it spins it, in radians per second
+	--[[
+		A blast cuts through the props it reaches; the pieces that still reach the prop's base through each other stand
+		(a part that starts at most PROP_BASE_HEIGHT studs above the base is on the ground)
+	]]
+	PROP_BASE_HEIGHT = 0.6,
+
+	--[[
+		How fast a blast throws what it cuts off a prop (and a one-part prop it reaches), in studs per second, and the
+		most it spins it, in radians per second
+	]]
 	PROP_KNOCK_SPEED = 35,
 	PROP_KNOCK_SPIN = 6,
 

@@ -272,3 +272,17 @@ name on top, and few buttons, so nobody gets confused about what to press.
 logo, one yellow **Play** (the quick match) with **Modes** beside it, Party, a slim Loadout bar and two corner
 buttons; solo, the public match list, custom lobbies and the crates moved into windows. The top bar's Shop button is
 gone (the currency bar's + opens the shop). Rule: Maps and placeholders → "The lobby is a 3D stage".
+
+### Picnic Plains rebuilt in MapLab, and props that break (2026-11-05)
+
+**Before.** The studio's Picnic Plains had ragged outlines, one-stud spikes and uneven dark dirt, some edges off the
+stud grid, and mesh trees, bushes and rocks that a blast could only throw whole.
+
+**Why it changed.** The owner wanted the land to fit the destruction (every edge on the grid, layers that make
+sense), a way to make more maps the same way, and props that break like the land does.
+
+**Now.** Maps are made in MapLab, the game home's map kit: the land is a picture on the 1-stud grid, cleaned and
+packed into merged parts, checked, and exported into `Arenas` only after the owner approves. Props are part-built
+Models in the meshes' look (piles of bevelled blocks), free of the grid, and a blast cuts its hole through them; the
+pieces no longer joined to the base fly off and fade (`Arena/Scripts/Server/Props.lua`). Rules: Arena → "Props break
+under blasts", "Maps are made in MapLab".

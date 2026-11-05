@@ -14,8 +14,11 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Ground is what's `Arena_Indestructible`:** each island's waterline blocks. **Floating ledges float:** their
   parts carry `Arena_Floats`, and a cut-off group of them stays up while it covers `FLOAT_MIN_AREA`; smaller crumbs
   fall. Never mark a ledge block indestructible to hold it up: it hangs uncut over the craters around it.
-- **Props react to blasts:** trees, bushes and rocks in a map's Decor carry `Arena_Prop`; a blast throws the ones it
-  reaches, and one whose ground is gone falls; both fade out.
+- **Props break under blasts:** trees, bushes and rocks in a map's Decor are `Arena_Prop` Models built from parts
+  (never collidable for worms). A blast cuts its hole through them with the same CSG cylinder as the terrain, and
+  the pieces no longer joined to the prop's base fly off; a prop whose ground is gone falls. What falls fades out.
+- **Maps are made in MapLab** (the game home's map kit, `assets/_tools/map-kit/`): the land drawn on the 1-stud grid
+  and built into parts, props part-built, checked, then exported into the arena templates after the owner approves.
 - **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), centred
   on the arena's plane at Z = 0, and cached by the Arena module at start. Weapon models are authored in
   `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/` and cached by Arsenal (its README → In the place).
