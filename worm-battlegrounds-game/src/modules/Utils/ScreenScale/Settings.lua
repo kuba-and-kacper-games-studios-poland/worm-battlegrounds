@@ -10,6 +10,7 @@ local _settings = {
 		"Results",
 		"Lobby",
 		"MatchBoard",
+		"PlayModes",
 		"CustomLobby",
 		"SoloSetup",
 		"Party",

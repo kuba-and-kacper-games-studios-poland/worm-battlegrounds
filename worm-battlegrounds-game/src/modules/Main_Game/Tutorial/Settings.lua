@@ -27,7 +27,6 @@ local _settings = {
 		Fire = "Drag back from your worm to aim, then let go to fire",
 		BotTurn = "The bot's turn. Watch out!",
 		Finish = "Two hits knock it out. Finish it!",
-		Crate = "Open your free crate!",
 		Equip = "Put the Grenade and the Shotgun in your loadout",
 	},
 
@@ -38,7 +37,6 @@ local _settings = {
 
 	HINT_GUI_NAME = "TutorialHint",
 	LOBBY_GUI_NAME = "Lobby",
-	CRATES_GUI_NAME = "Crates",
 	LOADOUT_GUI_NAME = "Loadout",
 }
 

@@ -34,6 +34,14 @@ local _settings = {
 	GUI_NAME = "Crates",
 	ODDS_GUI_NAME = "CrateOdds",
 	OPEN_GUI_NAME = "CrateOpen",
+
+	--[[
+		The lobby gui with the Crates button, and its badge: this text while a free crate waits, else how many crates the
+		player's coins open, shown as BADGE_MAX+ past BADGE_MAX
+	]]
+	LOBBY_GUI_NAME = "Lobby",
+	BADGE_FREE = "FREE",
+	BADGE_MAX = 9,
 }
 
 return _settings

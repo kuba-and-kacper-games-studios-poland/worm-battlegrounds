@@ -63,6 +63,8 @@ function Module.Start(oddsOpener, resultsOpener)
 	elems["List"] = moduleGui:FindFirstChild("U_CrateList", true) --- @type ScrollingFrame
 	elems["TutorialCrate"] = moduleGui:FindFirstChild("U_TutorialCrate", true) --- @type Frame
 	prefabs["CrateCard"] = elems["List"]:FindFirstChild("PREFAB | CrateCard") --- @type Frame
+	elems["Badge"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_OpenCrates", true):FindFirstChild("S_Badge", true) --- @type Frame
+	elems["BadgeCount"] = elems["Badge"]:FindFirstChild("S_Count", true) --- @type TextLabel
 	showOdds = oddsOpener
 	showResults = resultsOpener
 
@@ -80,6 +82,7 @@ function Module.Start(oddsOpener, resultsOpener)
 	I.Interact.OnPress(elems["TutorialCrate"]:FindFirstChild("S_Open", true):FindFirstChild("Button"), function()
 		Module.Open(_settings.TUTORIAL_CRATE, 1, "Coins")
 	end)
+	I.Topic.Subscribe("Currency_Changed", Module._refreshBadge)
 	I.OnLoaded(I.Priority.Replicator, Module._connectReplicator)
 end
 
@@ -201,7 +204,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the tutorial crate in place of the list while it waits, and the free badge on VIP's daily crate.
+	Shows the tutorial crate in place of the list while it waits, the free badge on VIP's daily crate, and the lobby's
+	Crates button badge.
 ]]
 function Module._refresh()
 	--[[ Visibility ]]
@@ -215,6 +219,10 @@ function Module._refresh()
 	for crateId: string, _card: Frame in pairs(cards) do
 		Module._refreshCard(crateId)
 	end
+
+	--[[ Badge ]]
+
+	Module._refreshBadge()
 end
 
 --%%%%%%%%%%%%%%%%%%%% Pick
@@ -277,6 +285,26 @@ function Module._refreshCard(crateId: string)
 	card:FindFirstChild("S_Free", true).Visible = Module._isFree(crateId)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Refresh Badge
+
+--[[
+	Shows the lobby's Crates button badge: BADGE_FREE while a free crate waits (the tutorial's, or VIP's daily one), else
+	how many of the cheapest coin crate the player's coins open (BADGE_MAX+ past BADGE_MAX), hidden at none.
+]]
+function Module._refreshBadge()
+	--[[ Local Variables ]]
+
+	local free: boolean = (tutorialRep ~= nil and tutorialRep:GetAttribute("CrateReady") == true) or Module._isFree(_settings.VIP_CRATE)
+	local price: string? = Module._getCheapestCoinPrice()
+	local count = if price then I.BN.DivideWithPrecision(I.Currency.Get("Coins") or "0", price) else I.BN.new(0) --- @type BigNum_Instance
+	local max = I.BN.new(_settings.BADGE_MAX) --- @type BigNum_Instance
+
+	--[[ Applying ]]
+
+	elems["Badge"].Visible = free or I.BN.Lt(I.BN.new(0), count)
+	elems["BadgeCount"].Text = if free then _settings.BADGE_FREE elseif I.BN.Lt(max, count) then `{_settings.BADGE_MAX}+` else tostring(count)
+end
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
 --%%%%%%%%%%%%%%%%%%%% Is Free
@@ -287,6 +315,32 @@ end
 --- @return boolean
 function Module._isFree(crateId: string)
 	return crateId == _settings.VIP_CRATE and shopRep ~= nil and shopRep:GetAttribute("VipCrateReady") == true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Cheapest Coin Price
+
+--[[
+	Returns the lowest price of one crate in coins, among the crates the panel shows.
+]]
+--- @return string?
+function Module._getCheapestCoinPrice()
+	--[[ Local Variables ]]
+
+	local cheapest: string? = nil
+
+	--[[ Searching ]]
+
+	--- @param row Crates_CrateData
+	for _crateId: string, row in pairs(I.G_Crates.GetAll()) do
+		local coins = row.Prices["Coins"] --- @type Crates_Price?
+		if not row.Hidden and coins and (not cheapest or I.BN.Lt(I.BN.new(coins.One), I.BN.new(cheapest))) then
+			cheapest = coins.One
+		end
+	end
+
+	--[[ Returning ]]
+
+	return cheapest
 end
 
 return Module

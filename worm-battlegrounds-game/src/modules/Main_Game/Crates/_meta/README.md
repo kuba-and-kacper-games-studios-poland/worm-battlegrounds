@@ -3,7 +3,7 @@
 The lobby's crates. The server opens a crate or a 10-pack: it checks the crate takes the currency (or VIP's free
 daily crate), refuses diamond prices where the player's policy restricts paid random items, takes the price, rolls
 each item by the crate's odds, gives it, and reports which copies just made an item shiny. The client draws the
-Crates panel (one card per crate with its prices, **Open**, **Open 10** and **Details**), the `CrateOdds` widget and
+Crates window (one card per crate with its prices, **Open**, **Open 10** and **Details**), the `CrateOdds` widget and
 the `CrateOpen` reveal. The tutorial crate is a hidden, fixed crate that opens once, while `Tutorial` says it waits.
 
 | | |
@@ -20,7 +20,7 @@ the `CrateOpen` reveal. The tutorial crate is a hidden, fixed crate that opens o
 | `Server.lua` | `Open`: checks, paying, rolling, giving |
 | `Global.lua` | The crate rows; warns at start when a crate's odds don't add up to 100 or name an unknown item |
 | `Client.lua` | Starts the three client handlers |
-| `Scripts/Client/Panel.lua` | The Crates panel: cards, the pay toggle, the free badge, the tutorial crate card, opening |
+| `Scripts/Client/Panel.lua` | The Crates window: cards, the pay toggle, the free badge, the tutorial crate card, opening |
 | `Scripts/Client/Odds.lua` | The `CrateOdds` widget |
 | `Scripts/Client/Reveal.lua` | The `CrateOpen` reveal: the crate shakes, then shows one card or ten |
 | `Settings.lua` | `Crates_Settings` |
@@ -86,9 +86,12 @@ place of a roll).
 | `TUTORIAL_CRATE` | `"Tutorial"` | The hidden crate the tutorial gives once |
 | `SHAKE_SECONDS`, `SHAKE_DEGREES` | `1.2`, `12` | The reveal's shake |
 | `GUI_NAME`, `ODDS_GUI_NAME`, `OPEN_GUI_NAME` | `"Crates"`, `"CrateOdds"`, `"CrateOpen"` | The guis it drives |
+| `LOBBY_GUI_NAME`, `BADGE_FREE`, `BADGE_MAX` | `"Lobby"`, `"FREE"`, `9` | The gui with the Crates button, and its badge: `BADGE_FREE` while a free crate waits, else how many crates the coins open, `9+` past `BADGE_MAX` |
 
 ## In the place
 
-Drives the `Crates` panel (`U_CrateList` › `PREFAB | CrateCard`, `U_TutorialCrate`), `CrateOdds` (`U_Odds` ›
-`PREFAB | OddsRow`) and `CrateOpen` (`U_Stage`, `U_Cards` › `PREFAB | ResultCard`, `S_OpenAgain`). The `U_Skins`
-button on the panel is Cosmetics'. The reveal's `S_Burst` effect isn't built yet.
+Drives the `Crates` window (`U_CrateList` › `PREFAB | CrateCard`, `U_TutorialCrate`), which WidgetManager opens from
+the lobby's Crates button (`Lobby` › `U_OpenCrates`), and that button's badge (`S_Badge` › `S_Count`): FREE while the
+tutorial crate or VIP's daily crate waits, else how many of the cheapest coin crate the player's coins open (`9+` past
+9, hidden at none), redrawn on `Currency_Changed`. It also drives `CrateOdds` (`U_Odds` ›
+`PREFAB | OddsRow`) and `CrateOpen` (`U_Stage`, `U_Cards` › `PREFAB | ResultCard`, `S_OpenAgain`). The reveal's `S_Burst` effect isn't built yet.

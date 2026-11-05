@@ -3,7 +3,8 @@
 The first-time flow. A new player's first join sends them to the tutorial match (the Lobby module launches it): a 1v1
 against the tutorial bot, which aims beside them and falls to two Bazooka hits, with hints in order (walk, jump, aim
 and fire, the bot's turn, finish it). When it ends, the match server marks it done and gives 100 coins. Back in the
-lobby, a hint and an arrow point to the tutorial crate (the Grenade and the Shotgun), then to the loadout; once both
+lobby, the Crates button's badge reads FREE for the tutorial crate (the Grenade and the Shotgun, the Crates module's
+badge), then a hint and an arrow point to the loadout; once both
 weapons are in it, the tutorial is done and never shows again. The Studio map plays the whole flow on one server; the
 Lobby map alone in Studio, which can't start the match, skips it and goes straight to the crate. The hints move on
 only on the player's own shots (the bot may play first), and each set shows only where it belongs (the `InMatch`
@@ -24,7 +25,7 @@ Player attribute).
 | `Server.lua` | Saved progress, the match's end, the crate, the equip step |
 | `Client.lua` | Starts the match hints on the Match map, the lobby hints on the Lobby map, both on the Studio map |
 | `Scripts/Client/MatchHints.lua` | The hints during the tutorial match |
-| `Scripts/Client/LobbyHints.lua` | The crate and equip hints and the arrow in the lobby; reports the equip step |
+| `Scripts/Client/LobbyHints.lua` | The equip hint and the arrow in the lobby; reports the equip step |
 | `Settings.lua` | `Tutorial_Settings` |
 
 ## API
@@ -64,12 +65,12 @@ It listens to `Match_Ended` (Match map) and `Crates_Opened` (Lobby map) when tho
 | `CRATE_ID` | `"Tutorial"` | The crate the lobby offers once |
 | `STARTER_WEAPONS` | `{ "Grenade", "Shotgun" }` | What the crate gives, and what the equip step checks |
 | `MATCH_MAP`, `LOBBY_MAP`, `MATCH_KIND` | `"Match"`, `"Lobby"`, `"Tutorial"` | The maps that run only the match hints or only the lobby hints, and the match kind |
-| `HINTS` | Walk, Jump, Fire, BotTurn, Finish, Crate, Equip | What each hint says |
+| `HINTS` | Walk, Jump, Fire, BotTurn, Finish, Equip | What each hint says |
 | `JUMP_SPEED` | `6` | How fast a worm must rise to count as a jump, in studs per second |
-| `HINT_GUI_NAME`, `LOBBY_GUI_NAME`, `CRATES_GUI_NAME`, `LOADOUT_GUI_NAME` | | The hint bubble, and the guis the arrow points into |
+| `HINT_GUI_NAME`, `LOBBY_GUI_NAME`, `LOADOUT_GUI_NAME` | | The hint bubble, and the guis the arrow lives in and points into |
 
 ## In the place
 
 Drives `TutorialHint` (`U_Hint` › `S_Text`; `S_Arrow` stays hidden) and the `Lobby` gui's `U_Pointer` › `S_Arrow`,
-which it keeps over the top of `Crates` › `U_TutorialCrate`, then `Loadout` › `U_Slots`. The tutorial bot's damage
+which it keeps over the top of `Loadout` › `U_Slots` during the equip step. The tutorial bot's damage
 is the Bots module's `DAMAGE_TAKEN`.

@@ -37,6 +37,9 @@ local _settings = {
 
 	-- An empty slot's name colour; a filled one takes its item's rarity colour (the gui kit's Text)
 	EMPTY_NAME_COLOR = Color3.fromRGB(255, 255, 255),
+
+	-- An empty slot's picture: the gui kit's plus
+	EMPTY_ICON = "rbxassetid://134817447648270",
 }
 
 return _settings

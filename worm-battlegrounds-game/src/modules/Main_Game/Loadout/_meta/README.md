@@ -65,3 +65,4 @@ whether to open it with coins. Match reads `GetMatchLoadout` when it seats the p
 | `SHINY_COPIES` | `10` | Copies that make an item shiny |
 | `PANEL_GUI_NAME`, `PICKER_GUI_NAME` | `"Loadout"`, `"LoadoutPicker"` | The guis |
 | `EMPTY_NAME_COLOR` | `(255, 255, 255)` | An empty slot's name colour; a filled slot's name takes its item's rarity colour |
+| `EMPTY_ICON` | the kit's plus (`rbxassetid://134817447648270`) | An empty slot's picture; a locked slot shows only its cover |

@@ -258,3 +258,17 @@ held up when its floating parts cover at least `FLOAT_MIN_AREA` (24 square studs
 is indestructible. In the same change, trees, bushes and rocks became `Arena_Prop`s that blasts throw and that fall
 when their ground goes (`Arena/Scripts/Server/Props.lua`). Rules: Arena → "Floating ledges float", "Props react to
 blasts".
+
+### The lobby became a stage with one Play button (2026-11-05)
+
+**Before.** The lobby was a flat sky-blue backdrop covered in panels: Party, a Loadout window, a Play panel with Play
+solo, three public match cards and Custom lobby, a Crates panel with every crate's buttons and Skins, plus a Shop
+button in the top bar. New players had too many things to press.
+
+**Why it changed.** The owner wanted the lobby to read like Fortnite's: your worm standing in front, the game's
+name on top, and few buttons, so nobody gets confused about what to press.
+
+**Now.** The camera looks at the `LobbyStage` Model, where the player's worm stands in its skin. The screen keeps the
+logo, one yellow **Play** (the quick match) with **Modes** beside it, Party, a slim Loadout bar and two corner
+buttons; solo, the public match list, custom lobbies and the crates moved into windows. The top bar's Shop button is
+gone (the currency bar's + opens the shop). Rule: Maps and placeholders → "The lobby is a 3D stage".

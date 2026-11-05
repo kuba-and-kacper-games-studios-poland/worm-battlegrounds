@@ -49,7 +49,6 @@ function Module.Start()
 	elems["HintArrow"] = moduleGui:FindFirstChild("S_Arrow", true) --- @type ImageLabel
 	elems["Pointer"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_Pointer", true) --- @type Frame
 	elems["Arrow"] = elems["Pointer"]:FindFirstChild("S_Arrow", true) --- @type ImageLabel
-	elems["TutorialCrate"] = I.UserInterface.UI[_settings.CRATES_GUI_NAME]:FindFirstChild("U_TutorialCrate", true) --- @type Frame
 	elems["Slots"] = I.UserInterface.UI[_settings.LOADOUT_GUI_NAME]:FindFirstChild("U_Slots", true) --- @type Frame
 
 	--[[ Applying ]]
@@ -93,8 +92,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the step that waits: the hint and an arrow over the tutorial crate, then over the loadout; nothing once the
-	tutorial is done, or while the player is in a match (the Studio map plays both on one server).
+	Shows the equip step while it waits: the hint and an arrow over the loadout (the free crate has the Crates button's
+	badge instead); nothing once the tutorial is done, or while the player is in a match.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -102,10 +101,7 @@ function Module._refresh()
 	local inLobby: boolean = not I.S.Players.LocalPlayer:GetAttribute("InMatch")
 	local hint: string? = nil
 	target = nil
-	if inLobby and moduleRep and moduleRep:GetAttribute("CrateReady") then
-		hint = "Crate"
-		target = elems["TutorialCrate"]
-	elseif inLobby and moduleRep and moduleRep:GetAttribute("EquipReady") then
+	if inLobby and moduleRep and moduleRep:GetAttribute("EquipReady") then
 		hint = "Equip"
 		target = elems["Slots"]
 	end

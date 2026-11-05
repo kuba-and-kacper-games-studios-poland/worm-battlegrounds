@@ -39,7 +39,7 @@ local _settings = {
 		wheel, and the party list emotes show over in the lobby
 	]]
 	LOADOUT_GUI_NAME = "Loadout",
-	CRATES_GUI_NAME = "Crates",
+	LOBBY_GUI_NAME = "Lobby",
 	MATCH_HUD_GUI_NAME = "MatchHud",
 	PARTY_GUI_NAME = "Party",
 }

@@ -39,12 +39,6 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Gui
 
 	GUI_NAME = "Shop",
-
-	-- The top bar button that opens the shop, on these maps only
-	TOP_BAR_TEXT = "SHOP",
-
-	--- @type { string }
-	TOP_BAR_MAPS = { "Lobby", "Studio" },
 }
 
 return _settings

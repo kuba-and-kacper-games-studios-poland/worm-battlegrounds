@@ -76,6 +76,7 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Gui
 
 	BOARD_GUI_NAME = "MatchBoard",
+	MODES_GUI_NAME = "PlayModes",
 	SOLO_GUI_NAME = "SoloSetup",
 	CUSTOM_GUI_NAME = "CustomLobby",
 

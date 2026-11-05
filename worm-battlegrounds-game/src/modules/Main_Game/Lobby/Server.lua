@@ -51,6 +51,16 @@ function Module.Init()
 	I.Network.GetEvent("Lobby_RejoinOffer")
 	I.Network.GetEvent("Lobby_Rejoin", { "Player", "boolean" }, { RateLimit = 1 })
 	I.Network.Fired("Lobby_Rejoin", Module._onRejoin)
+
+	----------------------------
+	------ INITIALIZATION ------
+	----------------------------
+
+	-- Clients put their worm on the lobby's stage in here
+	I.Create("Folder")({
+		Name = _localName,
+		Parent = I.Dirs.UmeWorkspace,
+	})
 end
 
 --%%%%%%%%%%%%%%%%%%%% Start
@@ -72,8 +82,8 @@ end
 
 --[[
 	Routes a player who arrives in the lobby: a reserved server that booted the lobby (an expired match) sends
-	everyone to a public lobby; a player who hasn't played the tutorial match goes there first; a player who dropped
-	out of a running match is asked whether to go back.
+	everyone to a public lobby; a player who hasn't played the tutorial match goes there first (not in Studio, unless
+	asked); a player who dropped out of a running match is asked whether to go back.
 ]]
 function Module._onPlayerAdded(player: Player)
 	-- Check if player is valid | SERVER
@@ -96,9 +106,10 @@ function Module._onPlayerAdded(player: Player)
 
 	--[[ Tutorial ]]
 
-	-- The Lobby map alone in Studio can't start the tutorial match, so it goes on to the lobby's part
+	-- Studio skips the tutorial match unless asked to, and the Lobby map alone can't start it: both go on to the lobby's part
+	local skipMatch: boolean = I.S.RunService:IsStudio() and I.S.Workspace:GetAttribute(_settings.STUDIO_TUTORIAL_ATTRIBUTE) ~= true
 	if not I.Tutorial.IsMatchDone(player) then
-		if I.MatchBoard.Launch({ player }, "Solo", "Deathmatch", 2, _settings.TUTORIAL_MAP, _settings.TUTORIAL_DIFFICULTY, true) then
+		if not skipMatch and I.MatchBoard.Launch({ player }, "Solo", "Deathmatch", 2, _settings.TUTORIAL_MAP, _settings.TUTORIAL_DIFFICULTY, true) then
 			return
 		end
 		if I.S.RunService:IsStudio() then

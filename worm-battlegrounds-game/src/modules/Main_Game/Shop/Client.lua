@@ -14,9 +14,6 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 local elems = {} --- @type { [string]: Instance }
 local prefabs = {} --- @type { [string]: Instance }
 
--- The top bar button, hidden while the player is in a match (the Studio map plays both on one server)
-local topBarButton = nil --- @type TopBar_Button?
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -41,7 +38,6 @@ function Module.Start()
 
 	Module._getElements()
 	Module._createConnections()
-	Module._addTopBarButton()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization
@@ -77,46 +73,7 @@ function Module._createConnections()
 	I.S.TextChatService.OnIncomingMessage = Module._onIncomingMessage
 end
 
---%%%%%%%%%%%%%%%%%%%% Add Top Bar Button
-
---[[
-	Adds the top bar button that opens the shop, on the maps that sell from it.
-]]
-function Module._addTopBarButton()
-	--[[ Checks ]]
-
-	-- Check if this map shows the button
-	if not table.find(_settings.TOP_BAR_MAPS, I.Config.PlaceLoader.MapId) then
-		return
-	end
-
-	--[[ Building ]]
-
-	topBarButton = I.TopBar.AddButton("Left")
-	topBarButton:SetLayoutOrder(2)
-	topBarButton:SetText(_settings.TOP_BAR_TEXT)
-	topBarButton:SetCallback(function()
-		I.WidgetManager.Open(_settings.GUI_NAME)
-	end)
-
-	--[[ Connections ]]
-
-	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshTopBarButton)
-	Module._refreshTopBarButton()
-end
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
-
---%%%%%%%%%%%%%%%%%%%% Refresh Top Bar Button
-
---[[
-	Hides the top bar button while the player is in a match.
-]]
-function Module._refreshTopBarButton()
-	--[[ Applying ]]
-
-	topBarButton.Instance.Visible = not I.S.Players.LocalPlayer:GetAttribute("InMatch")
-end
 
 --%%%%%%%%%%%%%%%%%%%% On Opened
 

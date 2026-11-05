@@ -119,12 +119,15 @@ function Module._refresh()
 		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData?
 		local copies: number = tonumber(I.Inventory.Items and I.Inventory.Items.Standard and I.Inventory.Items.Standard[itemId]) or 0
 		local lock: Frame = box:FindFirstChild("S_Lock", true)
-		box:FindFirstChild("S_Icon", true).Image = if item then item.IconId else ""
-		box:FindFirstChild("S_Name", true).Text = if item then item.Name else "Empty"
+		local locked: boolean = slot > unlocked
+
+		-- A locked slot shows only its cover, so nothing reads through it
+		box:FindFirstChild("S_Icon", true).Image = if item then item.IconId elseif locked then "" else _settings.EMPTY_ICON
+		box:FindFirstChild("S_Name", true).Text = if item then item.Name elseif locked then "" else "Empty"
 		box:FindFirstChild("S_Name", true).TextColor3 = if item then I.Rarity.GetLook(item.Rarity).Base else _settings.EMPTY_NAME_COLOR
 		box:FindFirstChild("S_Shiny", true).Visible = copies >= _settings.SHINY_COPIES
 		box.Visible = slot <= unlocked + 1
-		lock.Visible = slot > unlocked
+		lock.Visible = locked
 		lock:FindFirstChild("S_Price", true).Text = if _settings.SLOT_PRICES[slot] then `{_settings.SLOT_PRICES[slot]} coins` else ""
 	end
 end

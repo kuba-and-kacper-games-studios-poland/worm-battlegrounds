@@ -2,7 +2,7 @@
 
 The Robux shop and VIP. The client draws the `Shop` widget: the diamond packs (developer products) and the game
 passes, each with its live price, bought through ume's Marketplace prompts. The currency bar's **+** opens it through
-its tags, and on the Lobby and Studio maps a top bar button does too (hidden during a match on the Studio map). The server marks VIP players (the `Vip` Player attribute,
+its tags (the lobby keeps the top bar clear). The server marks VIP players (the `Vip` Player attribute,
 which gives a gold worm name and a chat tag) and keeps VIP's free skin crate, once per UTC day.
 
 | | |
@@ -10,7 +10,7 @@ which gives a gold worm name and a chat tag) and keeps VIP's free skin crate, on
 | Folder | `src/modules/Main_Game/Shop` |
 | Runs on | Server, Client · every map |
 | Exposes | `I.Shop` (server) |
-| Uses | `I.G_Marketplace`, `I.Replicator`, `I.TopBar`, `I.WidgetManager`, `I.DoEvery`, `TextChatService` |
+| Uses | `I.G_Marketplace`, `I.Replicator`, `I.WidgetManager`, `I.DoEvery`, `TextChatService` |
 | Saves | `Profile.Shop` |
 
 ## Files
@@ -18,7 +18,7 @@ which gives a gold worm name and a chat tag) and keeps VIP's free skin crate, on
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | VIP, the daily free crate, a check every minute for a new day |
-| `Client.lua` | The `Shop` widget, the top bar button, the VIP chat tag |
+| `Client.lua` | The `Shop` widget, the VIP chat tag |
 | `Settings.lua` | `Shop_Settings` |
 | `_meta/_types.lua` | `Shop_Pack`, `Shop_Pass` |
 
@@ -60,7 +60,6 @@ No remotes of its own: purchases use Marketplace's `Marketplace_PromptProductPur
 | `VIP_CHAT_TAG` | gold `[VIP] ` | Put in front of a VIP player's chat messages |
 | `VIP_CHECK_SECONDS` | `60` | How often the server looks for a new day's crate |
 | `GUI_NAME` | `"Shop"` | The widget |
-| `TOP_BAR_TEXT`, `TOP_BAR_MAPS` | `"SHOP"`, `{ "Lobby", "Studio" }` | The top bar button, and the maps that show it |
 
 ## In the place
 

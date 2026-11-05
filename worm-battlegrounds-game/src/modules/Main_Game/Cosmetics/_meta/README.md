@@ -21,7 +21,7 @@ worm in a match or beside their name in the lobby's party list.
 | `Server.lua` | Starter items, equipping, buying and playing emotes, the skin a match uses |
 | `Global.lua` | The skin and emote rows |
 | `Client.lua` | Starts the three client handlers |
-| `Scripts/Client/Skins.lua` | The `Skins` widget and the lobby's skin button (`Crates` › `U_Skins`) |
+| `Scripts/Client/Skins.lua` | The `Skins` widget and the lobby's skin button (`Lobby` › `U_Skins`) |
 | `Scripts/Client/EmoteShop.lua` | The `EmoteShop` widget |
 | `Scripts/Client/Emotes.lua` | The emote row, the emote wheel, and showing played emotes |
 | `Settings.lua` | `Cosmetics_Settings` |
@@ -82,7 +82,7 @@ worm in a match or beside their name in the lobby's party list.
 | `WHEEL_RADIUS` | `0.38` | How far the wheel's emotes sit from its centre, as a share of its size |
 | `PREVIEW_DISTANCE` | `1.6` | The skin preview camera's distance, in the model's sizes |
 | `SKINS_GUI_NAME`, `EMOTE_SHOP_GUI_NAME` | `"Skins"`, `"EmoteShop"` | The widgets |
-| `LOADOUT_GUI_NAME`, `CRATES_GUI_NAME`, `MATCH_HUD_GUI_NAME`, `PARTY_GUI_NAME` | | The guis that hold the emote row, the skin button, the emote wheel and the party list |
+| `LOADOUT_GUI_NAME`, `LOBBY_GUI_NAME`, `MATCH_HUD_GUI_NAME`, `PARTY_GUI_NAME` | | The guis that hold the emote row, the skin button, the emote wheel and the party list |
 
 ## In the place
 

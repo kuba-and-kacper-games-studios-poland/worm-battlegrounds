@@ -42,7 +42,7 @@ function Module.Start()
 
 	moduleGui = I.UserInterface.UI[_settings.SKINS_GUI_NAME]
 	elems["Skins"] = moduleGui:FindFirstChild("U_Skins", true) --- @type ScrollingFrame
-	elems["SkinButton"] = I.UserInterface.UI[_settings.CRATES_GUI_NAME]:FindFirstChild("U_Skins", true) --- @type Frame
+	elems["SkinButton"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_Skins", true) --- @type Frame
 	prefabs["SkinTile"] = elems["Skins"]:FindFirstChild("PREFAB | SkinTile") --- @type Frame
 
 	--[[ Connections ]]

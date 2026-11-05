@@ -87,7 +87,8 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Studio plays the `Studio` map:** both maps' folders and modules on one server, since Studio can't teleport. The
   lobby hands each match to `I.Match.Host`, and the `InMatch` Player attribute says which half a player is in: every
   screen, camera and hint that belongs to one half follows it instead of assuming its map. A Workspace attribute
-  `Ume_StudioMapId` (`Lobby` or `Match`) tests one map alone.
+  `Ume_StudioMapId` (`Lobby` or `Match`) tests one map alone. Studio saves nothing, so a playtest skips the tutorial
+  match and opens on the lobby; the Workspace attribute `StudioTutorial` (true) plays it.
 - **Placeholders until the owner provides the real thing:** developer products and game passes keep `Id = 0`; weapon
   projectiles, effects and skins other than Classic are made in code or fall back to the Classic worm. Each such spot
   has a `shortcut:` comment or a README line saying it's a placeholder. Never create products, passes or models on
@@ -102,9 +103,14 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   `Utils_PlatformSize`), and ScreenScale multiplies the screen's scale by the device scale the tag keeps on the
   UIScale (`Utils_BaseScale`). No module or attribute of the game's own does per-device sizing. The GUI kit tags its
   panels 0.75 on Desktop, since it's drawn for phones.
-- **Panels hang from a screen edge or corner** (top-left Party, bottom-left Loadout, bottom-centre Play,
-  bottom-right Crates), so a per-device size (`Utils_PlatformSize`) never needs a per-device position. On phones and
+- **Panels hang from a screen edge or corner** (top-left Party, bottom-left Loadout, bottom-centre Play, top-right
+  currency and the Crates and Skins buttons), so a per-device size (`Utils_PlatformSize`) never needs a per-device position. On phones and
   tablets a panel too big for the screen gets a Mobile size, its list scrolling, and a Mobile scale under 1 only when
   its content needs the room; a heading that costs a phone too much hides there (`Utils_HideOnPlatform`).
+- **The lobby is a 3D stage, not a backdrop picture:** the camera sits on the `LobbyStage` Model's `Camera` marker and
+  the player's worm stands on its `Worm` marker (Lobby's README → In the place), with the lobby's guis see-through
+  over it. Keep the screen to a few things: the logo at the top, one yellow **Play** (the quick match) with **Modes**
+  beside it, Party, the Loadout bar and the corner buttons. Everything else (solo, the public match list, custom
+  lobbies, crates, skins) opens in a window.
 - **Check guis shown together for overlaps** before calling a layout done: PC sizes from 1024 × 768 to 3840 × 2160,
   tablets, and phones down to 667 × 375.

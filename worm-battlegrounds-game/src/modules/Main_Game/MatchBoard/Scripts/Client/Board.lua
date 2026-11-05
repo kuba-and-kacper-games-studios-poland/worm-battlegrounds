@@ -45,7 +45,8 @@ function Module.Start()
 
 	moduleGui = I.UserInterface.UI[_settings.BOARD_GUI_NAME]
 	elems["Play"] = moduleGui:FindFirstChild("U_Play") --- @type Frame
-	elems["Rows"] = moduleGui:FindFirstChild("U_Rows", true) --- @type Frame
+	elems["Quick"] = elems["Play"]:FindFirstChild("S_Quick", true):FindFirstChild("Button") --- @type ImageButton
+	elems["Rows"] = I.UserInterface.UI[_settings.MODES_GUI_NAME]:FindFirstChild("U_Rows", true) --- @type Frame
 	elems["WaitingRoom"] = moduleGui:FindFirstChild("U_WaitingRoom") --- @type Frame
 	elems["Match"] = elems["WaitingRoom"]:FindFirstChild("S_Match", true) --- @type TextLabel
 	elems["Countdown"] = elems["WaitingRoom"]:FindFirstChild("S_Countdown", true) --- @type TextLabel
@@ -64,6 +65,7 @@ function Module.Start()
 	for _index: number, config: Instance in ipairs(boardFolder:GetChildren()) do
 		Module._watchRow(config)
 	end
+	I.Interact.OnPress(elems["Quick"], Module._quickJoin)
 	I.Interact.OnPress(elems["Vote"], function()
 		I.Network.Fire("MatchBoard_Vote")
 	end)
@@ -99,6 +101,7 @@ function Module._watchRow(config: Instance)
 		lines[config.Name] = line
 		I.Interact.OnPress(line:FindFirstChild("S_Join", true):FindFirstChild("Button"), function()
 			I.Network.Fire("MatchBoard_Join", config.Name)
+			I.WidgetManager.Close(_settings.MODES_GUI_NAME)
 		end)
 	end
 
@@ -121,6 +124,45 @@ function Module._onRowRemoved(config: Instance)
 		lines[config.Name] = nil
 	end
 	Module._refresh()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Quick Join
+
+--[[
+	Joins the open public match closest to starting: the one with the most players that still has room, a deathmatch
+	first on a tie, since any party fits it. The server checks the party fits.
+]]
+function Module._quickJoin()
+	--[[ Local Variables ]]
+
+	local best: Instance? = nil
+	local bestCount: number = -1
+
+	--[[ Searching ]]
+
+	for rowId: string, _line: Frame in pairs(lines) do
+		local config: Instance? = boardFolder:FindFirstChild(rowId)
+		if not config then
+			continue
+		end
+		local count: number = #Module._getPlayers(config)
+		local deathmatch: boolean = config:GetAttribute("Mode") == "Deathmatch"
+		if count < config:GetAttribute("Size") and (count > bestCount or count == bestCount and deathmatch) then
+			best = config
+			bestCount = count
+		end
+	end
+
+	--[[ Checks ]]
+
+	-- Check if a match has room
+	if not best then
+		return
+	end
+
+	--[[ Joining ]]
+
+	I.Network.Fire("MatchBoard_Join", best.Name)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh
