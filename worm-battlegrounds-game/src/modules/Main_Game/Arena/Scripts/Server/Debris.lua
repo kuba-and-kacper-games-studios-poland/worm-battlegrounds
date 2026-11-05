@@ -219,7 +219,8 @@ end
 --[[
 	Collects the parts connected to a start part, stopping early once it reaches indestructible ground, the search
 	limit, or a part an earlier search walked (an earlier floating group would hold this part too, so that search
-	ended on the ground). Returns the parts found and whether they are held up.
+	ended on the ground). A whole group stays up too when its floating parts (`Arena_Floats`) cover at least
+	FLOAT_MIN_AREA on the plane. Returns the parts found and whether they are held up.
 ]]
 --- @param visited { [BasePart]: number }
 --- @return { BasePart }
@@ -230,6 +231,7 @@ function Module._getGroup(start: BasePart, visited, search: number)
 	local group = {} --- @type { BasePart }
 	local queue = { start } --- @type { BasePart }
 	local head: number = 1
+	local floatArea: number = 0
 	visited[start] = search
 
 	--[[ Searching ]]
@@ -240,6 +242,9 @@ function Module._getGroup(start: BasePart, visited, search: number)
 		table.insert(group, part)
 		if part:GetAttribute("Arena_Indestructible") or #group >= _settings.SUPPORT_SEARCH_LIMIT then
 			return group, true
+		end
+		if part:GetAttribute("Arena_Floats") then
+			floatArea += part.Size.X * part.Size.Y
 		end
 		for _index: number, contact: BasePart in ipairs(Module.GetContacts(part)) do
 			if visited[contact] and visited[contact] ~= search then
@@ -254,7 +259,7 @@ function Module._getGroup(start: BasePart, visited, search: number)
 
 	--[[ Returning ]]
 
-	return group, false
+	return group, floatArea >= _settings.FLOAT_MIN_AREA
 end
 
 return Module

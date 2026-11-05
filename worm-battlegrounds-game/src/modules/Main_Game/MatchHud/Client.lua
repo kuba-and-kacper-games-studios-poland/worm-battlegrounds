@@ -72,12 +72,19 @@ end
 
 --[[
 	Shows the HUD while the player is in the match: always on a match server, and on the Studio map once its lobby
-	starts one.
+	starts one. The guis that are always on elsewhere (HIDDEN_IN_MATCH) are hidden meanwhile.
 ]]
 function Module._refreshShown()
+	--[[ Local Variables ]]
+
+	local inMatch: boolean = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
+
 	--[[ Applying ]]
 
-	moduleGui.Enabled = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
+	moduleGui.Enabled = inMatch
+	for _index: number, guiName: string in ipairs(_settings.HIDDEN_IN_MATCH) do
+		I.UserInterface.UI[guiName].Enabled = not inMatch
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

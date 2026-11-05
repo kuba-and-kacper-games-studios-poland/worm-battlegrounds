@@ -19,6 +19,10 @@ local _data: Folder = script:FindFirstAncestor(_localName):FindFirstChild("Data"
 local weapons = {} --- @type { [string]: Arsenal_WeaponData }
 local utilities = {} --- @type { [string]: Arsenal_UtilityData }
 
+-- Each weapon's model from Assets/Arsenal/Models, and the ones with a projectile of their own from Projectiles
+local cachedModels = {} --- @type { [string]: Model }
+local cachedProjectiles = {} --- @type { [string]: Model }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -47,6 +51,8 @@ function Module.Init()
 	for _index: number, row: Instance in ipairs(_data:FindFirstChild("Utilities"):GetChildren()) do
 		utilities[row.Name] = require(row)
 	end
+	Module._cacheModels("Models", cachedModels)
+	Module._cacheModels("Projectiles", cachedProjectiles)
 
 	----------------------------
 	---- ASSIGN TO INSTANCE ----
@@ -60,9 +66,65 @@ function Module.Init()
 		GetAll = Module.GetAll,
 		GetDamage = Module.GetDamage,
 		GetKnockback = Module.GetKnockback,
+		GetModel = Module.GetModel,
+		GetProjectileModel = Module.GetProjectileModel,
+		HasModel = Module.HasModel,
 		IsWeapon = Module.IsWeapon,
 		IsUtility = Module.IsUtility,
 	}
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization
+
+--%%%%%%%%%%%%%%%%%%%% Cache Models
+
+--[[
+	Caches the weapon models in Assets/Arsenal/<folderName>, each named after its weapon row and with its RootPart (the
+	PrimaryPart) hidden. Skips, with a warn on the server, what isn't a Model with a PrimaryPart or has no weapon row.
+]]
+--- @param cache { [string]: Model }
+function Module._cacheModels(folderName: string, cache)
+	--[[ Data ]]
+
+	local assets: Instance? = I.Dirs.Assets:FindFirstChild(_localName)
+	local dir: Instance? = assets and assets:FindFirstChild(folderName)
+
+	--[[ Checks ]]
+
+	-- Check if the folder is in the place
+	if not dir then
+		if I.Env.IsServer then
+			warn(`[{_localName}::{script.Name}]: Folder (Assets/{_localName}/{folderName}) is missing - no weapon has a model there!`)
+		end
+		return
+	end
+
+	--[[ Caching ]]
+
+	for _index: number, model: Instance in ipairs(dir:GetChildren()) do
+		--[[ Checks ]]
+
+		-- Check if the child is a Model with its RootPart
+		if not model:IsA("Model") or not model.PrimaryPart then
+			if I.Env.IsServer then
+				warn(`[{_localName}::{script.Name}]: ({model:GetFullName()}) isn't a Model with a PrimaryPart - skipped! -`, model)
+			end
+			continue
+		end
+
+		-- Check if a weapon row uses it
+		if not weapons[model.Name] then
+			if I.Env.IsServer then
+				warn(`[{_localName}::{script.Name}]: Model (Assets/{_localName}/{folderName}/{model.Name}) has no weapon row in Data/Weapons - unused. -`, model)
+			end
+			continue
+		end
+
+		--[[ Saving ]]
+
+		model.PrimaryPart.Transparency = 1
+		cache[model.Name] = model
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -132,6 +194,47 @@ end
 --- @return number
 function Module.GetKnockback(class: string)
 	return _settings.KNOCKBACK[class] or 0
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Model
+
+--[[
+	Returns a weapon's model (clone it): the one a worm holds, and throws when the weapon has no projectile model.
+	Faces +X from its RootPart, at the grip of a held weapon and the centre of a thrown one.
+]]
+--- @return Model?
+function Module.GetModel(itemId: string)
+	--[[ Checks ]]
+
+	-- Check if the weapon has a model
+	if not cachedModels[itemId] then
+		warn(`[{_localName}::{script.Name}]: Weapon ({itemId}) model is missing!`)
+		return nil
+	end
+
+	--[[ Returning ]]
+
+	return cachedModels[itemId]
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Projectile Model
+
+--[[
+	Returns the model a weapon's shot flies as (clone it): its own projectile model, else the weapon's model.
+]]
+--- @return Model?
+function Module.GetProjectileModel(itemId: string)
+	return cachedProjectiles[itemId] or Module.GetModel(itemId)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Has Model
+
+--[[
+	Returns whether a weapon has a model, without warning when it doesn't.
+]]
+--- @return boolean
+function Module.HasModel(itemId: string)
+	return cachedModels[itemId] ~= nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Weapon

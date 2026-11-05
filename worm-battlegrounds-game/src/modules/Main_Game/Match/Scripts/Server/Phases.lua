@@ -21,10 +21,10 @@ local Rematch = require(script.Parent:FindFirstChild("Rematch")) --- @type Match
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local matchFolder: Folder
-local random: Random = Random.new()
 
--- Each participant's landing spot along X, by id
-local drops = {} --- @type { [string]: number }
+-- Each participant's landing spot on the arena's plane, and whether they placed it, by id
+local drops = {} --- @type { [string]: Vector2 }
+local placed = {} --- @type { [string]: boolean }
 
 -- Whether the Studio map's lobby handed over a match that hasn't finished
 local hosted: boolean = false
@@ -223,9 +223,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Pick Drop
 
 --[[
-	Moves a player's landing spot during the drop phase, kept inside the drop zone.
+	Places a player's landing spot during the drop phase: anywhere in the play area a worm fits, out of walls and
+	liquid. A spot that doesn't fit is ignored.
 ]]
-function Module.PickDrop(player: Player, x: number)
+function Module.PickDrop(player: Player, x: number, y: number)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return
@@ -243,68 +244,92 @@ function Module.PickDrop(player: Player, x: number)
 		return
 	end
 
+	-- Check if the spot is a number pair
+	if x ~= x or y ~= y then
+		return
+	end
+
+	-- Check if a worm fits there
+	local spot: Vector2 = Vector2.new(x, y)
+	if not I.Arena.IsFree(Vector3.new(spot.X, spot.Y, 0), I.Settings["Worms"].ROOT_SIZE / 2) then
+		return
+	end
+
 	--[[ Saving ]]
 
-	Module._setDrop(participant.Id, x)
+	placed[participant.Id] = true
+	Roster.SetInfo(participant.Id, "Placed", true)
+	Module._setDrop(participant.Id, spot)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Drop
 
 --[[
-	The drop phase: everyone starts on a spread-out random spot of the drop zone and has DROP_SECONDS to move it.
+	The drop phase: everyone starts on a spread-out random spot standing on land, and players have DROP_SECONDS to place
+	theirs anywhere in the play area; it ends early once every connected player has placed.
 ]]
 function Module._drop()
 	--[[ Data ]]
 
-	local zone: BasePart = I.Arena.GetDropZone()
+	local bounds: BasePart = I.Arena.GetBounds()
 	local participants = Roster.GetParticipants() --- @type { Match_Participant }
+	local spots = I.Arena.GetLandSpots(#participants, I.Settings["Worms"].ROOT_SIZE / 2) --- @type { Vector3 }
 
-	--[[ Local Variables ]]
+	--[[ Checks ]]
 
-	local low: number = zone.Position.X - zone.Size.X / 2 + 2
-	local high: number = zone.Position.X + zone.Size.X / 2 - 2
-	local slots = {} --- @type { number }
-	for index: number = 1, #participants do
-		table.insert(slots, low + (high - low) * (index - 0.5) / #participants)
+	-- Check if the map has land for everyone to start on
+	if #spots == 0 then
+		warn(`[{_localName}::{script.Name}]: Map ({matchFolder:GetAttribute("MapId")}) has no land to start worms on - using the top of its bounds!`)
+		table.insert(spots, bounds.Position + Vector3.new(0, bounds.Size.Y / 2 - 5, 0))
 	end
 
 	--[[ Saving ]]
 
 	drops = {}
-	matchFolder:SetAttribute("DropMinX", low)
-	matchFolder:SetAttribute("DropMaxX", high)
-	matchFolder:SetAttribute("DropY", zone.Position.Y + zone.Size.Y / 2)
+	placed = {}
+	matchFolder:SetAttribute("DropMinX", bounds.Position.X - bounds.Size.X / 2)
+	matchFolder:SetAttribute("DropMaxX", bounds.Position.X + bounds.Size.X / 2)
+	matchFolder:SetAttribute("DropMinY", bounds.Position.Y - bounds.Size.Y / 2)
+	matchFolder:SetAttribute("DropMaxY", bounds.Position.Y + bounds.Size.Y / 2)
 	matchFolder:SetAttribute("DropEndsAt", I.S.Workspace:GetServerTimeNow() + _settings.DROP_SECONDS)
 
-	-- Bots keep their spread-out spot; players start on one and can move it
+	-- Bots keep their land spot; players start on one and can place their own (spots repeat when there are too few)
 	--- @param participant Match_Participant
-	for _index: number, participant in ipairs(participants) do
-		Module._setDrop(participant.Id, table.remove(slots, random:NextInteger(1, #slots)))
+	for index: number, participant in ipairs(participants) do
+		local spot: Vector3 = spots[(index - 1) % #spots + 1]
+		placed[participant.Id] = participant.IsBot
+		Roster.SetInfo(participant.Id, "Placed", participant.IsBot)
+		Module._setDrop(participant.Id, Vector2.new(spot.X, spot.Y))
 	end
 
 	--[[ Waiting ]]
 
 	Module.SetPhase("Drop")
-	task.wait(_settings.DROP_SECONDS)
+	local deadline: number = os.clock() + _settings.DROP_SECONDS
+	while os.clock() < deadline and not Module._isEveryonePlaced() do
+		task.wait(0.1)
+	end
+
+	-- Stops the drop timer on screen when everyone placed early
+	matchFolder:SetAttribute("DropEndsAt", I.S.Workspace:GetServerTimeNow())
 end
 
 --%%%%%%%%%%%%%%%%%%%% Land
 
 --[[
-	The landing: every worm appears at the top of the drop zone over its spot with its parachute open, and the match
-	waits until they all landed (or went out), MAX_LANDING seconds at most.
+	The landing: every worm appears on its spot, a player's own pick with its parachute open (the rest stand on land),
+	and the match waits until they all landed (or went out), MAX_LANDING seconds at most.
 ]]
 function Module._land()
-	--[[ Local Variables ]]
-
-	local height: number = matchFolder:GetAttribute("DropY")
-
 	--[[ Spawning ]]
 
 	--- @param participant Match_Participant
 	for _index: number, participant in ipairs(Roster.GetParticipants()) do
-		I.Worms.Spawn(participant, Vector3.new(drops[participant.Id], height, 0))
-		I.WormControl.ApplyEffect(participant.Id, "Parachute")
+		local spot: Vector2 = drops[participant.Id]
+		I.Worms.Spawn(participant, Vector3.new(spot.X, spot.Y, 0))
+		if placed[participant.Id] and not participant.IsBot then
+			I.WormControl.ApplyEffect(participant.Id, "Parachute")
+		end
 	end
 	Module.SetPhase("Landing")
 
@@ -329,17 +354,37 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Drop
 
 --[[
-	Saves a participant's landing spot, clamped to the drop zone, and shows it on their entry for the drop markers.
+	Saves a participant's landing spot and shows it on their entry for the drop markers.
 ]]
-function Module._setDrop(participantId: string, x: number)
-	--[[ Local Variables ]]
-
-	local clamped: number = math.clamp(x, matchFolder:GetAttribute("DropMinX"), matchFolder:GetAttribute("DropMaxX"))
-
+function Module._setDrop(participantId: string, spot: Vector2)
 	--[[ Saving ]]
 
-	drops[participantId] = clamped
-	Roster.SetInfo(participantId, "DropX", clamped)
+	drops[participantId] = spot
+	Roster.SetInfo(participantId, "DropX", spot.X)
+	Roster.SetInfo(participantId, "DropY", spot.Y)
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Is Everyone Placed
+
+--[[
+	Returns whether every connected player in the match has placed their landing spot.
+]]
+--- @return boolean
+function Module._isEveryonePlaced()
+	--[[ Checking ]]
+
+	--- @param participant Match_Participant
+	for _index: number, participant in ipairs(Roster.GetParticipants()) do
+		if participant.Connected and not placed[participant.Id] then
+			return false
+		end
+	end
+
+	--[[ Returning ]]
+
+	return true
 end
 
 return Module

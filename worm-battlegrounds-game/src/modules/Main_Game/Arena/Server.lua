@@ -19,6 +19,7 @@ local Loader = require(_scripts:FindFirstChild("Server"):FindFirstChild("Loader"
 local Carver = require(_scripts:FindFirstChild("Server"):FindFirstChild("Carver")) --- @type Arena_Server_Carver
 local Debris = require(_scripts:FindFirstChild("Server"):FindFirstChild("Debris")) --- @type Arena_Server_Debris
 local Liquid = require(_scripts:FindFirstChild("Server"):FindFirstChild("Liquid")) --- @type Arena_Server_Liquid
+local Props = require(_scripts:FindFirstChild("Server"):FindFirstChild("Props")) --- @type Arena_Server_Props
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -73,10 +74,11 @@ function Module.Init()
 		GetBounds = Loader.GetBounds,
 		GetMarkers = Loader.GetMarkers,
 		GetPlane = Loader.GetPlane,
-		GetDropZone = Module.GetDropZone,
+		GetLandSpots = Module.GetLandSpots,
 		GetLiquid = Liquid.GetLiquid,
 		GetLiquidKind = Liquid.GetLiquidKind,
 		GetHazard = Module.GetHazard,
+		IsFree = Module.IsFree,
 		IsSettled = Debris.IsSettled,
 	}
 end
@@ -96,6 +98,7 @@ function Module.Load(mapId: string)
 	if not Loader.Load(mapId) then
 		return false
 	end
+	Props.Collect()
 	Liquid.Build()
 
 	--[[ Publishing ]]
@@ -135,6 +138,7 @@ function Module.Carve(center: Vector3, radius: number)
 	local seeds = Carver.Carve(center, radius) --- @type { BasePart }
 	Liquid.Refresh(center - Vector3.new(radius, radius, 0), center + Vector3.new(radius, radius, 0))
 	Debris.Drop(seeds)
+	Props.Update(center, radius)
 
 	--[[ Saving ]]
 
@@ -143,30 +147,75 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
---%%%%%%%%%%%%%%%%%%%% Get Drop Zone
+--%%%%%%%%%%%%%%%%%%%% Get Land Spots
 
 --[[
 	**SERVER** |
-	Returns the loaded map's DropZone marker: the X range worms may land in, and the height they drop from (its top).
+	Returns `count` random spots where a ball of `radius` stands on the top of the terrain, out of liquid, kept
+	LAND_SPOT_GAP studs apart while there's room (closer when there isn't). Empty when the map has no such ground.
 ]]
---- @return BasePart?
-function Module.GetDropZone()
+--- @return { Vector3 }
+function Module.GetLandSpots(count: number, radius: number)
 	--[[ Data ]]
 
-	local markers: Folder? = Loader.GetMarkers()
-	local zone: Instance? = markers and markers:FindFirstChild("DropZone")
+	local bounds: BasePart? = Loader.GetBounds()
+	local terrain: Folder? = Loader.GetTerrain()
+	if not bounds or not terrain then
+		return {}
+	end
 
-	--[[ Checks ]]
+	--[[ Local Variables ]]
 
-	-- Check if the map has a drop zone
-	if not zone or not zone:IsA("BasePart") then
-		warn(`[{_localName}::{script.Name}]: The loaded map has no DropZone marker!`)
-		return nil
+	local params: RaycastParams = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { terrain }
+	local top: number = bounds.Position.Y + bounds.Size.Y / 2
+	local left: number = bounds.Position.X - bounds.Size.X / 2 + radius
+	local right: number = bounds.Position.X + bounds.Size.X / 2 - radius
+	local candidates = {} --- @type { Vector3 }
+
+	--[[ Finding ]]
+
+	-- The highest flat enough ground under each step, with room for the ball
+	for x: number = left, right, _settings.LAND_SPOT_STEP do
+		local hit: RaycastResult? = I.S.Workspace:Raycast(Vector3.new(x, top, bounds.Position.Z), Vector3.new(0, -bounds.Size.Y, 0), params)
+		local spot: Vector3? = if hit then hit.Position + Vector3.new(0, radius + 0.1, 0) else nil
+		if hit and spot and hit.Normal.Y >= _settings.LAND_SPOT_MIN_NORMAL and Module.IsFree(spot, radius) then
+			table.insert(candidates, spot)
+		end
+	end
+
+	--[[ Picking ]]
+
+	local random: Random = Random.new()
+	random:Shuffle(candidates)
+	local spots = {} --- @type { Vector3 }
+	local skipped = {} --- @type { Vector3 }
+	for _index: number, candidate: Vector3 in ipairs(candidates) do
+		if #spots >= count then
+			break
+		end
+		local tooClose: boolean = false
+		for _spotIndex: number, spot: Vector3 in ipairs(spots) do
+			if math.abs(spot.X - candidate.X) < _settings.LAND_SPOT_GAP then
+				tooClose = true
+				break
+			end
+		end
+		table.insert(if tooClose then skipped else spots, candidate)
+	end
+
+	-- Fills what the gap left out from the closer ones
+	for _index: number, candidate: Vector3 in ipairs(skipped) do
+		if #spots >= count then
+			break
+		end
+		table.insert(spots, candidate)
 	end
 
 	--[[ Returning ]]
 
-	return zone
+	return spots
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Hazard
@@ -195,6 +244,42 @@ function Module.GetHazard(position: Vector3)
 		return "Bounds"
 	end
 	return Liquid.GetLiquid(position)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Free
+
+--[[
+	**SERVER** |
+	Returns whether a ball of `radius` fits at a position: inside the play area, out of liquid and touching no terrain.
+]]
+--- @return boolean
+function Module.IsFree(position: Vector3, radius: number)
+	--[[ Data ]]
+
+	local bounds: BasePart? = Loader.GetBounds()
+	if not bounds then
+		return false
+	end
+
+	--[[ Local Variables ]]
+
+	local inside: Vector3 = bounds.CFrame:PointToObjectSpace(position)
+
+	--[[ Checks ]]
+
+	-- Check if the ball is inside the play area
+	if math.abs(inside.X) > bounds.Size.X / 2 - radius or math.abs(inside.Y) > bounds.Size.Y / 2 - radius then
+		return false
+	end
+
+	-- Check if the ball is out of liquid
+	if Liquid.GetLiquid(position) then
+		return false
+	end
+
+	--[[ Returning ]]
+
+	return #I.S.Workspace:GetPartBoundsInRadius(position, radius, Loader.GetTerrainParams()) == 0
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

@@ -82,7 +82,7 @@ function Module.Init()
 	I.Topic.Register("Match_Ended", { "table", "table", "table" })
 
 	--- @Network
-	I.Network.GetEvent("Match_PickDrop", { "Player", "number" }, { RateLimit = 10 })
+	I.Network.GetEvent("Match_PickDrop", { "Player", "number", "number" }, { RateLimit = 10 })
 	I.Network.Fired("Match_PickDrop", Phases.PickDrop)
 	I.Network.GetEvent("Match_KnockedOut")
 

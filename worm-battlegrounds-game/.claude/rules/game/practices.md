@@ -11,6 +11,14 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Blasts carve with CSG:** `GeometryService:SubtractAsync` with a cylinder whose axis runs along Z (through the
   plane), so craters are smooth and round. `SplitApart` keeps every loose piece its own part; a group of pieces that
   no longer touches the ground falls and anchors again where it lands.
+- **Ground is what's `Arena_Indestructible`:** each island's waterline blocks. **Floating ledges float:** their
+  parts carry `Arena_Floats`, and a cut-off group of them stays up while it covers `FLOAT_MIN_AREA`; smaller crumbs
+  fall. Never mark a ledge block indestructible to hold it up: it hangs uncut over the craters around it.
+- **Props react to blasts:** trees, bushes and rocks in a map's Decor carry `Arena_Prop`; a blast throws the ones it
+  reaches, and one whose ground is gone falls; both fade out.
+- **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), centred
+  on the arena's plane at Z = 0, and cached by the Arena module at start. Weapon models are authored in
+  `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/` and cached by Arsenal (its README → In the place).
 - **Liquids are a stop-motion stud simulation:** water and lava live in a grid of half-stud cells stepped at 8 fps
   and drawn as merged rectangles in `2022 Small Stud`, so they hop like a brick film. They are the only thing in the
   arena on a grid, and the cells stay fine (never one-stud or bigger blocks).
@@ -23,6 +31,9 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **The active worm is moved by its player's client** through network ownership; the server only checks speed and
   stamina and takes the worm back. Anything the server does to a worm (knockback, a knockout) happens while the
   server owns it.
+- **A worm starts standing on land unless its player places it:** bots and players who don't place start on
+  `I.Arena.GetLandSpots` (on top of the ground, never over liquid); only a spot a player placed is dropped onto with
+  the parachute.
 - **A walking worm has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 
@@ -47,6 +58,9 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   and writes the theme's `Icons.lua` and `Skins.lua`. Nothing is uploaded to Roblox before the owner says so; then
   the pictures get PrepKit's pixel-fix, are uploaded, and `Icons.lua` points at their `rbxassetid://` ids. The GUI
   kit is uploaded (2026-11-04); the first kit's item, emote and skin pictures (`wb_guipreview`) are still local.
+  A Studio update installs a fresh content folder without them, and every gui showing one goes blank: copy them in
+  again (`assets/_inbox/ui_kit/README.md` → Rebuilding), then restart Studio, which remembers a failed picture for
+  the whole session.
 - **The game's guis are built from the theme's controls** (`WormBattlegroundsBrawl`, over `WormBattlegrounds`),
   never from raw `Primitive` nodes holding their own colours and sizes (as ume-gui's System guis are): `Widget` for
   every WidgetManager widget, `Box` for panels and cards, `Item` for item cards, `Cells` for lists and grids code

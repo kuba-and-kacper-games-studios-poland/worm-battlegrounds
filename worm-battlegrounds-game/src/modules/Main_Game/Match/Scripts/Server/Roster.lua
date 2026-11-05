@@ -253,7 +253,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Info
 
 --[[
-	Writes one of a participant's values that clients show (DropX, Out, Place, Connected) onto their entry.
+	Writes one of a participant's values that clients show (DropX, DropY, Placed, Out, Place, Connected) onto their entry.
 ]]
 function Module.SetInfo(participantId: string, name: string, value: any)
 	--[[ Data ]]

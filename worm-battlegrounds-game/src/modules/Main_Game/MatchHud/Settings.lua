@@ -7,6 +7,13 @@ local _settings = {
 	GUI_NAME = "MatchHud",
 	RESULTS_GUI_NAME = "Results",
 
+	--[[
+		Guis the framework keeps on (`UserInterface_PreventHiding`) that the match screen hides while the player is in
+		a match: the currency bar sits where the turn banner and timer go
+	]]
+	--- @type { string }
+	HIDDEN_IN_MATCH = { "Currency" },
+
 	-- A loadout slot's fill while it's selected, and otherwise (the gui kit's selected blue and its Slot)
 	SELECTED_COLOR = Color3.fromRGB(40, 140, 255),
 	SELECTED_TRANSPARENCY = 0.2,
@@ -32,6 +39,14 @@ local _settings = {
 		Enum.KeyCode.Five,
 		Enum.KeyCode.Six,
 	},
+
+	--[[
+		A box whose item has no icon shows the weapon's model instead: seen through a camera with this field of view,
+		from this direction (the muzzle points right), with this much room around it (1 is a tight fit)
+	]]
+	MODEL_FOV = 30,
+	MODEL_VIEW_DIRECTION = Vector3.new(0.3, 0.25, 1),
+	MODEL_PADDING = 1.15,
 
 	--%%%%%%%%%%%%%%%%%%%% Kill Feed
 

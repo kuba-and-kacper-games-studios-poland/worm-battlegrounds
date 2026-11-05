@@ -2,7 +2,9 @@
 
 The match's rules on a match server. It reads the match's metadata (sent by MatchBoard with the teleport; on the
 Studio map, handed over through `I.Match.Host`; on the Match map alone in Studio, `STUDIO_METADATA`), waits for the players, seats them and fills the rest with bots, then plays: the drop (each player
-picks where their worm lands), the landing, then turns (`TURN_SECONDS` each, with wind) until one team is left, with
+clicks or taps anywhere in the arena a worm fits, out of walls and liquid, to place where their worm lands; it
+ends as soon as every connected player has placed, or after `DROP_SECONDS`), the landing (a placed worm parachutes
+from its spot; bots and players who didn't place start standing on land, from `I.Arena.GetLandSpots`), then turns (`TURN_SECONDS` each, with wind) until one team is left, with
 sudden death from `SUDDEN_DEATH_ROUND`. Then it ends the match (MatchRewards pays and shows Results), runs the rematch
 vote and sends everyone who didn't vote to the lobby. A player who drops out keeps their seat for `REJOIN_SECONDS`
 and can come back from the lobby; a player who leaves is knocked out.
@@ -33,7 +35,7 @@ player left stops at the next turn. One match plays at a time.
 | `Scripts/Server/Connection.lua` | Leaving, dropping out, rejoining, sending players to the lobby, the `InMatch` attribute |
 | `Scripts/Server/Rematch.lua` | The rematch vote |
 | `Client.lua` | Match state for other client modules |
-| `Scripts/Client/DropPicker.lua` | Picking the drop point |
+| `Scripts/Client/DropPicker.lua` | Picking the drop point: the marker follows the mouse (or the left stick), faded where a worm doesn't fit; a click, a tap or the gamepad's A places it |
 | `Settings.lua` | `Match_Settings` |
 | `_meta/_types.lua` | `Match_Metadata`, `Match_RosterEntry`, `Match_Participant`, `Match_Placement`, `Match_Stats`, … |
 
@@ -76,7 +78,7 @@ player left stops at the next turn. One match plays at a time.
 
 **Receive: RemoteEvents**
 
-- `Match_PickDrop @ (player: Player, x: number)`: during the drop
+- `Match_PickDrop @ (player: Player, x: number, y: number)`: during the drop, a spot on the arena's plane; the server keeps it only where `I.Arena.IsFree` lets a worm fit
 - `Match_Leave @ (player: Player)`: knocks out the player's worm, then sends them to the lobby. Rate limit 1 per second.
 - `Match_Rematch @ (player: Player)`: a rematch vote. Rate limit 2 per second.
 
@@ -95,8 +97,8 @@ player left stops at the next turn. One match plays at a time.
 | Where | Key | What |
 | --- | --- | --- |
 | Profile | `Match.Rejoin` | `{ PlaceId, AccessCode, Until }` written when a player drops (the lobby reads it) |
-| `ReplicatedStorage.Ume.Match` | `Kind`, `Mode`, `MapId`, `Phase`, `ActiveId`, `TurnEndsAt`, `Wind`, `Round`, `SuddenDeath`, `Arrived`, `Expected`, `DropMinX`, `DropMaxX`, `DropY`, `DropEndsAt`, `RematchVotes`, `RematchEndsAt` | The match's state for every client |
-| `…Match.Participants.<id>` | `DisplayName`, `UserId`, `Team`, `Color`, `IsBot`, `Connected`, `Out` | One `Configuration` per participant |
+| `ReplicatedStorage.Ume.Match` | `Kind`, `Mode`, `MapId`, `Phase`, `ActiveId`, `TurnEndsAt`, `Wind`, `Round`, `SuddenDeath`, `Arrived`, `Expected`, `DropMinX`, `DropMaxX`, `DropMinY`, `DropMaxY` (the play area a spot may be placed in), `DropEndsAt` (set to now when everyone placed early), `RematchVotes`, `RematchEndsAt` | The match's state for every client |
+| `…Match.Participants.<id>` | `DisplayName`, `UserId`, `Team`, `Color`, `IsBot`, `Connected`, `Out`, `DropX`, `DropY` (the landing spot), `Placed` (whether it was placed; bots always are) | One `Configuration` per participant |
 | `Player` attribute | `InMatch` | `true` while the player is in the match: everyone on a match server, those `Host` brought on the Studio map. Lobby and match screens follow it |
 
 ## Settings

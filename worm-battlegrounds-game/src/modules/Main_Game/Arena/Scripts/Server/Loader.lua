@@ -11,6 +11,9 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
+-- Every map template from SAssets.Arenas that has what a map needs, by map id
+local templates = {} --- @type { [string]: Model }
+
 local arenaFolder: Folder
 local terrainFolder: Folder?
 local markersFolder: Folder?
@@ -62,6 +65,65 @@ function Module.Init()
 			I.S.PhysicsService:CollisionGroupSetCollidable(name, other, false)
 		end
 	end
+
+	--[[ Templates ]]
+
+	Module._cacheTemplates()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Cache Templates
+
+--[[
+	Caches every map template under SAssets.Arenas that has Terrain, Markers and Markers.Bounds, and readies it once:
+	markers hidden and never colliding or blocking queries, terrain anchored in the Terrain collision group.
+]]
+function Module._cacheTemplates()
+	--[[ Data ]]
+
+	local arenas: Instance? = I.Dirs.SAssets:FindFirstChild("Arenas")
+
+	--[[ Checks ]]
+
+	-- Check if the place has map templates
+	if not arenas then
+		warn(`[{_localName}::{script.Name}]: Folder (SAssets.Arenas) is missing - no map can load!`)
+		return
+	end
+
+	--[[ Caching ]]
+
+	for _index: number, template: Instance in ipairs(arenas:GetChildren()) do
+		--[[ Checks ]]
+
+		-- Check if the template is a Model with terrain, markers and bounds
+		local markers: Instance? = template:FindFirstChild("Markers")
+		if not template:IsA("Model") or not template:FindFirstChild("Terrain") or not markers or not markers:FindFirstChild("Bounds") then
+			warn(`[{_localName}::{script.Name}]: Map ({template.Name}) needs to be a Model with Terrain, Markers and Markers.Bounds - skipped! -`, template)
+			continue
+		end
+
+		--[[ Applying ]]
+
+		for _markerIndex: number, marker: Instance in ipairs(markers:GetDescendants()) do
+			if marker:IsA("BasePart") then
+				marker.Anchored = true
+				marker.Transparency = 1
+				marker.CanCollide = false
+				marker.CanQuery = false
+				marker.CanTouch = false
+			end
+		end
+		for _partIndex: number, part: Instance in ipairs(template:FindFirstChild("Terrain"):GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Anchored = true
+				part.CollisionGroup = "Terrain"
+			end
+		end
+
+		--[[ Saving ]]
+
+		templates[template.Name] = template
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -69,29 +131,20 @@ end
 --%%%%%%%%%%%%%%%%%%%% Load
 
 --[[
-	Clears the arena and clones a map's template into it: its Terrain, Decor and Markers. Markers are hidden and
-	never collide or block queries, terrain joins the Terrain collision group, and a plane part is placed at the
-	bounds for worms and projectiles to keep to.
+	Clears the arena and clones a map's cached template into it (its Terrain, Decor and Markers), then places a plane
+	part at the bounds for worms and projectiles to keep to.
 ]]
 --- @return boolean
 function Module.Load(mapId: string)
 	--[[ Data ]]
 
-	local arenas: Instance? = I.Dirs.SAssets:FindFirstChild("Arenas")
-	local template: Instance? = arenas and arenas:FindFirstChild(mapId)
+	local template: Model? = templates[mapId]
 
 	--[[ Checks ]]
 
 	-- Check if the map has a template
 	if not template then
-		warn(`[{_localName}::{script.Name}]: Map ({mapId}) has no template in SAssets.Arenas!`)
-		return false
-	end
-
-	-- Check if the template has terrain, markers and bounds
-	local markers: Instance? = template:FindFirstChild("Markers")
-	if not template:FindFirstChild("Terrain") or not markers or not markers:FindFirstChild("Bounds") then
-		warn(`[{_localName}::{script.Name}]: Map ({mapId}) template needs Terrain, Markers and Markers.Bounds!`)
+		warn(`[{_localName}::{script.Name}]: Map ({mapId}) has no usable template in SAssets.Arenas!`)
 		return false
 	end
 
@@ -107,24 +160,6 @@ function Module.Load(mapId: string)
 	terrainFolder = arenaFolder:FindFirstChild("Terrain")
 	markersFolder = arenaFolder:FindFirstChild("Markers")
 	boundsPart = markersFolder:FindFirstChild("Bounds")
-
-	--[[ Applying ]]
-
-	for _index: number, marker: Instance in ipairs(markersFolder:GetDescendants()) do
-		if marker:IsA("BasePart") then
-			marker.Anchored = true
-			marker.Transparency = 1
-			marker.CanCollide = false
-			marker.CanQuery = false
-			marker.CanTouch = false
-		end
-	end
-	for _index: number, part: Instance in ipairs(terrainFolder:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Anchored = true
-			part.CollisionGroup = "Terrain"
-		end
-	end
 	terrainParams.FilterDescendantsInstances = { terrainFolder }
 
 	--[[ Plane ]]
@@ -198,7 +233,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Markers
 
 --[[
-	Returns the loaded map's Markers folder (Bounds, DropZone, liquids).
+	Returns the loaded map's Markers folder (Bounds, liquids).
 ]]
 --- @return Folder?
 function Module.GetMarkers()

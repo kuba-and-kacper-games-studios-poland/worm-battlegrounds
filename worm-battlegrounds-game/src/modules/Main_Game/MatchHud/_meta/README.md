@@ -18,10 +18,10 @@ closes Results.
 
 | File | What it controls |
 | --- | --- |
-| `Client.lua` | Turns the gui on and starts the handlers |
+| `Client.lua` | Turns the gui on while the player is in a match (and the `HIDDEN_IN_MATCH` guis off), and starts the handlers |
 | `Scripts/Client/Turn.lua` | Banner, timer, wind, stamina |
 | `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
-| `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys; utilities are used as soon as they're picked on the player's turn |
+| `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys; utilities are used as soon as they're picked on the player's turn. A weapon with no icon picture shows its 3D model in its box instead (`I.G_Arsenal.GetModel`, in a ViewportFrame `S_Model` over `S_Icon`) |
 | `Scripts/Client/Aim.lua` | Drag and pad aiming, the aim dots, firing, homing targets, detonating |
 | `Scripts/Client/KillFeed.lua` | Knockout lines |
 | `Scripts/Client/TouchControls.lua` | Walk and jump buttons on touch screens |
@@ -40,9 +40,11 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | Key | Default | What |
 | --- | --- | --- |
 | `GUI_NAME`, `RESULTS_GUI_NAME` | `"MatchHud"`, `"Results"` | The guis |
+| `HIDDEN_IN_MATCH` | `{ "Currency" }` | Guis the framework keeps on (`UserInterface_PreventHiding`) that are hidden while the player is in a match; the currency bar sits where the turn banner and timer go |
 | `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENCY` | `(40, 140, 255)`, `0.2`, `(0, 0, 0)`, `0.7` | The selected loadout slot's fill (its `Body`), and the others' |
 | `LEAVE_TEXT`, `MUSIC_TEXT`, `LEAVE_QUESTION` | | The top bar buttons and the leave confirmation |
 | `SLOT_KEYS` | One … Six | Keys that pick slots 1 to 6 (the Bazooka first) |
+| `MODEL_FOV`, `MODEL_VIEW_DIRECTION`, `MODEL_PADDING` | `30`, `0.3, 0.25, 1`, `1.15` | A box's weapon model: the camera's field of view, the direction it looks from (the muzzle points right), and the room around the model's longest side |
 | `FEED_LINES`, `FEED_SECONDS` | `4`, `6` | Kill feed length and how long a line stays |
 | `MIN_DRAG`, `MAX_DRAG` | `24`, `260` | Drag length in pixels for no power and full power |
 | `AIM_SEND_INTERVAL` | `0.1` | How often the aim is sent to others |

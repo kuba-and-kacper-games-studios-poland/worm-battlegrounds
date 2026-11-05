@@ -12,6 +12,24 @@ local _settings = {
 	-- The most pieces one support search walks before it treats the group as grounded, so a carve stays cheap
 	SUPPORT_SEARCH_LIMIT = 400,
 
+	--[[
+		A cut-off group stays up when its floating parts (`Arena_Floats`, a map's floating ledges) cover at least this
+		many square studs on the plane (each part's width × height); smaller crumbs fall
+	]]
+	FLOAT_MIN_AREA = 24,
+
+	--%%%%%%%%%%%%%%%%%%%% Land Spots
+
+	--[[
+		Where worms stand when they don't pick a spot (bots, players who don't place theirs): the ground is looked for
+		every LAND_SPOT_STEP studs along the arena, and spots are kept at least LAND_SPOT_GAP studs apart while there's room
+	]]
+	LAND_SPOT_STEP = 2,
+	LAND_SPOT_GAP = 16,
+
+	-- How steep ground a worm may stand on: the lowest Y of the ground's normal (1 is flat)
+	LAND_SPOT_MIN_NORMAL = 0.7,
+
 	--%%%%%%%%%%%%%%%%%%%% Collision
 
 	--[[
@@ -37,6 +55,19 @@ local _settings = {
 	SETTLE_HOLD = 0.5,
 	DEBRIS_SETTLE_TIME = 4,
 	DEBRIS_KILL_DEPTH = 20,
+
+	--%%%%%%%%%%%%%%%%%%%% Props
+
+	-- How far under a prop's base (a tree, a bush, a rock) the ground may be before the prop falls, in studs
+	PROP_SUPPORT_DEPTH = 1.5,
+
+	-- How fast a blast throws a prop it reaches, in studs per second, and the most it spins it, in radians per second
+	PROP_KNOCK_SPEED = 35,
+	PROP_KNOCK_SPIN = 6,
+
+	-- How long a fallen or thrown prop lies before it fades out, in seconds, and the fade
+	PROP_FADE_DELAY = 3,
+	PROP_FADE_TWEENINFO = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
 
 	--%%%%%%%%%%%%%%%%%%%% Liquid
 

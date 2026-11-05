@@ -159,6 +159,9 @@ function Module._rebuild()
 		box.LayoutOrder = index
 		box.Visible = true
 		icon.Image = if row then row.Icon else ""
+		if icon.Image == "" and I.G_Arsenal.HasModel(itemId) then
+			Module._showModel(icon, I.G_Arsenal.GetModel(itemId))
+		end
 		box:FindFirstChild("S_Key", true).Text = tostring(index)
 		box.Parent = elems["Slots"]
 		boxes[itemId] = box
@@ -173,6 +176,40 @@ function Module._rebuild()
 		selected = "Bazooka"
 	end
 	Module._refreshBoxes()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Show Model
+
+--[[
+	Shows a weapon's model in a box's icon, for a weapon with no icon picture: a ViewportFrame (`S_Model`) over the
+	icon, the model side-on with its muzzle to the right, framed to fit.
+]]
+function Module._showModel(icon: ImageLabel, model: Model)
+	--[[ Building ]]
+
+	local viewport: ViewportFrame = I.Create("ViewportFrame")({
+		Name = "S_Model",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Parent = icon,
+	})
+	local camera: Camera = I.Create("Camera")({
+		FieldOfView = _settings.MODEL_FOV,
+		Parent = viewport,
+	})
+	local clone: Model = model:Clone()
+	clone:PivotTo(CFrame.lookAlong(Vector3.zero, Vector3.xAxis))
+	clone.Parent = viewport
+	viewport.CurrentCamera = camera
+
+	--[[ Framing ]]
+
+	local boxCFrame: CFrame
+	local boxSize: Vector3
+	boxCFrame, boxSize = clone:GetBoundingBox()
+	local reach: number = math.max(boxSize.X, boxSize.Y, boxSize.Z) / 2
+	local distance: number = reach / math.tan(math.rad(_settings.MODEL_FOV / 2)) * _settings.MODEL_PADDING
+	camera.CFrame = CFrame.lookAt(boxCFrame.Position + _settings.MODEL_VIEW_DIRECTION.Unit * distance, boxCFrame.Position)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Boxes

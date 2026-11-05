@@ -216,3 +216,45 @@ errors. The tutorial hint drew over windows (`DisplayOrder` 10) and covered the 
 under them.
 
 **Rule.** `game/practices.md` → Guis (the look, yellow leads the eye, picked and owned states).
+
+### The first map's floating ledges hold on one block (2026-11-05)
+
+**Before.** The greybox Picnic Plains stood on one indestructible seabed, and everything else touched it, so the
+debris search (`Arena/Scripts/Server/Debris.lua`) always found ground.
+
+**Why it changed.** The studio's real Picnic Plains has four floating ledges that touch nothing. With no
+`Arena_Indestructible` part in them, the first blast on a ledge would drop the whole ledge into the sea. Marking a
+ledge's biggest blocks would leave slabs no weapon can cut.
+
+**Now.** Each island's waterline blocks are indestructible, and each ledge has one small rock block in its middle
+marked too (`Arena_Indestructible`), so a ledge can be blasted away around it. The map is authored in
+`Workspace.Ume.ServerStorage_Assets/Arenas/PicnicPlains` and cached by the Arena module at start. Rule: Arena →
+"Ground is what's `Arena_Indestructible`".
+
+### Worms start on land, not over the sea (2026-11-05)
+
+**Before.** Every worm parachuted in from the top of the map's `DropZone`, spread evenly along its whole width. On
+the studio's Picnic Plains that width spans the gaps between islands, so bots (and players who didn't place) could
+float down into the sea and drown before the first turn.
+
+**Why it changed.** A start spot should never cost a worm. Players can now place their spot anywhere a worm fits,
+so the evenly spread line was only left for those who don't pick.
+
+**Now.** `I.Arena.GetLandSpots` casts a ray down every 2 studs, keeps flat enough ground out of liquid, and picks
+random spots 16 studs apart while there's room; bots and players who didn't place start standing there, with no
+parachute. The `DropZone` marker is gone. Rule: Worms → "A worm starts standing on land unless its player places it".
+
+### Ledges float instead of hanging on one block (2026-11-05)
+
+**Before.** Each floating ledge of Picnic Plains held on one small `Arena_Indestructible` block in its middle (the
+lesson above). On one ledge that block was a 1-stud dirt plate under a tree, and blasts around it left it hanging
+uncut over the crater: it looked like destruction was broken.
+
+**Why it changed.** Any block that can't be cut stays visible after the ground around it is gone, so there's no good
+block to pick.
+
+**Now.** Ledge parts carry `Arena_Floats` (carved pieces keep it), and the debris search counts a cut-off group as
+held up when its floating parts cover at least `FLOAT_MIN_AREA` (24 square studs); smaller crumbs fall. No ledge block
+is indestructible. In the same change, trees, bushes and rocks became `Arena_Prop`s that blasts throw and that fall
+when their ground goes (`Arena/Scripts/Server/Props.lua`). Rules: Arena → "Floating ledges float", "Props react to
+blasts".
