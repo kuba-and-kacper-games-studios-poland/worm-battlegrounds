@@ -47,21 +47,62 @@ local _gui = {
 						Direction = "Horizontal",
 						Align = "Center",
 						Children = {
-							{ Control = "Picture", Id = "S_CoinIcon", Image = "wb-coin", Style = "Glyph" },
+							-- Each icon and count on a frame of its own, whose UIScale the count's Currency_Slot pulses as orbs arrive
 							{
-								Control = "Label",
-								Id = "S_Coins",
-								Text = "0",
-								Style = { "Heading", "Coin" },
-								Tags = { Currency_Slot = { Currency_Name = "Coins" } },
+								Primitive = "Frame",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									AutomaticSize = Enum.AutomaticSize.XY,
+									BackgroundTransparency = 1,
+									Size = UDim2.new(),
+								},
+								Children = {
+									{
+										Control = "Stack",
+										Direction = "Horizontal",
+										Align = "Center",
+										Props = { AutomaticSize = Enum.AutomaticSize.XY, Size = UDim2.new() },
+										Children = {
+											{ Control = "Picture", Id = "S_CoinIcon", Image = "wb-coin", Style = "Glyph" },
+											{
+												Control = "Label",
+												Id = "S_Coins",
+												Text = "0",
+												Style = { "Heading", "Coin" },
+												Tags = { Currency_Slot = { Currency_Name = "Coins" } },
+											},
+										},
+									},
+									{ Primitive = "UIScale", Id = "S_CoinsScale" },
+								},
 							},
-							{ Control = "Picture", Id = "S_DiamondIcon", Image = "wb-diamond", Style = "Glyph" },
 							{
-								Control = "Label",
-								Id = "S_Diamonds",
-								Text = "0",
-								Style = { "Heading", "Diamond" },
-								Tags = { Currency_Slot = { Currency_Name = "Diamonds" } },
+								Primitive = "Frame",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									AutomaticSize = Enum.AutomaticSize.XY,
+									BackgroundTransparency = 1,
+									Size = UDim2.new(),
+								},
+								Children = {
+									{
+										Control = "Stack",
+										Direction = "Horizontal",
+										Align = "Center",
+										Props = { AutomaticSize = Enum.AutomaticSize.XY, Size = UDim2.new() },
+										Children = {
+											{ Control = "Picture", Id = "S_DiamondIcon", Image = "wb-diamond", Style = "Glyph" },
+											{
+												Control = "Label",
+												Id = "S_Diamonds",
+												Text = "0",
+												Style = { "Heading", "Diamond" },
+												Tags = { Currency_Slot = { Currency_Name = "Diamonds" } },
+											},
+										},
+									},
+									{ Primitive = "UIScale", Id = "S_DiamondsScale" },
+								},
 							},
 							{
 								Control = "Button",
