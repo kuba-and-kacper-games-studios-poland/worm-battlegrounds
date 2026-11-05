@@ -97,10 +97,6 @@ local _settings = {
 		Roster = {},
 	},
 	STUDIO_WAIT = 3,
-
-	-- What a Studio test player with an empty loadout takes into the match, to try the weapons
-	--- @type { string }
-	STUDIO_LOADOUT = { "Grenade", "ClusterBomb", "HomingMissile", "BlackHoleGrenade", "Jetpack" },
 }
 
 return _settings

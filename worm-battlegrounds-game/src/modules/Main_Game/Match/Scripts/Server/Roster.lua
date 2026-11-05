@@ -156,11 +156,6 @@ function Module.Build()
 		items, shinyItems = I.Loadout.GetMatchLoadout(player)
 		skinId, skinShiny = I.Cosmetics.GetSkin(player)
 
-		-- Studio test players with an empty loadout try STUDIO_LOADOUT
-		if #items == 0 and I.S.RunService:IsStudio() then
-			items = table.clone(_settings.STUDIO_LOADOUT)
-		end
-
 		--- @type Match_Participant
 		local participant = {
 			Id = `P_{player.UserId}`,

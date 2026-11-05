@@ -113,7 +113,7 @@ player left stops at the next turn. One match plays at a time.
 | `REJOIN_SECONDS`, `REMATCH_SECONDS` | `60`, `20` | How long a dropped seat waits; the rematch vote |
 | `TEAM_SIZES`, `TEAMS`, `FFA_COLORS` | | Teams by mode, team names and colours, deathmatch colours |
 | `STUDIO_MAP` | `"Studio"` | The map that runs the lobby and its matches on one server |
-| `STUDIO_METADATA`, `STUDIO_WAIT`, `STUDIO_LOADOUT` | | The Match map alone in Studio: its stand-in match and wait; the loadout of a Studio player with an empty one |
+| `STUDIO_METADATA`, `STUDIO_WAIT` | | The Match map alone in Studio: its stand-in match and wait |
 
 ## In the place
 
