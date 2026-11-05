@@ -16,7 +16,8 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   fall. Never mark a ledge block indestructible to hold it up: it hangs uncut over the craters around it.
 - **Props break under blasts:** trees, bushes and rocks in a map's Decor are `Arena_Prop` Models built from parts
   (never collidable for worms). A blast cuts its hole through them with the same CSG cylinder as the terrain, and
-  the pieces no longer joined to the prop's base fly off; a prop whose ground is gone falls. What falls fades out.
+  the pieces no longer joined to the prop's base fly off; a prop whose ground is gone (under its trunk) falls. What
+  falls fades out.
 - **Maps are made in MapLab** (the game home's map kit, `assets/_tools/map-kit/`): the land drawn on the 1-stud grid
   and built into parts, props part-built, checked, then exported into the arena templates after the owner approves.
 - **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), centred
@@ -35,8 +36,8 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   stamina and takes the worm back. Anything the server does to a worm (knockback, a knockout) happens while the
   server owns it.
 - **A worm starts standing on land unless its player places it:** bots and players who don't place start on
-  `I.Arena.GetLandSpots` (on top of the ground, never over liquid); only a spot a player placed is dropped onto with
-  the parachute.
+  `I.Arena.GetLandSpots` (on top of the ground on any storey, never over liquid); only a spot a player placed is
+  dropped onto with the parachute.
 - **A walking worm has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 

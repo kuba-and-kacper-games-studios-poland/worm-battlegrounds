@@ -286,3 +286,20 @@ packed into merged parts, checked, and exported into `Arenas` only after the own
 Models in the meshes' look (piles of bevelled blocks), free of the grid, and a blast cuts its hole through them; the
 pieces no longer joined to the base fly off and fade (`Arena/Scripts/Server/Props.lua`). Rules: Arena → "Props break
 under blasts", "Maps are made in MapLab".
+
+### The Desert, a map with two storeys (2026-11-05)
+
+**Before.** Every map had one storey: islands at the liquid with small ledges above. Worms that didn't place started
+on the highest ground in each column, and a prop stood while there was ground under the middle of its outline.
+
+**Why it changed.** The owner wanted a second map, a desert with lava at the bottom and an oasis, and after the first
+try ("not organic, looks forced") asked for two storeys: one main island, with long, big floating islands above it.
+Its first playtest showed two limits: 15 of 16 start spots fell on the upper islands, since only the highest ground
+was looked at, and a palm leaning over the pool was dropped after a blast elsewhere, since the middle of its outline
+hung over water.
+
+**Now.** The Desert (made in MapLab) is in the match pool beside Picnic Plains. `GetLandSpots` looks at every top in
+each column, so worms start on both storeys, and keeps spots apart by distance, not by X alone. A prop stands while
+there's ground under its pivot (a part-built prop's trunk). Rules: Worms → "A worm starts standing on land", Arena →
+"Props break under blasts".
+

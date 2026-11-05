@@ -109,7 +109,7 @@ function Module.Update(center: Vector3, radius: number)
 		--[[ Dropping ]]
 
 		-- What still stands falls whole once its ground is gone
-		if not Module._isSupported(boxCFrame, boxSize) then
+		if not Module._isSupported(prop, boxCFrame, boxSize) then
 			table.remove(standing, index)
 			Module._release(prop, nil)
 		end
@@ -402,16 +402,18 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Supported
 
 --[[
-	Returns whether anchored terrain is right under the middle of a prop's base, within PROP_SUPPORT_DEPTH.
+	Returns whether anchored terrain is right under a prop's base, within PROP_SUPPORT_DEPTH: under its pivot (a
+	part-built prop's trunk; a one-part prop's middle), so a tree leaning out over a drop still stands.
 ]]
 --- @return boolean
-function Module._isSupported(boxCFrame: CFrame, boxSize: Vector3)
+function Module._isSupported(prop: PVInstance, boxCFrame: CFrame, boxSize: Vector3)
 	--[[ Local Variables ]]
 
 	local params: RaycastParams = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = { Loader.GetTerrain() }
-	local base: Vector3 = boxCFrame.Position - Vector3.new(0, boxSize.Y / 2 - 0.5, 0)
+	local pivot: Vector3 = prop:GetPivot().Position
+	local base: Vector3 = Vector3.new(pivot.X, boxCFrame.Position.Y - boxSize.Y / 2 + 0.5, pivot.Z)
 
 	--[[ Returning ]]
 

@@ -151,8 +151,9 @@ end
 
 --[[
 	**SERVER** |
-	Returns `count` random spots where a ball of `radius` stands on the top of the terrain, out of liquid, kept
-	LAND_SPOT_GAP studs apart while there's room (closer when there isn't). Empty when the map has no such ground.
+	Returns `count` random spots where a ball of `radius` stands on top of the terrain on any storey (under a floating
+	ledge too), out of liquid, kept LAND_SPOT_GAP studs apart while there's room (closer when there isn't). Empty when
+	the map has no such ground.
 ]]
 --- @return { Vector3 }
 function Module.GetLandSpots(count: number, radius: number)
@@ -170,18 +171,37 @@ function Module.GetLandSpots(count: number, radius: number)
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = { terrain }
 	local top: number = bounds.Position.Y + bounds.Size.Y / 2
+	local bottom: number = bounds.Position.Y - bounds.Size.Y / 2
 	local left: number = bounds.Position.X - bounds.Size.X / 2 + radius
 	local right: number = bounds.Position.X + bounds.Size.X / 2 - radius
 	local candidates = {} --- @type { Vector3 }
 
 	--[[ Finding ]]
 
-	-- The highest flat enough ground under each step, with room for the ball
+	-- Every flat enough top under each step with room for the ball, on every storey
 	for x: number = left, right, _settings.LAND_SPOT_STEP do
-		local hit: RaycastResult? = I.S.Workspace:Raycast(Vector3.new(x, top, bounds.Position.Z), Vector3.new(0, -bounds.Size.Y, 0), params)
-		local spot: Vector3? = if hit then hit.Position + Vector3.new(0, radius + 0.1, 0) else nil
-		if hit and spot and hit.Normal.Y >= _settings.LAND_SPOT_MIN_NORMAL and Module.IsFree(spot, radius) then
-			table.insert(candidates, spot)
+		local y: number = top
+		while y > bottom do
+			--[[ Casting ]]
+
+			local hit: RaycastResult? = I.S.Workspace:Raycast(Vector3.new(x, y, bounds.Position.Z), Vector3.new(0, bottom - y, 0), params)
+
+			--[[ Checks ]]
+
+			-- Check if there's land left under this point
+			if not hit then
+				break
+			end
+
+			--[[ Saving ]]
+
+			local spot: Vector3 = hit.Position + Vector3.new(0, radius + 0.1, 0)
+			if hit.Normal.Y >= _settings.LAND_SPOT_MIN_NORMAL and Module.IsFree(spot, radius) then
+				table.insert(candidates, spot)
+			end
+
+			-- Go on from just under it: a ray skips the part it starts in, and a top under more land isn't free
+			y = hit.Position.Y - 0.05
 		end
 	end
 
@@ -197,7 +217,7 @@ function Module.GetLandSpots(count: number, radius: number)
 		end
 		local tooClose: boolean = false
 		for _spotIndex: number, spot: Vector3 in ipairs(spots) do
-			if math.abs(spot.X - candidate.X) < _settings.LAND_SPOT_GAP then
+			if (spot - candidate).Magnitude < _settings.LAND_SPOT_GAP then
 				tooClose = true
 				break
 			end

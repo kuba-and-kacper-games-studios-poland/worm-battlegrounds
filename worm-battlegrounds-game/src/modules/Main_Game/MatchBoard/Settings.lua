@@ -58,6 +58,7 @@ local _settings = {
 		LakesideShowdown = { Name = "Lakeside Showdown", Sizes = { 2, 4, 6 }, Thumbnail = "" },
 		MoltenSpires = { Name = "Molten Spires", Sizes = { 2, 4, 6 }, Thumbnail = "" },
 		TheBigMashup = { Name = "The Big Mashup", Sizes = { 8 }, Thumbnail = "" },
+		Desert = { Name = "Desert", Sizes = { 2, 4, 6 }, Thumbnail = "" },
 	},
 
 	--[[
@@ -65,7 +66,7 @@ local _settings = {
 		made for plays on any map in it
 	]]
 	--- @type { string }
-	MAP_POOL = { "PicnicPlains" },
+	MAP_POOL = { "PicnicPlains", "Desert" },
 
 	--%%%%%%%%%%%%%%%%%%%% Solo
 

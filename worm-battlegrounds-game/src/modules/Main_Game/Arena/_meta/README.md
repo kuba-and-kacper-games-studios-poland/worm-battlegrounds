@@ -46,7 +46,7 @@ part, so clients need no code. It creates no remotes or saved data.
 | `GetMarkers()` | `Folder?` | The loaded map's `Markers` folder (`Bounds`, liquids) |
 | `GetPlane()` | `Attachment?` | The attachment on the bounds' center whose axis runs along Z: a PlaneConstraint's `Attachment0` keeps a part on the plane |
 | `GetLiquid(position: Vector3)` | `string?` | `"Water"`, `"Lava"` or `nil` at a position |
-| `GetLandSpots(count: number, radius: number)` | `{ Vector3 }` | `count` random spots where a ball of `radius` stands on top of the terrain (flat enough, out of liquid), `LAND_SPOT_GAP` apart while there's room; fewer, or none, when the map has too little ground. Where bots and players who don't place start |
+| `GetLandSpots(count: number, radius: number)` | `{ Vector3 }` | `count` random spots where a ball of `radius` stands on top of the terrain on any storey (under a floating ledge too; flat enough, out of liquid), `LAND_SPOT_GAP` apart while there's room; fewer, or none, when the map has too little ground. Where bots and players who don't place start |
 | `IsFree(position: Vector3, radius: number)` | `boolean` | Whether a ball of `radius` fits there: inside the bounds, out of liquid, touching no terrain (the drop's landing spots) |
 | `GetHazard(position: Vector3)` | `string?` | What knocks a worm out there: `"Water"` or `"Lava"` in liquid, `"Bounds"` beside or below the play area (above it is fine), `nil` when safe |
 | `IsSettled()` | `boolean` | Whether no carved-off debris is still falling |
@@ -93,7 +93,7 @@ No remotes: clients see the arena through Roblox's replication of its parts.
 | `LIQUID_FALL` | `6` | How many cells a falling cell drops in one step |
 | `LIQUID_PROBE_SCALE` | `0.5` | A cell is solid when terrain reaches into a box this share of its size around its center |
 | `LIQUID_BUILD_ROWS_PER_FRAME` | `8` | How many grid rows a map's load probes before it gives the server a frame |
-| `LAND_SPOT_STEP`, `LAND_SPOT_GAP` | `2`, `16` | `GetLandSpots` looks for ground every 2 studs along the arena and keeps spots 16 studs apart while there's room |
+| `LAND_SPOT_STEP`, `LAND_SPOT_GAP` | `2`, `16` | `GetLandSpots` looks for ground every 2 studs along the arena, on every storey, and keeps spots 16 studs apart while there's room |
 | `LAND_SPOT_MIN_NORMAL` | `0.7` | The steepest ground a land spot may be on (the lowest Y of its normal; 1 is flat) |
 | `LIQUID_KINDS` | `{ "Water", "Lava" }` | The liquid kinds, in the order of their ids in the grid |
 | `LIQUID_SPREAD` | `{ Water = 12, Lava = 3 }` | How many cells a cell moves sideways in one step, toward the nearest way down along its row |
@@ -109,7 +109,7 @@ No remotes: clients see the arena through Roblox's replication of its parts.
 | `Workspace.Ume.Arena` | Created at start. Holds the loaded map's `Terrain` (its parts in the `Terrain` collision group), `Decor` and `Markers`, plus `Liquid` (the drawn rectangles), the probe part the liquid uses, and `Plane` (an invisible part at the bounds' center holding the `Plane` attachment) |
 | `SAssets.Arenas.<MapId>` | A map template, authored in `Workspace.Ume.ServerStorage_Assets/Arenas/`, which the Utils module moves into `ServerStorage.Ume.Assets` (`I.Dirs.SAssets`) when the game starts. A Model with the folders below |
 | `<MapId>.Terrain` | The map's parts, anchored. `Arena_Indestructible = true` marks ground blasts never cut, which holds everything else up: every map needs some. `Arena_Floats = true` marks floating terrain (ledges): a cut-off group of it stays up while it's big enough (`FLOAT_MIN_AREA`). Carved pieces keep both |
-| `<MapId>.Decor` | Parts never carved and touching nothing (no collision, queries or touches): the backdrop wall, trees, bushes. A Model or part with `Arena_Prop = true` stands on the terrain. A blast cuts its hole through a Model prop's parts and throws the pieces it frees from the base; a one-part prop (a mesh) it reaches is thrown whole; a prop falls when the ground under its base goes. What falls or flies fades out after `PROP_FADE_DELAY` |
+| `<MapId>.Decor` | Parts never carved and touching nothing (no collision, queries or touches): the backdrop wall, trees, bushes. A Model or part with `Arena_Prop = true` stands on the terrain. A blast cuts its hole through a Model prop's parts and throws the pieces it frees from the base; a one-part prop (a mesh) it reaches is thrown whole; a prop falls when the ground under its base goes (under its pivot: a part-built prop's trunk, so a tree leaning over a drop stays up). What falls or flies fades out after `PROP_FADE_DELAY` |
 | `<MapId>.Markers.Bounds` | The play area: the liquid grid covers it, the cutter is its depth, debris below it is removed |
 | `<MapId>.Markers.<any>` with `Arena_Liquid` | A box filled with that liquid at load (`"Water"` or `"Lava"`); the grid reaches up to the highest one |
 
@@ -122,7 +122,13 @@ three islands at the waterline and four floating ledges over a 282-stud sea (`Te
 `Arena_Indestructible`, every ledge part has `Arena_Floats`, and its 18 trees, bushes and rocks are part-built
 `Arena_Prop` Models (parts named `Trunk`, `Leaves`, `Needles`, `Spot`, `Bush`, `Rock`). The template it replaced is
 kept in the place's `Workspace._Labs.MapLab._Iterations` (`PicnicPlains_arena_1`); the greybox before it in
-`ServerStorage.!dump`.
+`ServerStorage.!dump`. `Desert` (made in MapLab) is two storeys over lava: one main island standing on the lava
+(`Terrain/Island_1`, x −110 to 112, its `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`) with an oasis
+pool, and two long floating islands above it (`Ledge_1`, x −128 to −36, `Ledge_2`, x −6 to 122, every part with
+`Arena_Floats`); 461 parts named `Sand`, `DarkSand`, `Sandstone`, `DarkSandstone`, `Clay`, `DarkStone`. Markers:
+`Lava` (Y −8 to 4, across the map, first, so it's the liquid sudden death raises) and `Oasis` (`Water`, x −30 to 0,
+Y 16 to 23). Its 24 props are part-built `Arena_Prop` Models in `Decor/Cacti`, `Trees` (palms), `Bushes`, `Rocks`
+(parts named `Cactus`, `Flower`, `Trunk`, `Ring`, `Leaves`, `Coconut`, `Twig`, `Bush`, `Rock`).
 
 ## Commands
 

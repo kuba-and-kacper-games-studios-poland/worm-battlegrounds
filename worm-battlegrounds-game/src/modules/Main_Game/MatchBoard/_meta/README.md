@@ -79,7 +79,7 @@ Rows are `Configuration`s in `ReplicatedStorage.Ume.MatchBoard`, one per row, wi
 | `TEAM_ROWS`, `TEAM_OPTIONS` | `2`, Duo/Trio/Quads options | How many team rows show, and their modes and sizes |
 | `TEAM_SIZES`, `MODE_NAMES` | | Players per team by mode; mode names shown |
 | `PUBLIC_DIFFICULTY` | `"Medium"` | Bots that fill public matches |
-| `MAPS`, `MAP_POOL` | 6 map rows; `{ "PicnicPlains" }` | Map names and sizes; the maps in rotation |
+| `MAPS`, `MAP_POOL` | 7 map rows; `{ "PicnicPlains", "Desert" }` | Map names and sizes; the maps in rotation |
 | `SOLO_DIFFICULTIES` | Easy, Medium, Hard | Solo choices |
 | `BOARD_GUI_NAME`, `MODES_GUI_NAME`, `SOLO_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |
 | `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENCY` | `(40, 140, 255)`, `0.2`, `(0, 0, 0)`, `0.7` | A picked difficulty's or map's slot fill (its `Body`), and an unpicked one's. Mode and player-count buttons swap to their selected skin instead (`Kit_SelectedImage`) |
