@@ -105,6 +105,10 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   screen, camera and hint that belongs to one half follows it instead of assuming its map. A Workspace attribute
   `Ume_StudioMapId` (`Lobby` or `Match`) tests one map alone. Studio saves nothing, so a playtest skips the tutorial
   match and opens on the lobby; the Workspace attribute `StudioTutorial` (true) plays it.
+- **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
+  Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
+  stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
+  the game starts: nothing in play stands on it (avatars are parked anchored, the lobby stage has its own ground).
 - **Placeholders until the owner provides the real thing:** developer products and game passes keep `Id = 0`; weapon
   projectiles, effects and skins other than Classic are made in code or fall back to the Classic worm. Each such spot
   has a `shortcut:` comment or a README line saying it's a placeholder. Never create products, passes or models on
