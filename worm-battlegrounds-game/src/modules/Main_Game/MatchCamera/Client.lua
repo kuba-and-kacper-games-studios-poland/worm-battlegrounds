@@ -64,7 +64,9 @@ function Module.Start()
 	combatFolder = I.Dirs.UmeWorkspace:WaitForChild("Combat")
 	I.FOV_Controller.SetLock(_localName)
 	Module._createConnections()
-	I.S.RunService:BindToRenderStep(_localName, Enum.RenderPriority.Camera.Value + 1, Module._update)
+
+	-- Before CameraShake's step (Camera + 1), so Combat's blast shakes land on top of the view
+	I.S.RunService:BindToRenderStep(_localName, Enum.RenderPriority.Camera.Value, Module._update)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization

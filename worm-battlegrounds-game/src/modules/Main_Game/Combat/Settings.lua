@@ -28,6 +28,39 @@ local _settings = {
 	BULLET_CARVE = 0.75,
 	BULLET_KNOCK_SHARE = 0.25,
 
+	--%%%%%%%%%%%%%%%%%%%% Blast Feel
+
+	-- A blast this big (its radius, in studs) shakes the camera and vibrates at full strength; bigger ones go past it
+	FEEL_FULL_RADIUS = 10,
+
+	-- Blasts shake and vibrate less the farther they are from the middle of the view, and not at all past this, in studs
+	FEEL_RANGE = 90,
+
+	-- How hard a full-strength blast shakes the camera (CameraShake's Magnitude), and how long it takes to settle, in seconds
+	SHAKE_MAGNITUDE = 4,
+	SHAKE_SETTLE = 0.45,
+
+	--[[
+		A blast at least this strong vibrates a phone or pad (the Combat_BlastBig and Combat_BlastSmall haptic presets);
+		a weaker one only shakes
+	]]
+	HAPTIC_BIG = 0.6,
+	HAPTIC_SMALL = 0.15,
+
+	--[[
+		The most chunks of ground a blast throws, how fast they fly (studs per second), the smallest and biggest side
+		of a chunk (studs), and how long one lies on the ground before it fades (seconds)
+	]]
+	DEBRIS_MAX = 16,
+
+	--- @type { number }
+	DEBRIS_SPEED = { 25, 50 },
+
+	--- @type { number }
+	DEBRIS_SIZE = { 0.3, 1 },
+
+	DEBRIS_LIFETIME = 2.5,
+
 	--%%%%%%%%%%%%%%%%%%%% Behaviors
 
 	-- Bomblets fly out of a cluster bomb at a random speed between these, in studs per second
@@ -81,6 +114,14 @@ local _settings = {
 		Bomblet = Color3.fromRGB(200, 120, 40),
 	},
 	PROJECTILE_SIZE = 1,
+
+	-- shortcut: blasts draw with the particle pictures every Roblox client ships until the studio makes its own
+	--- @type { [string]: string }
+	BLAST_TEXTURES = {
+		Smoke = "rbxasset://textures/particles/smoke_main.dds",
+		Fire = "rbxasset://textures/particles/fire_main.dds",
+		Sparks = "rbxasset://textures/particles/sparkles_main.dds",
+	},
 }
 
 return _settings

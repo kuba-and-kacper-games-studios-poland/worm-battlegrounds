@@ -5,14 +5,16 @@ it, then runs the weapon's behaviour (rockets, bouncers, crawlers, homing missil
 carves craters with Arena, damages and knocks back worms, and tells Match when the shot is fired and when everything
 has settled. Utilities heal or change how the worm moves. Uses and cooldowns are counted per match. Every client
 puts the active worm's weapon in its hands during its turn, on the camera's side, turned to its aim, and draws each
-shot in flight as its weapon's model.
+shot in flight as its weapon's model. Blasts draw a flash, a fireball, fire, sparks, smoke and flying chunks of the
+ground they hit, which bounce on the terrain and lie there a moment; they shake the camera and vibrate phones and pads
+by their size and how close they are to the view, and a hit on the player's own worm vibrates too.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Combat` |
 | Runs on | Server, Client, Global · Match map |
 | Exposes | `I.Combat` (server), `I.G_Combat` (both) |
-| Uses | `I.Match`, `I.Worms`, `I.Arena`, `I.G_Arsenal`, `I.Replicator` |
+| Uses | `I.Match`, `I.Worms`, `I.Arena`, `I.G_Arsenal`, `I.Replicator`, `I.CameraShake`, `I.Haptic` |
 
 ## Files
 
@@ -25,7 +27,8 @@ shot in flight as its weapon's model.
 | `Scripts/Server/Blast.lua` | Explosions: craters, damage, knockback |
 | `Scripts/Server/Behaviors/*.lua` | One file per `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee) and the Spider Bomb's snails |
 | `Global.lua` | Launch velocity, wind and arc prediction, shared with the aim dots and bots |
-| `Client.lua` | Explosion and tracer effects (placeholders); starts the client handler |
+| `Client.lua` | Starts the client handlers |
+| `Scripts/Client/Effects.lua` | Blasts (flash, fireball, light, fire, sparks and smoke particles, chunks of the ground that bounce on the terrain in the `Chip` collision group, then fade), tracers with a flash where they land, the camera shake and the haptics (`Combat_BlastBig`, `Combat_BlastSmall`, `Combat_Hurt` in `src/global_data/Haptic/Preset.lua`). Placeholders until the studio's effects exist |
 | `Scripts/Client/Flight.lua` | Shots in flight drawn as their weapon's model (`GetProjectileModel`) over the hidden placeholder part: rockets and missiles along their flight, thrown and rolled weapons turning with the part, the spider bomb upright facing its crawl. Bomblets, snails and weapons without a model keep the placeholder |
 | `Scripts/Client/Held.lua` | The active worm's held weapon: a copy of its model in `Workspace.Ume.Combat`, on the camera's side, turned to its aim |
 | `Settings.lua` | `Combat_Settings` |
@@ -78,6 +81,14 @@ shot in flight as its weapon's model.
 - `Combat_Hit @ (participantId: string, damage: number, position: Vector3)`: to everyone
 - `Combat_Tracer @ (itemId: string, origin: Vector3, points: { Vector3 })`: to everyone
 
+### Client
+
+**Receive: RemoteEvents**
+
+- `Combat_Explosion`: drawn, shaken and felt by `Effects`
+- `Combat_Hit`: a hit on the player's own worm vibrates
+- `Combat_Tracer`: drawn by `Effects`
+
 ## Data
 
 | Where | Key | What |
@@ -104,7 +115,13 @@ shot in flight as its weapon's model.
 | `HELD_TURN_SPEED` | `14` | How quickly the held weapon turns to a new aim |
 | `PROJECTILE_COLORS`, `PROJECTILE_SIZE` | | Placeholder projectile looks (the server's parts; hidden on clients under a model) |
 | `PROJECTILE_STAND_INS` | `{ Bazooka = "HomingMissile" }` | Shots drawn as another weapon's projectile model until their own exists (placeholder) |
+| `BLAST_TEXTURES` | Roblox's `smoke_main`, `fire_main`, `sparkles_main` | The blast particles' pictures (placeholder) |
+| `FEEL_FULL_RADIUS`, `FEEL_RANGE` | `10`, `90` | A blast this big is felt at full strength; it's felt less the farther from the middle of the view, and not past `FEEL_RANGE` studs |
+| `SHAKE_MAGNITUDE`, `SHAKE_SETTLE` | `4`, `0.45` | A full-strength blast's camera shake, and how long it takes to settle |
+| `HAPTIC_BIG`, `HAPTIC_SMALL` | `0.6`, `0.15` | The strengths from which a blast plays `Combat_BlastBig` or `Combat_BlastSmall` |
+| `DEBRIS_MAX`, `DEBRIS_SPEED` | `16`, `{ 25, 50 }` | The most chunks of ground a blast throws, and their speed |
+| `DEBRIS_SIZE`, `DEBRIS_LIFETIME` | `{ 0.3, 1 }`, `2.5` | A chunk's smallest and biggest side, in studs, and how long it lies before fading |
 
 ## In the place
 
-Creates `Workspace.Ume.Combat` for projectiles (placeholder balls) and the clients' aim dots.
+Creates `Workspace.Ume.Combat` for projectiles (placeholder balls), the clients' aim dots and their blast effects (`Blast`, `BlastPuff`, `Debris`, `Tracer` parts).

@@ -12,7 +12,7 @@ closes Results.
 | --- | --- |
 | Folder | `src/modules/Main_Game/MatchHud` |
 | Runs on | Client · Match map, Studio map |
-| Uses | `I.Match`, `I.Worms`, `I.WormControl`, `I.G_Arsenal`, `I.G_Combat`, `I.Replicator`, `I.TopBar`, `I.PlayerSettings`, `I.WidgetManager`, `ContextActionService` |
+| Uses | `I.Match`, `I.Worms`, `I.WormControl`, `I.G_Arsenal`, `I.G_Combat`, `I.Replicator`, `I.TopBar`, `I.PlayerSettings`, `I.WidgetManager`, `I.Haptic`, `ContextActionService` |
 
 ## Files
 
@@ -22,7 +22,7 @@ closes Results.
 | `Scripts/Client/Turn.lua` | Banner, timer, wind, stamina |
 | `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
 | `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys; utilities are used as soon as they're picked on the player's turn. A weapon with no icon picture shows its 3D model in its box instead (`I.G_Arsenal.GetModel`, in a ViewportFrame `S_Model` over `S_Icon`) |
-| `Scripts/Client/Aim.lua` | Drag and pad aiming, the aim dots, firing, homing targets, detonating; the dots of another worm's aim (a player's or a bot's) while it aims |
+| `Scripts/Client/Aim.lua` | Drag and pad aiming, the aim dots, firing (with the `Combat_Fire` haptic tick), homing targets, detonating; the dots of another worm's aim (a player's or a bot's) while it aims |
 | `Scripts/Client/KillFeed.lua` | Knockout lines |
 | `Scripts/Client/TouchControls.lua` | Walk and jump buttons on touch screens |
 | `Scripts/Client/Results.lua` | The Results screen, rematch votes |

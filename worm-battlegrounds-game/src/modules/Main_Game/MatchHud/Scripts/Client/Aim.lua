@@ -316,7 +316,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Fire
 
 --[[
-	Sends the shot (Combat_Fire) with the angle, power and a homing missile's target, then clears the aim.
+	Sends the shot (Combat_Fire) with the angle, power and a homing missile's target, ticks a phone or pad, then clears
+	the aim.
 ]]
 function Module._fire()
 	--[[ Local Variables ]]
@@ -333,6 +334,7 @@ function Module._fire()
 	--[[ Sending ]]
 
 	I.Network.Fire("Combat_Fire", itemId, angle, power, target)
+	I.Haptic.PlayOnce("Combat_Fire")
 	firedItem = itemId
 
 	--[[ Clearing ]]

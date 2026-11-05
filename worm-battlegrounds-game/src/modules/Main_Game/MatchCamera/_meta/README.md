@@ -6,7 +6,7 @@ while the player's `CameraFollowsShot` setting is on, else the active worm (its 
 player's worm, else the arena's middle, and stays inside the arena's bounds. Players pan by dragging with the right
 mouse button, two fingers on touch, or the right stick while LT is held; the pan resets when the camera follows
 another worm. They zoom with the mouse wheel (not over a gui that scrolls) or a pinch, between `ZOOM_MIN` and
-`ZOOM_MAX` studs from the plane; the zoom stays for the match. It locks the FOV_Controller while it runs. While the player isn't in the match (the `InMatch` Player
+`ZOOM_MAX` studs from the plane; the zoom stays for the match. It locks the FOV_Controller while it runs, and updates at the `Camera` render priority, one step before ume's CameraShake, so Combat's blast shakes land on top of it. While the player isn't in the match (the `InMatch` Player
 attribute, on the Studio map's lobby) it gives Roblox's camera back. It creates no remotes, Topics or saved data.
 
 | | |

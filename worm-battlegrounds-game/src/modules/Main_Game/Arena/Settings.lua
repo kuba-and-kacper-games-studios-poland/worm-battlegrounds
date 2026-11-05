@@ -34,7 +34,8 @@ local _settings = {
 
 	--[[
 		The collision groups registered at start, each with the groups it never collides with: worms stand on terrain
-		but pass through each other and the place's own parts, and ghosts touch nothing
+		but pass through each other and the place's own parts, ghosts touch nothing, and the chips blasts throw
+		(Combat's client effects) bounce on terrain only
 	]]
 	--- @type { [string]: { string } }
 	COLLISION_GROUPS = {
@@ -42,6 +43,7 @@ local _settings = {
 		Worm = { "Worm", "Default" },
 		Projectile = { "Projectile", "Default" },
 		Ghost = { "Default", "Terrain", "Worm", "Projectile", "Ghost" },
+		Chip = { "Chip", "Default", "Worm", "Projectile", "Ghost" },
 	},
 
 	--%%%%%%%%%%%%%%%%%%%% Debris

@@ -317,3 +317,20 @@ the aim line to show for everyone when one player aims, and for bots to shoot sl
 (`AimTime`), and MatchHud's `Aim` draws any other worm's line while the stamps keep coming. Bots think 2.5 to 4
 seconds, then hold their weapon and swing their aim to the shot over 1.5 seconds before they fire. Rules: Worms →
 "The active worm holds its weapon on the camera's side", "Everyone sees the active worm aim".
+
+### Blasts that shake, rumble and throw the ground (2026-11-05)
+
+**Before.** A blast was a neon ball that swelled and faded, with Roblox's classic explosion puff; bullets drew fading
+lines. The camera stayed still and nothing vibrated. The game has no sounds yet.
+
+**Why it changed.** The owner asked for the game's feel to be polished first, starting with the shot and the blast
+every turn ends on, with screen shakes and haptics for phones.
+
+**Now.** Combat's client `Effects` handler draws a blast as a white flash, a fireball, a light, and bursts of fire,
+sparks and smoke (Roblox's own particle pictures until the studio makes its own), and throws chunks of the terrain and
+props it hit in their colours (0.3 to 1 stud, in Arena's `Chip` collision group, so they bounce on the terrain and
+lie there for 2.5 seconds but pass through worms and shots; the first version let them fall through everything). It shakes the camera with ume's CameraShake, which needed MatchCamera to update one
+render step earlier (`Camera` instead of `Camera + 1`) so the shake lands on top of the view instead of being
+overwritten. Phones and pads vibrate through the Haptic module's presets: a tick on the player's own shot, a thump
+for blasts by size and distance, and a longer one when their worm is hurt. Rules: Worms → "Blasts are felt, not
+only seen".

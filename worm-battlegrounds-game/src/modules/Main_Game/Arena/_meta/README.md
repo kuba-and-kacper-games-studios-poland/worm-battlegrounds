@@ -100,7 +100,7 @@ No remotes: clients see the arena through Roblox's replication of its parts.
 | `LIQUID_PRESSURE` | `{ Water = 8, Lava = 2 }` | How many of its highest cells one connected body moves each step into lower free cells beside it, so it levels through gaps and under debris |
 | `LIQUID_COLORS` | Water `40, 140, 230`, Lava `255, 96, 20` | The blocks' colours |
 | `LIQUID_TRANSPARENCY` | Water `0.2`, Lava `0` | The blocks' transparency |
-| `COLLISION_GROUPS` | `Terrain`, `Worm`, `Ghost` | Collision groups registered at start, each with the groups it doesn't collide with: worms pass through each other and through `Default` parts (avatars, props), ghosts through everything |
+| `COLLISION_GROUPS` | `Terrain`, `Worm`, `Projectile`, `Ghost`, `Chip` | Collision groups registered at start, each with the groups it doesn't collide with: worms pass through each other and through `Default` parts (avatars, props), ghosts through everything, the chunks blasts throw (Combat's client effects) collide with terrain only |
 
 ## In the place
 

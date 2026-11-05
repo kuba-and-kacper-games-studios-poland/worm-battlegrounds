@@ -44,6 +44,12 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Everyone sees the active worm aim:** its aim line shows on every screen while it aims, players' and bots' alike,
   from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots take aim visibly before
   they fire.
+- **Blasts are felt, not only seen:** Combat's client `Effects` shakes the camera with ume's CameraShake, on top of
+  MatchCamera (which updates at the `Camera` render priority, one step before the shaker), and vibrates phones and
+  pads through the Haptic module's `Combat_*` presets (`src/global_data/Haptic/Preset.lua`). How hard comes from the
+  blast's size and its distance from the middle of the view, and nothing is felt outside a match. The player's own
+  shot ticks and a hit on their own worm thumps. The chunks of ground a blast throws are physics parts in Arena's
+  `Chip` collision group: they bounce on the terrain, never on worms or shots, and fade after `DEBRIS_LIFETIME`.
 - **A walking worm has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 
