@@ -1,8 +1,8 @@
 # Loadout
 
-The lobby's bottom-left panel: the emote row (the smiley, the owned emotes, + for the emote shop), the Bazooka, and one slot per loadout slot (3 to 5). Locked slots show their price.
+The lobby's bottom-left bar: the emote row (the smiley, the owned emotes, + for the emote shop), the Bazooka, and one slot per loadout slot (3 to 5). Locked slots show their price.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). 520 × 580 under the Party panel, from the bottom-left corner (500 × 420 at scale 0.9 on phones and tablets, a whole row of slots showing); slots 128 square, three to a row; locked slots and the shiny mark read on a darker cover. Owned items sit on plain slots, the rarity only in the name's colour (its Preview refills the slots that way).
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). A dark `Hud` box like the match's loadout bar, titled Loadout, 800 wide and as tall as its rows, from the bottom-left corner; slots 112 square (`BarSlot`), all in one row on PC. On phones and tablets it's 440 wide at scale 0.9, so the slots wrap to two rows and clear the Play button. An empty slot shows the kit's plus; locked slots and the shiny mark read on a darker cover, with only the lock and price. Owned items sit on plain slots, the rarity only in the name's colour (its Preview refills the slots that way).
 
 |  |  |
 | --- | --- |
@@ -16,12 +16,12 @@ The lobby's bottom-left panel: the emote row (the smiley, the owned emotes, + fo
 
 | Element | Control | What game code does with it |
 | --- | --- | --- |
-| `U_Loadout` | Box (`Panel`, `Fixed`) | The panel. Has `S_ScreenScale` |
+| `U_Loadout` | Box (`Hud`) | The bar. Has `S_ScreenScale` |
 | `U_Emotes` | Cells (horizontal, `Fixed`) | The emote row: holds one `Emote` per owned emote between `S_Smiley` and `S_Shop` |
 | `U_Emotes` › `S_Smiley` | Item (`Small`) | Expands or folds the emote row |
 | `U_Emotes` › `S_Shop` | Item (`Small`) | Opens `EmoteShop` (its tags) |
-| `U_Slots` | Cells (`Squares`) | Holds one `Slot` per loadout slot after `S_Bazooka` |
-| `U_Slots` › `S_Bazooka` | Item (`Square`) | The basic weapon, always there, no slot |
+| `U_Slots` | Cells (`Squares`, `Fixed`, as tall as its rows) | Holds one `Slot` per loadout slot after `S_Bazooka` |
+| `U_Slots` › `S_Bazooka` | Item (`Small`) | The basic weapon, always there, no slot |
 
 ## Prefabs
 

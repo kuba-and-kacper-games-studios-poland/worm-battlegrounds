@@ -14,19 +14,19 @@ local _gui = {
 
 	--[[ Tree ]]
 
-	-- Bottom left: the emotes row, then the items the player takes into the next match
+	-- Bottom left, on a dark bar like the match's loadout bar: the emotes row, then the items for the next match
 	Root = {
 		Control = "Box",
 		Id = "U_Loadout",
 		Title = "Loadout",
 		Screen = true,
-		-- On phones and tablets: shorter, its slots scrolling instead, and drawn at 0.9 so a whole row of slots shows
-		Style = { "Panel", "Fixed", PlatformScale = { Utils_MobileScale = 0.9 } },
-		Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(500, 420) } },
+		-- On phones and tablets: narrower, so the slots wrap to two rows and clear the Play button
+		Style = { "Hud", PlatformScale = { Utils_MobileScale = 0.9 } },
+		Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(440, 0) } },
 		Props = {
 			AnchorPoint = Vector2.new(0, 1),
 			Position = UDim2.fromScale(0.0125, 0.978),
-			Size = UDim2.fromOffset(520, 580),
+			Size = UDim2.fromOffset(800, 0),
 		},
 		Children = {
 			-- The smiley expands the row of owned emotes (PREFAB | Emote); + opens the emote shop
@@ -60,18 +60,21 @@ local _gui = {
 					},
 				},
 			},
-			-- The Bazooka (always there, no slot), then one box per slot, 3 to 5 (PREFAB | Slot)
+			-- The Bazooka (always there, no slot), then one box per slot, 3 to 5 (PREFAB | Slot), in one row on PC
 			{
 				Control = "Cells",
 				Id = "U_Slots",
-				Style = { "Squares", CellWidth = 128, CellHeight = 128 },
+				Scroll = false,
+				-- As tall as its rows, so the bar grows when the slots wrap
+				Style = { "Squares", "Fixed", CellWidth = "BarSlot", CellHeight = "BarSlot" },
+				Props = { AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.fromScale(1, 0) },
 				Children = {
 					{
 						Control = "Item",
 						Id = "S_Bazooka",
 						Text = "Bazooka",
 						Image = "wb-bazooka",
-						Style = { "Square", Padding = "XS" },
+						Style = "Small",
 						Props = { LayoutOrder = -1 },
 					},
 				},
@@ -84,12 +87,12 @@ local _gui = {
 	Templates = {
 		-- An emote the player owns; a press plays it
 		["PREFAB | Emote"] = { Control = "Item", Parent = "U_Emotes", Style = "Small" },
-		-- A loadout slot: the item's icon and name, its outline in the item's rarity; a press opens LoadoutPicker
+		-- A loadout slot: the item's icon and name in its rarity's colour (a + while empty); a press opens LoadoutPicker
 		["PREFAB | Slot"] = {
 			Control = "Item",
 			Parent = "U_Slots",
 			Text = "Empty",
-			Style = { "Square", Padding = "XS" },
+			Style = "Small",
 			Children = {
 				-- Shown on a shiny item (10 copies)
 				{

@@ -15,60 +15,45 @@ local _gui = {
 	--[[ Tree ]]
 
 	--[[
-		The middle panel, low enough for the tutorial hint above it: U_Play until the player joins a public match, then
+		Bottom centre: U_Play (Play, the quick match, and Modes for the rest) until the player joins a public match, then
 		U_WaitingRoom in its place
 	]]
 	Root = {
 		Primitive = "Folder",
 		Children = {
 			{
-				Control = "Box",
+				Primitive = "Frame",
 				Id = "U_Play",
-				Title = "Play",
-				Screen = true,
-				-- On phones and tablets: shorter, its list scrolling instead, and drawn at 0.9 so a match card fits whole
-				Style = { "Panel", "Fixed", PlatformScale = { Utils_MobileScale = 0.9 } },
-				Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(560, 600) } },
+				Tags = { Utils_PlatformScale = { Utils_DesktopScale = 0.75, Utils_MobileScale = 0.9, Utils_ConsoleScale = 1, Utils_VRScale = 1 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 1),
+					BackgroundTransparency = 1,
 					Position = UDim2.fromScale(0.5, 0.978),
-					Size = UDim2.fromOffset(720, 860),
+					Size = UDim2.fromOffset(760, 144),
 				},
 				Children = {
-					-- 1v1 against a bot: opens SoloSetup to pick the difficulty
+					{ Primitive = "UIScale", Id = "S_ScreenScale" },
 					{
-						Control = "Button",
-						Id = "U_Solo",
-						Text = "Play solo",
-						Style = { "Primary", "Large" },
-						Tags = {
-							Interact_Button = {
-								Interact_ModuleName = "WidgetManager",
-								Interact_Function = "Toggle",
-								Interact_Arg1 = "SoloSetup",
-							},
-						},
-					},
-					-- Hidden on phones and tablets, so a whole match card fits under Play solo
-					{
-						Control = "Label",
-						Text = "Public matches",
-						Align = "Center",
-						Style = "Heading",
-						Tags = { Utils_HideOnPlatform = { Utils_MobileVisibility = false } },
-					},
-					-- The 3 open public lobbies, refreshed as they start (PREFAB | Row)
-					{ Control = "Cells", Id = "U_Rows" },
-					-- A private lobby for friends: opens CustomLobby
-					{
-						Control = "Button",
-						Id = "U_Custom",
-						Text = "Custom lobby",
-						Tags = {
-							Interact_Button = {
-								Interact_ModuleName = "WidgetManager",
-								Interact_Function = "Toggle",
-								Interact_Arg1 = "CustomLobby",
+						Control = "Stack",
+						Direction = "Horizontal",
+						Style = "Buttons",
+						Children = {
+							-- The quick match: joins the open public match closest to starting
+							{ Control = "Button", Id = "S_Quick", Text = "Play", Grow = 1, Style = { "Primary", "Hero" } },
+							-- Opens PlayModes: solo against a bot, the public matches, a custom lobby
+							{
+								Control = "Button",
+								Id = "S_Modes",
+								Text = "Modes",
+								AutoWidth = true,
+								Style = "Hero",
+								Tags = {
+									Interact_Button = {
+										Interact_ModuleName = "WidgetManager",
+										Interact_Function = "Toggle",
+										Interact_Arg1 = "PlayModes",
+									},
+								},
 							},
 						},
 					},
@@ -125,42 +110,6 @@ local _gui = {
 	--[[ Prefabs ]]
 
 	Templates = {
-		--[[
-			One open public lobby on a purple card: map picture, mode and map, players and the 30-second timer, then Join
-			(or Join teams), blue since a list of matches has no one next step
-		]]
-		["PREFAB | Row"] = {
-			Control = "Box",
-			Parent = "U_Rows",
-			Style = { "Card", "Event" },
-			Children = {
-				{
-					Control = "Stack",
-					Direction = "Horizontal",
-					Children = {
-						{ Control = "Picture", Id = "S_Thumbnail", Style = { "Thumbnail", Width = 160, Height = 90 } },
-						{
-							Control = "Stack",
-							Grow = 1,
-							Style = "None",
-							Children = {
-								{ Control = "Label", Id = "S_Mode", Text = "Deathmatch", Style = "Strong" },
-								{ Control = "Label", Id = "S_Map", Text = "Fluffy Fallout", Style = { "Small", "Map" } },
-								{
-									Control = "Stack",
-									Direction = "Horizontal",
-									Children = {
-										{ Control = "Label", Id = "S_Players", Text = "3 / 8", Style = "Small" },
-										{ Control = "Label", Id = "S_Timer", Text = "0:30", Style = { "Small", "Warning" } },
-									},
-								},
-							},
-						},
-						{ Control = "Button", Id = "S_Join", Text = "Join", AutoWidth = true },
-					},
-				},
-			},
-		},
 		-- One player in the waiting room
 		["PREFAB | PlayerName"] = {
 			Control = "Stack",

@@ -1,8 +1,8 @@
 # Crates
 
-The lobby's right panel: the 4 crates (weapon, premium, utility, skin), each with its prices, **Open**, **Open 10** and **Details**; the free tutorial crate; and the **Skins** button showing the equipped skin.
+The **Crates** window, opened from the lobby's Crates button (`Lobby` › `U_OpenCrates`): the 4 crates (weapon, premium, utility, skin), each with its prices, **Open**, **Open 10** and **Details**; or the free tutorial crate in their place.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Each crate card has three rows: the picture and name, the currencies as tabs (slate, the paying one blue), then Open and Open 10 in green (prices) and Details in blue. The panel is 560 wide, so it clears Play on tablets, and hangs from the bottom-right corner. On phones and tablets it's 520 × 820 at scale 0.9, its list scrolling. The tutorial's free crate keeps the one yellow.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Each crate card has three rows: the picture and name, the currencies as tabs (slate, the paying one blue), then Open and Open 10 in green (prices) and Details in blue. A `Large` widget (1400 × 880, 0.8 on Mobile), the cards two to a row (640 × 380 each), the list scrolling. The tutorial's free crate keeps the one yellow.
 
 |  |  |
 | --- | --- |
@@ -10,17 +10,16 @@ The lobby's right panel: the 4 crates (weapon, premium, utility, skin), each wit
 | Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
 | Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
-| Export | A ScreenGui named `Crates`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` |
+| Export | A ScreenGui named `Crates`: `Enabled` off, `DisplayOrder` 1, `ScreenInsets` `DeviceSafeInsets` |
 
 ## Elements
 
 | Element | Control | What game code does with it |
 | --- | --- | --- |
-| `U_Crates` | Box (`Panel`, `Fixed`) | The panel. Has `S_ScreenScale` |
+| `U_Widget` | Widget (`Large`) | The window WidgetManager opens. Has `S_ScreenScale` |
 | `U_TutorialCrate` | Box | The new player's free crate, shown once by Tutorial in place of the list |
 | `U_TutorialCrate` › `S_Open` | Button (`Primary`) | Opens it |
 | `U_CrateList` | Cells | Holds one `CrateCard` per crate |
-| `U_Skins` | Item (`Square`) | Opens `Skins` (its tags); `S_Info` shows the equipped skin's name |
 
 ## Prefabs
 
@@ -30,7 +29,7 @@ The lobby's right panel: the 4 crates (weapon, premium, utility, skin), each wit
 
 ## Driven by
 
-The game's `Crates` module (cards, the tutorial crate, opening), `Cosmetics` (`U_Skins`) and the `Shop` module's VIP state (`S_Free`, read by Crates).
+WidgetManager opens it (the `Lobby` gui's Crates button). The game's `Crates` module fills it (cards, the tutorial crate, opening), with the `Shop` module's VIP state (`S_Free`, read by Crates).
 
 ## Preview
 
@@ -45,13 +44,12 @@ The game's `Crates` module (cards, the tutorial crate, opening), `Cosmetics` (`U
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Crates`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size. Prices are read live and odds shown before buying (Roblox's paid random items rules).
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Crates`, `Enabled` off. WidgetManager turns it on. A restyled copy keeps its `Name`, Ids and prefab names. The window is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size. Prices are read live and odds shown before buying (Roblox's paid random items rules).
 
 ### Input
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Open Skins | Click | Tap | Select and A | `U_Skins` tags (WidgetManager `Toggle`) |
 | Pick a currency, Open, Open 10, Details | Click | Tap | Select and A | Crates connects the card buttons |
 
 ### Looks

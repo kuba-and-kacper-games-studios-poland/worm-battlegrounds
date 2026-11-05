@@ -1,8 +1,8 @@
 # MatchBoard
 
-The lobby's middle panel. Before joining: **Play solo**, the 3 open public matches, and **Custom lobby**. After joining a public match the waiting room takes its place: the match, the countdown, the players, **Vote to start** and **Leave match**.
+The lobby's bottom-centre row. Before joining: **Play** (the quick match: joins the open public match closest to starting) and **Modes** (opens `PlayModes`: Play solo, Custom lobby, the public matches). After joining a public match the waiting room takes its place: the match, the countdown, the players, **Vote to start** and **Leave match**.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Play solo is the large yellow button, the screen's main one; open matches are purple event cards (a picture, mode, the map in green, players and timer) with a blue Join, since a list of matches has no one next step. The panel is 720 wide so it fits between Party and Crates, and hangs from the bottom (bottom-centre, its foot level with Loadout's) so the tutorial hint fits above it. On phones and tablets it's 560 × 600 at scale 0.9 and the "Public matches" heading hides (`Utils_HideOnPlatform`), so a whole match card shows.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Play is the yellow `Hero` button, the screen's one main button; Modes beside it is blue, as other actions are. The row has no panel behind it, so the lobby's stage shows around it: a 760 × 144 frame with its own `S_ScreenScale`, hanging from the bottom centre (0.75 on Desktop, 0.9 on Mobile). The waiting room is a 720 × 860 panel in the same spot (560 × 600 at scale 0.9 on phones and tablets).
 
 |  |  |
 | --- | --- |
@@ -16,10 +16,9 @@ The lobby's middle panel. Before joining: **Play solo**, the 3 open public match
 
 | Element | Control | What game code does with it |
 | --- | --- | --- |
-| `U_Play` | Box (`Panel`, `Fixed`) | The play panel; hidden while the player waits in a match. Has `S_ScreenScale` |
-| `U_Solo` | Button (`Primary`) | Opens `SoloSetup` (its tags) |
-| `U_Rows` | Cells | Holds one `Row` per open public match |
-| `U_Custom` | Button | Opens `CustomLobby` (its tags) |
+| `U_Play` | Frame | The Play row; hidden while the player waits in a match. Has `S_ScreenScale` |
+| `U_Play` › `S_Quick` | Button (`Primary`, `Hero`) | Joins the open public match closest to starting |
+| `U_Play` › `S_Modes` | Button (`Hero`) | Opens `PlayModes` (its tags) |
 | `U_WaitingRoom` | Box (`Panel`, `Fixed`) | The waiting room, hidden until the player joins. Has `S_ScreenScale` |
 | `U_WaitingRoom` › `S_Match` | Label (`Title`) | "Duo team deathmatch • Map name" |
 | `U_WaitingRoom` › `S_Countdown` | Label (`Heading`) | "Match starts in 0:29" |
@@ -32,20 +31,18 @@ The lobby's middle panel. Before joining: **Play solo**, the 3 open public match
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | Row` | `U_Rows` | `S_Thumbnail` (map picture), `S_Mode`, `S_Map`, `S_Players` ("3 / 8"), `S_Timer` ("0:30"), `S_Join` ("Join" or "Join teams") |
 | `PREFAB | PlayerName` | `U_Players` | `S_Avatar`, `S_Name` |
 
 ## Driven by
 
-The game's `MatchBoard` module: it turns the ScreenGui on on the Lobby map, refreshes the rows, and swaps `U_Play` for `U_WaitingRoom` when the player joins.
+The game's `MatchBoard` module: the quick match on `S_Quick`, and swapping `U_Play` for `U_WaitingRoom` when the player joins. The `Lobby` module turns the ScreenGui on outside matches.
 
 ## Preview
 
-`Preview.lua` (`UmeGui_Guis_WormBattlegrounds_MatchBoard_Preview`) fills example rows and players and scales the panels to the screen.
+`Preview.lua` (`UmeGui_Guis_WormBattlegrounds_MatchBoard_Preview`) fills example players and scales the panels to the screen.
 
 | Setting | What it does |
 | --- | --- |
-| `S_Rows` (Slider, 0 to 3) | How many public matches are listed |
 | `S_Joined` (Toggle) | Shows the waiting room in place of the play panel |
 | `S_Players` (Slider, 1 to 8) | Players in the waiting room |
 
@@ -59,8 +56,8 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Open Play solo / Custom lobby | Click | Tap | Select and A | `U_Solo`, `U_Custom` tags (`Interact_Button` → WidgetManager `Toggle`) |
-| Join, Vote, Leave | Click | Tap | Select and A | MatchBoard connects `S_Join`, `S_Vote`, `S_Leave` |
+| Open Modes | Click | Tap | Select and A | `S_Modes` tags (`Interact_Button` → WidgetManager `Toggle`) |
+| Play, Vote, Leave | Click | Tap | Select and A | MatchBoard connects `S_Quick`, `S_Vote`, `S_Leave` |
 
 ### Looks
 

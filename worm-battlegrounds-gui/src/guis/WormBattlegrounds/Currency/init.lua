@@ -30,15 +30,15 @@ local _gui = {
 					Size = UDim2.fromScale(0.8, 0.8),
 				},
 			},
-			-- Top middle, on a dark pill: coins and diamonds (Currency_Slot labels ume's Currency writes), + opens the Shop
+			-- Top right, on a dark pill: coins and diamonds (Currency_Slot labels ume's Currency writes), + opens the Shop
 			{
 				Control = "Box",
 				Id = "U_Bar",
 				Screen = true,
 				Style = "Pill",
 				Props = {
-					AnchorPoint = Vector2.new(0.5, 0),
-					Position = UDim2.fromScale(0.5, 0.011),
+					AnchorPoint = Vector2.new(1, 0),
+					Position = UDim2.fromScale(0.9875, 0.011),
 					Size = UDim2.fromOffset(440, 0),
 				},
 				Children = {

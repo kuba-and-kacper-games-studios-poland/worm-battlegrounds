@@ -10,16 +10,6 @@ local Workspace: Workspace = game:GetService("Workspace")
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
---[[ Examples ]]
-
--- Public lobbies as MatchBoard lists them: mode, map, players, time left, team mode
---- @type { { [string]: any } }
-local ROWS = {
-	{ Mode = "Deathmatch", Map = "Fluffy Fallout", Players = "3 / 8", Timer = "0:24", Teams = false },
-	{ Mode = "Duo team deathmatch", Map = "Lava Lagoon", Players = "5 / 8", Timer = "0:12", Teams = true },
-	{ Mode = "Trio team deathmatch", Map = "Brick Bay", Players = "2 / 6", Timer = "0:29", Teams = true },
-}
-
 --[[ Screen ]]
 
 -- The screen size the guis are laid out for, and the boost on short Mobile screens, as ume's Settings module's
@@ -48,7 +38,6 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Slider", Id = "S_Rows", Label = "Public matches", Value = 3, Min = 0, Max = 3, Step = 1 },
 		{ Control = "Toggle", Id = "S_Joined", Label = "Joined a match", Value = false },
 		{
 			Control = "Slider",
@@ -67,7 +56,7 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the public match rows and the waiting room's players, and shows the panel the player is on.
+	Fills the waiting room's players, and shows the Play row or the waiting room.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -75,20 +64,6 @@ function Module.Apply(preview)
 
 	preview.View:Get("U_Play").Instance.Visible = not preview.Values.S_Joined
 	preview.View:Get("U_WaitingRoom").Instance.Visible = preview.Values.S_Joined
-
-	--[[ Rows ]]
-
-	local rows = preview.Fill("PREFAB | Row", preview.Values.S_Rows) --- @type { UmeGui_Subview }
-
-	--- @param row UmeGui_Subview
-	for index: number, row in ipairs(rows) do
-		local example = ROWS[index] --- @type { [string]: any }
-		row:Get("S_Mode").SetText(example.Mode)
-		row:Get("S_Map").SetText(example.Map)
-		row:Get("S_Players").SetText(example.Players)
-		row:Get("S_Timer").SetText(example.Timer)
-		row:Get("S_Join").SetText(if example.Teams then "Join teams" else "Join")
-	end
 
 	--[[ Waiting Room ]]
 

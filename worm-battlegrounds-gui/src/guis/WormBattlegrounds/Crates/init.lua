@@ -7,27 +7,19 @@ local _gui = {
 
 	--[[ General ]]
 
-	-- The Crates module turns it on, on the Lobby map, as I.UserInterface.UI["Crates"]
+	-- The lobby's Crates button opens it; the Crates module fills it as I.UserInterface.UI["Crates"]
 	Name = "Crates",
 	Theme = "WormBattlegroundsBrawl",
-	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
+	Screen = { DisplayOrder = 1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
 
-	-- Right: the 4 crates (PREFAB | CrateCard), the tutorial crate, and the skins button
+	-- The 4 crates, two to a row (PREFAB | CrateCard), or the new player's free crate in their place
 	Root = {
-		Control = "Box",
-		Id = "U_Crates",
+		Control = "Widget",
+		Id = "U_Widget",
 		Title = "Crates",
-		Screen = true,
-		-- On phones and tablets: shorter, its list scrolling instead, and drawn at 0.9 so the buttons keep their room
-		Style = { "Panel", "Fixed", PlatformScale = { Utils_MobileScale = 0.9 } },
-		Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(520, 820) } },
-		Props = {
-			AnchorPoint = Vector2.new(1, 1),
-			Position = UDim2.fromScale(0.9875, 0.978),
-			Size = UDim2.fromOffset(560, 900),
-		},
+		Style = "Large",
 		Children = {
 			-- The new player's free crate (Grenade and Shotgun), shown once by Tutorial in place of the list
 			{
@@ -39,22 +31,7 @@ local _gui = {
 					{ Control = "Button", Id = "S_Open", Text = "Open", Style = "Primary" },
 				},
 			},
-			{ Control = "Cells", Id = "U_CrateList" },
-			-- Opens the Skins widget; shows the equipped skin
-			{
-				Control = "Item",
-				Id = "U_Skins",
-				Text = "Skins",
-				Subtext = "Classic",
-				Style = "Square",
-				Tags = {
-					Interact_Button = {
-						Interact_ModuleName = "WidgetManager",
-						Interact_Function = "Toggle",
-						Interact_Arg1 = "Skins",
-					},
-				},
-			},
+			{ Control = "Cells", Id = "U_CrateList", Style = { "Grid", CellWidth = 640, CellHeight = 380 } },
 		},
 	},
 

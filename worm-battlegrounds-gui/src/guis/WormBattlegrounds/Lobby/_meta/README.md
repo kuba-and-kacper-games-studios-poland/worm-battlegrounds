@@ -1,38 +1,45 @@
 # Lobby
 
-The lobby's backdrop: a flat illustrated background over the whole screen, under every other gui, and the tutorial's arrow layer over it.
+The lobby's own screen, under every other gui and see-through, so the Lobby module's 3D stage (the player's worm) shows behind it: the game's name at the top, the **Crates** and **Skins** buttons in the top-right corner, and the tutorial's arrow layer.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Only the theme changes (the tutorial arrow).
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The name is a `Hero` label in gold, a placeholder until the owner's logo exists (then a picture). Crates and Skins are square `Item` slots under the currency bar; a red `Badge` pill sits on the Crates button's top-right corner. Each group is a frame with its own `S_ScreenScale` (0.75 on Desktop, smaller on Mobile).
 
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/Lobby"` |
 | Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
-| Devices | Desktop (Mobile and Console look the same) |
+| Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR larger (`Utils_PlatformScale`) |
 | Export | A ScreenGui named `Lobby`: `Enabled` off, `DisplayOrder` -1000, `ScreenInsets` `None` (edge to edge) |
 
 ## Elements
 
 | Element | Control | What game code does with it |
 | --- | --- | --- |
-| `U_Background` | ImageLabel | The lobby art (`Image`), cropped to the screen; until it exists, a sky-blue fill |
+| `U_Logo` | Frame | The game's name, top centre. Has `S_ScreenScale` |
+| `U_Menu` | Frame | The corner buttons, top right. Has `S_ScreenScale` |
+| `U_OpenCrates` | Item (`Square`) | Opens `Crates` (its tags) |
+| `U_OpenCrates` › `S_Badge` | Box (`Badge`, `Fixed`) | The red badge on its corner, hidden until Crates shows it |
+| `U_OpenCrates` › `S_Count` | Label (`Strong`) | The badge's text: FREE, a count, or 9+ |
+| `U_Skins` | Item (`Square`) | Opens `Skins` (its tags); Cosmetics writes the equipped skin's picture and name (`S_Icon`, `S_Info`) |
 | `U_Pointer` | Frame | Full-screen layer for the tutorial |
 | `U_Pointer` › `S_Arrow` | Picture (`Glyph`) | Tutorial shows it and moves it over the button the player should press |
 
 ## Driven by
 
-The game's `Lobby` module turns the ScreenGui on on the Lobby map; `Tutorial` drives `S_Arrow`.
+The game's `Lobby` module turns the ScreenGui on outside matches; `Tutorial` drives `S_Arrow`; `Cosmetics` fills `U_Skins`; `Crates` fills the Crates button's badge.
 
 ## Integration
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Lobby`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. The background art goes in `U_Background.Image` once it's uploaded.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Lobby`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Its frames are laid out for a 1920 × 1080 screen and sized by the game's ScreenScale module (`Lobby` is in its `GUIS` list). The logo picture replaces the `U_Logo` label once it's drawn and approved.
 
 ### Input
 
-None: it only shows.
+| Action | Mouse and keyboard | Touch | Gamepad | Bound in |
+| --- | --- | --- | --- | --- |
+| Open Crates / Skins | Click | Tap | Select and A | `U_OpenCrates`, `U_Skins` tags (`Interact_Button` → WidgetManager `Toggle`) |
 
 ### Looks
 

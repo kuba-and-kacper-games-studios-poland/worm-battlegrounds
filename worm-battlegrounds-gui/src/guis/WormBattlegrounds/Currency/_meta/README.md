@@ -1,6 +1,6 @@
 # Currency
 
-System's `Currency` made the game's own: the orbs area ume's Currency slots fly orbs across, and a top bar with the player's coins and diamonds and a **+** that opens the shop.
+System's `Currency` made the game's own: the orbs area ume's Currency slots fly orbs across, and a bar in the top-right corner with the player's coins and diamonds and a **+** that opens the shop (the lobby's logo has the top middle).
 
 **Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Coins and diamonds sit on a dark pill (`Box` `Pill`) instead of a panel, 440 wide; + is a green square button with the kit's plus (it opens the Shop, a price).
 

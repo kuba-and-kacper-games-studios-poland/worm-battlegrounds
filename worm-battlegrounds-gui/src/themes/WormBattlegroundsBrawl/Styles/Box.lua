@@ -78,6 +78,11 @@ local _styles = {
 	Event = { Slab = { Skin = "wb-skin-card_purple" } },
 	-- With Card: a highlighted person or place (you, in a list of players)
 	Highlight = { Slab = { Skin = "wb-skin-card_blue" } },
+	-- A notification badge on a button's corner (FREE, a count): the kit's red dot stretched into a pill
+	Badge = {
+		Padding = 0,
+		Slab = { Skin = "wb-skin-dot_red", Fill = "", Pattern = "" },
+	},
 }
 
 return _styles
