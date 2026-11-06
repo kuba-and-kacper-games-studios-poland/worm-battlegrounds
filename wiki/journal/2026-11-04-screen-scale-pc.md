@@ -1,7 +1,8 @@
 ---
 title: "Panels scale by width on narrow screens, and per device through ume's PlatformScale"
 date: 2026-11-04
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Guis"]
 files:

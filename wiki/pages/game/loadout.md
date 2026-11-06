@@ -2,14 +2,14 @@
 title: "Loadout & inventory"
 summary: "One inventory of weapons and utilities. Players take 3 into a match, or up to 5 with upgrades."
 icon: toolbox
-status: planned
+status: active
 order: 5
 type: "System"
 tags: [game, items]
 infobox:
   Slots: "3, up to 5"
   Holds: "Weapons and utilities, any mix"
-  Upgrades: "Robux or in-game coins"
+  Upgrades: "2,500 and 6,000 coins, or a game pass"
 questions:
   - id: slot-prices
     text: "A Worm Battlegrounds loadout starts with 3 slots and can grow to 5. Which slots cost what?"
@@ -51,16 +51,37 @@ on the left of the [[Lobby]].
 
 - Every player starts with **3 slots**.
 - Slots can grow to **4** and then **5**. Each one can be **bought with Robux or unlocked with coins**, whichever
-  the player picks; slot 5 costs more.
+  the player picks: slot 4 for **2,500 coins** or the Slot 4 game pass, slot 5 for **6,000 coins** or the Slot 5 pass,
+  once slot 4 is open.
 - A slot holds **one item, a weapon or a utility**. Any mix works: 3 weapons, 2 weapons and a jetpack, or 3 utilities.
 - **Every slot holds a different item:** the same weapon can't fill two slots.
 - Each weapon has a number of **uses per match**, and some have a cooldown: see [[Arsenal#Uses and cooldowns]].
 - Every player also has a **basic weapon** that's always there and takes no slot, so an empty loadout can still
   play.
 
+## In the lobby
+
+The loadout is a slim dark bar at the bottom left of the [[Lobby]], like the match's loadout bar: the Bazooka, then
+the slots in one row (two rows on phones), with the emote row above them.
+
+- **A filled slot** shows its item's picture and its name in its rarity's colour.
+- **An empty slot** shows a **+**. Pressing it, or a filled slot, opens the **picker**: every weapon and utility the
+  player owns, each with its rarity, uses and cooldown, and its copies toward shiny ("7 / 10").
+- **The next locked slot** shows only its price on a dark cover ("2500 coins"). Pressing it asks whether to open it
+  with coins.
+
+In a match, each slot shows its uses left ("x3"); see [[Match screen#Bottom: stamina, power and the loadout bar]].
+
 ## Inventory
 
 The inventory holds every weapon and utility the player owns, from the crates (see [[Currencies & crates]]). The full
 list is in the [[Arsenal]].
+
+## History
+
+:::changelog
+- 2026-11-03: Loadouts of 3 to 5 slots, the picker, and slots 4 and 5 for coins or game passes.
+- 2026-11-05: The lobby's loadout is a slim bar like the match's; a locked slot shows only its price.
+:::
 
 ::navbox{from="game"}

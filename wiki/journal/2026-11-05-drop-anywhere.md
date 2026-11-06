@@ -1,7 +1,8 @@
 ---
 title: "Drop: place your worm anywhere it fits; the timer ends once everyone placed"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Match modes & maps", "Match screen", "Match modules"]
 files:

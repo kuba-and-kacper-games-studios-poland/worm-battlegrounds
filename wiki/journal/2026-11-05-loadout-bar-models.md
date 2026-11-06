@@ -1,7 +1,8 @@
 ---
 title: "Loadout bar: weapons with no icon show their 3D model"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Match screen", "Arsenal"]
 files:

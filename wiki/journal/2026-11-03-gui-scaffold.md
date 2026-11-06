@@ -1,7 +1,8 @@
 ---
 title: "First pass of every gui: 22 guis on the WormBattlegrounds theme"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Guis", "Lobby", "Match screen", "Currencies & crates", "Emotes", "Loadout & inventory"]
 files:
@@ -47,3 +48,5 @@ and the Preview settings fill the lists.
 blocks (the code folder's `game/practices.md` → Guis). Still open from the page's suggestions: rarity colours are now
 theme tokens (suggestion `rarity-colours` is built in the theme, not yet answered), no team symbols, no controls-size
 setting.
+
+**Merged.** Merged as history only: the placeholder look it describes was replaced the same day and again on 2026-11-04.

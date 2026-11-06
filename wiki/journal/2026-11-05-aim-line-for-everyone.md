@@ -1,7 +1,8 @@
 ---
 title: "Every player sees the active worm's aim line, players' and bots'"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Match screen", "Controls & platforms"]
 files:
@@ -26,3 +27,5 @@ Studio playtest). Two players: the waiting one sees the other's dots move as the
 
 **From.** Controls & platforms → suggestion trajectory-preview ("Show a short dotted line from the worm's weapon
 while aiming"), already built for the shooter; this shows it to everyone.
+
+**Merged.** The aim line itself was replaced by the crosshair on 2026-11-06; that everyone sees the active worm's aim went in.

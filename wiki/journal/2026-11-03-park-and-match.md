@@ -1,7 +1,8 @@
 ---
 title: "CharacterPark parks avatars at 0, -60, 0; the Game module is now Match"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Lobby & meta modules", "Architecture", "Roadmap"]
 files:

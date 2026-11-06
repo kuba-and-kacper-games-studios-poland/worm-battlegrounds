@@ -21,11 +21,13 @@ suggestions:
     options: [Yes, No]
 ---
 
-The modules that run on a **match server** (the `Match` map). They live in `src/modules/Main_Game/` of the code folder
-and are turned off on the `Lobby` map ([[Architecture#Place loader config]]). Rules for every module: the code folder's
-`AGENTS.md` and `.claude/rules/` (`ume/structure.md`, `ume/events.md`, `ume/environments.md`, `luau/*`). What players
-see and the numbers come from the game pages: [[Match modes & maps]], [[Controls & platforms]], [[Arsenal]],
-[[Match screen]], [[Currencies & crates#Coins from a match]].
+The modules that run on a **match server** (the `Match` map, in the match place). They live in
+`src/modules/Main_Game/` of the code folder and are turned off on the `Lobby` map ([[Architecture#Place loader config]]).
+All of them are built (phases P1 to P7 of the [[Roadmap]]); this page says what each one does and the numbers players
+feel. **Each module's `_meta/README.md` is the source of truth** for its full API, remotes, settings and place setup.
+Rules for every module: the code folder's `AGENTS.md` and `.claude/rules/` (`ume/structure.md`, `ume/events.md`,
+`luau/*`, and the game's `game/practices.md`). What players see: [[Match modes & maps]], [[Controls & platforms]],
+[[Arsenal]], [[Match screen]], [[Currencies & crates#Coins from a match]].
 
 ## Arsenal
 
@@ -35,16 +37,17 @@ see and the numbers come from the game pages: [[Match modes & maps]], [[Controls
 | Exposes | `I.G_Arsenal` |
 | Data | `Data/Weapons/<ItemId>.lua`, `Data/Utilities/<ItemId>.lua` (shape: [[Data & networking#Arsenal rows]]) |
 
-The combat numbers of the 14 weapons and 6 utilities, keyed by the same ids as their Inventory items. It holds no
-state.
+The combat numbers of the 14 weapons and 6 utilities, keyed by the same ids as their Inventory items, and their
+models. It holds no state.
 
-- `Get(itemId)` → the row, warns and returns `nil` for an unknown id (ume's cache `Get*` rule).
-- `GetAll()`, `IsWeapon(itemId)`, `IsUtility(itemId)`.
-- `GetDamage(itemId, distance, isShiny)` → damage at that distance from the blast center: linear from `DamageMax` at
-  the center to `DamageEdge` at `BlastRadius`, times `SHINY_DAMAGE_MULTIPLIER` (1.05) when shiny.
-- `GetKnockback(class)` → impulse speed for `Small`, `Medium`, `High`, `VeryHigh`, `Extreme` (`KNOCKBACK` setting).
-- At start it checks every row has an Inventory item of category `Weapon` or `Utility` (except the always-owned
-  Bazooka) and every such item has a row, warning for each mismatch.
+- `Get`, `GetAll`, `IsWeapon`, `IsUtility`; `GetDamage(itemId, distance, isShiny)` (linear from `DamageMax` at the
+  center to `DamageEdge` at `BlastRadius`, ×`SHINY_DAMAGE_MULTIPLIER` 1.05 when shiny); `GetKnockback(class)`
+  (`KNOCKBACK`: Small 20, Medium 45, High 70, VeryHigh 95, Extreme 130).
+- **Models:** `GetModel`, `HasModel`, `GetProjectileModel`, `HasProjectileModel`, cached at start on both sides from
+  `Assets/Arsenal/Models` and `Projectiles`. Each model is a hidden `RootPart` facing +X (at the grip of a held
+  weapon, the centre of a thrown one) with a `Muzzle` attachment where its shot leaves it. `BURST_SHOTS` (`Snail`)
+  lets a burst's shot have its own model. Still without one: Baseball Bat, One Punch, Low Gravity Potion, the
+  Cluster bomb's bomblets.
 
 **Done when:** `I.G_Arsenal.Get("Dynamite").DamageMax` prints 85 from the command bar, and a missing row warns once
 at start.
@@ -53,169 +56,147 @@ at start.
 
 | | |
 |---|---|
-| Runs on | Server, Client, Global |
-| Exposes | `I.Arena` (server), `I.G_Arena` (both: grid queries) |
+| Runs on | Server |
+| Exposes | `I.Arena` |
 | World | `Workspace.Ume.Arena` |
-| Uses | `I.Dirs.SAssets` (`Arenas`), `I.Lighting`, `PhysicsService` |
 
-Owns the terrain and the arena around it. How the grid, chunks, carving and falling blocks work:
-[[Architecture#Terrain: a grid drawn as merged parts]].
+Owns the terrain, the liquids and the arena around it. How it works: [[Architecture#Terrain: authored parts carved by CSG]].
 
-**Server handlers** (`Scripts/Server/`):
-
-| Handler | Does |
+| Handler (`Scripts/Server/`) | Does |
 |---|---|
-| `Loader.lua` | `Load(mapId)`: clears the old arena, clones the template's Decor and Markers, rasterizes Terrain into a fresh grid, builds every chunk, places the plane part, the liquid part and `BaseSpawn`, applies the map's lighting preset, sets `Workspace.Gravity`. Registers the collision groups in `Init` |
-| `Grid.lua` | The `buffer`, cell ↔ world conversion, `Carve(center, radius)` → cells removed, flood fill for floating groups |
-| `Chunks.lua` | Greedy meshing of one chunk into Parts (material colours from `MATERIALS`, the studs `Texture`), rebuilding the chunks a carve touched |
-| `Debris.lua` | Turns floating groups into falling welded assemblies (`Debris` group, server-owned) and writes them back into the grid when they settle |
-| `Liquid.lua` | The water or lava level, raising it each turn in sudden death (`RaiseLiquid(cells)`), and the `LiquidLevel` attribute |
+| `Loader.lua` | Caches and checks every template at start; `Load(mapId)` clones one, places the `Plane`, notes the floor (`GetFloor`); registers the collision groups |
+| `Carver.lua` | `BuildCutter` (one box per row of 1-stud squares in the blast) and `Carve`, by CSG |
+| `Debris.lua` | Finds the groups a carve cut loose (bedrock on the floor and floating ledges hold), welds them, lets them fall and anchors them where they land |
+| `Props.lua` | Collects the `Arena_Prop`s on load; after each carve cuts them, throws the freed pieces, drops props whose ground is gone |
+| `Liquid.lua` | The half-stud water and lava grid at 8 fps, and `RaiseLiquid` for sudden death |
 
-**Server API (`I.Arena`):** `Load(mapId)`, `Carve(center: Vector3, radius: number)`, `RaiseLiquid(cells)`,
-`GetDropZone()` → X min, X max and drop height, `GetBounds()`, `GetLiquid()` → level and kind, `IsOut(position)` → `false` or
-the cause (`Water`, `Lava`, `Fell`), `IsSettled()` (no debris moving).
+**API (`I.Arena`):** `Load`, `Carve(center, radius)`, `RaiseLiquid`, `GetBounds`, `GetMarkers`, `GetPlane`,
+`GetLiquid(position)`, `GetHazard(position)` (`"Water"`, `"Lava"`, `"Bounds"` or nil), `IsFree(position, radius)`
+(where a placed drop may go), `GetLandSpots(count, radius)` (where unplaced worms start: every top on every storey,
+flat enough, out of liquid, `LAND_SPOT_GAP` 16 apart), `IsSettled()`. **Topic:** `Arena_Loaded (mapId)`. No remotes:
+Roblox replicates the parts. **Admin commands:** `/arena load <map>`, `/arena carve <x> <y> <radius>`.
 
-**Global API (`I.G_Arena`):** `IsSolid(position)`, `GroundBelow(position)` → the top of the first solid ground
-below, used by bots (server, from the grid) and drop markers (client, a raycast against the replicated terrain
-parts). Clients never carve.
+**Settings** (the main ones): `CARVE_CELL` 1, `CONTACT_MARGIN` 0.15, `FLOAT_MIN_AREA` 24, `LAND_SPOT_STEP` 2,
+`LAND_SPOT_GAP` 16, `LAND_SPOT_MIN_NORMAL` 0.7, `COLLISION_GROUPS`, `SETTLE_SPEED` 0.5, `DEBRIS_SETTLE_TIME` 4,
+`PROP_SUPPORT_DEPTH` 1.5, `PROP_BASE_HEIGHT` 0.6, `PROP_KNOCK_SPEED` 35, `PROP_KNOCK_SPIN` 6, `PROP_FADE_DELAY` 3,
+`LIQUID_CELL` 0.5, `LIQUID_FPS` 8, `LIQUID_FALL` 6, `LIQUID_SPREAD` (water 12, lava 3), `LIQUID_PRESSURE` (water 8,
+lava 2).
 
-**Client:** liquid surface effects (waves, lava glow), debris dust on carve, and the arena backdrop (a sky image far
-behind the plane, from the map row).
+**Not built from the plan:** a map's gravity and lighting preset. **Unsure:** a still liquid surface can keep
+half-stud bumps (it can't spread thinner than a cell).
 
-**Settings:** `CELL_SIZE` 2, `TERRAIN_DEPTH` 4, `CHUNK_CELLS` 16, `GRAVITY` (start at 120, tune), `MATERIALS` (id →
-colour, Material, indestructible), `DEBRIS_SETTLE_TIME` 4.
-
-**Done when:** a Studio match on the greybox Picnic Plains shows the terrain as studded merged parts (a few hundred,
-not thousands: count them), `I.Arena.Carve(Vector3.new(0, 10, 0), 6)` from the command bar cuts a round hole, and a
-bridge cut at both ends falls and rejoins the ground.
+**Done when:** `/arena carve -75 18 6` on Picnic Plains steps a crater in 1-stud stairs, a bridge cut at both ends
+falls and lands, and water flows into a crater dug to the sea.
 
 ## Worms
 
 | | |
 |---|---|
 | Runs on | Server, Client |
-| Exposes | `I.Worms` (server), `I.Worms` (client: lookups) |
+| Exposes | `I.Worms` (server: bodies and health; client: `Get`, `GetMine`) |
 | World | `Workspace.Ume.Worms`, one Model per participant |
-| Uses | `I.Arena`, `I.Cosmetics` (equipped skin), `I.Sound`, `I.Haptic` |
 
-The worm bodies: spawning, health, damage, death, ghosts, and how they look.
+The worm bodies: spawning, health, damage, knockouts, ghosts, tags and gear.
 
-- **A worm** is a Model named by its participant id (`P_<UserId>` for players, `B_<n>` for bots): an invisible
-  `Ball` root part (2.6 studs across, `Worm` collision group, custom friction), the skin model cloned from
-  `Assets.Skins.<SkinId>` welded on and massless, a `PlaneConstraint` and an `AlignOrientation` (upright, facing left
-  or right), an `AnimationController` with an `Animator`, and the held item's model from `Assets.Items.<ItemId>`.
-- **Attributes** (others read them): `ParticipantId`, `UserId` (0 for bots), `DisplayName`, `Team`, `Color`,
-  `Health`, `MaxHealth`, `Alive`, `Ghost`, `IsBot`, `Facing` (−1 or 1), `HeldItem`, `AimAngle`, `Shiny` (skin),
-  `Vip`.
-- **Server API (`I.Worms`):** `Spawn(participant, position)`, `Get(participantId)` → model, `GetAll()`,
-  `GetAlive()`, `Damage(participantId, amount, sourceId?, itemId?)`, `Heal(participantId, amount)` (never above
-  `MAX_HEALTH` 200), `Knockback(participantId, impulse: Vector3, sourceId?)`, `Kill(participantId, cause, sourceId?)`,
-  `SetOwner(participantId, player?)` (network ownership), `IsSettled()`, `Clear()`.
-- **Each Heartbeat** (server): checks `I.Arena.IsOut` for every alive worm, tracks the highest point of each fall and
-  applies fall damage on landing (1 per stud above `SAFE_FALL_HEIGHT`, at most 40; none while a parachute is open),
-  and keeps the last attacker of each worm this turn for kill credit.
-- **Death:** `Alive = false`, `Ghost = true`, the body becomes a see-through ghost in the `Ghost` group that floats
-  up a few studs; publishes `Worms_Died (participantId, cause, killerId?, itemId?)`.
-- **Client:** clones the `WormTag` billboard onto each worm (name in team colour, gold for VIP, health number and
-  bar, the active marker and timer above the active worm for everyone but its owner), plays animations (`Idle`,
-  `Walk`, `Jump`, `Fall`, `Aim`, `Hurt`, `Emote`) from the skin row's ids, pops damage numbers when the
-  `DamageNumbers` setting is on, hurt sounds and voice lines.
+- **A worm** is a Model named by its participant id (`P_<UserId>` for players, `B_<n>` for bots): an invisible ball
+  `Root` 2.6 studs across in the `Worm` group (friction 1 at rest, 0 while walking), a `PlaneConstraint`, an
+  `AlignOrientation` "Upright", a `LinearVelocity` "Walk", and the skin welded on, massless (only the Classic
+  placeholder exists, in `Assets.Skins`).
+- **Attributes:** `ParticipantId`, `UserId`, `DisplayName`, `Team`, `Color`, `IsBot`, `Health`, `MaxHealth`, `Alive`,
+  `Ghost`, `Facing`, `Vip`, `DamageTaken`; Combat writes `HeldItem`, `AimAngle`, `AimPower`, `AimTime`; WormControl
+  writes `CanMove`, `Stamina`, `Parachute`, `JetpackFuel`; Match writes `Active`.
+- **API:** `Spawn`, `Damage` (a worm at 0 stays in play until Match knocks it out after the shot settles), `Heal`
+  (never above 200), `Knockback` (the server must own the worm), `Kill`, `SetOwner`, `Clear`, `Get`, `GetAll`,
+  `GetAlive`. **Topic:** `Worms_Died (participantId, cause, killerId?, itemId?)`.
+- **Each Heartbeat** (server): hazards along each worm's path, then fall damage on landing (1 per stud above 10, 40
+  at most; a worm stands when ground is within 0.4 studs under its ball).
+- **Knockout:** a ghost, anchored, in the `Ghost` group, 0.6 see-through, floating 4 studs up over 1.5 s.
+- **Client:** a `WormTag` on every worm (name in team colour, gold for VIP; level; a big health number over a bar
+  coloured green → yellow → red by `HEALTH_*_COLOR`; the active worm's arrow), scaled by `I.ScreenScale.AddBillboard`;
+  `DamagePop` numbers (with the `DamageNumbers` setting); and **gear** (`Gear.lua`, `GEAR`): the Parachute model 4.3
+  studs over the ball while `Parachute` is set, the Jetpack 1.3 behind and 0.8 up while `JetpackFuel` is.
+- **Not built:** animations (the skins have none), hurt sounds, voice lines.
+- **Admin commands:** `/worms damage|heal <amount> [id]`, `/worms kill [id]`, `/worms push <x> <y> [id]`.
 
-**Settings:** `MAX_HEALTH` 200, `SAFE_FALL_HEIGHT` 10 (a proposal), `MAX_FALL_DAMAGE` 40, `ROOT_SIZE` 2.6.
-
-**Done when:** in a Studio match each test player has a worm on the plane that never leaves Z = 0, health shows over
-its head, `I.Worms.Damage("P_<id>", 50)` drops the bar to 150, and a worm pushed into the water turns into a ghost
-and prints `Worms_Died … Water`.
+**Done when:** a test worm never leaves Z = 0, `/worms damage 50` drops it to 150 and pops "-50", and a worm dropped
+into the water turns into a ghost and prints `Worms_Died … Water`.
 
 ## WormControl
 
 | | |
 |---|---|
 | Runs on | Server, Client |
-| Exposes | `I.WormControl` (server: turn start/end hooks) |
-| Uses | `I.Worms`, `I.Match`, `I.Platform`, `ContextActionService` |
+| Exposes | `I.WormControl` (server: `StartTurn`, `EndTurn`, `ApplyEffect`; client: `Hold` for touch buttons) |
 
-Moving the active worm, and the movement utilities' effects.
+Moving the active worm, and the movement utilities.
 
-- **Client, during my turn:** binds move (:kbd[A] :kbd[D], arrows, left stick, the on-screen ◀ ▶), jump (:kbd[Space],
-  :kbd[A] on a pad, the jump button) at `Enum.ContextActionPriority.High`, sinking them while my turn runs, unbinding
-  when it ends. My client owns my worm then: walking sets a `LinearVelocity` along X at `WALK_SPEED`, jumping applies
-  an upward impulse (unlimited jumps), and a short step-up push climbs one-cell ledges. The stamina bar reads my
-  Replicator `Match.Stamina` and stops walking at 0.
-- **Server:** at turn start gives the active player ownership (`I.Worms.SetOwner`) and fills stamina; each Heartbeat
-  charges horizontal distance to stamina and checks speed (the checks in [[Architecture#Worms and projectiles: Roblox physics, server-owned]]); takes
-  ownership back on fire, turn end or a failed check.
-- **Utility effects** (`ApplyEffect(participantId, effect)`, called by Combat): `Jetpack` (client-driven upward
-  `VectorForce` with `JETPACK_FUEL` seconds of fuel, 20% more when shiny; the server allows flight only while fuel
-  lasts), `Speed` (walk speed ×`SPEED_MULTIPLIER` for the turn, 10% more when shiny), `LowGravity` (a counter-gravity
-  `VectorForce` of `LOW_GRAVITY_SCALE` for the turn, 10% stronger when shiny), `Parachute` (caps falling speed at
-  `PARACHUTE_FALL_SPEED`, 20% slower when shiny, until landing; no fall damage).
+- **Turns:** `StartTurn` gives the worm's physics to its player's client, fills `Stamina` and sets `CanMove`; the
+  client follows `CanMove`, so there are no remotes. `EndTurn` takes it back (server ownership, facing kept, the turn's
+  effects cleared).
+- **Client:** walks at `WALK_SPEED` 8 (A / D, arrows, left stick past 0.3, d-pad, the HUD's ◀ ▶), jumps at
+  `JUMP_SPEED` 44 (about 5 studs) only from the ground, unlimited, climbs ledges up to 2 studs with a 16 studs/s push,
+  and loses its grip while walking so it slides along walls. Bound at `ContextActionPriority.High`, sunk.
+- **Server:** charges sideways movement to `Stamina` (20 studs a turn; at 0 the worm stops walking but keeps its turn
+  and its jumps), and the speed check ([[Architecture#Worms and projectiles: Roblox physics, server-owned]]).
+- **Effects** (`ApplyEffect`, called by Combat): `Parachute` (falls at 6 studs/s, no fall damage until it lands),
+  `Jetpack` (3 s of fuel, climbing at 16 studs/s while jump is held), `Speed` (walks ×1.5 as fast and as far),
+  `LowGravity` (0.4 of gravity). A shiny copy multiplies them by `SHINY_BOOST` (jetpack 1.2, speed 1.1, low gravity
+  0.9, parachute 0.8).
+- **Admin commands:** `/wormcontrol turn [id]`, `/wormcontrol end [id]`.
 
-**Settings:** `WALK_SPEED` 8, `JUMP_IMPULSE`, `STAMINA_STUDS` 20, `STEP_HEIGHT` 2, `JETPACK_FUEL` 3,
-`SPEED_MULTIPLIER` 1.5, `LOW_GRAVITY_SCALE` 0.4, `PARACHUTE_FALL_SPEED` 6. Whether the Speed potion also stretches
-stamina is asked on [[Arsenal]]; until answered it stretches stamina by the same 1.5.
+**Unsure:** touch and gamepad movement weren't tested in Studio.
 
 **Done when:** on my turn my worm walks and jumps with no delay, stops after about 20 studs, and a command-bar
-teleport of my worm on my client snaps it back within a second with a warning in the server output.
+teleport of my worm on my client snaps it back within a second with the "moved too fast" warning.
 
 ## Combat
 
 | | |
 |---|---|
 | Runs on | Server, Client, Global |
-| Exposes | `I.Combat` (server), `I.G_Combat` (both: launch math) |
-| World | `Workspace.Ume.Combat` (projectiles) |
-| Uses | `I.G_Arsenal`, `I.Arena`, `I.Worms`, `I.WormControl`, `I.Match`, `I.Sound`, `I.CameraShake` (client) |
+| Exposes | `I.Combat` (server; client: `SetAim`, `GetMuzzle`), `I.G_Combat` (both: launch math) |
+| World | `Workspace.Ume.Combat` (projectiles, held weapons, aim circles, blast effects) |
 
-Everything between "fire" and "the shot is over": checking the request, uses and cooldowns, running the weapon,
-explosions, damage, knockback and kill credit.
+Everything between "fire" and "the shot is over".
 
-**The fire pipeline (server):**
+**The fire pipeline (server, `Fire.lua`):**
 
-1. `Combat_Fire (player, itemId, angle, power, target?)` arrives. Checks: the player's worm is the active one, the
-   phase is `Turn`, the item is the Bazooka or in their match loadout, uses left and no cooldown, `angle` is finite,
-   `power` is 0–1. Anything else is dropped (ume's Network already rejects bad types and NaN).
-2. Takes a use, starts the cooldown, takes the worm's ownership back, publishes `Combat_ShotFired` (Match moves to
-   `Flight`).
-3. Runs the weapon's **behavior** (below). Each behavior ends by calling `Explode` and/or `Hit`.
-4. When every projectile, bomblet and snail is done, publishes `Combat_ShotResolved (participantId, damageDealt)`.
+1. `Combat_Fire (player, itemId, angle, power, target?)` arrives (bots call `I.Combat.Fire` directly). It's refused
+   unless the worm is the active one, the phase is `Turn`, the item is the Bazooka or in the match loadout with uses
+   left and no cooldown, and `power` is 0–1.
+2. Takes a use, starts the cooldown, `EndTurn`s the worm, publishes `Combat_ShotFired` (Match moves to `Flight`).
+3. Runs the weapon's **behavior** (`Scripts/Server/Behaviors/<Kind>.lua`: `Rocket`, `Bouncer`, `Snail`, `Crawler`,
+   `Homing`, `Roller`, `Hitscan`, `Melee`), each ending in `Explode` and/or `Hit` (`Blast.lua`).
+4. When every projectile, bomblet and snail is done, publishes `Combat_ShotResolved (participantId, damage)`.
 
-**Utilities:** `Combat_UseUtility (player, itemId)` checks the same way, takes a use, and applies it: `Bandage` +40,
-`Medkit` +100 (45 and 110 shiny) through `I.Worms.Heal`; the others through `I.WormControl.ApplyEffect`. Using a
-utility never ends the turn.
+**Utilities** (`Combat_UseUtility`): heals through `I.Worms.Heal` (Bandage 40, Medkit 100; 45 and 110 shiny), the rest
+through `I.WormControl.ApplyEffect`. Using one never ends the turn. **Uses and cooldowns** count per match
+(`Uses.lua`), in the player's Replicator `Combat` (`Slots`, `Uses_<item>`, `Cooldown_<item>`).
 
-**`Explode(center, radius, itemId, sourceId)`:** carves the terrain (`I.Arena.Carve`), finds worms in the radius
-(`GetPartBoundsInRadius` on root parts), deals `I.G_Arsenal.GetDamage` to each, pushes each away from the center (plus
-an upward bias) with the weapon's knockback class, records the attacker, fires `Combat_Explosion` to all.
+**Aim, seen by everyone:** `ShowAim` writes the worm's `AimAngle`, `AimPower`, `AimTime` (0 once fired) and
+`HeldItem`; the aiming client's unreliable `Combat_Aim` (10 a second) and bots go through it. `CHARGE_SECONDS` 1.6 is
+how long a charge takes from none to full, and back (MatchHud and Bots read it).
 
-**`Hit(participantId, damage, impulse, itemId, sourceId)`:** the same for bullets and melee, with no carve (bullets
-carve one cell where they hit terrain).
+**Client handlers** (`Scripts/Client/`):
 
-**Behaviors** (`Scripts/Server/Behaviors/<Kind>.lua`, one file per kind; each weapon row names its kind):
+| Handler | Draws |
+|---|---|
+| `Held.lua` | The active worm's weapon in its hands on every screen, from `HeldItem`: `HELD_FORWARD` 0.8 along the aim, `HELD_HEIGHT` −0.3, `HELD_DEPTH` 1.5 toward the camera, turning at `HELD_TURN_SPEED` 14, never upside down. On the aiming player's own screen it follows `SetAim` at once |
+| `Flight.lua` | Each projectile part as its model (`GetProjectileModel`), hiding the server's placeholder ball; rockets point along their flight, thrown weapons turn with their ball, the spider bomb stays upright, snails face the camera. `PROJECTILE_STAND_INS` flies the Bazooka as the homing missile's missile |
+| `Effects.lua` | From `Combat_Explosion`, `Combat_Tracer`, `Combat_Hit`: a flash, a fireball (gold when shiny), a light, fire, sparks and smoke (`BLAST_TEXTURES`, Roblox's own for now), up to `DEBRIS_MAX` 16 chunks of the hit ground in the `Chip` group (25–50 studs/s, 0.3–1 stud, `DEBRIS_LIFETIME` 2.5 s); a camera shake (`SHAKE_MAGNITUDE` 4, `SHAKE_SETTLE` 0.45, full at `FEEL_FULL_RADIUS` 10, none past `FEEL_RANGE` 90 studs from the view's middle); haptics (`Combat_BlastBig` from 0.6, `Combat_BlastSmall` from 0.15, `Combat_Hurt` on my worm; `Combat_Fire` is played by MatchHud) |
 
-| Kind | Weapons | How it runs |
-|---|---|---|
-| `Rocket` | Bazooka, Spartan spear | Physics part launched at `angle` with speed from `power`; wind force; raycast each step; the Bazooka explodes on first contact; the spear hits every worm along its path (each once) and sticks into the terrain |
-| `Bouncer` | Grenade, Dynamite, Cluster bomb, Variety grenade | Physics part with bounce (`Elasticity`); Grenade explodes after its `Fuse` (3 s); Dynamite and Cluster bomb on first contact; Cluster then scatters 5 `Bomblet` parts that explode on contact; Variety grenade deals 50, then spawns 4 `Snail`s |
-| `Snail` | Variety grenade's snails | 4 steered parts, each in its own direction (down-left, down-right, left, right), eating cells (`Carve` radius 2) as they crawl; each hits a worm it touches 5 per hit, 8 hits at most, 40 in all |
-| `Crawler` | Spider bomb | Thrown like a grenade; on landing crawls along the terrain surface and up walls toward the nearest enemy for 5 s, then explodes |
-| `Homing` | Homing missile | Needs `target`: flies up for 1 s with wind, then steers toward the target at constant speed, wind no longer counts; explodes on contact |
-| `Roller` | Black hole grenade | Released at the worm's feet, rolls forward (`Facing`) along the ground and hops over bumps; never explodes on its own; a second `Combat_Detonate` from its owner (or the end of `MAX_ROLL_TIME`) bursts it: radius 14, 100 to 25, a black hole effect |
-| `Hitscan` | Shotgun, Uzi, Minigun | Raycasts from the muzzle: Shotgun 5 pellets in a `Spread` cone at once; Uzi 5 and Minigun 20 in a burst `BurstInterval` apart, each with a small knockback; fires `Combat_Tracer` for each |
-| `Melee` | Baseball bat, One Punch | A box overlap in front of the worm in the aim direction; the first worm hit takes the damage and a `VeryHigh` (bat) or `Extreme` (punch, steeper upward) knockback |
+**Global (`I.G_Combat`):** `GetLaunchVelocity`, `GetWindAcceleration` (`WIND_ACCEL` 3), `PredictArc`, shared by bots
+and the server.
 
-**Client:** explosion, splash and tracer effects from the remotes (templates in `Assets.Effects`), the black hole
-effect, camera shake scaled by distance to my camera (`I.CameraShake`), a haptic on my worm's hits (`I.Haptic`),
-projectile trails (attachments added to the replicated parts when they appear).
+**Other settings:** `MUZZLE_GAP` 0.8 (shots still leave just past the worm's ball, not from the drawn muzzle),
+`SHOOTER_GRACE` 0.25, `MAX_PROJECTILE_TIME` 12, `UPWARD_BIAS` 0.5, `KNOCKBACK_EDGE` 0.5, `BULLET_CARVE` 0.75,
+`BULLET_KNOCK_SHARE` 0.25, `BOMBLET_SPEED` 20–40, `SNAIL_SPEED` 6, `SNAIL_BITE` 0.3, `SNAIL_LIFETIME` 6,
+`CONTACT_DISTANCE` 2.5, `ROLL_HOP_SPEED` 22, `MELEE_BOX` 4.
 
-**Global (`I.G_Combat`):** `GetLaunchVelocity(itemId, angle, power)` and `PredictArc(origin, velocity, wind, seconds)`,
-shared by the aim line, bots and the server so they agree.
-
-**Match state the server keeps** (session, reset each match): uses left and cooldown per participant and item,
-written to the owner's Replicator `Match` folder as `Uses_<ItemId>` and `Cooldown_<ItemId>` (own turns left).
+**Placeholders:** blast particles and the missing models above; no sounds yet.
 
 **Done when:** each of the 14 weapons and 6 utilities does what its [[Arsenal]] row says in a Studio match against
-a bot, uses and cooldowns count down in the loadout bar, and the kill feed names the right weapon for each knockout.
+a bot, uses count down in the loadout bar, and the kill feed names the right weapon for each knockout.
 
 ## Match
 
@@ -223,16 +204,15 @@ a bot, uses and cooldowns count down in the loadout bar, and the kill feed names
 |---|---|
 | Runs on | Server, Client |
 | Exposes | `I.Match` (server, client) |
-| World | `Workspace.Ume.Match` (attributes), the template's `Main_Game/Game` renamed |
-| Uses | `I.Config.Metadata`, `I.Arena`, `I.Worms`, `I.WormControl`, `I.Combat`, `I.Bots`, `I.Loadout`, `I.Cosmetics`, `I.Team`, `I.Player`, `I.Notify`, `I.TeleportExternal` |
+| World | `Workspace.Ume.Match` (attributes, `Participants`) |
 
 The match: who plays, the phases, the turns, and how it ends.
 
 ```mermaid
 stateDiagram-v2
   [*] --> Waiting
-  Waiting --> Drop: all arrived or 20 s
-  Drop --> Landing: 15 s
+  Waiting --> Drop: everyone's data loaded, or 20 s
+  Drop --> Landing: everyone placed, or 15 s
   Landing --> Turn: worms landed
   Turn --> Flight: shot fired
   Turn --> Settle: time ran out
@@ -243,98 +223,91 @@ stateDiagram-v2
   Ended --> [*]: back to lobby
 ```
 
-**Server handlers** (`Scripts/Server/`):
-
-| Handler | Does |
+| Handler (`Scripts/Server/`) | Does |
 |---|---|
-| `Roster.lua` | Builds participants from the metadata (or `STUDIO_METADATA`): humans from `Roster`, bots to fill `Size`. Each participant: `Id`, `UserId`, `Name`, `Team`, `Color`, `IsBot`, `Loadout` (from `I.Loadout.GetMatchLoadout`; bots from `Bots`), `Skin`, `Shiny`. Team modes create Roblox teams (`I.Team.Create`, Red, Blue, Green, Yellow) so the player list and team chat follow; free-for-all gives each participant one of `FFA_COLORS`. Kicks anyone not in the roster back to the lobby |
-| `Phases.lua` | The state machine above. `Waiting`: up to `WAIT_FOR_PLAYERS` 20 s; missing public players become bots, missing custom players are dropped. `Drop`: 15 s to pick a landing spot (`Match_PickDrop`; bots pick at random, spread apart), `DropX` on each worm's participant; then worms spawn at the drop height with parachutes open. `Ended`: placements, `Match_Ended`, the results, the rematch vote |
-| `Turns.lua` | Turn order team by team (random team order, members rotating inside each team, skipping dead and away worms), the 15 s timer (`TurnEndsAt` = server time + 15), a new wind each turn, rounds (a round ends when the order wraps), sudden death from round `SUDDEN_DEATH_ROUND` (the liquid rises `SUDDEN_DEATH_RISE` cells each turn), settle, then the next turn |
-| `Placement.lua` | Records the order worms go out; places the last team (or worm) standing first; team modes give every member the team's place. A leaver is placed last among those still alive when they leave |
-| `Connection.lua` | Leave game (`Match_Leave`): kill the worm (ghost), place it, teleport the player to the lobby. Disconnect: the worm stays and skips its turns; `Match.Rejoin` written to the player's profile in `OnPlayerRemoving`; back within `REJOIN_SECONDS` 60 → control returns; after 60 s the worm dies as a leaver |
-| `Rematch.lua` | After results, `REMATCH_SECONDS` 20 for `Match_Rematch` votes; at the end (or when every remaining human voted) the voters play again on the same server (`I.Arena.Load`, new roster, bots fill a public match), everyone else is teleported to the lobby. With no voters, everyone goes and the server empties |
-| `Stats.lua` | Per participant: damage dealt, knockouts, rounds played, best shot (most damage in one shot); for results and rewards |
+| `Phases.lua` | The main loop: loads the map **before** waiting for players (so it shows while they arrive), then `Play`. Runs `Play` in a `pcall`, and a match that can't play (no map, an error) sends everyone to the lobby. The drop: `Match_PickDrop (x, y)` keeps a spot only where `I.Arena.IsFree` lets a worm fit; the drop ends when every connected player placed, else after `DROP_SECONDS` 15; placed worms parachute from their spot, the rest start on `I.Arena.GetLandSpots` |
+| `Roster.lua` | Builds participants from the metadata (or `STUDIO_METADATA`), counting a player as arrived only once `I.Player.Valid`; waits up to `WAIT_FOR_PLAYERS` 20 s; seats the arrived, fills the rest with bots (none in a custom match, nor a party match with `Difficulty = "None"`); team modes make Roblox teams (`TEAMS`), deathmatch gives each worm one of `FFA_COLORS` |
+| `Turns.lua` | Team-by-team order, `TURN_SECONDS` 15, a new wind each turn (±`WIND_MAX` 10), rounds, the `TurnOrder` attribute (the worms that can play, in the order their next turn comes), sudden death: from `SUDDEN_DEATH_ROUND` 4 the liquid rises `SUDDEN_DEATH_RISE` 1 row (half a stud) every turn, from `SUDDEN_DEATH_FAST_ROUND` 8 by `SUDDEN_DEATH_FAST_RISE` 4 rows; settle (`SETTLE_HOLD` 0.5, `MAX_SETTLE` 8, `MAX_FLIGHT` 20) |
+| `Placement.lua` | The order worms go out; the last team or worm standing first; team members share the team's place; a leaver is placed last among those still alive |
+| `Connection.lua` | Leave (`Match_Leave`): the worm is knocked out (cause `Left`), then the player goes to the lobby. A drop keeps the seat for `REJOIN_SECONDS` 60 (`Match.Rejoin` in the profile). `SendToLobby` names the card ("Back to the lobby…") and, in the tutorial match, counts the tutorial as played (`I.Tutorial.CompleteMatch`) |
+| `Rematch.lua` | `REMATCH_SECONDS` 20 of `Match_Rematch` votes; the voters play again on this server, everyone else goes. The tutorial skips it |
+| `Stats.lua` | Per participant: damage, knockouts, rounds, best shot (its damage) |
 
-**`Workspace.Ume.Match` attributes:** `Phase`, `Round`, `ActiveId`, `TurnEndsAt`, `Wind`, `SuddenDeath`, `Kind`,
-`Mode`, `MapId`, `RematchEndsAt`, `RematchVotes`.
+**Client:** republishes the attributes as Topics (`Match_PhaseChanged`, `Match_TurnStarted`, `Match_MyTurn`), keeps
+`IsMyTurn()` and `GetMyParticipantId()`, and the drop picker (`DropPicker.lua`: the marker follows the pointer or the
+left stick at `DROP_STICK_SPEED` 40, faded where a worm doesn't fit; click, tap or A places it; others' `DropMarker`s
+faded until placed).
 
-**Server API (`I.Match`):** `GetParticipant(id)`, `GetParticipantOf(player)`, `GetParticipants()`, `GetActive()`,
-`GetPhase()`, `IsActivePlayer(player)`, `GetMetadata()`. **Topics:** `Match_PhaseChanged`, `Match_TurnStarted`,
-`Match_TurnEnded`, `Match_ParticipantOut`, `Match_Ended (placements, stats, metadata)`.
+**Studio:** `Host(players, metadata)` plays a match the lobby hands over on the `Studio` map.
 
-**Client (`I.Match`):** reads the attributes and republishes them as client Topics (`Match_PhaseChanged`,
-`Match_TurnStarted`, `Match_MyTurn`), keeps `IsMyTurn()`, `GetMyParticipantId()`. The drop picker (a marker that
-follows the pointer or stick along the drop zone, everyone's markers shown with the `DropMarker` billboard) and the
-results widget's data.
-
-**Settings:** `TURN_SECONDS` 15, `DROP_SECONDS` 15, `WAIT_FOR_PLAYERS` 20, `SUDDEN_DEATH_ROUND` 10 (the start is
-still asked on [[Match modes & maps]]), `SUDDEN_DEATH_RISE` 1, `REJOIN_SECONDS` 60, `REMATCH_SECONDS` 20,
-`MAX_SETTLE` 8, `SETTLE_SPEED` 0.5, `WIND_MAX` 10, `WIND_ACCEL` 1.5, `FFA_COLORS`, `TEAM_COLORS`, `STUDIO_METADATA`.
-
-**Done when:** a 2-player Studio match runs drop → turns → a knockout → results; turns alternate team by team in a
-4-player Duo test with 2 bots; letting the timer run out passes the turn; after round 10 the water rises each turn.
+**Done when:** a 4-worm Studio match runs waiting → drop → turns → a knockout → results; placing a spot in the sky
+ends the drop at once; the sea stays put for rounds 1 to 3, rises a row each turn from round 4, four rows from round 8.
 
 ## Bots
 
 | | |
 |---|---|
 | Runs on | Server |
-| Exposes | `I.Bots` |
-| Uses | `I.Match`, `I.Worms`, `I.G_Combat`, `I.G_Arsenal`, `I.G_Arena`, `I.Combat` |
+| Exposes | `I.Bots` (`CreateParticipant(difficulty, number)`, `TakeTurn(participantId)`) |
 
-AI participants for empty spots, solo matches and the tutorial.
+AI participants for empty seats, solo and party matches, and the tutorial.
 
-- `CreateParticipant(difficulty)` → a name from `BOT_NAMES`, a random crate skin, a loadout from `LOADOUTS[difficulty]`.
-- `TakeTurn(participantId)`: waits `THINK_TIME` (1.5–3 s), sometimes walks toward cover or a better angle (Hard), picks
-  a target (Easy: random enemy; Medium: nearest; Hard: the best expected damage, worms near water first), picks a
-  weapon (Easy: Bazooka mostly; Medium and Hard: the best one for the distance and terrain), then solves the shot.
-- **Solving a shot:** searches angle and power with `I.G_Combat.PredictArc` (with wind on Hard and Medium, without
-  on Easy), checking the path against the terrain with raycasts, and keeps the shot that lands closest to the target.
-  Then it adds an error so it hits about `HIT_RATE` of the time: Easy 30%, Medium 60%, Hard 85%. Bots fire through
-  the same `Combat` pipeline as players (a server-side call, not a remote).
-- **Tutorial bot:** never aims at the player (it shoots at the ground near them) and takes double damage, so two
-  Bazooka hits knock it out.
+- **A bot** gets a name from `BOT_NAMES`, its difficulty's loadout (`LOADOUTS`: Easy Grenade and Shotgun; Medium adds
+  Dynamite; Hard Dynamite, Cluster Bomb, Uzi, Homing Missile, Baseball Bat) and `DamageTaken`.
+- **A turn:** thinks `THINK_TIME` 2.5–4 s, picks a target and a weapon (melee within `MELEE_RANGE` 5, guns within
+  `GUN_RANGE` 40), searches angles and powers with `PredictArc` (every 6° and 0.1 power, 4 s of arc) until a shot
+  lands near the target, then misses on purpose often enough to hit at `HIT_RATE` (Easy 30 %, Medium 60 %, Hard
+  85 %, Tutorial 0). It holds its weapon, swings its crosshair from level to the shot over `AIM_TIME` 1.5 s, charges
+  as a player would (guns and melee skip it), all shown through `ShowAim` every `AIM_STEP` 0.1 s, and fires through
+  `I.Combat.Fire`.
+- **Tutorial bot:** aims beside the player, never hits, and takes ×3 damage (`DAMAGE_TAKEN`), so two Bazooka hits
+  (35 each) knock out its 200 health.
 
-**Done when:** a solo Hard match in Studio: the bot hits most shots and uses the wind; an Easy bot misses most.
+**Done when:** a solo Hard match in Studio: the bot hits most shots; an Easy bot misses most; both aim where the
+player can see before firing.
 
 ## MatchCamera
 
 | | |
 |---|---|
 | Runs on | Client |
-| Uses | `I.Match`, `I.FOV_Controller` (locks it while a match runs), `I.PlayerSettings` (`CameraFollowsShot`) |
+| Uses | `I.Worms`, `I.Buff` (the `FOV` buff), `I.PlayerSettings` (`CameraFollowsShot`) |
 
-The side-on camera. Scriptable, looking along −Z with a narrow field of view (`FOV` 30) from far away, so the game
-reads as 2D. It follows the active worm, then the shot in flight (when `CameraFollowsShot` is on), then the
-explosion, then the next worm. Players pan during their turn (right mouse drag or the screen edge on PC, two
-fingers on touch, :kbd[LT] + right stick on a pad); panning holds until the next turn. Clamped to the arena bounds,
-zoomed out to fit The Big Mashup's width when needed.
+The side-on camera, scriptable, looking along −Z from `DISTANCE` 110 with `FOV` 30, inside the Bounds marker. It
+follows a flying shot (parts with the `Projectile` attribute) while `CameraFollowsShot` is on, else the active worm,
+else the local player's worm, else the arena's middle (`FOLLOW_SPEED` 6). Panning: right-mouse drag, two fingers, or
+the right stick while LT is held (`STICK_PAN_SPEED` 60); the pan resets when it follows another worm. Zoom: the wheel
+(not over a scrolling gui) and a pinch, `ZOOM_MIN` 45 to `ZOOM_MAX` 200 studs, `ZOOM_STEP` 0.15 a notch,
+`ZOOM_SPEED` 10; it stays for the match. It sets the `FOV` buff's `Standard` base instead of writing
+`Camera.FieldOfView`, so an open window still widens the view 5°, and updates at the `Camera` render priority so
+Combat's shakes land on top. **Not built:** panning at the screen's edge, a gamepad zoom, zooming out to fit wide
+maps.
 
 **Done when:** in a Studio match the camera never shows the arena from an angle, follows a Bazooka shot to its
-explosion, and pans on all three inputs.
+explosion, pans on all three inputs, and two wheel notches in take it from 110 to about 79.5 studs.
 
 ## MatchHud
 
 | | |
 |---|---|
 | Runs on | Client |
-| Guis | `MatchHud`, `WormTag`, `DropMarker`, `Results`, `Settings` ([[Guis]]) |
-| Uses | `I.Match`, `I.Combat` (remotes), `I.Loadout`, `I.Cosmetics`, `I.TopBar`, `I.WidgetManager`, `I.PlayerSettings`, `I.Platform` |
+| Guis | `MatchHud`, `Results` ([[Guis]]) |
 
-Everything on the match screen, as described on [[Match screen]] and [[Controls & platforms]]. One handler per part
-(`Scripts/Client/`):
+Everything on the match screen, as described on [[Match screen]] and [[Controls & platforms]]. It shows while the
+player is in the match (the `InMatch` Player attribute) and hides the guis in `HIDDEN_IN_MATCH` (`Currency`).
 
-| Handler | Draws |
+| Handler (`Scripts/Client/`) | Draws |
 |---|---|
-| `TopBar.lua` | Adds Leave game (asks first with `I.WidgetManager.ShowConfirmation`), Mute music (sets `Music` to 0 and back) and Settings to ume's top bar (`I.TopBar.AddButton("Left")`). Chat and the voice mic are Roblox's own top bar buttons |
-| `Turn.lua` | My turn: the banner at the top with the timer; wind arrow and strength (0–10) beside it; the stamina bar |
-| `LoadoutBar.lua` | The Bazooka box plus one box per slot (3–5): icon, uses left, cooldown, selection; :kbd[1]–:kbd[5], clicks, taps, :kbd[LB] / :kbd[RB]; selecting sends `Combat_Select` |
-| `Aim.lua` | Aiming: press and drag (mouse or finger; direction is the angle, length the power), release fires; right mouse, :kbd[Esc] or dragging back onto the worm cancels; on a pad the right stick aims and holding :kbd[RT] runs the power bar up and down, release fires, :kbd[B] cancels. Shows the angle marker, the power bar and a short aim line (`PredictArc` without wind); marks my last shot's angle and power. Homing missile: tap a target first. Sends `Combat_Fire`, and my aim at 10 Hz on the unreliable `Combat_Aim` |
-| `TouchControls.lua` | ◀ ▶ and Jump on phone and tablet only (`Utils_HideOnPlatform`), kept at the screen edges |
-| `KillFeed.lua` | Top right, from `Match_KnockedOut`: "Bax knocked out Ninja with the Black hole grenade", or "Ninja fell into the water" |
-| `Emotes.lua` | The smiley above the loadout bar opens the emote wheel; picking one sends `Cosmetics_PlayEmote` |
-| `KnockedOut.lua` | When my worm is out: Spectate (closes the panel; the camera keeps following the match) or Leave |
-| `Results.lua` | Opens the `Results` widget on `Match_Results`: placings in team colours, my coins and XP, match stats, Rematch with votes and its timer, Back to lobby |
+| `TopBar.lua` | Leave (asks first) and Music on ume's top bar; chat and the mic are Roblox's own |
+| `Turn.lua` | The turn panel: "YOUR TURN!", or the active worm's name in its colour and the player's wait from `TurnOrder` ("YOU'RE NEXT!", "YOUR TURN IN 3 TURNS"); the timer, blank outside the `Turn` phase; the wind's strength; the stamina bar ("Stamina 70%") |
+| `Aim.lua` | The crosshair `CROSSHAIR_DISTANCE` 9 studs from the worm (`CROSSHAIR_SIZE` 3), pointing at the mouse, finger or right stick; holding charges the power, bouncing none → full → none every `CHARGE_SECONDS`, drawn as `POWER_DOTS` 32 circles from the weapon's `Muzzle` to the crosshair (`POWER_DOT_SIZE` 0.5 → 2.1, `POWER_COLORS` yellow → red), both kept the same size on screen at any zoom; letting go fires; nothing fires by itself. Guns and melee fire on the press. Homing missile: a target first. Sends `Combat_Aim` every `AIM_SEND_INTERVAL` 0.1 s and draws other worms' aims (`AIM_SHOW_GRACE` 0.4, `AIM_SMOOTHING` 15). The power bar ("Power 60%") and the angle ("45°") |
+| `LoadoutBar.lua` | The Bazooka's box plus one per slot: the icon, or the item's model in a ViewportFrame when it has none (`MODEL_FOV` 30, `MODEL_VIEW_DIRECTION`, `MODEL_PADDING` 1.15); uses left ("x3"); the selected box blue; keys 1–6 (`SLOT_KEYS`), clicks, taps, LB / RB; sends `Combat_Select` |
+| `TouchControls.lua` | ◀ ▶ (bottom left) and Jump (bottom right) on phones and tablets, through `I.WormControl.Hold` |
+| `KillFeed.lua` | `FEED_LINES` 4 lines for `FEED_SECONDS` 6, from `Match_KnockedOut`; a line too long for the feed's width gets two lines |
+| `Panels.lua` | The waiting, drop and knocked-out blocks (Spectate, Leave) |
+| `Results.lua` | The `Results` widget on `Match_Results`: the lineup of placings, my coins and XP, stats, Rematch with votes and time left, Back to lobby |
+
+The emote wheel is the Cosmetics module's ([[Lobby & meta modules#Cosmetics]]); the tutorial's hints are Tutorial's.
 
 **Done when:** every item on [[Match screen]] shows and works on PC, on a phone (Studio's device emulator) and with a
 gamepad.
@@ -348,20 +321,15 @@ gamepad.
 
 Pays each human at the end of a match, from the tables on [[Currencies & crates#Coins from a match]].
 
-- **Coins by kind:** `Public` deathmatch by player count and place, team match by number of teams and place (75 for
-  winning a 2v2), `Solo` only a win (Easy 20, Medium 35, Hard 60), `Custom` and `Tutorial` nothing.
-- **Anti-farming:** the last 2 places are paid only if the player played at least 2 rounds or was knocked out by
-  another participant; leaving before 2 rounds pays nothing.
-- **Double Coins:** ×2 when the player owns the `DoubleCoins` game pass.
-- **XP:** `XP_PER_MATCH` 100 through `I.Progression.AddXP`, for every human who finished the match (not leavers).
-  Which kinds of match give XP is asked on [[Levels & XP]]; until answered, public, solo and custom matches do, the
-  tutorial doesn't.
-- **Statistics:** `MatchesPlayed`, `Wins`, `Knockouts`, `DamageDealt` (`I.Statistic.Add`).
-- Saves the profile at once (`I.Player.GetProfile(player):Save()`) before the results show, so a quick teleport
-  can't lose the reward, then sends each player `Match_Results` with what they earned.
-
-**Settings:** `DEATHMATCH_COINS` (by player count, then place), `TEAM_COINS` (by number of teams, then place),
-`TEAM_2V2_WIN` 75, `SOLO_COINS`, `XP_PER_MATCH` 100, `ANTI_FARM_ROUNDS` 2.
+- **Coins by kind:** `Public` deathmatch by player count and place (`DEATHMATCH_COINS`), team match by number of
+  teams and place (`TEAM_COINS`, `TEAM_2V2_WIN` 75), `Solo` only a win (`SOLO_COINS` Easy 20, Medium 35, Hard 60),
+  `Party` like a public deathmatch of its worm count, times `PARTY_NO_BOTS_SHARE` 0.5 without bots (rounded down),
+  `Custom` and `Tutorial` nothing (the tutorial's 100 coins come from Tutorial).
+- **Anti-farming:** the last 2 places are paid only after `ANTI_FARM_ROUNDS` 2 rounds or a knockout by another
+  participant; leavers get nothing. **Double Coins** doubles.
+- **XP:** `XP_PER_MATCH` 100 for the kinds in `XP_KINDS` (Public, Solo, Party, Custom).
+- **Statistics:** `MatchesPlayed`, `Wins`, `Knockouts`, `DamageDealt`.
+- Saves the profile before the results show, then sends each player `Match_Results (placements, stats, earned)`.
 
 **Done when:** a Studio 4-player deathmatch pays 100 / 50 / 25 / 15 by place (15 only after 2 rounds), and the coins
 show in the results.

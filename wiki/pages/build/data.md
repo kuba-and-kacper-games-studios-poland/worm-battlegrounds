@@ -16,21 +16,21 @@ suggestions:
 ---
 
 The data side of [[Match modules]] and [[Lobby & meta modules]]. Numbers players see stay on the game pages
-([[Arsenal]], [[Currencies & crates]], [[Levels & XP]], [[Emotes]]); this page says where each one goes in code.
-ume's rules apply: the profile template in each module's entry script is the only shape of saved data (no classes for
-it), amounts are integer strings with `I.BN` math, and data rows live in `<Module>/Data/` with their shape in
-`_meta/_types.lua`.
+([[Arsenal]], [[Currencies & crates]], [[Levels & XP]], [[Emotes]]); this page says where each one goes in code. Each
+module's `_meta/README.md` lists its own remotes and data in full. ume's rules apply: the profile template in each
+module's entry script is the only shape of saved data, amounts are integer strings with `I.BN` math, and data rows live
+in `<Module>/Data/` with their shape in `_meta/_types.lua`.
 
 ## Saved for each player
 
-One ProfileStore profile, shared by both maps. Each module adds its key to `I.Player.ProfileTemplate` in its `Init`.
+One ProfileStore profile, shared by both places. Each module adds its key to `I.Player.ProfileTemplate` in its `Init`.
 
 | Key | Owner | Shape | Notes |
 |---|---|---|---|
 | `Currency.Currencies.Coins`, `.Diamonds` | `2_Currency` | `{ Amount, TotalEarned, TotalSpent, HighestOwned }` | Existing module, new currencies |
 | `Inventory.Standard[itemId]` | `1_Inventory` | Copies owned, an integer string | Weapons, utilities, skins, emotes. 10 copies = shiny |
 | `Statistic.Standard` | ume's Statistic | `XP`, `MatchesPlayed`, `Wins`, `Knockouts`, `DamageDealt`, `Playtime` | Rows in `src/global_data/Statistic/Statistic.lua` |
-| `Loadout` | `Loadout` | `{ Slots = { itemId or "" ×5 }, CoinSlots = { [4] = false, [5] = false } }` | New players: all empty |
+| `Loadout` | `Loadout` | `{ Slots = { itemId or "" ×5 }, CoinSlots = { Slot4 = false, Slot5 = false } }` | New players: all empty |
 | `Cosmetics` | `Cosmetics` | `{ EquippedSkin = "Skin_Classic" }` | |
 | `Tutorial` | `Tutorial` | `{ MatchDone = false, CrateOpened = false, Done = false }` | |
 | `Match` | `Match` | `{ Rejoin = false or { PlaceId, AccessCode, Until } }` | Written by a match server when a player drops; read and cleared by the lobby |
@@ -55,18 +55,19 @@ New profiles own `Skin_Classic` and `Emote_Wave` (granted on first join; owned f
 ## Arsenal rows
 
 `Arsenal/Data/Weapons/<ItemId>.lua` and `Data/Utilities/<ItemId>.lua`, typed `Arsenal_WeaponData` /
-`Arsenal_UtilityData`. Damage, blast radius, uses and cooldowns are the numbers on [[Arsenal]]; this table says how
-each weapon is coded.
+`Arsenal_UtilityData`. The rows are the source for damage, blast radius, uses and cooldowns; the [[Arsenal]] page
+shows them.
 
 | Field | What |
 |---|---|
+| `Name`, `Icon` | The shown name, and the loadout bar's picture (`""` shows the item's model) |
 | `Kind` | The behavior: `Rocket`, `Bouncer`, `Crawler`, `Homing`, `Roller`, `Hitscan`, `Melee` ([[Match modules#Combat]]) |
 | `Aim` | `Arc`, `Straight`, `Melee`, `Target`, `Feet` (how `MatchHud` aims it) |
 | `Wind` | Whether wind pushes it |
 | `DamageMax`, `DamageEdge`, `BlastRadius`, `Knockback` | Blast damage from center to edge, radius in studs, a knockback class |
 | `Uses`, `Cooldown` | Per match (`-1` unlimited), cooldown in own turns |
 | `MinSpeed`, `MaxSpeed` | Launch speed at power 0 and 1 |
-| Kind extras | `Fuse` (Grenade 3), `Elasticity`, `Pellets` / `Bullets`, `Spread`, `BurstInterval`, `PerBulletDamage`, `Bomblets` (5 × 15, radius 3), `Snails` (4, 8 hits × 5, radius 2), `CrawlTime` (5), `LockDelay` (1), `MaxRollTime`, `ModelName` |
+| Kind extras | `Fuse` (Grenade 3), `Elasticity`, `BurstOnContact`, `Bomblets` (`{ Count = 5, DamageMax = 15, DamageEdge = 5, Radius = 3 }`), `Snails` (`{ Count = 4, Hits = 8, Damage = 5, Radius = 2 }`), `Pellets`, `PerBulletDamage`, `Spread`, `Range`, `BurstInterval`, `CrawlTime` (5), `CrawlSpeed`, `LockDelay` (1), `HomingSpeed`, `RollSpeed`, `MaxRollTime` (8), `Reach`, `Lift`, `Pierce` |
 
 | Weapon | Kind | Aim | Wind | Knockback |
 |---|---|---|---|---|
@@ -80,53 +81,58 @@ each weapon is coded.
 | Baseball bat | Melee | Melee | no | VeryHigh |
 | Homing missile | Homing | Target | until it locks | Medium |
 | Black hole grenade | Roller | Feet | no | High |
-| Variety grenade | Bouncer, then 4 snails | Arc | no | Medium, snails Small |
+| Variety grenade | Bouncer (bursts on contact), then 4 snails | Arc | no | Medium, snails Small |
 | Minigun | Hitscan (20-bullet burst) | Straight | no | Small each |
 | One Punch | Melee | Melee | no | Extreme |
 | Spartan spear | Rocket (pierces) | Arc | yes | Medium |
 
-Utility rows: `Effect` (`Heal`, `Jetpack`, `Speed`, `Parachute`, `LowGravity`), `Amount` (heal), `ShinyAmount` (the
-shiny boosts on [[Currencies & crates#Duplicates and shiny items]]), `Uses`.
+Utility rows: `Name`, `Icon`, `Effect` (`Heal`, `Jetpack`, `Speed`, `Parachute`, `LowGravity`), `Amount` (heal),
+`ShinyAmount` (Bandage 45, Medkit 110), `Uses`. The movement effects' numbers are WormControl's settings.
 
-`Arsenal/Settings.lua`: `KNOCKBACK` (class → impulse speed: Small 20, Medium 45, High 70, VeryHigh 95, Extreme 130, a
-first proposal to tune), `SHINY_DAMAGE_MULTIPLIER` 1.05 (whether shiny keeps a boost is still asked on
-[[Currencies & crates]]; set it to 1 if not).
+`Arsenal/Settings.lua`: `KNOCKBACK` (class → speed: Small 20, Medium 45, High 70, VeryHigh 95, Extreme 130, a first
+proposal to tune), `SHINY_DAMAGE_MULTIPLIER` 1.05 (whether shiny keeps a boost is still asked on
+[[Currencies & crates]]; set it to 1 if not), `BURST_SHOTS`.
+
+**Models** live in the place, not the rows: `Assets/Arsenal/Models/<ItemId>` and `Assets/Arsenal/Projectiles/<ShotId>`
+([[Architecture#In the place]]).
 
 ## Crates
 
-`Crates/Data/Crates/<CrateId>.lua`, typed `Crates_CrateData`: `Name`, `Prices` (`{ Coins = { One = "100", Ten =
-"900" }, Diamonds = … }`), `Odds` (`{ [itemId] = percent }`, adding up to 100), `Fixed` (a list of items always given:
-the tutorial crate), `PaidRandom` (true for the diamond prices: hidden where restricted), `Hidden` (not on the panel:
-the tutorial crate).
+`Crates/Data/Crates/<CrateId>.lua`, typed `Crates_CrateData`: `Name`, `Picture`, `LayoutOrder`, `Hidden` (not in the
+window: the tutorial crate), `Prices` (`{ Coins = { One = "100", Ten = "900" }, Diamonds = … }`), `OddsByCurrency`
+(`{ [currency]: { [itemId]: percent } }`, each adding up to 100), `Fixed` (items always given in place of a roll).
+Rolls in a currency listed in Crates' `PAID_CURRENCIES` (`Diamonds`) are paid random items, refused where the policy
+restricts them.
 
 | Crate id | Prices | Odds |
 |---|---|---|
 | `Weapon` | 100 coins, 10 for 900 | The weapon crate column on [[Currencies & crates#Drop chances]] |
 | `Premium` | 250 diamonds, 10 for 2,250 | The premium crate column |
-| `Utility` | 100 coins (900), or 200 diamonds (1,800) | The two utility columns: one odds table per currency (`OddsByCurrency`) |
+| `Utility` | 100 coins (900), or 200 diamonds (1,800) | The two utility columns, one odds table per currency |
 | `Skin` | 100 coins (900), or 50 diamonds (450) | The skin table, the same for both currencies |
-| `Tutorial` | 100 coins | Fixed: `Grenade` and `Shotgun` |
+| `Tutorial` | 100 coins | Fixed: `Grenade` and `Shotgun`. Hidden |
 
 ## Skins, emotes and maps
 
 | Rows | Fields |
 |---|---|
-| `Cosmetics/Data/Skins/<SkinId>.lua` | `Model` (name in `Assets.Skins`), `Source` (`Start`, `Crate`, `Level`, `Vip`), `Animations` (`Idle`, `Walk`, `Jump`, `Fall`, `Aim`, `Hurt` asset ids), `VoiceSet` (sound names) |
-| `Cosmetics/Data/Emotes/<EmoteId>.lua` | `Level` (0 = none), `Coins` ("0" for Wave), `AnimationId`, `VoiceSound` |
-| `Arena/Data/Maps/<MapId>.lua` | `Name`, `Theme`, `Sizes` (`{ 2, 4, 6 }` or `{ 8 }`), `Thumbnail`, `Backdrop`, `LightingPreset`, `Music`, `Liquid` (`Water`, `Lava` or none) |
+| `Cosmetics/Data/Skins/<SkinId>.lua` | `Model` (name in `Assets.Skins`), `Source` (`Start`, `Crate`, `Level`, `Vip`), `Animations` (`Idle`, `Walk`, `Jump`, `Fall`, `Aim`, `Hurt` asset ids, all 0 until the art exists), `VoiceSet` |
+| `Cosmetics/Data/Emotes/<EmoteId>.lua` | `Level` (0 = none), `Coins` ("0" for Wave), `AnimationId` and `VoiceSound` (empty until the art exists) |
+| MatchBoard's `MAPS` setting | Per map id: `Name`, `Sizes` (`{ 2, 4, 6 }` or `{ 8 }`), `Thumbnail` (empty for now). `MAP_POOL` names the maps in rotation |
 
-Map ids: `RockslideRidge`, `PicnicPlains`, `FluffyFallout`, `LakesideShowdown`, `MoltenSpires`, `TheBigMashup`.
+Map ids: `PicnicPlains`, `Desert` (built), `RockslideRidge`, `FluffyFallout`, `LakesideShowdown`, `MoltenSpires`,
+`TheBigMashup`. A map's liquid comes from its template's markers; lighting presets, backdrops and music per map aren't
+built yet.
 
 ## Global data
 
 | File | Rows |
 |---|---|
 | `Statistic/Statistic.lua` | `XP` (ClientUpdate), `MatchesPlayed`, `Wins`, `Knockouts`, `DamageDealt` |
-| `Marketplace/Products.lua` | `Diamonds_Handful` 250, `Diamonds_Pouch` 500, `Diamonds_Bag` 1,000, `Diamonds_Chest` 1,500, `Diamonds_Vault` 2,500: each `Reward` adds its diamonds and returns `"Diamonds: 250"`. Ids from the Creator Hub |
-| `Marketplace/GamePasses.lua` | `Slot4`, `Slot5`, `DoubleCoins`, `VIP` (`SingleReward`: `Skin_Vip`). Ids from the Creator Hub |
-| `Sound/SoundsList.lua` | `Explosion_Small`, `Explosion_Medium`, `Explosion_Big`, `BlackHole`, `Splash`, `Sizzle`, `Bounce`, `Shot_Shotgun`, `Shot_Uzi`, `Shot_Minigun`, `Hit_Bat`, `Hit_Punch`, `Spear_Throw`, `Jetpack_Loop`, `Drink`, `Heal`, `Parachute_Open`, `Turn_Start`, `Timer_Tick`, `Crate_Shake`, `Crate_Reveal`, `Coin`, `LevelUp`, `Music_Lobby`, `Music_Match`, worm voice lines (`Voice_Hurt`, `Voice_Taunt`, `Voice_Victory`, one per emote). Uploaded as `.ogg` after PrepKit |
-| `Haptic/Preset.lua` | `Explosion_Near`, `Hit_Self` |
-| `Lighting` | Presets in the place: `Rocky`, `Grass`, `Clouds`, `Lake`, `Lava`, `Mashup` |
+| `Marketplace/Products.lua` | `Diamonds_Handful` 250, `Diamonds_Pouch` 500, `Diamonds_Bag` 1,000, `Diamonds_Chest` 1,500, `Diamonds_Vault` 2,500: each `Reward` adds its diamonds and returns `"Diamonds: 250"`. Ids are 0 until the owner creates them |
+| `Marketplace/GamePasses.lua` | `Slot4`, `Slot5`, `DoubleCoins`, `VIP` (`SingleReward`: `Skin_Vip`). Ids are 0 until the owner creates them |
+| `Haptic/Preset.lua` | `Combat_Fire` (the player fires), `Combat_BlastSmall`, `Combat_BlastBig`, `Combat_Hurt` (the player's own worm is hit) |
+| `Sound/SoundsList.lua` | Not filled yet: the game has no sounds. Planned: `Explosion_Small`, `Explosion_Medium`, `Explosion_Big`, `BlackHole`, `Splash`, `Sizzle`, `Bounce`, the shots and hits, `Jetpack_Loop`, `Drink`, `Heal`, `Parachute_Open`, `Turn_Start`, `Timer_Tick`, `Crate_Shake`, `Crate_Reveal`, `Coin`, `LevelUp`, `Music_Lobby`, `Music_Match`, the worms' voice lines. Uploaded as `.ogg` after PrepKit |
 
 ## Remotes
 
@@ -135,34 +141,34 @@ Every remote, by the module that owns it (only the owner calls `Get*`; server in
 
 | Remote | Kind | Direction | Payload | Limit |
 |---|---|---|---|---|
-| `Match_PickDrop` | Event | client → server | `x: number` | 10/s |
+| `Match_PickDrop` | Event | client → server | `x: number, y: number` (a spot on the plane) | |
 | `Match_Leave` | Event | client → server | — | 1/s |
-| `Match_Rematch` | Event | client → server | `vote: boolean` | 2/s |
-| `Match_KnockedOut` | Event | server → all | `victimId, cause, killerId?, itemId?` | |
-| `Match_Results` | Event | server → player | the player's results table | |
-| `Combat_Select` | Event | client → server | `itemId: string` | 10/s |
-| `Combat_Fire` | Event | client → server | `itemId: string, angle: number, power: number (0–1), target: Vector3?` | 2/s |
-| `Combat_UseUtility` | Event | client → server | `itemId: string` | 2/s |
-| `Combat_Detonate` | Event | client → server | — | 2/s |
-| `Combat_Aim` | Unreliable | client → server | `angle: number, power: number` | 15/s |
+| `Match_Rematch` | Event | client → server | — (a vote) | 2/s |
+| `Match_KnockedOut` | Event | server → all | `participantId, cause, killerId?, itemId?` | |
+| `Match_Results` | Event | server → player | `placements, stats, earned` | |
+| `Combat_Select` | Event | client → server | `itemId: string` | |
+| `Combat_Fire` | Event | client → server | `itemId: string, angle: number, power: number (0–1), target: Vector3?` (refused outside the `Turn` phase) | 2/s |
+| `Combat_UseUtility` | Event | client → server | `itemId: string` | |
+| `Combat_Detonate` | Event | client → server | — | |
+| `Combat_Aim` | Unreliable | client → server | `angle: number, power: number` (10 a second while it's the player's turn) | |
 | `Combat_Explosion` | Event | server → all | `position, radius, itemId, shiny` | |
-| `Combat_Hit` | Event | server → all | `victimId, damage, position` | |
-| `Combat_Tracer` | Event | server → all | `itemId, from, hits: { Vector3 }` | |
+| `Combat_Hit` | Event | server → all | `participantId, damage, position` | |
+| `Combat_Tracer` | Event | server → all | `itemId, origin, points: { Vector3 }` | |
 | `Cosmetics_Equip` | Event | client → server | `skinId: string` | 2/s |
 | `Cosmetics_BuyEmote` | Function | client → server | `emoteId: string` → `boolean` | 2/s |
 | `Cosmetics_PlayEmote` | Event | client → server | `emoteId: string` | 1/s |
 | `Cosmetics_EmotePlayed` | Event | server → all | `userId, emoteId` | |
 | `Loadout_Set` | Event | client → server | `slot: number (1–5), itemId: string?` | 5/s |
-| `Loadout_UnlockSlot` | Function | client → server | `slot: number (4–5)` → `boolean` | 1/s |
-| `Crates_Open` | Function | client → server | `crateId: string, count: number (1 or 10), payWith: string` → results | 1/s |
-| `MatchBoard_Join` | Event | client → server | `rowId: string` | 2/s |
-| `MatchBoard_Leave` | Event | client → server | — | 2/s |
-| `MatchBoard_Vote` | Event | client → server | — | 2/s |
-| `MatchBoard_PlaySolo` | Event | client → server | `difficulty: string` | 1/s |
-| `MatchBoard_CreateCustom` | Event | client → server | `mapId: string, mode: string, size: number` | 1/s |
-| `MatchBoard_InviteCustom` | Event | client → server | `target: Player` | 2/s |
-| `MatchBoard_InviteAnswer` | Event | client → server | `roomId: string, accept: boolean` | 2/s |
-| `MatchBoard_StartCustom`, `MatchBoard_LeaveCustom` | Event | client → server | — | 1/s |
+| `Loadout_UnlockSlot` | Function | client → server | `slot: number (4–5)` → `boolean` | |
+| `Crates_Open` | Function | client → server | `crateId: string, count: number (1 or 10), payWith: string` → results | 2/s |
+| `MatchBoard_Join` | Event | client → server | `rowId: string` | |
+| `MatchBoard_Leave`, `MatchBoard_Vote` | Event | client → server | — | |
+| `MatchBoard_PlaySolo` | Event | client → server | `difficulty: string` | |
+| `MatchBoard_PlayParty` | Event | client → server | `difficulty: string` (`Easy`, `Medium`, `Hard` or `None`) | 1/s |
+| `MatchBoard_CreateCustom` | Event | client → server | `mapId: string, mode: string, size: number` | |
+| `MatchBoard_InviteCustom` | Event | client → server | `target: Player` | |
+| `MatchBoard_InviteAnswer` | Event | client → server | `roomId: string, accept: boolean` | |
+| `MatchBoard_StartCustom`, `MatchBoard_LeaveCustom` | Event | client → server | — | |
 | `MatchBoard_Invited` | Event | server → player | `fromUserId, roomId` | |
 | `Party_Invite`, `Party_Kick` | Event | client → server | `target: Player` | 2/s |
 | `Party_Answer` | Event | client → server | `fromUserId: number, accept: boolean` | 2/s |
@@ -171,9 +177,10 @@ Every remote, by the module that owns it (only the owner calls `Get*`; server in
 | `Lobby_RejoinOffer` | Event | server → player | `secondsLeft` | |
 | `Lobby_Rejoin` | Event | client → server | `accept: boolean` | 1/s |
 | `Tutorial_Step` | Event | client → server | `step: string` | 5/s |
+| `Transition_Destination` | Event | server → player | `text, image` (right before a teleport) | |
 
-Purchases use ume's Marketplace remotes (`Marketplace_PromptProductPurchase`, `Marketplace_PromptGamePassPurchase`);
-settings use the Settings module's own.
+Limits left empty use the Network module's default. Purchases use ume's Marketplace remotes
+(`Marketplace_PromptProductPurchase`, `Marketplace_PromptGamePassPurchase`); settings use the Settings module's own.
 
 ## Topics
 
@@ -181,12 +188,13 @@ Server Topics other modules subscribe to (each registered by its owner in `Init`
 
 | Topic | Payload |
 |---|---|
+| `Arena_Loaded` | `mapId` |
 | `Match_PhaseChanged` | `phase` |
 | `Match_TurnStarted`, `Match_TurnEnded` | `participantId` |
 | `Match_ParticipantOut` | `participantId, cause, killerId?, itemId?` |
 | `Match_Ended` | `placements, stats, metadata` |
 | `Combat_ShotFired` | `participantId, itemId` |
-| `Combat_ShotResolved` | `participantId, damageDealt` |
+| `Combat_ShotResolved` | `participantId, damage` |
 | `Worms_Died` | `participantId, cause, killerId?, itemId?` |
 | `Progression_LevelUp` | `player, level` |
 | `Crates_Opened` | `player, crateId, results` |
@@ -198,13 +206,15 @@ Client Topics: `Match_PhaseChanged`, `Match_TurnStarted`, `Match_MyTurn`, republ
 
 | Where | Values |
 |---|---|
-| `Workspace.Ume.Match` attributes | `Phase`, `Round`, `ActiveId`, `TurnEndsAt`, `Wind`, `SuddenDeath`, `Kind`, `Mode`, `MapId`, `RematchEndsAt`, `RematchVotes` |
-| `Workspace.Ume.Arena` attributes | `LiquidLevel`, `LiquidKind` |
-| Worm model attributes | `ParticipantId`, `UserId`, `DisplayName`, `Team`, `Color`, `Health`, `MaxHealth`, `Alive`, `Ghost`, `IsBot`, `Facing`, `HeldItem`, `AimAngle`, `Shiny`, `Vip`, `DropX` |
-| `Player` attributes | `PartyId`, `PartyLeader`, `Level`, `Vip` |
-| Replicator `Match` | `Stamina`, `Uses_<ItemId>`, `Cooldown_<ItemId>` |
+| `Workspace.Ume.Match` attributes | `Kind`, `Mode`, `MapId`, `Phase`, `ActiveId`, `TurnOrder`, `TurnEndsAt`, `Wind`, `Round`, `SuddenDeath`, `Arrived`, `Expected`, `DropMinX`, `DropMaxX`, `DropMinY`, `DropMaxY`, `DropEndsAt`, `RematchVotes`, `RematchEndsAt` |
+| `…Match.Participants/<id>` | `DisplayName`, `UserId`, `Team`, `Color`, `IsBot`, `Connected`, `Out`, `DropX`, `DropY`, `Placed` |
+| Worm model attributes | `ParticipantId`, `UserId`, `DisplayName`, `Team`, `Color`, `IsBot`, `Health`, `MaxHealth`, `Alive`, `Ghost`, `Facing`, `Vip`, `Shiny`, `Active`, `DamageTaken`, `CanMove`, `Stamina`, `Parachute`, `JetpackFuel`, `SpeedMultiplier`, `LowGravity`, `HeldItem`, `AimAngle`, `AimPower`, `AimTime` |
+| Projectile parts | `Projectile` (MatchCamera follows them; named after their weapon or shot) |
+| `Player` attributes | `PartyId`, `PartyLeader`, `Level`, `Vip`, `InMatch` |
+| Replicator `Combat` | `Slots`, `Uses_<ItemId>`, `Cooldown_<ItemId>` |
 | Replicator `Loadout` | `Slot1`…`Slot5`, `Unlocked` |
 | Replicator `Progression` | `Level`, `XPIntoLevel`, `XPForLevel` |
-| `ReplicatedStorage.Ume.MatchBoard/<RowId>` | The row attributes on [[Lobby & meta modules#MatchBoard]] |
+| Replicator `Cosmetics`, `Shop`, `Tutorial` | `EquippedSkin`; `VipCrateReady`; `MatchDone`, `CrateReady`, `EquipReady`, `Done` |
+| `ReplicatedStorage.Ume.MatchBoard/<RowId>` | `Kind`, `Mode`, `Size`, `MapId`, `Players` (JSON), `Votes`, `VotesNeeded`, `EndsAt`, `Owner` |
 
 ::navbox{from="build"}

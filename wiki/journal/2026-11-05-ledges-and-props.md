@@ -1,7 +1,8 @@
 ---
 title: "Floating ledges and props that react to blasts"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Match modes & maps", "Architecture"]
 files:
@@ -32,3 +33,5 @@ ground was blasted, and a small ledge crumb falling.
 **For the wiki.** Match modes & maps → Picnic Plains: the ledges float and can be blasted apart; trees, bushes and
 rocks get blown away. Architecture's terrain section: floating terrain (`Arena_Floats`) next to indestructible
 ground, and props.
+
+**Merged.** Props being thrown whole was replaced by props breaking (2026-11-05-props-break).

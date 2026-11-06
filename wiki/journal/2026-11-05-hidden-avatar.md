@@ -1,7 +1,8 @@
 ---
 title: "The Roblox avatar no longer shows on the match's waiting screen"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: fixed
 pages: ["Match screen"]
 files:
@@ -23,3 +24,5 @@ of the player's character has `Transparency` 1 (16 of 16 in the Studio test).
 
 **For the wiki.** Probably nothing: no page describes the avatar. A History line on Match screen if the owner wants
 fixes listed.
+
+**Merged.** Only a History line on Match screen and the CharacterPark lines on the build pages.

@@ -2,7 +2,7 @@
 title: "Emotes"
 summary: "9 worm emotes: Wave from the start, 8 bought with coins, the better ones unlocked by level. No crates."
 icon: people
-status: planned
+status: active
 order: 9
 type: "System"
 tags: [game, cosmetics]
@@ -48,11 +48,24 @@ The names, levels and prices are a first proposal.
 ## Using emotes
 
 - **In the lobby:** a **smiley button above the loadout** (left side) expands into a row of the emotes the player
-  owns.
-- **In a match:** the same smiley, above the loadout bar, opens an **emote wheel**: a circle of the player's
-  emotes to pick from.
+  owns. Others see the emote beside the player's name in the party list.
+- **In a match:** the smiley, right of the loadout bar, opens an **emote wheel**: a circle of the player's emotes to
+  pick from. The wheel closes when the player picks one, presses the smiley again, or clicks or taps anywhere else,
+  and when the smiley hides (knocked out, between phases).
 - In a match, the worm plays it where it stands, with its voice line. One emote every **5 seconds**, so nobody
   spams.
 - Emotes work during anyone's turn and while spectating.
+- The **emote shop** sells the coin emotes, each with its level and price.
+
+:::private[Placeholder in the build]
+Emotes have no animations or voice lines yet: a played emote shows its name over the worm for 2.5 seconds instead.
+:::
+
+## History
+
+:::changelog
+- 2026-11-03: The 9 emotes, the emote shop, the lobby's emote row and the match's emote wheel.
+- 2026-11-05: The emote wheel closes on a click or tap outside it.
+:::
 
 ::navbox{from="game"}

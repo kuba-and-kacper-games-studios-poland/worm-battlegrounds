@@ -1,7 +1,8 @@
 ---
 title: "Blasts flash, smoke, throw the ground, shake the camera and vibrate phones"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Match screen", "Arsenal", "Controls & platforms"]
 files:

@@ -1,7 +1,8 @@
 ---
 title: "Turn panel says when your turn comes: \"You're next!\", \"Your turn in 3 turns\""
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Match screen"]
 files:
@@ -24,3 +25,5 @@ their next turn comes (`Turns._getUpcoming`, which walks a copy of the team-by-t
 6, 4 (a bot was knocked out), 3, 2, "You're next!", "Your turn!" (checked in Studio).
 
 **For the wiki.** Match screen: the turn panel's top line, what it says on the player's turn and on others' turns.
+
+**Merged.** Merged with 2026-11-05-turn-panel-names, which moved the wait under the worm's name.

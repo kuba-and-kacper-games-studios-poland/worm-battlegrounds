@@ -1,7 +1,8 @@
 ---
 title: "Bots think 2.5 to 4 s, then take aim visibly for 1.5 s before firing"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Match modes & maps"]
 files:

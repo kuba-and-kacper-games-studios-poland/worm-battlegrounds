@@ -2,7 +2,7 @@
 title: "Levels & XP"
 summary: "Players earn XP from matches, level up, and unlock 3 exclusive worm skins at levels 25, 50 and 100."
 icon: bookmark
-status: planned
+status: active
 order: 8
 type: "System"
 image: "/assets/level-skins.png"
@@ -50,7 +50,11 @@ suggestions:
 
 Every match played gives the player **XP**: the same for every match, win or lose. Reaching **level 100**, the
 maximum, takes about **300 matches**. Enough XP raises their **level**, which shows next to their name in the
-[[Lobby]] and in matches.
+[[Lobby]]'s party list, on their worm's tag in matches ("Lv 12") and in the player list, beside their wins. A level
+up shows a message on screen.
+
+Public, solo, party and custom matches give XP; the tutorial match doesn't, and a player who leaves a match early
+gets none. Whether custom lobbies should keep giving XP is asked below.
 
 ## XP and levels
 
@@ -84,5 +88,12 @@ and robe; the FBI Agent wears a black suit, hat and sunglasses.
 **black-and-white striped cap**, with the 017 number tag, not the orange jumpsuit. It needs a redraw in the studded
 style.
 ::: See [[Currencies & crates#Skin crate]] for the crate skins.
+
+## History
+
+:::changelog
+- 2026-11-03: XP and levels: 100 XP a match, levels up to 100, and the Prisoner, FBI Agent and Wizard skins at 25, 50 and 100.
+- 2026-11-06: Party matches give XP too.
+:::
 
 ::navbox{from="game"}

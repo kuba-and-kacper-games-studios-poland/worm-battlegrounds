@@ -21,16 +21,16 @@ Sheep" or "Holy Hand Grenade"). That's why the walking bomb is a Black hole gren
 ## The game in one paragraph
 
 A **2D turn-based artillery game for Roblox** in a studded-brick style, for PC, phone, tablet and console. Each
-player controls **one worm (200 health)**. Players take **15-second turns**, team by team, to move, aim with a drag
-(or the right stick) and shoot; the turn ends when they shoot. Explosions break the block terrain and throw worms
+player controls **one worm (200 health)**. Players take **15-second turns**, team by team, to move, point a
+crosshair, hold to charge the power and let go to shoot; the turn ends when they shoot. Explosions break the block terrain and throw worms
 into water and lava. Matches have **2, 4, 6 or 8 players**, free-for-all or teams, on **6 maps**. Players earn
 **coins** by finishing place and buy **crates** for weapons, utilities and skins; **diamonds** are bought with Robux.
 
 ## Places and servers
 
 - **Lobby place:** the lobby screen, crates, loadout, party. See [[Lobby]].
-- **Match place:** every match on its own reserved server; the lobby teleports players there and back. See
-  [[Match modes & maps]].
+- **Match place** (Arena): every match on its own reserved server; the lobby teleports players there and back. Both
+  places are copies of one place file. See [[Match modes & maps]] and [[Architecture#Places, maps and servers]].
 
 ## Screens
 
@@ -39,7 +39,7 @@ into water and lava. Matches have **2, 4, 6 or 8 players**, free-for-all or team
 | Tutorial match and first-time flow | [[Lobby#First time playing]] |
 | Lobby: play solo, public matches, custom lobby, party, loadout, crates | [[Lobby]] |
 | Waiting room: players, timer, vote to start, leave | [[Lobby#After joining a match]] |
-| Drop phase: pick a landing spot in 15 seconds | [[Match modes & maps#Starting a match]] |
+| Drop phase: place your worm anywhere it fits, in 15 seconds | [[Match modes & maps#Starting a match]] |
 | Match screen: top bar, settings, turn and wind, health, stamina, loadout bar, kill feed | [[Match screen]] |
 | Knocked out (spectate or leave) and the results screen with Rematch | [[Match screen#End of match]] |
 | Crate opening and the shop | [[Currencies & crates]] |
@@ -80,8 +80,9 @@ into water and lava. Matches have **2, 4, 6 or 8 players**, free-for-all or team
 
 ## Left to the scripter
 
-The open suggestions on the pages (an aim line while aiming, marking the last shot, the worm in the lobby, a
-currency bar, loadout presets, and similar) are **up to the scripter**: build them if they fit, skip them if not.
+The open suggestions on the pages (marking the last shot, loadout presets, and similar) are **up to the scripter**:
+build them if they fit, skip them if not. The worm in the lobby and the currency bar are built; the aim line was
+built, then replaced by the crosshair.
 
 ## Suggested build order
 

@@ -1,7 +1,8 @@
 ---
 title: "Weapon models for 9 weapons, set up in Arsenal"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Arsenal"]
 files:

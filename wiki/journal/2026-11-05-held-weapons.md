@@ -1,7 +1,8 @@
 ---
 title: "Worms hold their weapon, on the side facing the camera"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Arsenal", "Match screen"]
 files:

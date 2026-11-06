@@ -1,7 +1,8 @@
 ---
 title: "Currency bar shows the player's coins and diamonds (was stuck at 0)"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: fixed
 pages: ["Lobby"]
 files:

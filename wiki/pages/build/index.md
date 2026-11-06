@@ -22,6 +22,10 @@ This section is the **build plan** for Worm Battlegrounds: every module, gui, sa
 the ume framework, and the order to build them. The game pages ([[The game]] and the pages under it) stay the source
 of truth for **what** the game does and its numbers; this section says **how** it's built and **in what order**.
 
+Phases P0 to P12 are built (2026-11-03 to 2026-11-06), with placeholder ids, models and art, and the pages below
+describe the game as built. Each module's `_meta/README.md` in the code folder is the source of truth for its API and
+settings; P13 (content and launch checks) is what's left.
+
 :::cards
 - :icon[checklist] [Roadmap](/roadmap) — the build order: 14 phases, each with its tasks and how to check it's done
 - :icon[books] [Architecture](architecture) — servers and maps, travel between them, physics, replication, the place
@@ -61,9 +65,9 @@ What the agent can't make or decide, and when it's needed.
 | Before phase | The owner provides |
 |---|---|
 | P0 | Both projects in UmeSync's "Worm Battlegrounds" category and connected to the open place; Studio with the Roblox Studio MCP running |
-| P1 | A greybox Picnic Plains is fine; the 6 real arena templates as they're made (shape on [[Architecture#In the place]]) |
+| P1 | The arena maps, made in MapLab and approved before they go in the game (shape on [[Architecture#In the place]]). Picnic Plains and Desert are in; 4 or 5 to go |
 | P2 | Worm skin models (the Classic first) and their animations; until then the agent's placeholder worm |
-| P9 | A published **test place** with API services on (DataStore, MemoryStore, teleports) to test lobby ↔ match travel; the place's max players (lobby servers) |
+| P9 | The published **lobby and match places** with API services on (DataStore, MemoryStore, teleports) to test lobby ↔ match travel; the lobby place's max players. Both places exist |
 | P10 | Item icons, crate pictures, skin models and emote animations |
 | P11 | The 5 developer products and 4 game passes created in the Creator Hub, their ids, and the Robux prices set there |
 | P13 | Sounds and music (uploaded as `.ogg` after PrepKit), the lobby background, map thumbnails, lighting presets, the badge list if any; the go-ahead for `IsProductionReady` |
@@ -74,13 +78,13 @@ Technical choices, with why. Each one goes into the game's `practices.md` in pha
 
 | Decision | Why |
 |---|---|
-| **One place, three maps** (`Lobby`, `Match`, ume's transit `UmeLobby`) | ume's place loader already routes reserved servers to a map with metadata; one place file, one sync. Matches can move to their own place later without code changes |
+| **Two places, one file** (the lobby place and the match place, Arena), booting the `Lobby` and `Match` maps, plus ume's transit `UmeLobby` and the Studio-only `Studio` map | One place file, one sync; the place id picks the map, so Roblox's analytics count the lobby and the matches apart (moved from one place to two on 2026-11-06) |
 | **Every match on its own reserved server** (`I.Teleport` with metadata) | The design asks for it; a match server only ever holds one match, so its code never juggles several |
 | **Rematch on the same server** | No teleport wait; the arena reloads from its template |
 | **Public rows per lobby server first** | Simple and testable with Studio's local players; a MemoryStore board can replace it behind the same API |
 | **Worms are not Roblox characters** | A turn game needs the server to decide positions. Avatars are parked (`CharacterPark`); worms are server-owned physics models |
 | **Roblox physics, server-owned, on a `PlaneConstraint`** | Bouncing grenades, rolling black holes, falling blocks and knockback come from the engine and replicate smoothly; the active worm is owned by its player while walking for instant feel, checked by the server |
-| **Terrain as a grid drawn by greedy-meshed chunk parts** | Exact, cheap carving; a few hundred parts per map; replicated by Roblox for free, rejoins included |
+| **Terrain as authored parts, carved by CSG in 1-stud steps** (replaced the planned grid of greedy-meshed chunks) | Maps look hand-made (made in MapLab); craters still step like blocks on the grid; replicated by Roblox for free, rejoins included. Only water and lava are a grid |
 | **Weapons, utilities, skins and emotes are Inventory items** | ume's Inventory already saves counts (copies toward shiny) and syncs them; combat numbers live beside them in `Arsenal` |
 | **Roblox's own chat, voice button, teams and player list** | TextChatService filters chat (a Roblox rule); `I.Team` gives team chat and the player list grouping for free |
 | **Fail-closed paid random items** | Diamond crates hide until `PolicyService` says they're allowed; Roblox can remove a game that gets this wrong |
@@ -94,17 +98,18 @@ later lands in that page's Incoming changes like any other.
 
 | Open on | Item | Built meanwhile |
 |---|---|---|
-| [[Match modes & maps]] | When sudden death starts | After round 10 (`SUDDEN_DEATH_ROUND`) |
 | [[Currencies & crates]] | Shiny gameplay boosts | Kept (+5% damage, the utility boosts), each one a single setting |
 | [[Currencies & crates]] | Restricted regions | Diamond crates hidden, coin crates stay |
 | [[Currencies & crates]] | Bot-filled public matches pay | Bots count as players (as the page says now) |
 | [[Currencies & crates]] | Honest labels, diamond bonus ladder, premium crate's power | Labels without discounts; the pack amounts as written; the premium crate as written |
-| [[Lobby]] | Middle solo difficulty's name, custom lobby teams, bots in custom lobbies, parties bigger than a team | Medium; two equal teams; bots at Medium fill empty spots; a party bigger than a team can't join that row |
+| [[Lobby]] | Middle solo difficulty's name, custom lobby teams, bots in custom lobbies, parties bigger than a team | Medium; two equal teams; no bots (only the players who joined); a party bigger than a team can't join that row |
 | [[Arsenal]] | Speed potion and stamina | Stamina ×1.5 with the speed |
-| [[Levels & XP]] | Which matches give XP | Public, solo and custom; not the tutorial |
+| [[Levels & XP]] | Which matches give XP | Public, solo, party and custom; not the tutorial |
 | [[Emotes]] | Where emotes are bought | A + at the end of the lobby's emote row opens the emote shop |
 | [[Match screen]] | Rematch map | The same map |
-| Every other open suggestion | Supply drops, quick chat, win streaks, mastery, starter pack… | Not built. The [[Build brief#Left to the scripter]] picks this plan builds: the short aim line, the last-shot marker, the currency bar |
+| [[Match screen]] | The turn timer on the active worm's tag | Only in the turn panel |
+| [[Match modes & maps]] | Desert: a seventh map or a replacement | In the rotation with Picnic Plains |
+| Every other open suggestion | Supply drops, quick chat, win streaks, mastery, starter pack… | Not built. Of the [[Build brief#Left to the scripter]] picks, the currency bar and the worm in the lobby are built; the short aim line was built, then replaced by the crosshair; the last-shot marker isn't |
 
 ## Not built at launch
 

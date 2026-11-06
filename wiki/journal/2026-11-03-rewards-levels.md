@@ -1,7 +1,8 @@
 ---
 title: "Match rewards and levels: coins by place, anti-farming, 100 XP a match, level skins"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Levels & XP", "Currencies & crates", "Match screen", "Lobby & meta modules", "Data & networking"]
 files:

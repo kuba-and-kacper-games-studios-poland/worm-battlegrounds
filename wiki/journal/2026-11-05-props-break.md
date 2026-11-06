@@ -1,7 +1,8 @@
 ---
 title: "Props break under blasts: trees, bushes and rocks are cut, their pieces fly off"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Match modes & maps", "Architecture"]
 files:

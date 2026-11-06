@@ -1,7 +1,8 @@
 ---
 title: "Weapons and utilities fire: Arsenal rows and the Combat module"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Arsenal", "Match modules", "Data & networking", "Roadmap"]
 files:

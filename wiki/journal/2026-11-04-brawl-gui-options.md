@@ -1,7 +1,8 @@
 ---
 title: "Every gui now has the GUI kit look (draft 4, Hazard plate windows)"
 date: 2026-11-04
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Guis"]
 files:
@@ -85,3 +86,5 @@ pictures were uploaded the same day (theme `Icons.lua`, all `rbxassetid://`) and
 versus reward tiles, how picked and owned show), the guis' pages' pictures, and a History line. Still unsure:
 the item, emote and skin pictures from the first kit are still local previews, and the option folders
 (`src/guis/WormBattlegrounds-<Gui>/`) are still on disk, uncommitted, until the owner removes them.
+
+**Merged.** The per-gui layout details and phone sizes stay in each gui's README; the Guis page gives the rules and the main sizes.

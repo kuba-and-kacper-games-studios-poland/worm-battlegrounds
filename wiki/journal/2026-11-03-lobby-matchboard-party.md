@@ -1,7 +1,8 @@
 ---
 title: "Lobby: match rows, solo, custom rooms, parties, rejoin, voice chat"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Lobby", "Match modes & maps", "Lobby & meta modules", "Architecture", "Data & networking"]
 files:

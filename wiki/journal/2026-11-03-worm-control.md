@@ -1,7 +1,8 @@
 ---
 title: "Worm movement: walk 8 studs/s, 20 studs of stamina, jump speed 44, server speed check"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Match modules", "Architecture", "Controls & platforms", "Roadmap"]
 files:

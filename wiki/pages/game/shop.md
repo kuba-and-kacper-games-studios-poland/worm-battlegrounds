@@ -1,15 +1,15 @@
 ---
 title: "Currencies & crates"
-summary: "Coins earned in game, diamonds bought with Robux, and three crates for weapons and worm skins."
+summary: "Coins earned in game, diamonds bought with Robux, and four crates for weapons, utilities and worm skins."
 icon: tag
-status: planned
+status: active
 order: 7
 type: "System"
 tags: [game, economy]
 infobox:
   Free currency: "Coins (earned in game)"
   Premium currency: "Diamonds (bought with Robux)"
-  Crates: "Coin · Diamond · Skin"
+  Crates: "Weapon · Premium · Utility · Skin"
 questions:
   - id: coin-earning
     text: "Worm Battlegrounds players earn coins in game to open coin crates and upgrade loadout slots. How do they earn them?"
@@ -90,14 +90,18 @@ suggestions:
     options: ["Weapon skins (a gold Bazooka, a candy Grenade)", "Gravestones left where a worm is knocked out", "Explosion colors and projectile trails", "Victory dances on the results screen", "Emotes sold for Robux beside the coin ones"]
 ---
 
-Worm Battlegrounds has two currencies and three crates, all on the right side of the [[Lobby]].
+Worm Battlegrounds has two currencies and four crates. The [[Lobby]] shows the coins and diamonds at the top right,
+and the **Crates** button under them opens the crates window.
 
 ## Currencies
 
 | Currency | Get it by | Spend it on |
 |---|---|---|
 | Coins | The place you finish in a match (free to play) | The weapon crate, the utility and skin crates, loadout slots 4 and 5, emotes |
-| Diamonds | Buying with Robux | The premium crate |
+| Diamonds | Buying with Robux | The premium crate, and the utility and skin crates |
+
+The bar shows each amount on one line; from 10,000 up it's written short (18,620 coins read **18.62k**). Its green
+**+** opens the shop (see [[#Diamonds]]). During a match the bar is hidden.
 
 ## Coins from a match
 
@@ -133,9 +137,19 @@ deathmatch win.
 | 2 teams: 3v3 or 4v4 | **100** | 15 | — | — |
 | 2 teams: 2v2 | **75** | 15 | — | — |
 
+### Party matches
+
+A party's friends-only deathmatch (see [[Lobby#Bottom: play]]) pays like a public **deathmatch** of its size, by
+place, with bots counted (a party of 3 with 3 bots pays like a 6-player deathmatch). With **no bots** it pays **half**
+of that, rounded down.
+
 ### Custom lobbies
 
 Private matches with friends (see [[Lobby#Custom lobby]]) pay **no coins**.
+
+### Tutorial
+
+The tutorial match pays **100 coins**, once, for the tutorial crate (see [[Lobby#First time playing]]).
 
 ### Solo against AI
 
@@ -170,6 +184,13 @@ come only from the weapon crates.
 
 The premium crate has no guaranteed drop (no pity system). Roblox requires showing the odds of paid random items,
 so every crate shows its drop chances before opening.
+
+**Opening one.** In the crates window each crate has tabs for the currencies it takes, **Open** and **Open 10**, and
+**Details**, which lists its odds. Opening shakes the crate, then shows the item (or 10 cards) in its rarity's frame
+with its copies, and **Shiny!** on the 10th copy.
+
+**Where paid random items are restricted** (Roblox's policy for the player's country and age), the diamond prices are
+hidden and refused, so the premium crate doesn't show; the coin prices stay, since coins are earned in game.
 
 ### Drop chances
 
@@ -269,8 +290,10 @@ diamonds):
 
 ## Diamonds
 
-Diamonds are bought with Robux as developer products, which can be bought again and again. Every pack is full
-price except the biggest, the **Vault, which is 10% off**.
+Diamonds are bought with Robux as developer products, which can be bought again and again, in the **shop**: the
+coins and diamonds bar's green **+** opens it. It lists the 5 packs and the 4 game passes with their prices, read live
+from Roblox; an owned pass's button turns grey and reads OWNED. Every pack is full price except the biggest, the
+**Vault, which is 10% off**.
 
 | Pack | Diamonds | Robux | Premium crates |
 |---|---|---|---|
@@ -290,6 +313,14 @@ Game passes are bought once and kept forever.
 | **Slot 5** | 299 | Opens loadout slot 5, after slot 4 (or unlock it with **6,000 coins**) |
 | **Double Coins** | 349 | Every coin reward from matches is doubled |
 | **VIP** | 199 | A gold name and VIP tag in chat, an exclusive VIP worm skin, and one free skin crate every day |
+
+VIP's free skin crate comes once per day (UTC): the Crates button and the skin crate's card read **FREE** while it
+waits.
+
+:::private[Placeholder in the build]
+The 5 packs and 4 passes aren't created on Roblox yet: every product and pass id is 0, so the shop shows "-" for
+their prices. The owner creates them in the Creator Hub and puts their ids in the game.
+:::
 
 All prices are a proposal. Either Legendary costs about 4,050–4,950 Robux; a specific one about 8,100–9,900.
 
@@ -314,5 +345,13 @@ A crate can drop something the player already owns: a weapon, a utility or a ski
 | Low gravity potion | 10% stronger: higher jumps, slower falls |
 
 The Grenade and Shotgun never drop from crates, so they can't become shiny.
+
+## History
+
+:::changelog
+- 2026-11-03: Coins by place, anti-farming and Double Coins; the weapon, premium, utility and skin crates with their odds, the odds window and the reveal; the shop, game passes and VIP's daily crate.
+- 2026-11-05: Crates open in a window from the Crates button, which shows FREE or how many crates the coins open; the coin and diamond counts show short from 10,000.
+- 2026-11-06: Party matches pay like a public deathmatch, half without bots.
+:::
 
 ::navbox{from="game"}

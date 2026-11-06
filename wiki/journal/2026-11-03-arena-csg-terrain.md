@@ -1,7 +1,8 @@
 ---
 title: "Destructible arena: hand-built parts carved by CSG, stop-motion stud liquids"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Architecture", "Match modules", "Roadmap"]
 files:
@@ -50,3 +51,5 @@ presets and map rows from the P1 plan aren't done yet (collision groups came lat
 cell, so a still surface can keep half-stud bumps, and water a falling piece displaces is pushed up onto that piece
 before it slides off. An earlier test run had one server frame of about 160 ms around the carves; the last run
 didn't repeat it, and its cause wasn't found.
+
+**Merged.** Smooth round craters were replaced by stepped ones (2026-11-05-voxel-craters), and the indestructible bedrock became cuttable (2026-11-05-bedrock-destructible); the pages say what's true now.

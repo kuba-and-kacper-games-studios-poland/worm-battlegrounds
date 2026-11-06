@@ -1,7 +1,8 @@
 ---
 title: "Tutorial hints wait for the player's own shot"
 date: 2026-11-04
-status: open
+status: merged
+merged: 2026-11-06
 kind: fixed
 pages: ["Lobby", "Lobby & meta modules"]
 files:

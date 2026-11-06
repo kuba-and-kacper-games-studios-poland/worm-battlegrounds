@@ -1,7 +1,8 @@
 ---
 title: "Lobby redesign: a 3D stage, one Play button, crates in a window"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Lobby", "Lobby & meta modules", "Guis", "Currencies & crates", "Shop"]
 files:

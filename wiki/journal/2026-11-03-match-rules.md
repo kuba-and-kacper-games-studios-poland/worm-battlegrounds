@@ -1,7 +1,8 @@
 ---
 title: "Match rules: drop, 15-second turns, wind, sudden death, rejoin and rematch"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Match modes & maps", "Match modules", "Architecture", "Data & networking", "Roadmap"]
 files:

@@ -1,7 +1,8 @@
 ---
 title: "Picnic Plains rebuilt in MapLab: land on the 1-stud grid, part-built props"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Match modes & maps", "Architecture"]
 files:
@@ -32,3 +33,5 @@ MapLab's validation passes with 0 errors and 0 warnings.
 same). Architecture's terrain section: maps are made in MapLab (picture on the 1-stud grid, built into parts,
 exported after approval); the indestructible ground is the islands' bedrock. Unsure: whether the wiki should name
 MapLab at all, since it lives outside the repo.
+
+**Merged.** Part counts and markers come from this entry; the place itself wasn't opened to check them. MapLab is named on Architecture only.

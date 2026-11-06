@@ -1,7 +1,8 @@
 ---
 title: "Match camera: side-on, FOV 30 from 110 studs, follows the worm and pans"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Match modules", "Controls & platforms", "Roadmap"]
 files:

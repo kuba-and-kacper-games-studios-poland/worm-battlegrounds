@@ -1,16 +1,17 @@
 ---
 title: "Lobby"
-summary: "The first screen: play solo or join a match in the middle, party and loadout on the left, crates on the right."
+summary: "The first screen: the player's worm on a 3D stage, Play solo and the public matches at the bottom, party and loadout on the left, crates and skins in the top-right corner."
 icon: home
-status: planned
+status: active
 order: 1
 type: "Screen"
 tags: [game, ui]
 infobox:
   Layout: "Like Roworld's lobby, in our own art"
-  Left: "Party · Loadout"
-  Middle: "Play solo · Active matches"
-  Right: "Weapon crate · Premium crate · Utility crate · Skin crate"
+  Behind: "A 3D stage with the player's worm"
+  Top left: "Party"
+  Top right: "Coins and diamonds · Crates · Skins"
+  Bottom: "Loadout (left) · Play solo and the public matches"
 questions:
   - id: lobby-background
     text: "Roworld's lobby sits on top of its world map. What should be behind the Worm Battlegrounds lobby's panels?"
@@ -71,9 +72,15 @@ suggestions:
   - id: worm-preview
     text: "Show the player's equipped worm skin in the middle of the Worm Battlegrounds lobby, standing behind the match list and playing its idle animation, so a new skin from the skin crate is seen right away?"
     options: [Yes, Later, No]
+    status: resolved
+    answer: "Built on 2026-11-05: the lobby is a 3D stage with the player's worm on a podium in its equipped skin (no idle animation yet: the skins have none)"
+    decided: 2026-11-06
   - id: currency-bar
     text: "Put a currency bar at the top of the Worm Battlegrounds lobby showing coins and diamonds, with a + beside diamonds that opens the Robux shop?"
     options: [Yes, Later, No]
+    status: resolved
+    answer: "Built: coins and diamonds at the top right, with a green + that opens the shop"
+    decided: 2026-11-06
   - id: daily-reward
     text: "Add a daily login reward to the Worm Battlegrounds lobby (coins every day, a coin crate on day 7) to bring players back each day?"
     options: [Yes, Later, No]
@@ -94,67 +101,125 @@ suggestions:
     options: [Yes, Later, No]
 ---
 
-The lobby is the first thing a player sees. Its panels sit on a **flat illustrated background**. It follows the layout of Roworld's lobby (a central panel for playing,
-a party panel on the left, crates on the right), drawn in Worm Battlegrounds' own art.
+The lobby is the first thing a player sees. Behind its panels is a **3D stage**: the player's worm stands on a podium
+in its equipped skin, among Picnic Plains trees, with hills and clouds behind. It follows the layout of Roworld's
+lobby (a panel at the bottom for playing, the party at the left, crates and skins in the corner), drawn in Worm
+Battlegrounds' own art.
+
+## On screen
+
+| Where | What |
+|---|---|
+| Top centre | The game's name, "WORM BATTLEGROUNDS", in gold |
+| Top left | The **Party** tab and panel (below) |
+| Top right | The **coins and diamonds** bar, with a green **+** that opens the shop; under it the **Crates** and **Skins** buttons |
+| Bottom left | The **Loadout** bar: the emote row, then the Bazooka and the slots (below) |
+| Bottom, just right of the centre | The **play panel**: Play solo and the public matches (below) |
+
+The **Crates** button has a red badge: **FREE** while a free crate waits (the tutorial crate, or a VIP's daily skin
+crate), otherwise how many crates the player's coins can open (350 coins and a 100-coin crate show **3**), **9+** past
+nine, and nothing when the coins don't cover one. Opening a window (Crates, Skins, the shop…) blurs the stage behind
+it.
 
 ## First time playing
 
 A new player starts with **0 coins** and goes straight into a match, not the lobby:
 
-1. **Tutorial match:** a 1v1 against a bot. The game shows how to aim and attack; two hits knock the bot out.
-2. **To the lobby:** the player gets coins for a **tutorial crate** and opens it. It gives the **Grenade and the
-   Shotgun**, the two starter weapons.
-3. **Equip:** the game points to the loadout on the left and shows how to put them in.
+1. **Tutorial match:** a 1v1 against the tutorial bot on Picnic Plains. The bot never hits the player and falls to
+   two Bazooka hits. Either side may play first; the hints follow the player's own turns: walk, jump, "Point the
+   crosshair at the bot, then hold to charge and let go to fire", the bot's turn, then "Two hits knock it out.
+   Finish it!". The match ends with **100 coins** and goes back to the lobby (no rematch). Leaving it early still
+   counts as playing it; closing the game mid-tutorial doesn't, so the tutorial starts again on the next join.
+2. **The tutorial crate:** back in the lobby, the Crates button reads **FREE**. The tutorial crate costs the 100
+   coins and always gives the **Grenade and the Shotgun**, the two starter weapons.
+3. **Equip:** a hint and an arrow point to the loadout until both are in it. Then the tutorial is done for good.
 
-## Middle: play
+## Bottom: play
 
-Like Roworld's lobby, the middle panel has two parts.
+Like Roworld's lobby, one panel at the bottom:
 
-- **Play solo**, the big button at the top: a **1v1 match against AI**, at the difficulty the player picks: **Easy,
-  Medium or Hard**. The AI hits its shots about **30%** of the time on Easy, **60%** on Medium and **85%** on Hard,
-  where it also uses the wind and picks good weapons. Only a win pays: 20, 35 or 60 coins by difficulty (see [[Currencies & crates]]).
-- **Public matches** under it: **3 open lobbies** at a time, **1 deathmatch** (free-for-all) and **2 bigger
-  matches** for more players. Each row shows:
-  - the **map's layout** as a small picture, like Roworld's map thumbnails
-  - the mode (deathmatch, or the teams: Duo, Trio, Quads), the map, and the players who joined (as `3 / 8`)
-  - a **30-second timer**: anyone can join until it runs out, then the match starts
-  - **Join**, or **Join teams** for team matches
-- The rows **keep refreshing**: when a lobby starts, a new one replaces it with a random map, player count, and team
-  size or deathmatch. Trios only appear on 6-player maps. See [[Match modes & maps]].
+- **"Welcome, Name"** at the top.
+- **Play solo**, the big yellow button, with **Custom** beside it. Play solo opens the setup in the same spot: **Easy,
+  Medium or Hard** bots, a line about each, what the match pays ("Only a win pays coins") and **Start**; **Back**
+  returns. It's a **1v1 against a bot**. The bot hits its shots about **30%** of the time on Easy, **60%** on Medium
+  and **85%** on Hard, where it also picks stronger weapons. Only a win pays: 20, 35 or 60 coins by difficulty (see
+  [[Currencies & crates]]).
+- **In a party** the button reads **Play with party**: the party leader picks **No bots**, Easy, Medium or Hard and
+  starts a friends-only deathmatch, everyone for themselves. With bots, there's one bot per party member; with no bots
+  only the party plays, for half the coins. Other members are told only the leader can start it.
+- **Public matches** under it: **four cards, one per mode**, always there: **Deathmatch** (4 players), **Duos** (4),
+  **Trios** (6) and **Quads** (8). Each card shows its mode, the players who joined (`1 / 6`), its timer and
+  **Join**.
+  - A card's **30-second timer** starts when its first player joins. When it runs out, the match starts with whoever
+    joined, and **bots fill every empty seat**, so one player can play Trios with two bot teammates.
+  - When a match starts, a fresh card of the same mode replaces it, on a random map (Picnic Plains or Desert for
+    now). See [[Match modes & maps]].
 
 ## Custom lobby
 
-Players can make a **custom lobby** to play friends privately, for example a **1v1 duel**: create it, invite friends,
-and start when everyone's in. Custom matches pay **no coins**, so they can't be farmed.
-
-Whoever makes a custom lobby chooses the **map**, **deathmatch or teams**, and the **number of players**.
+**Custom** opens a window to make a **custom lobby** and play friends privately, for example a **1v1 duel**: pick the
+**map**, **Deathmatch or Teams** and the **number of players** (2 to 8), invite players in this server or friends,
+and start once there are 2 or more. Custom matches pay **no coins**, so they can't be farmed, and have no bots: only
+the players who joined play.
 
 ## After joining a match
 
-Joining a public match swaps the middle panel for the match's waiting room, like Roworld's. The map it will be played
-on fills the background. The panel shows:
+Joining a public match swaps the play panel for the match's waiting room, like Roworld's:
 
-- **The match:** its mode and map (as "Duo team deathmatch • Map name").
-- **The countdown:** "Match starts in 0:29", counting down from the 30-second timer.
-- **The players:** how many have joined and how many fit (`5 / 8 players`), then every player's name.
-- **Vote to start**, with the votes so far and how many are needed (`4 / 6`). When **two thirds** of the players
-  vote, the match starts before the timer runs out.
-- **Leave match**, which goes back to the lobby.
+- **The match:** its mode and map ("DEATHMATCH • PICNIC PLAINS").
+- **The countdown:** "MATCH STARTS IN 0:29", counting down from the 30-second timer.
+- **The players:** how many have joined and how many fit (`1 / 4 players`), then every player's name.
+- **Vote to start**, with the votes so far and how many are needed (`VOTE TO START 0 / 1`). When **two thirds** of
+  the players vote, the match starts before the timer runs out.
+- **Leave match**, which goes back to the play panel.
+
+When the match starts, a card slides down over the screen ("Heading to Picnic Plains…") and stays up through the trip
+to the match server. After the match the same card says "Back to the lobby…".
+
+A player who dropped out of a running match and comes back within 60 seconds is asked **"Rejoin your match?"** in the
+lobby ("Back to your match…" on the card).
 
 ## Left: party and loadout
 
-- **Party:** invite up to 3 friends, for a party of 4. A party joins matches together and plays on the same team in
-  team modes. See [[Match modes & maps]].
-- **Loadout:** the items the player takes into the next match, 3 to 5 slots. See [[Loadout & inventory]].
-- **Emotes:** a smiley button above the loadout expands into the emotes the player owns. See [[Emotes]].
+- **Party:** up to **4** players. A tab, **"PARTY 1/4"**, opens and folds the panel: open at first on PC and console,
+  folded on phones and tablets. The panel lists every member (avatar, name, level, a crown on the leader, and Kick for
+  the leader). **Invite players** opens a window of everyone in this server who isn't in a party, each with
+  **Invite** (it turns to **Sent**), and **Invite friends** for friends who aren't here. An invited player gets a
+  **Party invite** window with the inviter's picture: **Join party** or **No thanks**; the invite runs out after 30
+  seconds. When the leader leaves, the next member leads. A party joins public matches together and plays on the same
+  team in team modes; a party bigger than a team can't join that mode. See [[Match modes & maps]].
+- **Loadout:** a slim dark bar like the match's loadout bar: the Bazooka and the 3 to 5 slots in one row (two rows on
+  phones). An empty slot shows a **+**; the next locked slot shows only its price ("2500 coins"). See
+  [[Loadout & inventory]].
+- **Emotes:** the row of emotes the player owns, above the slots. See [[Emotes]].
 
-## Right: crates
+## Top right: crates and skins
+
+The **Crates** button opens the crates window, two crates to a row:
 
 - **Weapon crate:** 100 coins (free to play), drops weapons.
 - **Premium crate:** 250 diamonds (Robux), drops weapons with better odds for the rarer ones.
 - **Utility crate:** 100 coins, or 200 diamonds for better odds; drops utilities.
-- **Skin crate:** 100 coins or 50 diamonds (same odds), drops skins for your worms. Each crate also comes as a 10-pack at 10% off. The same panel is where you equip a worm skin.
+- **Skin crate:** 100 coins or 50 diamonds (same odds), drops skins for your worms. Each crate also comes as a
+  10-pack: 10 for the price of 9.
 
-See [[Currencies & crates]].
+The **Skins** button opens the skins window, where the player equips a worm skin. See [[Currencies & crates]].
+
+## History
+
+:::changelog
+- 2026-11-03: The first lobby: Play solo and three public match rows in the middle, party and loadout on the left, crates on the right; custom lobbies, parties of 4, rejoin, voice chat; the tutorial.
+- 2026-11-04: The GUI kit's look; the tutorial hints follow the player's own shots.
+- 2026-11-05:
+  - The lobby is a 3D stage with the player's worm; one Play button and a Modes window; crates and skins move to the top-right corner, with the Crates badge.
+  - The coin and diamond counts show the player's amounts, on one line.
+  - The Party panel lists its members and folds to a tab on phones.
+  - Leaving the tutorial match early still counts it as played.
+- 2026-11-06:
+  - The play panel like Roworld's: Play solo up front, one public match per mode, bots filling every empty seat.
+  - Play with party: friends-only matches, with or without bots.
+  - Party invites open windows: a list of players to invite, and an invite to answer.
+  - A card slides over the screen between the lobby and a match.
+:::
 
 ::navbox{from="game"}

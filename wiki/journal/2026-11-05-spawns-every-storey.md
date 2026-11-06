@@ -1,7 +1,8 @@
 ---
 title: "Worms start on every storey, and leaning props stay up"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: fixed
 pages: ["Match modes & maps", "Architecture"]
 files:

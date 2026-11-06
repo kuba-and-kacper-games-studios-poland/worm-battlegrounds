@@ -2,7 +2,7 @@
 title: "Arsenal"
 summary: "The 13 weapons and 6 utilities Worm Battlegrounds launches with."
 icon: sword
-status: idea
+status: active
 order: 6
 type: "Item list"
 image: "/assets/weapons.png"
@@ -85,14 +85,28 @@ suggestions:
 
 ![All the weapons in studded-brick style](/assets/weapons.png "The weapons in studded-brick style. The Black hole grenade's art is still to come.")
 
-All weapons are built from **studded bricks**, like the rest of the game.
+All weapons are built from **studded bricks**, like the rest of the game. On its turn, the active worm **holds the
+weapon it picked**, in front of its body on the side facing the camera, turned to its aim; a shot **flies as its
+weapon's model** (grenades and bombs turn as they bounce and roll, missiles point along their flight).
 
 :::callout{tone="warning"}
 **Two pieces of this art need a redraw:**
-- **Black hole grenade:** the first draft showed a sheep. It needs its own studded art: a dark grenade with a
-  swirling purple black hole inside.
-- **Spider bomb:** the red body with a black web and blue legs looks like Spider-Man's colors (Marvel). Give it
-  other colors, like a black or green spider.
+- **Black hole grenade:** the first draft showed a sheep. The game's model is a **blue glass grenade with a lever**,
+  not the dark grenade with a swirling purple black hole inside this page asks for.
+- **Spider bomb:** the red body with a black web and blue legs (the game's model too) looks like Spider-Man's colors
+  (Marvel). Give it other colors, like a black or green spider.
+:::
+
+:::private[Placeholders in the build]
+- **Models still missing:** the Baseball bat, One Punch and the Cluster bomb's bomblets (they fly as plain balls).
+  The Bazooka's rocket flies as the Homing missile's missile until the studio sends a rocket.
+- **The Homing missile's launcher is cyan** (the owner's pick, 2026-11-06: "green for normal bazooka and cyan for
+  homing missile launcher"), so it doesn't look like the green Bazooka; the art above shows it green with a cyan
+  screen.
+- **The Spartan spear's model has no red ribbon**, unlike the art. The Variety grenade is a yellow smiley ball, and
+  its 4 snails are small grinning smiley balls whose face always turns to the camera.
+- **Item pictures** for the loadout bar exist only for the Bazooka, Grenade, Shotgun, Cluster bomb, Black hole grenade
+  and Jetpack, and only on the PC that built them (not uploaded yet); every other item shows its 3D model in its box.
 :::
 
 13 at launch, plus the **Bazooka**, the basic weapon every player always has. Every player starts with the
@@ -147,29 +161,37 @@ One Punch, Variety grenade and Black hole grenade can be used once per match, so
 
 ## Blast sizes and knockback
 
-A first proposal, in studs. A worm is about 3 studs tall. Knockback is how far an explosion or hit throws a worm.
+A first proposal, in studs, to tune in playtests. A worm is about 3.5 studs tall. Knockback is how far an explosion
+or hit throws a worm. A blast does its full damage at its center and less toward its edge, down to the edge damage.
 
-| Weapon | Blast radius | Knockback |
-|---|---|---|
-| Bazooka | 6 | Medium |
-| Grenade | 6 | Medium |
-| Shotgun | 1 per pellet | Small |
-| Uzi | 1 per bullet | Small per bullet |
-| Spider bomb | 6 | Medium |
-| Cluster bomb | 4, bomblets 3 | Medium |
-| Dynamite | 9 | High |
-| Baseball bat | None (hit) | Very high |
-| Homing missile | 6 | Medium |
-| Black hole grenade | **14** | High |
-| Variety grenade | 5, snails 2 each | Medium, snails small |
-| Minigun | 1 per bullet | Small per bullet, high in total |
-| One Punch | None (hit) | Extreme |
-| Spartan spear | None (pierces) | Medium |
+| Weapon | Blast radius | Damage: center → edge | Knockback |
+|---|---|---|---|
+| Bazooka | 6 | 35 → 15 | Medium |
+| Grenade | 6 | 55 → 20 | Medium |
+| Shotgun | 1 per pellet | 10 a pellet | Small |
+| Uzi | 1 per bullet | 10 a bullet | Small per bullet |
+| Spider bomb | 6 | 70 → 25 | Medium |
+| Cluster bomb | 4, bomblets 3 | 25 → 10, bomblets 15 → 5 | Medium |
+| Dynamite | 9 | 85 → 40 | High |
+| Baseball bat | None (hit) | 60 | Very high |
+| Homing missile | 6 | 65 → 20 | Medium |
+| Black hole grenade | **14** | 100 → 25 | High |
+| Variety grenade | 5, snails 2 each | 50 → 20, snails 5 a hit | Medium, snails small |
+| Minigun | 1 per bullet | 4 a bullet | Small per bullet, high in total |
+| One Punch | None (hit) | 80 | Extreme |
+| Spartan spear | None (pierces) | 65 | Medium |
+
+**What a blast does to the map.** It removes every one-stud square of ground within its radius, so craters are
+stepped like blocks, and cuts through trees, bushes and rocks the same way. It flashes, bursts into an orange fireball
+(gold for a shiny weapon), fire, sparks and smoke, and throws up to 16 chunks of the ground it hit, in that ground's
+colours (grass, dirt, a tree's leaves): they fly out, bounce, lie on the ground for 2.5 seconds and fade, passing
+through worms and shots. Bullets leave a small hole where they hit the ground.
 
 ## Hazards
 
-- **Water, lava and falling off the map** knock a worm out at once, whatever its health.
-- **Falls** cost 1 health per stud above a safe height, 40 at most.
+- **Water, lava and falling off the map** (beside or below the play area) knock a worm out at once, whatever its
+  health. A knocked-out worm becomes a see-through ghost that floats up.
+- **Falls** cost 1 health per stud above 10 studs, 40 at most. An open parachute takes no fall damage.
 
 ## Utilities
 
@@ -178,19 +200,35 @@ A first proposal, in studs. A worm is about 3 studs tall. Knockback is how far a
 
 | # | Utility | Rarity | Uses per match | What it does |
 |---|---|---|---|---|
-| 1 | **Jetpack** | :badge[Rare]{tone="accent"} | 2 | Fly for a short time |
-| 2 | **Speed potion** (blue) | :badge[Rare]{tone="accent"} | 2 | Drink it to move faster for the turn |
-| 3 | **Parachute** | :badge[Uncommon]{tone="good"} | 2 | Float down slowly instead of falling, so a big drop doesn't hurt |
+| 1 | **Jetpack** | :badge[Rare]{tone="accent"} | 2 | Fly while holding jump: 3 seconds of fuel, climbing at 16 studs a second |
+| 2 | **Speed potion** (blue) | :badge[Rare]{tone="accent"} | 2 | Drink it to walk 1.5 times as fast, and as far, for the turn |
+| 3 | **Parachute** | :badge[Uncommon]{tone="good"} | 2 | Float down at 6 studs a second instead of falling, with no fall damage |
 | 4 | **Bandage** | :badge[Uncommon]{tone="good"} | 2 | Heals 40 health |
 | 5 | **Medkit** | :badge[Epic]{tone="warn"} | 1 | Heals 100 health |
-| 6 | **Low gravity potion** | :badge[Legendary]{tone="bad"} | 1 | Drink it: the worm jumps higher and falls slower for the turn. The best utility |
+| 6 | **Low gravity potion** | :badge[Legendary]{tone="bad"} | 1 | Drink it: gravity drops to 40% for the turn, so the worm jumps higher and falls slower. The best utility |
 
 ![The utilities in studded-brick style](/assets/utilities.png "The utilities. The Low gravity potion's art is still to come.")
 
 The Speed potion is **blue**. The Low gravity potion is a **potion bottle** too, so it needs its own studded art
-(a purple bottle, to tell it apart from the blue Speed potion).
+(a purple bottle, to tell it apart from the blue Speed potion); it's the one utility with no model yet.
+
+Worms **wear** two utilities while they work, seen by every player: the open **Parachute** over the worm's head while
+it floats down (also when it lands on the map at the start of a match), and the **Jetpack** on its back for the rest
+of the turn once used. The game's Parachute is white and yellow; the art above shows it orange and white.
 
 Utilities drop from the **utility crate** (see [[Currencies & crates#Utility crate]]).
 Using a utility **doesn't end the turn**: the player still has to shoot. Worms start with 200 health, which is also the most they can have: healing never goes above 200.
+
+## History
+
+:::changelog
+- 2026-11-03: Every weapon and utility fires in the first build, with the numbers on this page (shots and blasts are placeholder balls).
+- 2026-11-05:
+  - Worms hold the weapon they picked; shots fly as their weapon's models (9 weapons).
+  - Blasts flash, burn, smoke and throw chunks of the ground; craters are stepped like blocks.
+- 2026-11-06:
+  - Models for the Minigun, Spartan spear and Variety grenade (with smiley snails); the Homing missile's launcher is cyan.
+  - Models for 5 utilities; worms wear the Parachute and the Jetpack while they work.
+:::
 
 ::navbox{from="game"}

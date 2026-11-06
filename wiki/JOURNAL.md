@@ -7,9 +7,9 @@ pick up later. It keeps the wiki out of the way while you work, and makes sure n
 
 Paths are from this wiki's folder.
 
-- **Project:** `../` (the game's repo, no gameplay yet): entries name its files from there, as
+- **Project:** `../` (the game's repo): entries name its files from there, as
   `worm-battlegrounds-game/src/…`
-- **Last merged:** 2026-11-03 (the game has no code yet)
+- **Last merged:** 2026-11-06 (P0 to P12 built; the split into two places was merged from the code, uncommitted, with no entry)
 
 ## While you work on the project
 
@@ -73,6 +73,9 @@ The project's own list of what every entry should carry, beyond the fields above
 - Remotes (RemoteEvents and RemoteFunctions), with their names and who fires them
 - DataStore keys and what each one saves
 - Weapon and mobile numbers: damage, blast radius, knockback, projectile speed, wind effect
+- Changes to the places and their maps (place ids, which map a place boots, how Studio tests them), even when no
+  player sees them: the Architecture page describes them
+- When an entry replaces an earlier one, its name (`Supersedes 2026-11-05-…`), and which part of it still holds
 
 When merging shows that entries miss something you had to dig up, add it here so later entries record it. When the
 wiki gains a new kind of page (mobs, quests, recipes), add what those pages need to stay right.

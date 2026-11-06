@@ -1,7 +1,8 @@
 ---
 title: "Picnic Plains: the studio's map replaces the greybox"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Match modes & maps", "Architecture"]
 files:
@@ -28,3 +29,5 @@ and the worms land on the islands and ledges.
 
 **For the wiki.** Match modes & maps → Picnic Plains: its look and layout (islands, floating ledges, sea), replacing
 the greybox description; Architecture's greybox note.
+
+**Merged.** Superseded by 2026-11-05-picnic-plains-maplab (bedrock instead of 48 waterline blocks, part-built props); the pages describe the MapLab map.

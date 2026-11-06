@@ -1,7 +1,8 @@
 ---
 title: "Shots fly as their weapon's model (grenades, missiles, the Bazooka's rocket)"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: changed
 pages: ["Arsenal"]
 files:

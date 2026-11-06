@@ -1,7 +1,8 @@
 ---
 title: "Arena: collision groups, the worm plane, GetHazard and Arena_Loaded"
 date: 2026-11-03
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Match modules", "Architecture"]
 files:

@@ -1,7 +1,8 @@
 ---
 title: "Match camera zooms with the mouse wheel and a pinch (45 to 200 studs)"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Controls & platforms", "Match screen"]
 files:

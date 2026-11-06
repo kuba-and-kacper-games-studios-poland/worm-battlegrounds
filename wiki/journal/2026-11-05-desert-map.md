@@ -1,7 +1,8 @@
 ---
 title: "New map: Desert, two storeys over lava with an oasis"
 date: 2026-11-05
-status: open
+status: merged
+merged: 2026-11-06
 kind: added
 pages: ["Match modes & maps", "Architecture"]
 files:
@@ -39,3 +40,5 @@ the entry "Worms start on every storey, and leaning props stay up".
 **For the wiki.** Match modes & maps: a new map, Desert (a page or a row, with its two storeys, the lava and the
 oasis). Unsure: its display name and sizes for the match board, and whether it joins the six planned maps' list or
 replaces one.
+
+**Merged.** Whether Desert is a seventh map or replaces a planned one is asked on Match modes & maps (question desert-map). Part counts and markers come from this entry; the place itself wasn't opened to check them.
