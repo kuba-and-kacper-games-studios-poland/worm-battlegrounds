@@ -2,7 +2,7 @@
 
 A damage number that rises and fades where a worm is hit (only with the Damage numbers setting on).
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Billboard 160 × 80 (was 140 × 64) for the bigger Display text.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). 160 × 100 at design scale, one line of the Display number ("-200" fits at full size), scaled with the screen like the hud.
 
 |  |  |
 | --- | --- |
@@ -17,7 +17,7 @@ A damage number that rises and fades where a worm is hit (only with the Damage n
 
 | Element | Control | What game code does with it |
 | --- | --- | --- |
-| `U_Pop` | Frame | Fills the billboard |
+| `U_Pop` | Frame | 160 × 100, the billboard's design size. Has `S_ScreenScale` (set with the billboard's size, below) |
 | `U_Pop` › `S_Amount` | Label (`Display`, `Danger`) | "-45" |
 
 ## Driven by
@@ -28,7 +28,7 @@ The game's `Worms` module clones it on each hit and tweens it up and out.
 
 ### Setup
 
-Export it with the Gui tool: a BillboardGui named `DamagePop` in StarterGui. Its module moves it where it keeps templates and clones it onto parts; the clone's `Size` and `StudsOffset` are set by that code (the preview uses 140 × 64 px).
+Export it with the Gui tool: a BillboardGui named `DamagePop` in StarterGui. Its module moves it where it keeps templates and clones it onto parts; the clone's `StudsOffset` is set by that code, and the game's ScreenScale module sizes the clone to the screen: it sets `S_ScreenScale` to the screen's scale (height / 1080, width / 1920 on screens narrower than 16:9, ×1.3 on Mobile screens shorter than 500 px, never under 0.6 on other devices; no device scale) and the billboard's `Size` to the root's design size times it. The Gui tool previews it at 160 × 100 (`Preview`).
 
 ### Input
 

@@ -18,7 +18,7 @@ local _gui = {
 	Root = {
 		Primitive = "Folder",
 		Children = {
-			-- Covers the game while the teleport happens
+			-- Covers the game while the teleport happens; the Transition module slides it, card and all
 			{
 				Primitive = "Frame",
 				Id = "U_Backdrop",
@@ -42,30 +42,32 @@ local _gui = {
 							Rotation = 90,
 						},
 					},
-				},
-			},
-			{
-				Control = "Box",
-				Id = "U_Card",
-				Screen = true,
-				Style = "Panel",
-				Props = {
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = UDim2.fromScale(0.5, 0.5),
-					Size = UDim2.fromOffset(720, 0),
-				},
-				Children = {
-					{ Control = "Picture", Id = "S_Image", Style = "Thumbnail" },
-					-- "Heading to the match…" or "Back to the lobby…"
 					{
-						Control = "Label",
-						Id = "S_Text",
-						Text = "Heading to the match…",
-						Align = "Center",
-						Style = "Title",
+						Control = "Box",
+						Id = "U_Card",
+						Screen = true,
+						Style = "Panel",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							Position = UDim2.fromScale(0.5, 0.5),
+							Size = UDim2.fromOffset(720, 0),
+						},
+						Children = {
+							{ Control = "Picture", Id = "S_Image", Style = "Thumbnail" },
+							-- "Heading to <map>…", "Back to the lobby…"
+							{
+								Control = "Label",
+								Id = "S_Text",
+								Text = "Heading to the match…",
+								Align = "Center",
+								Style = "Title",
+							},
+						},
 					},
 				},
 			},
+			-- ume's Teleport waits this long after showing the card, so its slide plays before the teleport
+			{ Primitive = "NumberValue", Props = { Name = "GuiAnimDuration", Value = 0.45 } },
 		},
 	},
 }

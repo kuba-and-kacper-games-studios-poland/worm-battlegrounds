@@ -44,7 +44,7 @@ WidgetManager opens it (the `Lobby` gui's Crates button). The game's `Crates` mo
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Crates`, `Enabled` off. WidgetManager turns it on. A restyled copy keeps its `Name`, Ids and prefab names. The window is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size. Prices are read live and odds shown before buying (Roblox's paid random items rules).
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Crates`, `Enabled` off. WidgetManager turns it on. A restyled copy keeps its `Name`, Ids and prefab names. The window is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size. Prices are read live and odds shown before buying (Roblox's paid random items rules).
 
 ### Input
 

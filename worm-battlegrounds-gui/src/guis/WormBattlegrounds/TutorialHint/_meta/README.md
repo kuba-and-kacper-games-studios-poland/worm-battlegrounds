@@ -2,7 +2,7 @@
 
 The tutorial's speech bubble: a line of text and an arrow, placed beside the element or spot it points at.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). 640 wide (was 440), so the hint fits on one line at the kit's heading size. It hangs from 18 % down the screen, under a match's turn panel and above the lobby's Play panel, instead of being centred at 35 % (where it covered Play). At 0.55 on phones and tablets, so it fits there too.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). 640 wide (was 440), so the hint fits on one line at the kit's heading size. It hangs from 27 % down the screen, under a match's turn panel (taller on other worms' turns, with the player's wait) and above the lobby's Play panel, instead of being centred at 35 % (where it covered Play). At 0.75 on phones and tablets (16 px text on a 667 × 375 phone), clear of the turn panel there too, the bot's turn included.
 
 |  |  |
 | --- | --- |
@@ -28,7 +28,7 @@ The game's `Tutorial` module: the match hints on the Match map, the crate and eq
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `TutorialHint`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `TutorialHint`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
 
 ### Input
 

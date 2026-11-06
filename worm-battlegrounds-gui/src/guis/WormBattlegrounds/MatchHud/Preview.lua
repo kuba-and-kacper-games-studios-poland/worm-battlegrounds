@@ -24,13 +24,18 @@ local FEED = {
 --- @type { string }
 local SLOT_WEAPONS = { "Grenade", "Shotgun", "Jetpack", "Airstrike", "Black hole grenade" }
 
+-- Whose turn it is when it isn't the player's, and their team colour
+local OTHER_NAME: string = "Bax"
+local OTHER_COLOR: Color3 = Color3.fromRGB(255, 99, 99)
+
 --[[ Screen ]]
 
--- The screen size the guis are laid out for, and the boost on short Mobile screens, as ume's Settings module's
+-- The screen size the guis are laid out for, the Mobile boost and the PC floor, as ScreenScale's Settings
 local DESIGN_HEIGHT: number = 1080
 local DESIGN_WIDTH: number = 1920
 local SMALL_SCREEN: number = 500
 local MOBILE_BOOST: number = 1.3
+local MIN_SCALE: number = 0.6
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -60,6 +65,7 @@ local Module = {
 			Value = "Turn",
 		},
 		{ Control = "Toggle", Id = "S_MyTurn", Label = "My turn", Value = true },
+		{ Control = "Toggle", Id = "S_Aiming", Label = "Aiming", Value = true },
 		{ Control = "Slider", Id = "S_Slots", Label = "Loadout slots", Value = 3, Min = 3, Max = 5, Step = 1 },
 		{ Control = "Slider", Id = "S_Feed", Label = "Kill feed lines", Value = 2, Min = 0, Max = 3, Step = 1 },
 		{ Control = "Toggle", Id = "S_Wheel", Label = "Emote wheel open", Value = false },
@@ -71,7 +77,8 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Shows the blocks of the picked phase, the loadout bar (its second slot cooling down), the kill feed and the emote wheel.
+	Shows the blocks of the picked phase, the loadout bar (its second slot cooling down) with stamina and the power
+	over it as MatchHud writes them, the kill feed and the emote wheel.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -88,11 +95,24 @@ function Module.Apply(preview)
 	view:Get("U_Drop").Instance.Visible = phase == "Drop"
 	view:Get("U_KnockedOut").Instance.Visible = phase == "Out"
 	view:Get("U_Turn").Instance.Visible = turn
-	view:Get("U_Turn", "S_Banner").Instance.Visible = preview.Values.S_MyTurn
 	view:Get("U_Stamina").Instance.Visible = myTurn
-	view:Get("U_Power").Instance.Visible = myTurn
+	view:Get("U_Power").Instance.Visible = myTurn and preview.Values.S_Aiming
 	view:Get("U_LoadoutBar").Instance.Visible = phase ~= "Waiting"
 	view:Get("U_EmoteWheel").Instance.Visible = preview.Values.S_Wheel
+
+	--[[ Turn ]]
+
+	-- On another worm's turn the banner names it in its team colour, with the player's wait under it
+	view:Get("U_Turn", "S_Banner").SetText(if preview.Values.S_MyTurn then "Your turn!" else `{OTHER_NAME}'s turn`)
+	view:Get("U_Turn", "S_Banner").SetTone(if preview.Values.S_MyTurn then "Text" else OTHER_COLOR)
+	view:Get("U_Turn", "S_Wait").Instance.Visible = not preview.Values.S_MyTurn
+	view:Get("U_Turn", "S_Wind").SetText("4")
+
+	--[[ Bars ]]
+
+	view:Get("U_Stamina", "S_Bar").SetText("Stamina 70%")
+	view:Get("U_Power", "S_Bar").SetText("Power 60%")
+	view:Get("U_Power", "S_Angle").SetText("45°")
 
 	--[[ Loadout Bar ]]
 
@@ -148,7 +168,8 @@ end
 
 --[[
 	Scales every panel to the previewed screen as the game's modules do: its height over the design height (or its
-	width over the design width on a narrower screen), bigger on short Mobile screens, times each panel's device scale.
+	width over the design width on a narrower screen), bigger on short Mobile screens and never under the floor on
+	others, times each panel's device scale.
 ]]
 --- @param preview UmeGui_Preview
 function Module._applyScreenScale(preview)
@@ -160,9 +181,11 @@ function Module._applyScreenScale(preview)
 	-- A screen narrower than the layout scales by its width, so side-by-side panels still fit
 	local scale: number = math.min(height / DESIGN_HEIGHT, width / DESIGN_WIDTH)
 
-	-- Boost short touch screens so the buttons stay big enough to tap
+	-- Boost short touch screens so the buttons stay big enough to tap; anything else never shrinks below the floor
 	if preview.Device == "Mobile" and height < SMALL_SCREEN then
 		scale *= MOBILE_BOOST
+	elseif preview.Device ~= "Mobile" then
+		scale = math.max(scale, MIN_SCALE)
 	end
 
 	--[[ Applying ]]

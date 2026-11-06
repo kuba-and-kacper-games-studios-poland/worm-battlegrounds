@@ -10,7 +10,7 @@ local _gui = {
 	-- The Loadout and Cosmetics modules turn it on, on the Lobby map, as I.UserInterface.UI["Loadout"]
 	Name = "Loadout",
 	Theme = "WormBattlegroundsBrawl",
-	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
+	Screen = { DisplayOrder = -1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
 
@@ -103,25 +103,25 @@ local _gui = {
 					Style = { "Small", "Strong", "Warning", "Outlined" },
 					Props = { AnchorPoint = Vector2.new(0, 0), Position = UDim2.fromOffset(8, 4) },
 				},
-				-- Covers slots 4 and 5 until they're unlocked
+				-- Covers slots 4 and 5 until they're unlocked: the price to open it, over two lines
 				{
 					Control = "Box",
 					Id = "S_Lock",
 					Visible = false,
-					-- A darker slot over the item, so the lock reads on its own
-					Style = { "Fixed", Slab = { FillTransparency = 0.2, Fade = 0 } },
+					-- A darker slot over the item, so the lock reads on its own; the hud's small padding leaves the price room
+					Style = { "Hud", "Fixed", Slab = { FillTransparency = 0.2, Fade = 0 } },
 					Props = {
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						Position = UDim2.fromScale(0.5, 0.5),
 						Size = UDim2.fromScale(1, 1),
 					},
 					Children = {
-						{ Control = "Label", Text = "Locked", Align = "Center", Style = "Strong" },
 						{
 							Control = "Label",
 							Id = "S_Price",
-							Text = "2,500 coins or 149 R$",
+							Text = "2500 coins",
 							Align = "Center",
+							Grow = 1,
 							Style = { "Small", "Coin" },
 						},
 					},

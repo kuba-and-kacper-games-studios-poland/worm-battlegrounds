@@ -71,6 +71,11 @@ function Module.Build(node, style, ctx)
 	ctx.Padding(parts.Content, "None", style.PaddingX)
 	ctx.Tag(button, style.Tags)
 
+	-- Text the game writes later stays in capitals too (its TextCase_Upper component)
+	if style.Upper then
+		ctx.Tag(buttonText, { TextCase_Upper = {} })
+	end
+
 	-- One placed on the screen by itself (a touch button) scales with it and per device, as the Box panels do
 	if node.Screen then
 		ctx.Create("UIScale", { Name = "S_ScreenScale", Parent = parts.Container })

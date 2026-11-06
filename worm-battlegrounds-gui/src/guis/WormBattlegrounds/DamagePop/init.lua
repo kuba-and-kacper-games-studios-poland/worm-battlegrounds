@@ -11,15 +11,18 @@ local _gui = {
 	Name = "DamagePop",
 	Kind = "Billboard",
 	Theme = "WormBattlegroundsBrawl",
-	Preview = { Width = 160, Height = 80 },
+	-- The billboard's size at design scale: as tall as one line of the Display number, scaled with the screen by code
+	Preview = { Width = 160, Height = 100 },
 
 	--[[ Tree ]]
 
 	Root = {
 		Primitive = "Frame",
 		Id = "U_Pop",
-		Props = { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) },
+		Props = { BackgroundTransparency = 1, Size = UDim2.fromOffset(160, 100) },
 		Children = {
+			-- Set with the billboard's size by ScreenScale
+			{ Primitive = "UIScale", Id = "S_ScreenScale" },
 			{ Control = "Label", Id = "S_Amount", Text = "-45", Align = "Center", Style = { "Display", "Danger" } },
 		},
 	},

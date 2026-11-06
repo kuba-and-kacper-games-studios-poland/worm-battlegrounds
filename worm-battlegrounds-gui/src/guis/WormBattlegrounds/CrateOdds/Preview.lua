@@ -26,11 +26,12 @@ local ODDS = {
 
 --[[ Screen ]]
 
--- The screen size the guis are laid out for, and the boost on short Mobile screens, as ume's Settings module's
+-- The screen size the guis are laid out for, the Mobile boost and the PC floor, as ScreenScale's Settings
 local DESIGN_HEIGHT: number = 1080
 local DESIGN_WIDTH: number = 1920
 local SMALL_SCREEN: number = 500
 local MOBILE_BOOST: number = 1.3
+local MIN_SCALE: number = 0.6
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -83,7 +84,8 @@ end
 
 --[[
 	Scales every panel to the previewed screen as the game's modules do: its height over the design height (or its
-	width over the design width on a narrower screen), bigger on short Mobile screens, times each panel's device scale.
+	width over the design width on a narrower screen), bigger on short Mobile screens and never under the floor on
+	others, times each panel's device scale.
 ]]
 --- @param preview UmeGui_Preview
 function Module._applyScreenScale(preview)
@@ -95,9 +97,11 @@ function Module._applyScreenScale(preview)
 	-- A screen narrower than the layout scales by its width, so side-by-side panels still fit
 	local scale: number = math.min(height / DESIGN_HEIGHT, width / DESIGN_WIDTH)
 
-	-- Boost short touch screens so the buttons stay big enough to tap
+	-- Boost short touch screens so the buttons stay big enough to tap; anything else never shrinks below the floor
 	if preview.Device == "Mobile" and height < SMALL_SCREEN then
 		scale *= MOBILE_BOOST
+	elseif preview.Device ~= "Mobile" then
+		scale = math.max(scale, MIN_SCALE)
 	end
 
 	--[[ Applying ]]

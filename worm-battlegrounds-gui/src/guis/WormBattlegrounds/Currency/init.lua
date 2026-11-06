@@ -39,7 +39,7 @@ local _gui = {
 				Props = {
 					AnchorPoint = Vector2.new(1, 0),
 					Position = UDim2.fromScale(0.9875, 0.011),
-					Size = UDim2.fromOffset(440, 0),
+					Size = UDim2.fromOffset(480, 0),
 				},
 				Children = {
 					{
@@ -61,6 +61,7 @@ local _gui = {
 										Control = "Stack",
 										Direction = "Horizontal",
 										Align = "Center",
+										Style = "Tight",
 										Props = { AutomaticSize = Enum.AutomaticSize.XY, Size = UDim2.new() },
 										Children = {
 											{ Control = "Picture", Id = "S_CoinIcon", Image = "wb-coin", Style = "Glyph" },
@@ -68,8 +69,11 @@ local _gui = {
 												Control = "Label",
 												Id = "S_Coins",
 												Text = "0",
+												Align = "Left",
 												Style = { "Heading", "Coin" },
-												Tags = { Currency_Slot = { Currency_Name = "Coins" } },
+												-- Wide enough for "18.62k": the slot writes amounts from 10,000 up short
+												Props = { Size = UDim2.fromOffset(104, 60) },
+												Tags = { Currency_Slot = { Currency_Name = "Coins", Currency_ShortFrom = 10000 } },
 											},
 										},
 									},
@@ -89,6 +93,7 @@ local _gui = {
 										Control = "Stack",
 										Direction = "Horizontal",
 										Align = "Center",
+										Style = "Tight",
 										Props = { AutomaticSize = Enum.AutomaticSize.XY, Size = UDim2.new() },
 										Children = {
 											{ Control = "Picture", Id = "S_DiamondIcon", Image = "wb-diamond", Style = "Glyph" },
@@ -96,8 +101,10 @@ local _gui = {
 												Control = "Label",
 												Id = "S_Diamonds",
 												Text = "0",
+												Align = "Left",
 												Style = { "Heading", "Diamond" },
-												Tags = { Currency_Slot = { Currency_Name = "Diamonds" } },
+												Props = { Size = UDim2.fromOffset(104, 60) },
+												Tags = { Currency_Slot = { Currency_Name = "Diamonds", Currency_ShortFrom = 10000 } },
 											},
 										},
 									},

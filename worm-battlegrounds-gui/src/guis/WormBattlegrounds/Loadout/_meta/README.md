@@ -2,7 +2,7 @@
 
 The lobby's bottom-left bar: the emote row (the smiley, the owned emotes, + for the emote shop), the Bazooka, and one slot per loadout slot (3 to 5). Locked slots show their price.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). A dark `Hud` box like the match's loadout bar, titled Loadout, 800 wide and as tall as its rows, from the bottom-left corner; slots 112 square (`BarSlot`), all in one row on PC. On phones and tablets it's 440 wide at scale 0.9, so the slots wrap to two rows and clear the Play button. An empty slot shows the kit's plus; locked slots and the shiny mark read on a darker cover, with only the lock and price. Owned items sit on plain slots, the rarity only in the name's colour (its Preview refills the slots that way).
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). A dark `Hud` box like the match's loadout bar, titled Loadout, 800 wide and as tall as its rows, from the bottom-left corner; slots 112 square (`BarSlot`), all in one row on PC. On phones and tablets it's 440 wide at scale 0.9, so the slots wrap to two rows and clear the Play button. An empty slot shows the kit's plus; the next locked slot reads on a darker cover with only its price ("2500 coins", over two lines at full size; the hud's small padding leaves it room), and the shiny mark sits in the corner. Owned items sit on plain slots, the rarity only in the name's colour (its Preview refills the slots that way).
 
 |  |  |
 | --- | --- |
@@ -10,7 +10,7 @@ The lobby's bottom-left bar: the emote row (the smiley, the owned emotes, + for 
 | Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
 | Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
-| Export | A ScreenGui named `Loadout`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` |
+| Export | A ScreenGui named `Loadout`: `Enabled` off, `DisplayOrder` -1 (under Party, so its opened panel covers it on phones), `ScreenInsets` `DeviceSafeInsets` |
 
 ## Elements
 
@@ -40,7 +40,7 @@ The game's `Loadout` (the slots) and `Cosmetics` (the emote row) modules.
 
 | Setting | What it does |
 | --- | --- |
-| `S_Unlocked` (Slider, 3 to 5) | Slots past it show their lock |
+| `S_Unlocked` (Slider, 3 to 5) | The next slot past it shows its cover and price, as Loadout's `Panel.lua` draws it; later ones hide |
 | `S_Emotes` (Slider, 1 to 9) | Owned emotes |
 | `S_Shiny` (Toggle) | Marks the first item shiny |
 
@@ -48,7 +48,7 @@ The game's `Loadout` (the slots) and `Cosmetics` (the emote row) modules.
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Loadout`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size. Item cards' `S_Icon`, `S_Name` and `S_Info` are made by the theme's `Item` control (theme README).
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Loadout`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size. Item cards' `S_Icon`, `S_Name` and `S_Info` are made by the theme's `Item` control (theme README).
 
 ### Input
 

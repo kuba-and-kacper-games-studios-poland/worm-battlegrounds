@@ -22,18 +22,18 @@ local _gui = {
 		Control = "Box",
 		Id = "U_Hint",
 		Screen = true,
-		-- Smaller on phones and tablets, so it fits between the turn panel and the lobby's Play panel there too
-		Style = { "Panel", PlatformScale = { Utils_MobileScale = 0.55 } },
+		-- Smaller on phones and tablets, so it fits between the turn panel and the lobby's Play panel there too (16 px text on a phone)
+		Style = { "Panel", PlatformScale = { Utils_MobileScale = 0.75 } },
 		Props = {
 			AnchorPoint = Vector2.new(0.5, 0),
-			Position = UDim2.fromScale(0.5, 0.18),
+			Position = UDim2.fromScale(0.5, 0.27),
 			Size = UDim2.fromOffset(640, 0),
 		},
 		Children = {
 			{
 				Control = "Label",
 				Id = "S_Text",
-				Text = "Drag to aim, let go to shoot!",
+				Text = "Hold to charge, let go to shoot!",
 				Align = "Center",
 				Style = "Heading",
 			},

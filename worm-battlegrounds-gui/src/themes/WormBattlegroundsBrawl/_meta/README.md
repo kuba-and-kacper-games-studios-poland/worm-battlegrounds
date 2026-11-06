@@ -58,7 +58,8 @@ Style records merge over the base theme's, so each file lists only what changes.
 | `Item.lua` | Default: a thing on a slot, the picture over its name and one line. `Square`, `Small` (112), `Difficulty` (200 × 220, the line in the coins' colour). Rewards `Common` … `Legendary`: a framed tile, the rarity's stage inside (`Stage`), silver for common to rare and gold with light behind (`Glow`, rays) for epic and legendary |
 | `Label.lua` | Default: the ink outline. `Heading`, `Title`, `Hero` (capitals, heavy outline). Tones `Accent`, `Map`, `Cream`, `Gold`, `Price` |
 | `Picture.lua` | `Avatar`, `AvatarLarge` (a light well, the 6 px ink outline), `Thumbnail` (rounded, ink outline), `Icon` (a bare picture bigger than a glyph) |
-| `Cells.lua` | `Players`, `Slots` (grids of player cards) |
+| `Cells.lua` | `Players`, `Slots` (grids of player cards), `Matches` (the lobby's public match cards, two a row, 344 × 152) |
+| `Progress.lua` | Default: the status line left-aligned (`StatusAlign`) with the ink outline (`TextStroke`, `TextStrokeThickness`). `Health`: the number big (`Heading`) and centred (a worm's tag) |
 | `Ribbon.lua` | From the first Brawl options, used by no gui now; `Blue` and `Red` name tokens this palette no longer has |
 
 ## Controls
@@ -118,16 +119,36 @@ reveal):
 | `Kit_<Rarity>_Glow` | Whether `Rays` and `Glow` show |
 | `Kit_<Rarity>_GlowColor` | Their `ImageColor3` |
 
+### Progress
+
+The shared `Progress` with its status line fixed at one line of its style's text size (the shared one grows by
+AutomaticSize, which measures in screen pixels under a panel's `S_ScreenScale`, so the label went out of scale on
+small screens), aligned by `StatusAlign` and outlined in ink like every text in the kit. Structure and handle are the
+shared control's: `Status`, `Track` › `Fill`.
+
+### Label
+
+The base theme's `Label`, same params and handle, tagged for capitals when its style says so (below).
+
 ### Ribbon
 
 A slanted banner behind a big title, from the first Brawl options; no gui uses it now.
+
+## Capitals
+
+A capitals style (`Upper` on a Label or Button style, `TitleUpper` on a Widget or Box style) puts the text in capitals
+when the gui is built. Text game code writes later would show as written, so the theme's `Label`, `Button`, `Widget`
+and `Box` also tag that text `TextCase_Upper`: the code folder's TextCase module puts it back in capitals whenever it
+changes, keeping rich text tags and escapes (`&lt;`). The tag ships with the export, so a gui needs exporting again
+to get it.
 
 ## Generated
 
 - `Icons.lua` and `Skins.lua` are written by the kit's build script, made outside this repo (the game home's
   `assets/_inbox/ui_kit_brawl/`: `skins.py` and `banners.py` draw the SVGs, `build.py` renders them). `Skins.lua`
   holds each sliced skin's `SliceCenter` in its PNG's pixels. The kit was uploaded on 2026-11-04: every `Icons.lua`
-  line is an `rbxassetid://`. A rebuild writes local previews (`rbxasset://textures/wb_brawlpreview/…`, which only
+  line is an `rbxassetid://` except `wb-wind` (the turn panel's wind, added 2026-11-05), a local preview until the
+  owner approves uploading it. A rebuild writes local previews (`rbxasset://textures/wb_brawlpreview/…`, which only
   the PC that built them shows) until the changed pictures are uploaded and the ids put back (the kit's README →
   Uploading).
 - No `Gamepad.lua`: the theme uses System's gamepad icons.

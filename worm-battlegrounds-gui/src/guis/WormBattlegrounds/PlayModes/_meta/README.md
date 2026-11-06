@@ -1,5 +1,9 @@
 # PlayModes
 
+**Unused since 2026-11-06:** the lobby's MatchBoard panel shows the public matches and the solo setup itself, and no
+code or button opens this gui any more. It stays until the owner says to remove it (the gui folder and its export in
+StarterGui).
+
 The lobby's **Modes** window: every way to play besides the quick match. **Play solo** (opens `SoloSetup`), **Custom lobby** (opens `CustomLobby`), and the open public matches, each with **Join**.
 
 **Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). A default `Widget` (1000 × 700) titled Modes. Play solo and Custom lobby are purple `Event` buttons side by side, as modes are; the window has no one next step, so no yellow. Open matches are purple event cards (a picture, mode, the map in green, players and timer) with a blue Join, under a "Public matches" heading; the list scrolls.

@@ -29,36 +29,68 @@ local _gui = {
 				Control = "Box",
 				Id = "U_Turn",
 				Screen = true,
-				-- Smaller on phones and tablets, so the tutorial hint fits under it
-				Style = { "Hud", PlatformScale = { Utils_MobileScale = 0.6 } },
+				-- A little smaller on phones and tablets, so the kill feed fits beside it; its wind text stays 15 px on a phone
+				Style = { "Hud", PlatformScale = { Utils_MobileScale = 0.7 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0),
 					Position = UDim2.fromScale(0.5, 0.011),
 					Size = UDim2.fromOffset(480, 0),
 				},
 				Children = {
+					-- "Your turn!" on the player's own turn; on other worms' turns "Bax's turn", in their team colour
 					{ Control = "Label", Id = "S_Banner", Text = "Your turn!", Align = "Center", Style = "Title" },
+					-- On other worms' turns: how long until the player's own ("You're next!", "Your turn in 3 turns")
+					{
+						Control = "Label",
+						Id = "S_Wait",
+						Text = "Your turn in 3 turns",
+						Align = "Center",
+						Visible = false,
+						Style = "Heading",
+					},
 					{
 						Control = "Stack",
 						Direction = "Horizontal",
 						Align = "Center",
 						Style = "Loose",
 						Children = {
-							{ Control = "Label", Id = "S_Timer", Text = "15", Style = "Display" },
-							-- Points the way the wind blows (rotated by code)
-							{ Control = "Picture", Id = "S_WindArrow", Image = "chevron-small-right", Style = "Glyph" },
-							{ Control = "Label", Id = "S_Wind", Text = "Wind 4", Style = "Heading" },
+							-- The turn's seconds, by a stopwatch
+							{
+								Control = "Stack",
+								Direction = "Horizontal",
+								Align = "Center",
+								Style = "Tight",
+								Children = {
+									{ Control = "Picture", Image = "wb-clock", Style = "Icon" },
+									{ Control = "Label", Id = "S_Timer", Text = "15", Style = "Display" },
+								},
+							},
+							-- The wind: gusts, the way it blows (the arrow, rotated by code) and its strength 0 to 10
+							{
+								Control = "Stack",
+								Direction = "Horizontal",
+								Align = "Center",
+								Style = "Tight",
+								Children = {
+									{ Control = "Picture", Image = "wb-wind", Style = "Icon" },
+									{ Control = "Picture", Id = "S_WindArrow", Image = "chevron-small-right", Style = "Glyph" },
+									{ Control = "Label", Id = "S_Wind", Text = "10", Style = "Heading" },
+								},
+							},
 						},
 					},
 				},
 			},
-			-- Top right, under the top bar: a line per knockout (PREFAB | FeedLine)
+			-- Top right, under the top bar: a line per knockout (PREFAB | FeedLine); narrower on phones and tablets, beside the turn panel
 			{
 				Control = "Cells",
 				Id = "U_KillFeed",
 				Scroll = false,
 				Style = "Fixed",
-				Tags = { Utils_PlatformScale = { Utils_DesktopScale = 0.75, Utils_MobileScale = 0.8, Utils_ConsoleScale = 1, Utils_VRScale = 1 } },
+				Tags = {
+					Utils_PlatformScale = { Utils_DesktopScale = 0.75, Utils_MobileScale = 1, Utils_ConsoleScale = 1, Utils_VRScale = 1 },
+					Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(440, 320) },
+				},
 				Props = {
 					AnchorPoint = Vector2.new(1, 0),
 					Position = UDim2.fromScale(0.9875, 0.067),
@@ -71,7 +103,10 @@ local _gui = {
 
 			--%%%%%%%%%%%%%%%%%%%% Bottom
 
-			-- The player's loadout: one box per slot (PREFAB | BarSlot); 1–5, a tap, or LB / RB pick one
+			--[[
+				The player's loadout: one box per slot (PREFAB | BarSlot); 1–5, a tap, or LB / RB pick one. Stamina and the
+				shot's power sit in a row on top of the slots, inside the same block, so they hug the bar on every screen
+			]]
 			{
 				Control = "Box",
 				Id = "U_LoadoutBar",
@@ -83,6 +118,35 @@ local _gui = {
 					Size = UDim2.fromOffset(720, 0),
 				},
 				Children = {
+					{
+						Control = "Stack",
+						Direction = "Horizontal",
+						Fill = true,
+						Style = "Loose",
+						Children = {
+							-- On the player's turn: how far the worm can still walk
+							{
+								Control = "Stack",
+								Id = "U_Stamina",
+								Style = "None",
+								Children = {
+									{ Control = "Progress", Id = "S_Bar", Text = "Stamina", Value = 0.7, Style = "Stamina" },
+								},
+							},
+							-- While aiming: the shot's power, then its angle (sized for "-90°")
+							{
+								Control = "Stack",
+								Id = "U_Power",
+								Direction = "Horizontal",
+								Align = "Center",
+								Style = "Tight",
+								Children = {
+									{ Control = "Progress", Id = "S_Bar", Text = "Power", Value = 0.6, Grow = 1, Style = "Power" },
+									{ Control = "Label", Id = "S_Angle", Text = "-90°", Style = "Heading" },
+								},
+							},
+						},
+					},
 					{
 						Control = "Stack",
 						Direction = "Horizontal",
@@ -116,47 +180,19 @@ local _gui = {
 					},
 				},
 			},
-			-- Above the loadout bar: stamina on the player's turn, and the smiley that opens the emote wheel
-			{
-				Control = "Box",
-				Id = "U_Stamina",
-				Screen = true,
-				Style = "Hud",
-				Props = {
-					AnchorPoint = Vector2.new(0.5, 1),
-					-- High enough to clear the bar on a phone, where panels are biggest for the screen
-					Position = UDim2.fromScale(0.5, 0.79),
-					Size = UDim2.fromOffset(420, 0),
-				},
-				Children = {
-					{ Control = "Progress", Id = "S_Bar", Text = "Stamina", Value = 0.7, Style = "Stamina" },
-				},
-			},
+			-- Right of the bar, clear of Jump on a phone: the smiley that opens the emote wheel
 			{
 				Control = "Item",
 				Id = "U_EmoteButton",
 				Image = "wb-smiley",
 				Screen = true,
 				Style = "Small",
-				Props = { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.21, 0.978) },
+				Props = { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.81, 0.978) },
 			},
-			-- Bottom right: the shot's power and angle while aiming
-			{
-				Control = "Box",
-				Id = "U_Power",
-				Screen = true,
-				Style = "Hud",
-				Props = {
-					AnchorPoint = Vector2.new(1, 1),
-					Position = UDim2.fromScale(0.9875, 0.978),
-					Size = UDim2.fromOffset(320, 0),
-				},
-				Children = {
-					{ Control = "Progress", Id = "S_Bar", Text = "Power", Value = 0.6, Style = "Power" },
-					{ Control = "Label", Id = "S_Angle", Text = "Angle 45°", Align = "Center", Style = "Heading" },
-				},
-			},
-			-- Phones and tablets: walk and jump buttons (aiming is a drag), each scaled with the screen
+			--[[
+				Phones and tablets: walk buttons in the bottom-left corner and Jump in the bottom-right (aiming is a press and hold), on
+				the bar's line, each scaled with the screen
+			]]
 			{
 				Primitive = "Frame",
 				Id = "U_Touch",
@@ -181,7 +217,7 @@ local _gui = {
 						Screen = true,
 						Props = {
 							AnchorPoint = Vector2.new(0, 1),
-							Position = UDim2.fromScale(0.0125, 0.8),
+							Position = UDim2.fromScale(0.0125, 0.978),
 							Size = UDim2.fromOffset(120, 112),
 						},
 					},
@@ -192,7 +228,7 @@ local _gui = {
 						Screen = true,
 						Props = {
 							AnchorPoint = Vector2.new(0, 1),
-							Position = UDim2.fromScale(0.11, 0.8),
+							Position = UDim2.fromScale(0.11, 0.978),
 							Size = UDim2.fromOffset(120, 112),
 						},
 					},
@@ -204,7 +240,7 @@ local _gui = {
 						Screen = true,
 						Props = {
 							AnchorPoint = Vector2.new(1, 1),
-							Position = UDim2.fromScale(0.9875, 0.73),
+							Position = UDim2.fromScale(0.9875, 0.978),
 							Size = UDim2.fromOffset(160, 112),
 						},
 					},
@@ -229,13 +265,13 @@ local _gui = {
 					{ Primitive = "UIScale", Id = "S_ScreenScale" },
 				},
 			},
-			-- The drop phase: everyone picks where to land, all at once
+			-- The drop phase: everyone picks where to land, all at once (sized like the turn panel)
 			{
 				Control = "Box",
 				Id = "U_Drop",
 				Screen = true,
 				Visible = false,
-				Style = { "Hud", PlatformScale = { Utils_MobileScale = 0.6 } },
+				Style = { "Hud", PlatformScale = { Utils_MobileScale = 0.7 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0),
 					Position = UDim2.fromScale(0.5, 0.011),
@@ -321,18 +357,19 @@ local _gui = {
 					Tags = {
 						Utils_HideOnPlatform = { Utils_MobileVisibility = false, Utils_ConsoleVisibility = false },
 					},
-					Props = { Position = UDim2.fromOffset(8, 4) },
+					-- A corner badge: sized by the slot, so it stays inside it
+					Props = { Position = UDim2.fromOffset(8, 4), Size = UDim2.fromScale(0.5, 0.4) },
 				},
 				{
 					Control = "Label",
 					Id = "S_Uses",
-					Text = "×3",
+					Text = "x3",
 					Align = "Right",
 					Style = "Strong",
 					Props = {
 						AnchorPoint = Vector2.new(1, 1),
 						Position = UDim2.new(1, -8, 1, -4),
-						Size = UDim2.fromScale(0.6, 0),
+						Size = UDim2.fromScale(0.6, 0.4),
 					},
 				},
 				-- Covers the slot while it cools down, with the turns left

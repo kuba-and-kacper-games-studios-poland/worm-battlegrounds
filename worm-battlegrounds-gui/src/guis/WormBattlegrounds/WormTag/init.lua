@@ -11,21 +11,26 @@ local _gui = {
 	Name = "WormTag",
 	Kind = "Billboard",
 	Theme = "WormBattlegroundsBrawl",
-	Preview = { Width = 240, Height = 200 },
+	-- The billboard's size at design scale: the tag's own, which code scales with the screen
+	Preview = { Width = 240, Height = 240 },
 
 	--[[ Tree ]]
 
 	Root = {
 		Primitive = "Frame",
 		Id = "U_Tag",
-		Props = { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) },
+		Props = { BackgroundTransparency = 1, Size = UDim2.fromOffset(240, 240) },
 		Children = {
+			-- Set with the billboard's size by ScreenScale, so the tag is as big for the screen as the hud
+			{ Primitive = "UIScale", Id = "S_ScreenScale" },
+			-- Stacks up from the billboard's bottom edge, the health bar nearest the worm
 			{
 				Control = "Stack",
 				Align = "Center",
 				Style = "None",
+				Props = { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1) },
 				Children = {
-					-- Over the worm whose turn it is: a marker and the turn timer
+					-- Over the worm whose turn it is: a marker (the turn's seconds are on the turn panel)
 					{
 						Control = "Stack",
 						Id = "S_Active",
@@ -33,7 +38,6 @@ local _gui = {
 						Align = "Center",
 						Style = "None",
 						Children = {
-							{ Control = "Label", Id = "S_Timer", Text = "15", Style = "Strong" },
 							{ Control = "Picture", Image = "chevron-small-down", Style = "Glyph" },
 						},
 					},
@@ -46,7 +50,7 @@ local _gui = {
 						Align = "Center",
 						Style = { "Small", "Dim" },
 					},
-					-- Health number and bar, in the team's colour; worms start at 200
+					-- Health number (big, centred) and bar, green to yellow to red with health; worms start at 200
 					{ Control = "Progress", Id = "S_Health", Text = "200", Value = 1, Style = "Health" },
 				},
 			},

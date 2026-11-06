@@ -26,9 +26,9 @@ local _gui = {
 		Style = "Large",
 		Children = {
 			{ Control = "Label", Id = "S_Result", Text = "You placed 2nd!", Align = "Center", Style = "Title" },
-			-- Every player's place, in team colours (PREFAB | Placing)
-			{ Control = "Cells", Id = "U_Placings" },
-			-- What the player earned
+			-- Every player's place, in team colours, side by side (PREFAB | Placing)
+			{ Control = "Cells", Id = "U_Placings", Style = "Players" },
+			-- What the player earned, then their match stats
 			{
 				Control = "Box",
 				Id = "U_Earned",
@@ -51,13 +51,6 @@ local _gui = {
 							},
 						},
 					},
-				},
-			},
-			-- The player's match stats
-			{
-				Control = "Box",
-				Id = "U_Stats",
-				Children = {
 					{
 						Control = "Stack",
 						Direction = "Horizontal",
@@ -99,7 +92,7 @@ local _gui = {
 	--[[ Prefabs ]]
 
 	Templates = {
-		-- One player's place, name in their team's colour, and the coins it paid
+		-- One player's card in the lineup: place, avatar, name in their team's colour, and the coins it paid
 		["PREFAB | Placing"] = {
 			Control = "Box",
 			Parent = "U_Placings",
@@ -108,12 +101,13 @@ local _gui = {
 			Children = {
 				{
 					Control = "Stack",
-					Direction = "Horizontal",
+					Align = "Center",
+					Style = "Tight",
 					Children = {
-						{ Control = "Label", Id = "S_Place", Text = "1st", Style = "Heading" },
+						{ Control = "Label", Id = "S_Place", Text = "1st", Align = "Center", Style = "Heading" },
 						{ Control = "Picture", Id = "S_Avatar", Style = "Avatar" },
-						{ Control = "Label", Id = "S_Name", Text = "PlayerName", Grow = 1, Style = "Strong" },
-						{ Control = "Label", Id = "S_Coins", Text = "+60 coins", Style = "Coin" },
+						{ Control = "Label", Id = "S_Name", Text = "PlayerName", Align = "Center", Style = "Strong" },
+						{ Control = "Label", Id = "S_Coins", Text = "+60 coins", Align = "Center", Style = "Coin" },
 					},
 				},
 			},

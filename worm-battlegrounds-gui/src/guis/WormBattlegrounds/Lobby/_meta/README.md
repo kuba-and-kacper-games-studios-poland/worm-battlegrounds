@@ -2,7 +2,7 @@
 
 The lobby's own screen, under every other gui and see-through, so the Lobby module's 3D stage (the player's worm) shows behind it: the game's name at the top, the **Crates** and **Skins** buttons in the top-right corner, and the tutorial's arrow layer.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The name is a `Hero` label in gold, a placeholder until the owner's logo exists (then a picture). Crates and Skins are square `Item` slots under the currency bar; a red `Badge` pill sits on the Crates button's top-right corner. Each group is a frame with its own `S_ScreenScale` (0.75 on Desktop, smaller on Mobile).
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The name is a `Hero` label in gold, a placeholder until the owner's logo exists (then a picture). Crates and Skins are square `Item` slots under the currency bar; a red `Badge` pill sits on the Crates button's top-right corner. Each group is a frame with its own `S_ScreenScale` (0.75 on Desktop, smaller on Mobile: the logo 0.4, so on a 667 × 375 phone it sits between the Party tab and the currency bar; the corner buttons 0.8, at 16.5 % down so they clear the bar).
 
 |  |  |
 | --- | --- |

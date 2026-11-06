@@ -2,7 +2,7 @@
 
 A player's chosen landing spot in the drop phase: their name and a pin, in their colour.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Billboard 240 × 100 (was 200 × 90) for the bigger text.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). 240 × 100 at design scale, scaled with the screen like the hud.
 
 |  |  |
 | --- | --- |
@@ -17,7 +17,7 @@ A player's chosen landing spot in the drop phase: their name and a pin, in their
 
 | Element | Control | What game code does with it |
 | --- | --- | --- |
-| `U_Marker` | Frame | Fills the billboard |
+| `U_Marker` | Frame | 240 × 100, the billboard's design size. Has `S_ScreenScale` (set with the billboard's size, below) |
 | `U_Marker` › `S_Name` | Label (`Strong`) | The player's name, in their colour |
 | `U_Marker` › `S_Pin` | Picture (`Glyph`) | Tinted in their colour |
 
@@ -29,7 +29,7 @@ The game's `Match` module clones one per player during the drop.
 
 ### Setup
 
-Export it with the Gui tool: a BillboardGui named `DropMarker` in StarterGui. Its module moves it where it keeps templates and clones it onto parts; the clone's `Size` and `StudsOffset` are set by that code (the preview uses 200 × 90 px).
+Export it with the Gui tool: a BillboardGui named `DropMarker` in StarterGui. Its module moves it where it keeps templates and clones it onto parts; the clone's `StudsOffset` is set by that code, and the game's ScreenScale module sizes the clone to the screen: it sets `S_ScreenScale` to the screen's scale (height / 1080, width / 1920 on screens narrower than 16:9, ×1.3 on Mobile screens shorter than 500 px, never under 0.6 on other devices; no device scale) and the billboard's `Size` to the root's design size times it. The Gui tool previews it at 240 × 100 (`Preview`).
 
 ### Input
 

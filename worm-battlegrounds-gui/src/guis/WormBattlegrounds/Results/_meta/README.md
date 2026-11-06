@@ -2,7 +2,7 @@
 
 The end of a match: every player's place in team colours, what the player earned (coins, XP, level up), their match stats, **Rematch** (votes and time left) and **Back to lobby**. It has no close button and can't be closed.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Every placing is a slate card (people get cards); Rematch is the one yellow, Back to lobby blue.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The placings are a lineup of tall slate cards side by side (the `Players` cells, people get cards): four fit across at 16:9, and a list that doesn't fit scrolls. The earnings and the match stats share one box under it. Rematch is the one yellow, Back to lobby blue.
 
 |  |  |
 | --- | --- |
@@ -17,9 +17,8 @@ The end of a match: every player's place in team colours, what the player earned
 | Element | Control | What game code does with it |
 | --- | --- | --- |
 | `U_Widget` › `S_Result` | Label (`Title`) | "You placed 2nd!" |
-| `U_Placings` | Cells | Holds one `Placing` per player |
-| `U_Earned` | Box | `S_Coins`, `S_Xp`, `S_LevelUp` (hidden until a level up) |
-| `U_Stats` | Box | `S_Damage`, `S_Knockouts`, `S_BestShot` |
+| `U_Placings` | Cells (`Players`) | Holds one `Placing` per player |
+| `U_Earned` | Box | `S_Coins`, `S_Xp`, `S_LevelUp` (hidden until a level up) on one line; the match stats `S_Damage`, `S_Knockouts`, `S_BestShot` on the next |
 | `U_Widget` › `S_Rematch` | Button (`Primary`) | Votes for a rematch; its text shows votes and time left |
 | `U_Widget` › `S_Lobby` | Button | Back to the lobby |
 
@@ -27,7 +26,7 @@ The end of a match: every player's place in team colours, what the player earned
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | Placing` | `U_Placings` | `S_Place`, `S_Avatar`, `S_Name` (team colour), `S_Coins` |
+| `PREFAB | Placing` | `U_Placings` | A tall card, centred top to bottom: `S_Place`, `S_Avatar`, `S_Name` (team colour), `S_Coins` |
 
 ## Driven by
 
@@ -46,7 +45,7 @@ The game's `MatchHud` module opens it with `I.WidgetManager.Open("Results")` whe
 
 ### Setup
 
-Export it with the Gui tool: a ScreenGui named `Results`. Then set the attribute `PreventClosing = true` on the exported ScreenGui (a gui table can't hold it): WidgetManager then opens nothing over it. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
+Export it with the Gui tool: a ScreenGui named `Results`. Then set the attribute `PreventClosing = true` on the exported ScreenGui (a gui table can't hold it): WidgetManager then opens nothing over it. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
 
 ### Input
 

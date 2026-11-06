@@ -1,5 +1,9 @@
 # SoloSetup
 
+**Unused since 2026-11-06:** the lobby's MatchBoard panel shows the public matches and the solo setup itself, and no
+code or button opens this gui any more. It stays until the owner says to remove it (the gui folder and its export in
+StarterGui).
+
 **Play solo**: a 1v1 against a bot. The player picks Easy, Medium or Hard (each with the coins a win pays) and presses **Start**.
 
 **Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The difficulties are slots with the bot's picture and the pay in the coins' colour (`Item` `Difficulty`), not rarity tiles; Start is the one yellow.
@@ -27,7 +31,7 @@ The game's `MatchBoard` module draws it on `WidgetManager_Opened` with `SoloSetu
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `SoloSetup`, `Enabled` off. WidgetManager opens it (a button's `Interact_Button` with `Interact_Function = "Toggle"`, `Interact_Arg1 = "SoloSetup"`, or `I.WidgetManager.Open("SoloSetup")`), and the module that fills it draws it on `WidgetManager_Opened`. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `SoloSetup`, `Enabled` off. WidgetManager opens it (a button's `Interact_Button` with `Interact_Function = "Toggle"`, `Interact_Arg1 = "SoloSetup"`, or `I.WidgetManager.Open("SoloSetup")`), and the module that fills it draws it on `WidgetManager_Opened`. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
 
 ### Input
 

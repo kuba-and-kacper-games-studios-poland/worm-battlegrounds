@@ -53,6 +53,11 @@ function Module.Build(node, style, ctx)
 		ctx.Tag(handle.Instance, { Utils_PlatformScale = style.PlatformScale })
 	end
 
+	-- A title the game writes later stays in capitals too (its TextCase_Upper component)
+	if node.Title and style.TitleUpper then
+		ctx.Tag(handle.Instance:FindFirstChild("Title", true), { TextCase_Upper = {} })
+	end
+
 	--[[ Returning ]]
 
 	return handle

@@ -11,6 +11,7 @@ local _gui = {
 	Name = "DropMarker",
 	Kind = "Billboard",
 	Theme = "WormBattlegroundsBrawl",
+	-- The billboard's size at design scale, scaled with the screen by code
 	Preview = { Width = 240, Height = 100 },
 
 	--[[ Tree ]]
@@ -18,8 +19,10 @@ local _gui = {
 	Root = {
 		Primitive = "Frame",
 		Id = "U_Marker",
-		Props = { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) },
+		Props = { BackgroundTransparency = 1, Size = UDim2.fromOffset(240, 100) },
 		Children = {
+			-- Set with the billboard's size by ScreenScale
+			{ Primitive = "UIScale", Id = "S_ScreenScale" },
 			{
 				Control = "Stack",
 				Align = "Center",

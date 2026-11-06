@@ -10,52 +10,109 @@ local _gui = {
 	-- The MatchBoard module turns it on, on the Lobby map, as I.UserInterface.UI["MatchBoard"]
 	Name = "MatchBoard",
 	Theme = "WormBattlegroundsBrawl",
-	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
+	Screen = { DisplayOrder = -1, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
 
 	--[[ Tree ]]
 
 	--[[
-		Bottom centre: U_Play (Play, the quick match, and Modes for the rest) until the player joins a public match, then
-		U_WaitingRoom in its place
+		One panel at the bottom, just right of the centre so it clears the Loadout card on 4:3 screens and phones, showing
+		one of three things in the same spot: U_Play (welcome, Play solo, the public matches), U_Setup (the solo or party
+		match's bots), or U_WaitingRoom once the player joins a public match
 	]]
 	Root = {
 		Primitive = "Folder",
 		Children = {
 			{
-				Primitive = "Frame",
+				Control = "Box",
 				Id = "U_Play",
-				Tags = { Utils_PlatformScale = { Utils_DesktopScale = 0.75, Utils_MobileScale = 0.9, Utils_ConsoleScale = 1, Utils_VRScale = 1 } },
+				Screen = true,
+				-- On phones and tablets: shorter, its list scrolling instead, and drawn at 0.9
+				Style = { "Panel", "Fixed", PlatformScale = { Utils_MobileScale = 0.9 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 1),
-					BackgroundTransparency = 1,
-					Position = UDim2.fromScale(0.5, 0.978),
-					Size = UDim2.fromOffset(760, 144),
+					Position = UDim2.fromScale(0.55, 0.978),
+					Size = UDim2.fromOffset(800, 700),
 				},
 				Children = {
-					{ Primitive = "UIScale", Id = "S_ScreenScale" },
+					{ Control = "Label", Id = "S_Welcome", Text = "Welcome, PlayerName", Align = "Center", Style = "Dim" },
 					{
 						Control = "Stack",
 						Direction = "Horizontal",
 						Style = "Buttons",
 						Children = {
-							-- The quick match: joins the open public match closest to starting
-							{ Control = "Button", Id = "S_Quick", Text = "Play", Grow = 1, Style = { "Primary", "Hero" } },
-							-- Opens PlayModes: solo against a bot, the public matches, a custom lobby
+							-- The panel's next step; in a party its leader's reads "Play with party"
+							{ Control = "Button", Id = "S_Solo", Text = "Play solo", Grow = 1, Style = { "Primary", "Large" } },
 							{
 								Control = "Button",
-								Id = "S_Modes",
-								Text = "Modes",
+								Id = "S_Custom",
+								Text = "Custom",
 								AutoWidth = true,
-								Style = "Hero",
+								Style = "Large",
 								Tags = {
 									Interact_Button = {
 										Interact_ModuleName = "WidgetManager",
 										Interact_Function = "Toggle",
-										Interact_Arg1 = "PlayModes",
+										Interact_Arg1 = "CustomLobby",
 									},
 								},
 							},
 						},
+					},
+					{ Control = "Label", Text = "Public matches", Align = "Center", Style = { "Heading", "Accent" } },
+					-- One open public match per mode, two a row (PREFAB | Row), refreshed as they start
+					{ Control = "Cells", Id = "U_Rows", Style = "Matches" },
+				},
+			},
+			-- Before a solo or party match: the bots, what they mean, the coins, Start
+			{
+				Control = "Box",
+				Id = "U_Setup",
+				Screen = true,
+				Visible = false,
+				Style = { "Panel", "Fixed", PlatformScale = { Utils_MobileScale = 0.9 } },
+				Props = {
+					AnchorPoint = Vector2.new(0.5, 1),
+					Position = UDim2.fromScale(0.55, 0.978),
+					Size = UDim2.fromOffset(800, 660),
+				},
+				Children = {
+					{
+						Control = "Stack",
+						Direction = "Horizontal",
+						Children = {
+							{ Control = "Label", Id = "S_Title", Text = "Play solo", Grow = 1, Style = "Title" },
+							{
+								Control = "Button",
+								Id = "S_Back",
+								Text = "Back",
+								AutoWidth = true,
+								Style = { "Danger", "Small" },
+								Tags = { Utils_ButtonKey = { Utils_GamepadKey = "ButtonB" } },
+							},
+						},
+					},
+					{ Control = "Label", Text = "Bots", Style = "Heading" },
+					-- The bots' difficulty; the picked one wears the kit's selected skin. No bots only shows in a party
+					{
+						Control = "Stack",
+						Direction = "Horizontal",
+						Fill = true,
+						Style = "Buttons",
+						Children = {
+							{ Control = "Button", Id = "S_None", Text = "No bots", Style = "Tab" },
+							{ Control = "Button", Id = "S_Easy", Text = "Easy", Style = "Tab" },
+							{ Control = "Button", Id = "S_Medium", Text = "Medium", Style = "Tab" },
+							{ Control = "Button", Id = "S_Hard", Text = "Hard", Style = "Tab" },
+						},
+					},
+					{ Control = "Label", Id = "S_Description", Text = "Bots that hit more than half their shots.", Align = "Center", Style = "Dim" },
+					{ Control = "Label", Id = "S_Reward", Text = "Win: 35 coins", Align = "Center", Style = "Price" },
+					{
+						Control = "Button",
+						Id = "S_Start",
+						Text = "Start",
+						Style = { "Primary", "Large" },
+						Tags = { Utils_ButtonKey = { Utils_GamepadKey = "ButtonA" } },
 					},
 				},
 			},
@@ -70,7 +127,7 @@ local _gui = {
 				Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(560, 600) } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 1),
-					Position = UDim2.fromScale(0.5, 0.978),
+					Position = UDim2.fromScale(0.55, 0.978),
 					Size = UDim2.fromOffset(720, 860),
 				},
 				Children = {
@@ -110,6 +167,40 @@ local _gui = {
 	--[[ Prefabs ]]
 
 	Templates = {
+		--[[
+			One open public match on a purple card, as modes are: the mode, its players and timer, then Join, blue since
+			a list of matches has no one next step
+		]]
+		["PREFAB | Row"] = {
+			Control = "Box",
+			Parent = "U_Rows",
+			Style = { "Card", "Event" },
+			Children = {
+				{
+					Control = "Stack",
+					Direction = "Horizontal",
+					Children = {
+						{
+							Control = "Stack",
+							Grow = 1,
+							Style = "None",
+							Children = {
+								{ Control = "Label", Id = "S_Mode", Text = "Deathmatch", Style = "Strong" },
+								{
+									Control = "Stack",
+									Direction = "Horizontal",
+									Children = {
+										{ Control = "Label", Id = "S_Players", Text = "3 / 6", Style = "Small" },
+										{ Control = "Label", Id = "S_Timer", Text = "0:30", Style = { "Small", "Warning" } },
+									},
+								},
+							},
+						},
+						{ Control = "Button", Id = "S_Join", Text = "Join", AutoWidth = true },
+					},
+				},
+			},
+		},
 		-- One player in the waiting room
 		["PREFAB | PlayerName"] = {
 			Control = "Stack",

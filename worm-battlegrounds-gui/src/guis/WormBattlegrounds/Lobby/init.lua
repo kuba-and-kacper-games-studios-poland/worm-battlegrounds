@@ -18,11 +18,14 @@ local _gui = {
 	Root = {
 		Primitive = "Folder",
 		Children = {
-			-- Top centre: the game's name (shortcut: text in the kit's font until the owner's logo exists, then a picture)
+			--[[
+				Top centre: the game's name (shortcut: text in the kit's font until the owner's logo exists, then a
+				picture); on phones and tablets small enough to sit between the Party tab and the coin bar
+			]]
 			{
 				Primitive = "Frame",
 				Id = "U_Logo",
-				Tags = { Utils_PlatformScale = { Utils_DesktopScale = 0.75, Utils_MobileScale = 0.7, Utils_ConsoleScale = 1, Utils_VRScale = 1 } },
+				Tags = { Utils_PlatformScale = { Utils_DesktopScale = 0.75, Utils_MobileScale = 0.4, Utils_ConsoleScale = 1, Utils_VRScale = 1 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0),
 					BackgroundTransparency = 1,
@@ -34,7 +37,7 @@ local _gui = {
 					{ Control = "Label", Text = "Worm Battlegrounds", Align = "Center", Style = { "Hero", "Gold" } },
 				},
 			},
-			-- Top right, under the currency bar: Crates and Skins, each opening its window
+			-- Top right, under the currency bar (clear of it on phones too): Crates and Skins, each opening its window
 			{
 				Primitive = "Frame",
 				Id = "U_Menu",
@@ -42,7 +45,7 @@ local _gui = {
 				Props = {
 					AnchorPoint = Vector2.new(1, 0),
 					BackgroundTransparency = 1,
-					Position = UDim2.fromScale(0.9875, 0.11),
+					Position = UDim2.fromScale(0.9875, 0.165),
 					Size = UDim2.fromOffset(340, 200),
 				},
 				Children = {

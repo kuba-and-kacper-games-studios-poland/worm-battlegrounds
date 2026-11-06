@@ -108,6 +108,11 @@ function Module.Build(node, style, ctx)
 	local titleStroke: UIStroke = ctx.Stroke(title, style.TitleStroke, style.TitleStrokeThickness)
 	titleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 
+	-- A title the game writes later stays in capitals too (its TextCase_Upper component)
+	if style.TitleUpper then
+		ctx.Tag(title, { TextCase_Upper = {} })
+	end
+
 	-- Closes through WidgetManager (style CloseTags): a click, or B on a gamepad
 	if node.Close ~= false then
 		local close = ctx.Build({ --- @type UmeGui_Handle

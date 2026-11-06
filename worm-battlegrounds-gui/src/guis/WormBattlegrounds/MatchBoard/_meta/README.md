@@ -1,26 +1,35 @@
 # MatchBoard
 
-The lobby's bottom-centre row. Before joining: **Play** (the quick match: joins the open public match closest to starting) and **Modes** (opens `PlayModes`: Play solo, Custom lobby, the public matches). After joining a public match the waiting room takes its place: the match, the countdown, the players, **Vote to start** and **Leave match**.
+The lobby's one panel, laid out like RoWorld's: a welcome line, **Play solo** with **Custom** beside it, and the public matches as cards, two a row (Deathmatch, Duos, Trios, Quads), each with its players, timer and **Join**. In the same spot it shows the setup for a solo or party match (the bots' difficulty, what it means, what it pays, **Start**) or, after joining a public match, the waiting room: the match, the countdown, the players, **Vote to start** and **Leave match**.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Play is the yellow `Hero` button, the screen's one main button; Modes beside it is blue, as other actions are. The row has no panel behind it, so the lobby's stage shows around it: a 760 × 144 frame with its own `S_ScreenScale`, hanging from the bottom centre (0.75 on Desktop, 0.9 on Mobile). The waiting room is a 720 × 860 panel in the same spot (560 × 600 at scale 0.9 on phones and tablets).
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Every panel is a `Box` `Panel` hanging from the bottom at 55 % across (0.75 on Desktop, 0.9 on Mobile): `U_Play` 800 × 700, `U_Setup` 800 × 660, `U_WaitingRoom` 720 × 860 (560 × 600 on phones and tablets). Play solo and Start are the panels' yellow; the match cards are purple, as modes are (`Box` `Card`, `Event`), in the theme's `Matches` grid (344 × 152 cells); Join and Custom are blue; the difficulties are slate `Tab` buttons that turn blue when picked. Titles, buttons and the countdown are capitals, whatever the code writes.
 
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/MatchBoard"` |
 | Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
-| Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
-| Export | A ScreenGui named `MatchBoard`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` |
+| Devices | Desktop at 0.75 of the kit's size, Mobile at 0.9, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
+| Export | A ScreenGui named `MatchBoard`: `Enabled` off, `DisplayOrder` -1 (under Party, so its opened panel covers it on phones), `ScreenInsets` `DeviceSafeInsets` |
 
 ## Elements
 
 | Element | Control | What game code does with it |
 | --- | --- | --- |
-| `U_Play` | Frame | The Play row; hidden while the player waits in a match. Has `S_ScreenScale` |
-| `U_Play` › `S_Quick` | Button (`Primary`, `Hero`) | Joins the open public match closest to starting |
-| `U_Play` › `S_Modes` | Button (`Hero`) | Opens `PlayModes` (its tags) |
+| `U_Play` | Box (`Panel`, `Fixed`) | The board; hidden while the setup or the waiting room shows. Has `S_ScreenScale` |
+| `U_Play` › `S_Welcome` | Label (`Dim`) | "Welcome, DisplayName" |
+| `U_Play` › `S_Solo` | Button (`Primary`, `Large`) | Opens the setup; reads "Play with party" in a party |
+| `U_Play` › `S_Custom` | Button (`Large`) | Opens `CustomLobby` (its tags) |
+| `U_Rows` | Cells (`Matches`) | Holds one `Row` per public match |
+| `U_Setup` | Box (`Panel`, `Fixed`) | The solo or party setup, hidden until Play solo. Has `S_ScreenScale` |
+| `U_Setup` › `S_Title` | Label (`Title`) | "Play solo" or "Play with party" |
+| `U_Setup` › `S_Back` | Button (`Danger`, `Small`) | Back to the board |
+| `U_Setup` › `S_None`, `S_Easy`, `S_Medium`, `S_Hard` | Button (`Tab`) | The bots; the picked one's `Face` takes `Kit_SelectedImage`. `S_None` (No bots) shows only in a party |
+| `U_Setup` › `S_Description` | Label (`Dim`) | What the picked bots are like |
+| `U_Setup` › `S_Reward` | Label (`Price`) | What the match pays |
+| `U_Setup` › `S_Start` | Button (`Primary`, `Large`) | Starts the match |
 | `U_WaitingRoom` | Box (`Panel`, `Fixed`) | The waiting room, hidden until the player joins. Has `S_ScreenScale` |
-| `U_WaitingRoom` › `S_Match` | Label (`Title`) | "Duo team deathmatch • Map name" |
+| `U_WaitingRoom` › `S_Match` | Label (`Title`) | "Trios • Map name" |
 | `U_WaitingRoom` › `S_Countdown` | Label (`Heading`) | "Match starts in 0:29" |
 | `U_WaitingRoom` › `S_Count` | Label (`Dim`) | "5 / 8 players" |
 | `U_Players` | Cells | Holds one `PlayerName` per joined player |
@@ -31,37 +40,41 @@ The lobby's bottom-centre row. Before joining: **Play** (the quick match: joins 
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
+| `PREFAB | Row` | `U_Rows` | `S_Mode`, `S_Players`, `S_Timer`, `S_Join` |
 | `PREFAB | PlayerName` | `U_Players` | `S_Avatar`, `S_Name` |
 
 ## Driven by
 
-The game's `MatchBoard` module: the quick match on `S_Quick`, and swapping `U_Play` for `U_WaitingRoom` when the player joins. The `Lobby` module turns the ScreenGui on outside matches.
+The game's `MatchBoard` module (`Board` and `Setup` handlers): the cards, Play solo, the setup and swapping the panels. The `Lobby` module turns the ScreenGui on outside matches.
 
 ## Preview
 
-`Preview.lua` (`UmeGui_Guis_WormBattlegrounds_MatchBoard_Preview`) fills example players and scales the panels to the screen.
+`Preview.lua` (`UmeGui_Guis_WormBattlegrounds_MatchBoard_Preview`) fills the four match cards and example players and scales the panels to the screen.
 
 | Setting | What it does |
 | --- | --- |
-| `S_Joined` (Toggle) | Shows the waiting room in place of the play panel |
+| `S_Panel` (Dropdown) | Shows the board, the setup or the waiting room |
+| `S_Party` (Toggle) | Play with party: the button and title, and No bots |
 | `S_Players` (Slider, 1 to 8) | Players in the waiting room |
 
 ## Integration
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchBoard`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchBoard`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
 
 ### Input
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Open Modes | Click | Tap | Select and A | `S_Modes` tags (`Interact_Button` → WidgetManager `Toggle`) |
-| Play, Vote, Leave | Click | Tap | Select and A | MatchBoard connects `S_Quick`, `S_Vote`, `S_Leave` |
+| Open Custom | Click | Tap | Select and A | `S_Custom` tags (`Interact_Button` → WidgetManager `Toggle`) |
+| Play solo, Join, a difficulty, Vote, Leave | Click | Tap | Select and A | MatchBoard connects them |
+| Start | Click | Tap | A (Cross) | `S_Start` tags (`Utils_ButtonKey`); MatchBoard connects it |
+| Back | Click | Tap | B (Circle) | `S_Back` tags (`Utils_ButtonKey`); MatchBoard connects it |
 
 ### Looks
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
-| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | Buttons | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
+| Picked difficulty | `S_None` … `S_Hard` › `Face` | `Kit_SelectedImage` (blue) when picked, else `Kit_Image` (slate) |
