@@ -27,10 +27,10 @@ by their size and how close they are to the view, and a hit on the player's own 
 | `Scripts/Server/Blast.lua` | Explosions: craters, damage, knockback |
 | `Scripts/Server/Behaviors/*.lua` | One file per `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee) and the Spider Bomb's snails |
 | `Global.lua` | Launch velocity, wind and arc prediction, shared with the aim dots and bots |
-| `Client.lua` | Starts the client handlers |
+| `Client.lua` | Starts the client handlers; `I.Combat` on the client (`SetAim`, `GetMuzzle`) |
 | `Scripts/Client/Effects.lua` | Blasts (flash, fireball, light, fire, sparks and smoke particles, chunks of the ground that bounce on the terrain in the `Chip` collision group, then fade), tracers with a flash where they land, the camera shake and the haptics (`Combat_BlastBig`, `Combat_BlastSmall`, `Combat_Hurt` in `src/global_data/Haptic/Preset.lua`). Placeholders until the studio's effects exist |
-| `Scripts/Client/Flight.lua` | Shots in flight drawn as their weapon's model (`GetProjectileModel`) over the hidden placeholder part: rockets and missiles along their flight, thrown and rolled weapons turning with the part, the spider bomb upright facing its crawl. Bomblets, snails and weapons without a model keep the placeholder |
-| `Scripts/Client/Held.lua` | The active worm's held weapon: a copy of its model in `Workspace.Ume.Combat`, on the camera's side, turned to its aim |
+| `Scripts/Client/Flight.lua` | Shots in flight drawn as their weapon's model (`GetProjectileModel`) over the hidden placeholder part: rockets and missiles along their flight, thrown and rolled weapons turning with the part, the spider bomb upright facing its crawl, the Variety grenade's snails (`Projectiles/Snail`) upright with their face to the camera. Bomblets and weapons without a model keep the placeholder |
+| `Scripts/Client/Held.lua` | The active worm's held weapon: a copy of its model in `Workspace.Ume.Combat`, on the camera's side, turned to the aim this screen draws (MatchHud's crosshair, at once) or else to the worm's replicated aim |
 | `Settings.lua` | `Combat_Settings` |
 
 ## API
@@ -48,6 +48,13 @@ by their size and how close they are to the view, and a hit on the player's own 
 | `CanUse(participantId, itemId)` | `boolean` | Uses left and no cooldown |
 | `GetUses(participantId, itemId)` | `number` | Uses left (−1 unlimited) |
 | `IsIdle()` | `boolean` | No shot is still moving |
+
+### Client: `I.Combat`
+
+| Function | Returns | What it does |
+| --- | --- | --- |
+| `SetAim(angle?)` | | Points the held weapon along the aim this screen draws, at once (MatchHud's crosshair, every frame it draws); nil hands it back to the worm's replicated aim |
+| `GetMuzzle()` | `Vector3?` | Where the held weapon's shot leaves it: its `Muzzle` attachment (Arsenal's README), nil when nothing is held |
 
 ### Global: `I.G_Combat`
 
@@ -105,6 +112,7 @@ by their size and how close they are to the view, and a hit on the player's own 
 | --- | --- | --- |
 | `WIND_ACCEL` | `3` | Wind's push at full strength |
 | `MUZZLE_GAP`, `SHOOTER_GRACE` | `0.8`, `0.25` | Where a shot starts, and how long it ignores its shooter |
+| `CHARGE_SECONDS` | `1.6` | How long a held fire button takes to charge a shot from none to full power, and back down again; MatchHud and Bots read it |
 | `MAX_PROJECTILE_TIME` | `12` | A shot still moving after this is removed |
 | `UPWARD_BIAS`, `KNOCKBACK_EDGE` | `0.5`, `0.5` | Knockback's lift, and its share at a blast's edge |
 | `BULLET_CARVE`, `BULLET_KNOCK_SHARE` | `0.75`, `0.25` | Gun bullets' crater size and knockback share |

@@ -162,14 +162,17 @@ end
 --%%%%%%%%%%%%%%%%%%%% Show Aim
 
 --[[
-	Holds the weapon and swings the bot's aim from level toward its shot over AIM_TIME, shown to every player like a
-	player's aim. Returns whether it's still the bot's turn at the end.
+	Holds the weapon, swings the bot's crosshair from level to its shot over AIM_TIME, then charges its power from none
+	to the shot's over the time a player's held button would take (Combat's CHARGE_SECONDS), shown to every player like
+	a player's aim. Guns and melee weapons fire without charging. Returns whether it's still the bot's turn at the end.
 ]]
 --- @return boolean
 function Module._showAim(participantId: string, itemId: string, angle: number, power: number)
 	--[[ Local Variables ]]
 
 	local startAngle: number = if math.cos(angle) < 0 then math.pi else 0
+	local aim: string = I.G_Arsenal.Get(itemId).Aim
+	local chargeTime: number = if aim == "Straight" or aim == "Melee" then 0 else power * I.Settings["Combat"].CHARGE_SECONDS
 	local started: number = os.clock()
 
 	--[[ Aiming ]]
@@ -180,10 +183,12 @@ function Module._showAim(participantId: string, itemId: string, angle: number, p
 			return false
 		end
 
-		local progress: number = math.min(1, (os.clock() - started) / _settings.AIM_TIME)
-		local eased: number = 1 - (1 - progress) ^ 3
-		I.Combat.ShowAim(participantId, itemId, startAngle + (angle - startAngle) * eased, _settings.AIM_START_POWER + (power - _settings.AIM_START_POWER) * eased)
-		if progress >= 1 then
+		local elapsed: number = os.clock() - started
+		local turned: number = math.min(1, elapsed / _settings.AIM_TIME)
+		local eased: number = 1 - (1 - turned) ^ 3
+		local charged: number = if chargeTime > 0 then math.clamp((elapsed - _settings.AIM_TIME) / chargeTime, 0, 1) else 1
+		I.Combat.ShowAim(participantId, itemId, startAngle + (angle - startAngle) * eased, if chargeTime > 0 then power * charged else 0)
+		if turned >= 1 and charged >= 1 then
 			break
 		end
 		task.wait(_settings.AIM_STEP)

@@ -1,7 +1,8 @@
 # MatchRewards
 
 Pays players when a match ends: coins by kind, size and place, XP, statistics, then the Results screen. Public
-deathmatch and team matches pay by place; a solo match pays only a win, by the bot's difficulty; custom and tutorial
+deathmatch and team matches pay by place; a solo match pays only a win, by the bot's difficulty; a party match (friends
+only) pays as a public deathmatch of its size, or `PARTY_NO_BOTS_SHARE` of that without bots; custom and tutorial
 matches pay no coins. Against farming, the last two places are paid only after `ANTI_FARM_ROUNDS` rounds or a knockout
 by another player. The Double Coins pass doubles coins. Leavers get nothing.
 
@@ -43,6 +44,7 @@ Writes the `MatchesPlayed`, `Wins`, `Knockouts` and `DamageDealt` statistics, an
 | `TEAM_COINS` | 2 teams: 100, 15 · 3: 100, 50, 15 · 4: 100, 60, 30, 15 | Public team coins by number of teams, then place |
 | `TEAM_2V2_WIN` | `75` | A won 2v2 pays this instead |
 | `SOLO_COINS` | Easy 20, Medium 35, Hard 60 | A solo win |
+| `PARTY_NO_BOTS_SHARE` | `0.5` | The share of a deathmatch's coins a party match without bots pays |
 | `ANTI_FARM_ROUNDS` | `2` | Rounds the last two places must play to be paid |
 | `DOUBLE_COINS_PASS` | `"DoubleCoins"` | The pass that doubles coins |
-| `XP_PER_MATCH`, `XP_KINDS` | `100`; Public, Solo, Custom | XP for a match of those kinds |
+| `XP_PER_MATCH`, `XP_KINDS` | `100`; Public, Solo, Party, Custom | XP for a match of those kinds |

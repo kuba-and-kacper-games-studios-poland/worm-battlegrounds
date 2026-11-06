@@ -44,6 +44,12 @@
 				"$path": "src/other/TagListPlus.model.json"
 			}
 		},
+		"ReplicatedFirst": {
+			"$className": "ReplicatedFirst",
+			"Transition": {
+				"$path": "src/replicated_first/Transition.client.lua"
+			}
+		},
 		"StarterPlayer": {
 			"$className": "StarterPlayer",
 			"StarterPlayerScripts": {

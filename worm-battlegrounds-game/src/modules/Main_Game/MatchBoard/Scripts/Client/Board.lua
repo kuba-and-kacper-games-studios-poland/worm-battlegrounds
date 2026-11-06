@@ -9,6 +9,10 @@ local _localName = "MatchBoard"
 --- @type MatchBoard_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Setup = require(script.Parent:FindFirstChild("Setup")) --- @type MatchBoard_Client_Setup
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local elems = {} --- @type { [string]: Instance }
@@ -19,7 +23,7 @@ local prefabs = {} --- @type { [string]: Instance }
 local moduleGui: ScreenGui
 local boardFolder: Folder
 
--- Each public row's line on the board, by row id
+-- Each public row's card on the board, by row id
 local lines = {} --- @type { [string]: Frame }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -45,8 +49,9 @@ function Module.Start()
 
 	moduleGui = I.UserInterface.UI[_settings.BOARD_GUI_NAME]
 	elems["Play"] = moduleGui:FindFirstChild("U_Play") --- @type Frame
-	elems["Quick"] = elems["Play"]:FindFirstChild("S_Quick", true):FindFirstChild("Button") --- @type ImageButton
-	elems["Rows"] = I.UserInterface.UI[_settings.MODES_GUI_NAME]:FindFirstChild("U_Rows", true) --- @type Frame
+	elems["Welcome"] = elems["Play"]:FindFirstChild("S_Welcome", true) --- @type TextLabel
+	elems["Solo"] = elems["Play"]:FindFirstChild("S_Solo", true) --- @type Frame
+	elems["Rows"] = elems["Play"]:FindFirstChild("U_Rows", true) --- @type ScrollingFrame
 	elems["WaitingRoom"] = moduleGui:FindFirstChild("U_WaitingRoom") --- @type Frame
 	elems["Match"] = elems["WaitingRoom"]:FindFirstChild("S_Match", true) --- @type TextLabel
 	elems["Countdown"] = elems["WaitingRoom"]:FindFirstChild("S_Countdown", true) --- @type TextLabel
@@ -57,6 +62,11 @@ function Module.Start()
 	prefabs["Row"] = elems["Rows"]:FindFirstChild("PREFAB | Row") --- @type Frame
 	prefabs["PlayerName"] = elems["Players"]:FindFirstChild("PREFAB | PlayerName") --- @type Frame
 
+	--[[ Setup ]]
+
+	Setup.Start(moduleGui, Module._refresh)
+	elems["Welcome"].Text = `Welcome, {I.S.Players.LocalPlayer.DisplayName}`
+
 	--[[ Connections ]]
 
 	boardFolder = I.Dirs.UmeReplicated:WaitForChild(_localName)
@@ -65,13 +75,14 @@ function Module.Start()
 	for _index: number, config: Instance in ipairs(boardFolder:GetChildren()) do
 		Module._watchRow(config)
 	end
-	I.Interact.OnPress(elems["Quick"], Module._quickJoin)
+	I.Interact.OnPress(elems["Solo"]:FindFirstChild("Button"), Module._onPlay)
 	I.Interact.OnPress(elems["Vote"], function()
 		I.Network.Fire("MatchBoard_Vote")
 	end)
 	I.Interact.OnPress(elems["Leave"], function()
 		I.Network.Fire("MatchBoard_Leave")
 	end)
+	I.S.Players.LocalPlayer.AttributeChanged:Connect(Module._refresh)
 	I.DoEvery.Every(0.25, Module._tick)
 	Module._refresh()
 end
@@ -81,7 +92,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Row
 
 --[[
-	Adds a line for a public row and redraws the board whenever any row changes.
+	Adds a card for a public row, in PUBLIC_ROWS order, and redraws the board whenever any row changes.
 ]]
 function Module._watchRow(config: Instance)
 	--[[ Data ]]
@@ -96,12 +107,12 @@ function Module._watchRow(config: Instance)
 	if kind == "Public" then
 		local line: Frame = prefabs["Row"]:Clone()
 		line.Name = config.Name
+		line.LayoutOrder = Module._getRowOrder(config:GetAttribute("Mode"))
 		line.Visible = true
 		line.Parent = elems["Rows"]
 		lines[config.Name] = line
 		I.Interact.OnPress(line:FindFirstChild("S_Join", true):FindFirstChild("Button"), function()
 			I.Network.Fire("MatchBoard_Join", config.Name)
-			I.WidgetManager.Close(_settings.MODES_GUI_NAME)
 		end)
 	end
 
@@ -114,7 +125,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Row Removed
 
 --[[
-	Takes a started or closed row's line off the board.
+	Takes a started or closed row's card off the board.
 ]]
 function Module._onRowRemoved(config: Instance)
 	--[[ Removing ]]
@@ -126,50 +137,34 @@ function Module._onRowRemoved(config: Instance)
 	Module._refresh()
 end
 
---%%%%%%%%%%%%%%%%%%%% Quick Join
+--%%%%%%%%%%%%%%%%%%%% On Play
 
 --[[
-	Joins the open public match closest to starting: the one with the most players that still has room, a deathmatch
-	first on a tie, since any party fits it. The server checks the party fits.
+	Play solo opens the setup for a solo match; in a party it sets up the party's match, which only the leader starts.
 ]]
-function Module._quickJoin()
+function Module._onPlay()
 	--[[ Local Variables ]]
 
-	local best: Instance? = nil
-	local bestCount: number = -1
-
-	--[[ Searching ]]
-
-	for rowId: string, _line: Frame in pairs(lines) do
-		local config: Instance? = boardFolder:FindFirstChild(rowId)
-		if not config then
-			continue
-		end
-		local count: number = #Module._getPlayers(config)
-		local deathmatch: boolean = config:GetAttribute("Mode") == "Deathmatch"
-		if count < config:GetAttribute("Size") and (count > bestCount or count == bestCount and deathmatch) then
-			best = config
-			bestCount = count
-		end
-	end
+	local localPlayer: Player = I.S.Players.LocalPlayer
 
 	--[[ Checks ]]
 
-	-- Check if a match has room
-	if not best then
+	-- Check if the player may start their party's match
+	if localPlayer:GetAttribute("PartyId") and not localPlayer:GetAttribute("PartyLeader") then
+		I.WidgetManager.ShowMessage("Only your party's leader can start a match.")
 		return
 	end
 
-	--[[ Joining ]]
+	--[[ Opening ]]
 
-	I.Network.Fire("MatchBoard_Join", best.Name)
+	Setup.Open(localPlayer:GetAttribute("PartyId") ~= nil)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the board: each public row's mode, map, players and join button, or the waiting room of the row the player
-	is in, with everyone in it and the votes.
+	Draws the board: Play solo (Play with party in a party), each public row's mode, players and timer, or the waiting
+	room of the row the player is in, with everyone in it and the votes. The setup panel shows in the board's place.
 ]]
 function Module._refresh()
 	--[[ Lines ]]
@@ -179,31 +174,37 @@ function Module._refresh()
 		if not config then
 			continue
 		end
-		local mapRow = _settings.MAPS[config:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
 		local players = Module._getPlayers(config) --- @type { number }
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
-		line:FindFirstChild("S_Map", true).Text = if mapRow then mapRow.Name else config:GetAttribute("MapId")
 		line:FindFirstChild("S_Players", true).Text = `{#players} / {config:GetAttribute("Size")}`
-		line:FindFirstChild("S_Thumbnail", true).Image = if mapRow then mapRow.Thumbnail else ""
-		line:FindFirstChild("S_Join", true):FindFirstChild("ButtonText", true).Text = if config:GetAttribute("Mode") == "Deathmatch" then "Join" else "Join teams"
 	end
+
+	--[[ Play ]]
+
+	elems["Solo"]:FindFirstChild("ButtonText", true).Text = if I.S.Players.LocalPlayer:GetAttribute("PartyId") then "Play with party" else "Play solo"
+
+	--[[ Panels ]]
+
+	-- Joining a public match closes the setup, which redraws the board again
+	local mine: Instance? = Module._getMyRow()
+	local waiting: boolean = mine ~= nil and mine:GetAttribute("Kind") == "Public"
+	if waiting and Setup.IsOpen() then
+		Setup.Close()
+		return
+	end
+	elems["Play"].Visible = not waiting and not Setup.IsOpen()
+	elems["WaitingRoom"].Visible = waiting
 
 	--[[ Waiting Room ]]
 
-	local mine: Instance? = Module._getMyRow()
-	local waiting: boolean = mine ~= nil and mine:GetAttribute("Kind") == "Public"
-	elems["Play"].Visible = not waiting
-	elems["WaitingRoom"].Visible = waiting
 	if not mine or not waiting then
 		return
 	end
-
 	local mapRow = _settings.MAPS[mine:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
 	local players = Module._getPlayers(mine) --- @type { number }
 	elems["Match"].Text = `{_settings.MODE_NAMES[mine:GetAttribute("Mode")] or mine:GetAttribute("Mode")} • {if mapRow then mapRow.Name else ""}`
 	elems["Count"].Text = `{#players} / {mine:GetAttribute("Size")} players`
 	elems["Vote"]:FindFirstChild("ButtonText", true).Text = `Vote to start  {mine:GetAttribute("Votes")} / {mine:GetAttribute("VotesNeeded")}`
-
 	for _index: number, child: Instance in ipairs(elems["Players"]:GetChildren()) do
 		if child:IsA("Frame") and child ~= prefabs["PlayerName"] then
 			child:Destroy()
@@ -278,6 +279,27 @@ end
 --- @return { number }
 function Module._getPlayers(config: Instance)
 	return I.S.HttpService:JSONDecode(config:GetAttribute("Players") or "[]")
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Row Order
+
+--[[
+	Returns where a public row of a mode sits on the board: its place in PUBLIC_ROWS.
+]]
+--- @return number
+function Module._getRowOrder(mode: string)
+	--[[ Searching ]]
+
+	--- @param option MatchBoard_RowOption
+	for index: number, option in ipairs(_settings.PUBLIC_ROWS) do
+		if option.Mode == mode then
+			return index
+		end
+	end
+
+	--[[ Returning ]]
+
+	return #_settings.PUBLIC_ROWS + 1
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Time

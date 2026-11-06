@@ -53,27 +53,28 @@ end
 --%%%%%%%%%%%%%%%%%%%% Add Shot
 
 --[[
-	A projectile part arrived (named after its weapon): when the weapon has a model, hides the placeholder ball and
-	draws the model in its place until the part is gone. Bomblets and snails keep their placeholders.
+	A projectile part arrived (named after its weapon, or a burst's shot like Snail): when it has a model, hides the
+	placeholder ball and draws the model in its place until the part is gone. Bomblets keep their placeholders.
 ]]
 function Module._addShot(child: Instance)
 	--[[ Checks ]]
 
-	-- Check if it's a projectile of a weapon with a model
-	if not child:IsA("BasePart") or not child:GetAttribute("Projectile") or not I.G_Arsenal.IsWeapon(child.Name) then
+	-- Check if it's a projectile with a model
+	if not child:IsA("BasePart") or not child:GetAttribute("Projectile") then
 		return
 	end
 	local modelId: string = _settings.PROJECTILE_STAND_INS[child.Name] or child.Name
-	if not I.G_Arsenal.HasModel(modelId) then
+	local isWeapon: boolean = I.G_Arsenal.IsWeapon(child.Name)
+	if not (isWeapon and I.G_Arsenal.HasModel(modelId)) and not I.G_Arsenal.HasProjectileModel(modelId) then
 		return
 	end
 
 	--[[ Building ]]
 
 	local model: Model = I.G_Arsenal.GetProjectileModel(modelId):Clone()
-	local row = I.G_Arsenal.Get(child.Name) --- @type Arsenal_WeaponData
+	local row = if isWeapon then I.G_Arsenal.Get(child.Name) else nil --- @type Arsenal_WeaponData?
 	child.LocalTransparencyModifier = 1
-	flying[child] = { Model = model, Kind = row.Kind, Last = child.Position, Facing = if child.AssemblyLinearVelocity.X < 0 then -1 else 1 }
+	flying[child] = { Model = model, Kind = if row then row.Kind else "Shot", Last = child.Position, Facing = if child.AssemblyLinearVelocity.X < 0 then -1 else 1 }
 	Module._place(child, 0)
 	model.Parent = effectsFolder
 
@@ -133,7 +134,8 @@ end
 
 --[[
 	Puts a shot's model on its part: rockets and missiles point along their flight, thrown and rolled weapons tumble
-	with the part, a crawling spider bomb stands upright facing the way it crawls.
+	with the part, a crawling spider bomb stands upright facing the way it crawls, and a burst's shot (a snail) stands
+	upright with its face to the camera.
 ]]
 function Module._place(part: BasePart, deltaTime: number)
 	--[[ Local Variables ]]
@@ -159,6 +161,9 @@ function Module._place(part: BasePart, deltaTime: number)
 			shot.Facing = if moved.X < 0 then -1 else 1
 		end
 		shot.Model:PivotTo(CFrame.lookAlong(position, Vector3.xAxis * shot.Facing, Vector3.yAxis))
+	elseif shot.Kind == "Shot" then
+		-- The model's right side (where a snail's face is) toward the camera, whichever way it moves
+		shot.Model:PivotTo(CFrame.lookAlong(position, Vector3.xAxis, Vector3.yAxis))
 	else
 		-- The part's own turning, from the model's front along +X and its side to the camera, as a worm holds it
 		shot.Model:PivotTo(part.CFrame * CFrame.lookAlong(Vector3.zero, Vector3.xAxis))

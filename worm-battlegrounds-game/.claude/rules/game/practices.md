@@ -8,14 +8,19 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Terrain is authored parts,** built like a hand-made map: long parts for the shapes, smaller ones for details, in
   SmoothPlastic with MaterialService's `2022 Stud` variant. Never Roblox Terrain, and never a grid of cells or
   one-stud blocks.
-- **Blasts carve with CSG:** `GeometryService:SubtractAsync` with a cylinder whose axis runs along Z (through the
-  plane), so craters are smooth and round. `SplitApart` keeps every loose piece its own part; a group of pieces that
-  no longer touches the ground falls and anchors again where it lands.
-- **Ground is what's `Arena_Indestructible`:** each island's waterline blocks. **Floating ledges float:** their
-  parts carry `Arena_Floats`, and a cut-off group of them stays up while it covers `FLOAT_MIN_AREA`; smaller crumbs
-  fall. Never mark a ledge block indestructible to hold it up: it hangs uncut over the craters around it.
+- **Blasts carve voxel craters with CSG:** `GeometryService:SubtractAsync` with a stepped circle running along Z
+  (through the plane): one box per row of the 1-stud squares whose centers are in the blast (`CARVE_CELL`), lined up
+  with the maps' grid, so craters step like voxels, never smooth curves. The terrain stays long parts; only the cut
+  is stepped. `SplitApart` keeps every loose piece its own part; a group of pieces that no longer touches the ground
+  falls and anchors again where it lands.
+- **Ground is bedrock on the floor:** each island's waterline blocks carry `Arena_Indestructible` (a name from before
+  blasts could cut it). Blasts cut bedrock like any terrain, so an island can be blasted down to the water; a bedrock
+  piece holds up what touches it while its bottom still reaches the map's floor (the bottom of its lowest bedrock),
+  and a piece cut loose falls. **Floating ledges float:** their parts carry `Arena_Floats`, and a cut-off group of
+  them stays up while it covers `FLOAT_MIN_AREA`; smaller crumbs fall. Never mark a ledge block as bedrock to hold it
+  up: it isn't on the floor, so it holds nothing.
 - **Props break under blasts:** trees, bushes and rocks in a map's Decor are `Arena_Prop` Models built from parts
-  (never collidable for worms). A blast cuts its hole through them with the same CSG cylinder as the terrain, and
+  (never collidable for worms). A blast cuts its hole through them with the same stepped cutter as the terrain, and
   the pieces no longer joined to the prop's base fly off; a prop whose ground is gone (under its trunk) falls. What
   falls fades out.
 - **Maps are made in MapLab** (the game home's map kit, `assets/_tools/map-kit/`): the land drawn on the 1-stud grid
@@ -41,9 +46,16 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **The active worm holds its weapon on the camera's side** (+Z, in front of its body), turned to its aim, so every
   player sees it; it's drawn by each client from the worm's `HeldItem` (Combat's `Held` handler), never welded on
   the server.
-- **Everyone sees the active worm aim:** its aim line shows on every screen while it aims, players' and bots' alike,
-  from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots take aim visibly before
-  they fire.
+- **Aiming is a crosshair and a held charge, as in Worms:** the crosshair sits a fixed distance from the worm in the
+  aim's direction (it shows the direction only, never the shot's path), and holding the fire button charges the
+  power, drawn as a row of circles from the held weapon's `Muzzle` attachment to the crosshair that light up as it
+  fills. The crosshair and circles keep their size on the screen whatever the zoom, and the screen that draws an aim
+  turns the held weapon with it at once (no wait for the server's copy). Held, the power
+  bounces from none to full and back (Combat's `CHARGE_SECONDS` each way); only letting go fires, never a full charge
+  or the turn running out. Guns and melee weapons fire on the press.
+- **Everyone sees the active worm aim:** its crosshair and power show on every screen through its turn, players' and
+  bots' alike, from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots turn their
+  crosshair, then charge, before they fire.
 - **Blasts are felt, not only seen:** Combat's client `Effects` shakes the camera with ume's CameraShake, on top of
   MatchCamera (which updates at the `Camera` render priority, one step before the shaker), and vibrates phones and
   pads through the Haptic module's `Combat_*` presets (`src/global_data/Haptic/Preset.lua`). How hard comes from the
@@ -94,17 +106,32 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   this).
 - **Text outlines follow the letters:** a UIStroke on text sets `ApplyStrokeMode = Contextual`, since `ctx.Stroke`
   outlines the box.
+- **Capitals stay capitals:** text in a capitals style (headings, titles, buttons, window and box titles) shows in
+  capitals whatever code writes, through the `TextCase_Upper` tag the theme adds and the TextCase module (Utils). Code
+  writes plain sentences ("Your turn in 3 turns"), never its own `string.upper`. A gui whose code writes into
+  capitals text is exported again when the theme's capitals change, so its export carries the tag.
 
 ## Maps and placeholders
 
-- **Two maps in one place:** `Lobby` and `Match` (`core/.../configs/place_loader.lua`). Each loads the `Default`
-  folders (shared by both) plus its own, and its module list leaves out the other map's modules (`MATCH_ONLY`,
-  `LOBBY_ONLY`).
-- **Studio plays the `Studio` map:** both maps' folders and modules on one server, since Studio can't teleport. The
-  lobby hands each match to `I.Match.Host`, and the `InMatch` Player attribute says which half a player is in: every
-  screen, camera and hint that belongs to one half follows it instead of assuming its map. A Workspace attribute
-  `Ume_StudioMapId` (`Lobby` or `Match`) tests one map alone. Studio saves nothing, so a playtest skips the tutorial
-  match and opens on the lobby; the Workspace attribute `StudioTutorial` (true) plays it.
+- **Two places, one file, two maps:** the lobby place (players join it) and the match place, Arena (matches run in
+  its reserved servers), are copies of the same place file, saved and published together, so Roblox's analytics
+  count the lobby and the matches apart. Each boots its own map, `Lobby` or `Match`, by its place id
+  (`core/.../configs/place_loader.lua`: `LOBBY_PLACE_ID`, `MATCH_PLACE_ID`, the same id as MatchBoard's
+  `MATCH_PLACE_ID`). Each map loads the `Default` folders (shared by both) plus its own, and its module list leaves out
+  the other map's modules (`MATCH_ONLY`, `LOBBY_ONLY`).
+- **Every teleport between the places shows the card:** the server names the destination
+  (`I.Transition.SetDestination`) right before a teleport, the `TeleportGui` card slides over the screen and Roblox
+  carries it through the teleport; the next server's ReplicatedFirst script (`src/replicated_first/`, the code
+  folder's only mount there) keeps it up until the player's client started, then slides it off. The place's own
+  `LoadingScreen` plays only on joins from the website.
+- **Studio plays the `Studio` map:** both maps' folders and modules on one server, the quick way to test a match. The
+  Workspace attribute `Ume_StudioMapId = "Lobby"` tests the real trip instead: the lobby teleports to the match place,
+  which a Studio test runs as last saved to Roblox, so save both places first. The map and match ride in the
+  teleport's data there, since a Studio test gives reserved servers no id (ume's place loader reads it only in
+  Studio); `"Match"` tests the match map alone. On the Studio map the lobby hands each match to `I.Match.Host`, and
+  the `InMatch` Player attribute says which half a player is in: every screen, camera and hint that belongs to one
+  half follows it instead of assuming its map. Studio saves nothing, so a playtest skips the tutorial match and opens
+  on the lobby; the Workspace attribute `StudioTutorial` (true) plays it.
 - **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
@@ -116,21 +143,37 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Panels scale with the screen in position and size:** every game gui's panels are laid out for a 1920 × 1080
   screen. Their positions are screen fractions (`UDim2.fromScale`, never pixel offsets, which don't scale), and their
   size is an `S_ScreenScale` UIScale the ScreenScale module (Utils) sets: by height, by width on a screen narrower
-  than 16:9, bigger on short phones. A new gui joins its `GUIS` list instead of scaling itself. A button or tile
+  than 16:9, bigger on short phones, and never under 0.6 on PC and console (`MIN_SCALE`), even where the width would
+  make it smaller, so text on a 1024 × 768 screen stays readable. Panels side by side are placed to fit at that floor.
+  A new gui joins its `GUIS` list instead of scaling itself. A button or tile
   placed on the screen by itself gets its own `S_ScreenScale` (the kit's `Screen` param: the touch buttons, the emote
   button).
+- **World labels scale with the screen too:** a billboard over the world (WormTag, DropMarker, DamagePop) lays its root
+  out at its design size with an `S_ScreenScale`, and the code that clones it hands it to
+  `I.ScreenScale.AddBillboard`, which sets that scale and the billboard's size to the root's times it (no device
+  scale). Never a fixed pixel billboard: on a phone it covers half the screen.
 - **Device sizes come from ume's platform tags:** a panel that differs per device carries `Utils_PlatformScale` (or
   `Utils_PlatformSize`), and ScreenScale multiplies the screen's scale by the device scale the tag keeps on the
   UIScale (`Utils_BaseScale`). No module or attribute of the game's own does per-device sizing. The GUI kit tags its
   panels 0.75 on Desktop, since it's drawn for phones.
-- **Panels hang from a screen edge or corner** (top-left Party, bottom-left Loadout, bottom-centre Play, top-right
-  currency and the Crates and Skins buttons), so a per-device size (`Utils_PlatformSize`) never needs a per-device position. On phones and
-  tablets a panel too big for the screen gets a Mobile size, its list scrolling, and a Mobile scale under 1 only when
-  its content needs the room; a heading that costs a phone too much hides there (`Utils_HideOnPlatform`).
+- **Panels hang from a screen edge or corner** (top-left Party, bottom-left Loadout, the MatchBoard panel at the
+  bottom just right of the centre (55 %), top-right currency and the Crates and Skins buttons), so a per-device size
+  (`Utils_PlatformSize`) never needs a per-device position. On phones and tablets a panel too big for the screen gets a Mobile size, its list scrolling, and a Mobile scale under 1 only when
+  its content needs the room; a heading that costs a phone too much hides there (`Utils_HideOnPlatform`). A panel
+  that would cover another one on phones folds behind a tab there instead (Party: a "Party 2/4" tab over a panel as
+  tall as its members, open on PC and console, folded on phones and tablets, opened by a press), and draws above what
+  it covers when opened (Loadout and MatchBoard at `DisplayOrder` -1, under Party's 0 and the windows' 1).
+- **Counts stay on one line:** a currency count gets the width of its longest text, and amounts from 10,000 up are
+  written short by the slot (`Currency_ShortFrom`: "18.62k"), so a count never wraps.
 - **The lobby is a 3D stage, not a backdrop picture:** the camera sits on the `LobbyStage` Model's `Camera` marker and
   the player's worm stands on its `Worm` marker (Lobby's README → In the place), with the lobby's guis see-through
-  over it. Keep the screen to a few things: the logo at the top, one yellow **Play** (the quick match) with **Modes**
-  beside it, Party, the Loadout bar and the corner buttons. Everything else (solo, the public match list, custom
-  lobbies, crates, skins) opens in a window.
+  over it. Keep the screen to a few things: the logo at the top, Party, the Loadout bar, the corner buttons, and one
+  panel at the bottom laid out like RoWorld's (the owner's reference, 2026-11-06): a welcome line, the yellow **Play
+  solo** (**Play with party** in a party) and the public matches, one card per mode. The solo or party setup and the
+  waiting room take that panel's place; custom lobbies, crates and skins open in a window.
+- **Matchmaking fills with bots:** every public mode has a row on the board at all times, its timer starts when the
+  first player joins, and at 0 the match starts with whoever joined, bots in every empty seat (one player can play
+  Trios). A party can also play alone (friends only): with bots it pays like a public match, without bots half
+  (MatchRewards' `PARTY_NO_BOTS_SHARE`).
 - **Check guis shown together for overlaps** before calling a layout done: PC sizes from 1024 × 768 to 3840 × 2160,
   tablets, and phones down to 667 × 375.

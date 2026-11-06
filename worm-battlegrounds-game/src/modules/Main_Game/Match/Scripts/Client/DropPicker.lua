@@ -243,6 +243,7 @@ function Module._createMarker(entry: Instance)
 	nameLabel.Text = entry:GetAttribute("DisplayName")
 	nameLabel.TextColor3 = entry:GetAttribute("Color")
 	pin.ImageColor3 = entry:GetAttribute("Color")
+	I.ScreenScale.AddBillboard(marker)
 	marker.Parent = part
 
 	--[[ Saving ]]

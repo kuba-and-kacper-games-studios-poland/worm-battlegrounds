@@ -12,6 +12,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Loader = require(script.Parent:FindFirstChild("Loader")) --- @type Arena_Server_Loader
+local Carver = require(script.Parent:FindFirstChild("Carver")) --- @type Arena_Server_Carver
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -119,7 +120,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Cut
 
 --[[
-	Subtracts the blast's cylinder from every part of a prop it reaches, leaving the pieces in the prop.
+	Subtracts the blast's stepped cutter (the terrain's) from every part of a prop it reaches, leaving the pieces in the
+	prop.
 ]]
 function Module._cut(prop: Model, center: Vector3, radius: number)
 	--[[ Local Variables ]]
@@ -130,19 +132,8 @@ function Module._cut(prop: Model, center: Vector3, radius: number)
 
 	--[[ Building ]]
 
-	-- The cutter: a cylinder's axis is its X, turned to run along Z through the prop
-	local cutter: Part = I.Create("Part")({
-		Name = "Cutter",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(boxSize.Magnitude + _settings.CARVE_DEPTH_MARGIN, radius * 2, radius * 2),
-		CFrame = CFrame.new(center.X, center.Y, boxCFrame.Position.Z) * CFrame.Angles(0, math.rad(90), 0),
-		Anchored = true,
-		CanCollide = false,
-		CanTouch = false,
-		CanQuery = false,
-		Transparency = 1,
-		Parent = Loader.GetArenaFolder(),
-	})
+	--- @type { BasePart }
+	local cutter = Carver.BuildCutter(center, radius, boxCFrame.Position.Z, boxSize.Magnitude + _settings.CARVE_DEPTH_MARGIN)
 
 	--[[ Cutting ]]
 
@@ -162,7 +153,7 @@ function Module._cut(prop: Model, center: Vector3, radius: number)
 
 		local success: boolean
 		local result: any | string?
-		success, result = pcall(I.S.GeometryService.SubtractAsync, I.S.GeometryService, part, { cutter }, SUBTRACT_OPTIONS)
+		success, result = pcall(I.S.GeometryService.SubtractAsync, I.S.GeometryService, part, cutter, SUBTRACT_OPTIONS)
 		if not success then
 			warn(`[{_localName}::{script.Name}]: Could not cut ({part:GetFullName()})! - ({result})`)
 			continue
@@ -185,7 +176,9 @@ function Module._cut(prop: Model, center: Vector3, radius: number)
 
 	--[[ Cleaning ]]
 
-	cutter:Destroy()
+	for _index: number, box: BasePart in ipairs(cutter) do
+		box:Destroy()
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Split

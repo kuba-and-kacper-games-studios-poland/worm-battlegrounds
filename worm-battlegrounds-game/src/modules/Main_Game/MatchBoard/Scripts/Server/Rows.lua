@@ -15,7 +15,6 @@ local Launch = require(script.Parent:FindFirstChild("Launch")) --- @type MatchBo
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
-local random: Random = Random.new()
 local boardFolder: Folder
 local nextId: number = 0
 
@@ -63,9 +62,9 @@ end
 function Module.Start()
 	--[[ Rows ]]
 
-	Module._addPublicRow("Deathmatch")
-	for _index: number = 1, _settings.TEAM_ROWS do
-		Module._addPublicRow("Team")
+	--- @param option MatchBoard_RowOption
+	for _index: number, option in ipairs(_settings.PUBLIC_ROWS) do
+		Module.AddRow("Public", option.Mode, option.Size, Launch.GetMap(option.Size))
 	end
 
 	--[[ Connections ]]
@@ -227,8 +226,8 @@ end
 
 --[[
 	**SERVER** |
-	Launches a row's match with its players still here; a public row is replaced by a new random one, a custom lobby
-	closes. Players who couldn't go stay on the board.
+	Launches a row's match with its players still here (bots fill the empty seats); a public row is replaced by a fresh
+	one of its mode, a custom lobby closes. Players who couldn't go stay on the board.
 ]]
 --- @param row MatchBoard_Row
 function Module.StartRow(row)
@@ -246,7 +245,7 @@ function Module.StartRow(row)
 
 	Module.RemoveRow(row.Id)
 	if row.Kind == "Public" then
-		Module._addPublicRow(if row.Mode == "Deathmatch" then "Deathmatch" else "Team")
+		Module.AddRow("Public", row.Mode, row.Size, Launch.GetMap(row.Size))
 	end
 
 	--[[ Launching ]]
@@ -322,28 +321,6 @@ function Module._checkTimers()
 			Module.StartRow(row)
 		end
 	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Add Public Row
-
---[[
-	Adds a random public row: a deathmatch at one of DEATHMATCH_SIZES, or a team match from TEAM_OPTIONS, on a map
-	made for its size.
-]]
-function Module._addPublicRow(kind: "Deathmatch" | "Team")
-	--[[ Local Variables ]]
-
-	local mode: string = "Deathmatch"
-	local size: number = _settings.DEATHMATCH_SIZES[random:NextInteger(1, #_settings.DEATHMATCH_SIZES)]
-	if kind == "Team" then
-		local option = _settings.TEAM_OPTIONS[random:NextInteger(1, #_settings.TEAM_OPTIONS)] --- @type MatchBoard_RowOption
-		mode = option.Mode
-		size = option.Size
-	end
-
-	--[[ Adding ]]
-
-	Module.AddRow("Public", mode, size, Launch.GetMap(size))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Publish

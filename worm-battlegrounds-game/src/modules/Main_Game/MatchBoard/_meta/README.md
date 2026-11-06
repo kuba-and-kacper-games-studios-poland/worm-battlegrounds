@@ -1,14 +1,19 @@
 # MatchBoard
 
-The lobby's way into matches. **Play** joins the open public row closest to starting (the most players with room left,
-a deathmatch on a tie); the **Modes** window (`PlayModes`) lists the public rows (deathmatches of 2, 4, 6 and 8, and
-team rows);
-a party leader joins a row for the whole party, and a row starts when it's full, when its `ROW_SECONDS` timer runs out
-with two or more players in it, or when `VOTE_FRACTION` of its players vote to start early. A started row is replaced
-by a fresh one. **Solo** starts a match against bots at a chosen difficulty (one player only), and **Custom** makes a
-room that friends are invited into and its owner starts. Launching builds the match's teams (parties stay together),
-writes the match's metadata and teleports everyone to a reserved server of the Match map. On the Studio map (the
-lobby and the match on one Studio server) it hands the match to `I.Match.Host` instead, and refuses while one plays.
+The lobby's way into matches, one panel at the bottom of the screen, laid out like RoWorld's: a welcome line, **Play
+solo** (the yellow next step) with **Custom** beside it, and the public matches, one card per mode (`PUBLIC_ROWS`:
+Deathmatch, Duos, Trios, Quads), each with its players, timer and **Join**. **Play solo** opens the setup in the
+panel's place: the bots' difficulty (Easy, Medium, Hard, what each means and what the match pays) and **Start**, a 1v1
+against a bot. In a party the button reads **Play with party**: its leader sets up a friends-only deathmatch with bots
+(`PARTY_BOTS_PER_PLAYER` per member) or with **No bots**, which pays half (MatchRewards). Joining a public match shows
+the waiting room in the panel's place (the match, the countdown, the players, **Vote to start**, **Leave match**). A
+party leader joins a row for the whole party; a row's `ROW_SECONDS` timer starts when its first player joins, and the
+row starts when it's full, when its timer runs out (bots fill every empty seat, so one player can play Trios alone), or
+when `VOTE_FRACTION` of its players vote to start early. A started row is replaced by a fresh one of its mode.
+**Custom** makes a room that friends are invited into and its owner starts. Launching builds the match's teams
+(parties stay together), writes the match's metadata and teleports everyone to a reserved server of the Match map.
+On the Studio map (the lobby and the match on one Studio server) it hands the match to `I.Match.Host` instead, and
+refuses while one plays.
 
 | | |
 | --- | --- |
@@ -24,10 +29,10 @@ lobby and the match on one Studio server) it hands the match to `I.Match.Host` i
 | `Server.lua` | Starts the three server handlers; the `I` table |
 | `Scripts/Server/Rows.lua` | Public and custom rows: joining, leaving, votes, timers, publishing them as `Configuration`s |
 | `Scripts/Server/Custom.lua` | Custom rooms: creating, inviting, answering, starting, leaving |
-| `Scripts/Server/Launch.lua` | Teams, metadata and the teleport (on the Studio map, `I.Match.Host`); solo matches |
+| `Scripts/Server/Launch.lua` | Teams, metadata and the teleport (on the Studio map, `I.Match.Host`); solo and party matches |
 | `Client.lua` | Starts the three client handlers |
-| `Scripts/Client/Board.lua` | The `MatchBoard` Play row (the quick match), the rows in `PlayModes`, the waiting room, votes and timers |
-| `Scripts/Client/Solo.lua` | The `SoloSetup` widget |
+| `Scripts/Client/Board.lua` | The `MatchBoard` panel: welcome, Play solo (Play with party), the public match cards, the waiting room, votes and timers |
+| `Scripts/Client/Setup.lua` | The panel's setup for a solo or party match: the bots, their text, Start |
 | `Scripts/Client/Custom.lua` | The `CustomLobby` widget and room invites |
 | `Settings.lua` | `MatchBoard_Settings` |
 | `_meta/_types.lua` | `MatchBoard_RowOption`, `MatchBoard_MapRow`, `MatchBoard_Row` |
@@ -51,6 +56,7 @@ lobby and the match on one Studio server) it hands the match to `I.Match.Host` i
 - `MatchBoard_Leave @ (player: Player)`
 - `MatchBoard_Vote @ (player: Player)`: vote to start the row early
 - `MatchBoard_PlaySolo @ (player: Player, difficulty: string)`: refused in a party of 2 or more
+- `MatchBoard_PlayParty @ (player: Player, difficulty: string)`: a difficulty or `"None"` (no bots); the leader of a party of 2 or more
 - `MatchBoard_CreateCustom @ (player: Player, mapId: string, mode: string, size: number)`
 - `MatchBoard_InviteCustom @ (player: Player, target: Player)`
 - `MatchBoard_InviteAnswer @ (player: Player, roomId: string, accept: boolean)`
@@ -71,15 +77,16 @@ Rows are `Configuration`s in `ReplicatedStorage.Ume.MatchBoard`, one per row, wi
 
 | Key | Default | What |
 | --- | --- | --- |
-| `MATCH_PLACE_ID`, `TELEPORT_GUI` | this place, `"TeleportGui"` | Where matches run, the teleport screen |
+| `MATCH_PLACE_ID`, `TELEPORT_GUI` | `118265066788984` (Arena), `"TeleportGui"` | The match place (the place loader config's `MATCH_PLACE_ID`), the teleport screen |
 | `STUDIO_MAP` | `"Studio"` | The map where matches start on the lobby's own server |
-| `ROW_SECONDS` | `30` | A row's countdown once someone joins |
+| `ROW_SECONDS` | `30` | A row's countdown once someone joins; at 0 it starts with whoever joined, bots filling the rest |
 | `VOTE_FRACTION` | `2 / 3` | Share of a row's players whose votes start it |
-| `DEATHMATCH_SIZES` | `{ 2, 4, 6, 8 }` | The deathmatch rows |
-| `TEAM_ROWS`, `TEAM_OPTIONS` | `2`, Duo/Trio/Quads options | How many team rows show, and their modes and sizes |
-| `TEAM_SIZES`, `MODE_NAMES` | | Players per team by mode; mode names shown |
+| `PUBLIC_ROWS` | Deathmatch 4, Duo 4, Trio 6, Quads 8 | The public rows, one per mode, always on the board |
+| `TEAM_SIZES`, `MODE_NAMES` | | Players per team by mode; mode names shown (Deathmatch, Duos, Trios, Quads) |
 | `PUBLIC_DIFFICULTY` | `"Medium"` | Bots that fill public matches |
 | `MAPS`, `MAP_POOL` | 7 map rows; `{ "PicnicPlains", "Desert" }` | Map names and sizes; the maps in rotation |
-| `SOLO_DIFFICULTIES` | Easy, Medium, Hard | Solo choices |
-| `BOARD_GUI_NAME`, `MODES_GUI_NAME`, `SOLO_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |
-| `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENCY` | `(40, 140, 255)`, `0.2`, `(0, 0, 0)`, `0.7` | A picked difficulty's or map's slot fill (its `Body`), and an unpicked one's. Mode and player-count buttons swap to their selected skin instead (`Kit_SelectedImage`) |
+| `SOLO_DIFFICULTIES` | Easy, Medium, Hard | The bots' difficulties in the setup (a party also gets No bots) |
+| `DIFFICULTY_TEXT`, `REWARD_TEXT` | | What the setup says about each choice, and what a solo match, a party match and a party match without bots pay |
+| `PARTY_BOTS_PER_PLAYER`, `PARTY_MAX_SIZE` | `1`, `8` | Bots per member in a party match with bots, and its most worms |
+| `BOARD_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |
+| `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENCY` | `(40, 140, 255)`, `0.2`, `(0, 0, 0)`, `0.7` | A picked map's slot fill (its `Body`), and an unpicked one's, in the custom lobby. Difficulty, mode and player-count buttons swap to their selected skin instead (`Kit_SelectedImage`) |

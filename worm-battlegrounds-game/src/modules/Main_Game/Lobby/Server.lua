@@ -106,7 +106,7 @@ function Module._onPlayerAdded(player: Player)
 
 	--[[ Tutorial ]]
 
-	-- Studio skips the tutorial match unless asked to, and the Lobby map alone can't start it: both go on to the lobby's part
+	-- Studio skips the tutorial match unless asked to; a match that can't start goes on to the lobby's part
 	local skipMatch: boolean = I.S.RunService:IsStudio() and I.S.Workspace:GetAttribute(_settings.STUDIO_TUTORIAL_ATTRIBUTE) ~= true
 	if not I.Tutorial.IsMatchDone(player) then
 		if not skipMatch and I.MatchBoard.Launch({ player }, "Solo", "Deathmatch", 2, _settings.TUTORIAL_MAP, _settings.TUTORIAL_DIFFICULTY, true) then
@@ -154,6 +154,7 @@ function Module._onRejoin(player: Player, accept: boolean)
 
 	--[[ Teleporting ]]
 
+	I.Transition.SetDestination({ player }, "Back to your match…", "")
 	I.TeleportToServer({ player }, rejoin.PlaceId, nil, rejoin.AccessCode, _settings.TELEPORT_GUI)
 end
 

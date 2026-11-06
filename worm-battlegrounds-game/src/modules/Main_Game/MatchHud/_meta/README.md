@@ -2,11 +2,16 @@
 
 The match screen and its input. It shows whose turn it is, the timer and the wind, the stamina bar, the kill feed, the
 loadout bar (the Bazooka and the player's items, with uses and cooldowns), touch walk and jump buttons, the waiting,
-drop and knocked-out blocks, and the Results screen. Aiming is a drag back from the worm with mouse or touch (the
-direction is the angle, the length the power), or the right stick and RT on a gamepad; letting go fires. Number keys 1
-to 6, LB and RB pick a slot. It adds **Leave** and **Music** to the top bar. The HUD and those buttons show while the
-player is in the match (the `InMatch` Player attribute); on the Studio map, going back to the lobby hides them and
-closes Results.
+drop and knocked-out blocks, and the Results screen. Aiming works like Worms: on the player's turn a crosshair sits
+`CROSSHAIR_DISTANCE` studs from the worm, pointing at the mouse (or the finger, or the right stick's direction); holding
+the mouse button, a finger or RT charges the power (a row of circles from the held weapon's muzzle, Combat's
+`GetMuzzle`, to the crosshair lights up, yellow to red; both keep their size on the screen at any zoom, sized for
+MatchCamera's `DISTANCE`), bouncing from none to full and back every Combat's `CHARGE_SECONDS` while held, and letting
+go fires at the power shown. The held weapon turns with the crosshair on this screen at once (Combat's `SetAim`).
+Nothing fires by itself: a turn that runs out while charging drops the charge. Guns and melee weapons fire on the press,
+at the crosshair. Every player sees the active worm's crosshair and power. Number keys 1 to 6, LB and RB pick a slot. It
+adds **Leave** and **Music** to the top bar. The HUD and those buttons show while the player is in the match (the
+`InMatch` Player attribute); on the Studio map, going back to the lobby hides them and closes Results.
 
 | | |
 | --- | --- |
@@ -19,11 +24,11 @@ closes Results.
 | File | What it controls |
 | --- | --- |
 | `Client.lua` | Turns the gui on while the player is in a match (and the `HIDDEN_IN_MATCH` guis off), and starts the handlers |
-| `Scripts/Client/Turn.lua` | Banner ("Your turn!", or on other worms' turns "You're next!" / "Your turn in N turns" from Match's `TurnOrder`), timer, wind, stamina |
+| `Scripts/Client/Turn.lua` | Banner ("Your turn!" in the gui's colour, or on other worms' turns "Bax's turn" in that worm's `Color`, from its `DisplayName`), the wait under it on other worms' turns ("You're next!" / "Your turn in N turns", from Match's `TurnOrder`; hidden once the player's worm is out), timer (blank while a shot flies and settles), wind (its strength, the arrow turned its way), stamina ("Stamina 70%", the gui's own label before the share; `U_Stamina` sits inside `U_LoadoutBar`, found recursively) |
 | `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
 | `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys; utilities are used as soon as they're picked on the player's turn. A weapon with no icon picture shows its 3D model in its box instead (`I.G_Arsenal.GetModel`, in a ViewportFrame `S_Model` over `S_Icon`) |
-| `Scripts/Client/Aim.lua` | Drag and pad aiming, the aim dots, firing (with the `Combat_Fire` haptic tick), homing targets, detonating; the dots of another worm's aim (a player's or a bot's) while it aims |
-| `Scripts/Client/KillFeed.lua` | Knockout lines |
+| `Scripts/Client/Aim.lua` | The crosshair and charging (mouse, touch, pad), the power cone, firing (with the `Combat_Fire` haptic tick), homing targets, detonating; another worm's crosshair and power (a player's or a bot's) while it aims; on the player's turn the power reads "Power 60%" (the gui's own label before the share) and the angle "45°" beside it (`U_Power` sits inside `U_LoadoutBar`, found recursively). shortcut: the crosshair is drawn in code from frames until the kit has a picture for it |
+| `Scripts/Client/KillFeed.lua` | Knockout lines; a line too long for the feed at its design size (`TextService:GetTextBoundsAsync`) gets two lines' height instead of shrinking |
 | `Scripts/Client/TouchControls.lua` | Walk and jump buttons on touch screens |
 | `Scripts/Client/Results.lua` | The Results screen, rematch votes |
 | `Scripts/Client/TopBar.lua` | The Leave and Music top bar buttons |
@@ -46,14 +51,15 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | `SLOT_KEYS` | One … Six | Keys that pick slots 1 to 6 (the Bazooka first) |
 | `MODEL_FOV`, `MODEL_VIEW_DIRECTION`, `MODEL_PADDING` | `30`, `0.3, 0.25, 1`, `1.15` | A box's weapon model: the camera's field of view, the direction it looks from (the muzzle points right), and the room around the model's longest side |
 | `FEED_LINES`, `FEED_SECONDS` | `4`, `6` | Kill feed length and how long a line stays |
-| `MIN_DRAG`, `MAX_DRAG` | `24`, `260` | Drag length in pixels for no power and full power |
-| `AIM_SEND_INTERVAL` | `0.1` | How often the aim is sent to others |
-| `AIM_SHOW_GRACE`, `AIM_SMOOTHING` | `0.4`, `15` | Another worm's aim dots show while its aim keeps arriving (none for this long hides them), eased toward each update |
-| `AIM_LINE_SECONDS`, `AIM_LINE_DOTS`, `AIM_DOT_SIZE`, `AIM_DOT_COLOR` | `0.6`, `10`, `0.35`, white | The aim dots |
+| `AIM_SEND_INTERVAL` | `0.1` | How often the aim is sent to others during the player's turn |
+| `AIM_SHOW_GRACE`, `AIM_SMOOTHING` | `0.4`, `15` | Another worm's crosshair and power show while its aim keeps arriving (none for this long hides them), eased toward each update |
+| `CROSSHAIR_DISTANCE`, `CROSSHAIR_SIZE`, `CROSSHAIR_COLOR` | `9`, `3`, light green | The crosshair: studs from the worm's middle, its size in studs, its colour |
+| `POWER_DOTS`, `POWER_COLORS`, `POWER_DOT_SIZE` | `32`, yellow to red, `{ 0.5, 2.1 }` (the last fills the crosshair's ring) | The power circles, overlapping into a smooth trail (round on-top billboards in `Workspace.Ume.Combat.AimPower`, drawn over the arena like the crosshair) from the muzzle out: how many, their colours and sizes in studs, first to last |
 | `TARGET_COLOR` | red | The homing target marker |
-| `STICK_DEADZONE`, `PAD_POWER_SPEED` | `0.3`, `0.8` | Gamepad aiming |
+| `STICK_DEADZONE` | `0.3` | How far the right stick leans to aim |
 
 ## In the place
 
-Puts the aim dots and the target marker in `Workspace.Ume.Combat`. Binds the CAS action `MatchHud_Slots` while the
+Puts the crosshair (`AimCrosshair`, a part with a stud-sized BillboardGui), the power circles (`AimPower`, a folder of
+parts `Dot1`…, each with a round stud-sized BillboardGui) and the target marker in `Workspace.Ume.Combat`. Binds the CAS action `MatchHud_Slots` while the
 loadout bar shows. The Results screen hides **Rematch** after the tutorial match.

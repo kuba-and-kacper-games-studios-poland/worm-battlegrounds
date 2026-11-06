@@ -23,7 +23,7 @@ worm in a match or beside their name in the lobby's party list.
 | `Client.lua` | Starts the three client handlers |
 | `Scripts/Client/Skins.lua` | The `Skins` widget and the lobby's skin button (`Lobby` › `U_Skins`) |
 | `Scripts/Client/EmoteShop.lua` | The `EmoteShop` widget |
-| `Scripts/Client/Emotes.lua` | The emote row, the emote wheel, and showing played emotes |
+| `Scripts/Client/Emotes.lua` | The emote row, the emote wheel (it closes on a pick, a click or tap anywhere but a button, and when the hud hides the emote button), and showing played emotes |
 | `Settings.lua` | `Cosmetics_Settings` |
 | `Data/Skins/<SkinId>.lua` | `Cosmetics_SkinData`: `Model` (in `Assets.Skins`), `Source`, `Animations`, `VoiceSet` |
 | `Data/Emotes/<EmoteId>.lua` | `Cosmetics_EmoteData`: `Level`, `Coins`, `AnimationId`, `VoiceSound` |

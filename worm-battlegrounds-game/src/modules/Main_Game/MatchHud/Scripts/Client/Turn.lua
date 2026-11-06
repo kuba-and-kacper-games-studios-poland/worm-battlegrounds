@@ -14,7 +14,13 @@ local elems = {} --- @type { [string]: Instance }
 
 local matchFolder: Folder
 local tickConnection: RBXScriptConnection?
-local shownSeconds: number = -1
+local shownTimer: string?
+
+-- The stamina bar's name from the gui ("Stamina"), written before its percentage
+local staminaText: string
+
+-- The banner's colour from the gui, put back on the player's own turn
+local bannerColor: Color3
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -39,12 +45,15 @@ function Module.Start(gui: ScreenGui)
 
 	elems["Turn"] = gui:FindFirstChild("U_Turn") --- @type Frame
 	elems["Banner"] = elems["Turn"]:FindFirstChild("S_Banner", true) --- @type TextLabel
+	elems["Wait"] = elems["Turn"]:FindFirstChild("S_Wait", true) --- @type TextLabel
 	elems["Timer"] = elems["Turn"]:FindFirstChild("S_Timer", true) --- @type TextLabel
 	elems["WindArrow"] = elems["Turn"]:FindFirstChild("S_WindArrow", true) --- @type ImageLabel
 	elems["Wind"] = elems["Turn"]:FindFirstChild("S_Wind", true) --- @type TextLabel
-	elems["Stamina"] = gui:FindFirstChild("U_Stamina") --- @type Frame
+	elems["Stamina"] = gui:FindFirstChild("U_Stamina", true) --- @type Frame
 	elems["StaminaFill"] = elems["Stamina"]:FindFirstChild("Fill", true) --- @type Frame
 	elems["StaminaStatus"] = elems["Stamina"]:FindFirstChild("Status", true) --- @type TextLabel
+	staminaText = elems["StaminaStatus"].Text
+	bannerColor = elems["Banner"].TextColor3
 
 	--[[ Connections ]]
 
@@ -62,8 +71,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the turn panel while turns run, the stamina bar on the player's own turn, and the banner on it ("Your
-	turn!") or, on other worms' turns, how many turns until the player's own; ticks the timer only while it shows.
+	Shows the turn panel while turns run, the stamina bar on the player's own turn, and whose turn it is: "Your turn!",
+	or another worm's name in its team colour with how many turns until the player's own; ticks only while it shows.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -72,11 +81,16 @@ function Module._refresh()
 	local inTurns: boolean = phase == "Turn" or phase == "Flight" or phase == "Settle"
 	local myTurn: boolean = I.Match.IsMyTurn()
 	local turnsLeft: number? = if myTurn then nil else Module._getTurnsLeft()
+	local activeId: string? = I.Match.GetActive()
+	local active: Model? = if activeId and not myTurn then I.Worms.Get(activeId) else nil
 
 	--[[ Banner ]]
 
-	elems["Banner"].Visible = myTurn or turnsLeft ~= nil
-	elems["Banner"].Text = if myTurn then "Your turn!" elseif turnsLeft == 1 then "You're next!" else `Your turn in {turnsLeft} turns`
+	elems["Banner"].Visible = myTurn or active ~= nil
+	elems["Banner"].Text = if active then `{active:GetAttribute("DisplayName")}'s turn` else "Your turn!"
+	elems["Banner"].TextColor3 = if active then active:GetAttribute("Color") else bannerColor
+	elems["Wait"].Visible = turnsLeft ~= nil
+	elems["Wait"].Text = if turnsLeft == 1 then "You're next!" elseif turnsLeft then `Your turn in {turnsLeft} turns` else ""
 
 	--[[ Visibility ]]
 
@@ -109,25 +123,29 @@ function Module._refreshWind()
 
 	elems["WindArrow"].Visible = wind ~= 0
 	elems["WindArrow"].Rotation = if wind < 0 then 180 else 0
-	elems["Wind"].Text = `Wind {math.abs(wind)}`
+	elems["Wind"].Text = tostring(math.abs(wind))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Tick
 
 --[[
-	Counts the turn's seconds down, and fills the stamina bar from the player's worm.
+	Counts the turn's seconds down on the turn panel, blank while a shot flies and settles, and fills the stamina bar
+	from the player's worm.
 ]]
 function Module._tick()
 	--[[ Local Variables ]]
 
 	local endsAt: number = matchFolder:GetAttribute("TurnEndsAt") or 0
-	local seconds: number = if I.Match.GetPhase() == "Turn" then math.max(math.ceil(endsAt - I.S.Workspace:GetServerTimeNow()), 0) else 0
+	local seconds: number = math.max(math.ceil(endsAt - I.S.Workspace:GetServerTimeNow()), 0)
+
+	-- Only the Turn phase has a clock: a 0 while a shot flies reads as time running out
+	local timerText: string = if I.Match.GetPhase() == "Turn" then tostring(seconds) else ""
 
 	--[[ Timer ]]
 
-	if seconds ~= shownSeconds then
-		shownSeconds = seconds
-		elems["Timer"].Text = tostring(seconds)
+	if timerText ~= shownTimer then
+		shownTimer = timerText
+		elems["Timer"].Text = timerText
 	end
 
 	--[[ Stamina ]]
@@ -138,7 +156,7 @@ function Module._tick()
 	end
 	local share: number = math.clamp((mine:GetAttribute("Stamina") or 0) / I.Settings["WormControl"].STAMINA_STUDS, 0, 1)
 	elems["StaminaFill"].Size = UDim2.fromScale(share, 1)
-	elems["StaminaStatus"].Text = `{math.round(share * 100)}%`
+	elems["StaminaStatus"].Text = `{staminaText} {math.round(share * 100)}%`
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

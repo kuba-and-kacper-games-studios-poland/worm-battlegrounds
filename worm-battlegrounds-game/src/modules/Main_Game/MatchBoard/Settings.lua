@@ -3,8 +3,11 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Places
 
-	-- The place matches run in (this one, until matches get a place of their own), and the teleport screen
-	MATCH_PLACE_ID = game.PlaceId,
+	--[[
+		The match place (Arena), where matches run in reserved servers (the same id as MATCH_PLACE_ID in the place
+		loader's config), and the teleport screen
+	]]
+	MATCH_PLACE_ID = 118265066788984,
 	TELEPORT_GUI = "TeleportGui",
 
 	-- The map that plays the lobby and its matches in one Studio server: matches start there instead of teleporting
@@ -16,16 +19,11 @@ local _settings = {
 	ROW_SECONDS = 30,
 	VOTE_FRACTION = 2 / 3,
 
-	-- The board's rows: one deathmatch at one of DEATHMATCH_SIZES, and TEAM_ROWS team matches from TEAM_OPTIONS
-	--- @type { number }
-	DEATHMATCH_SIZES = { 2, 4, 6, 8 },
-	TEAM_ROWS = 2,
-
+	-- The public rows, one per mode, always on the board: a row that starts is replaced by a fresh one of its mode
 	--- @type { MatchBoard_RowOption }
-	TEAM_OPTIONS = {
+	PUBLIC_ROWS = {
+		{ Mode = "Deathmatch", Size = 4 },
 		{ Mode = "Duo", Size = 4 },
-		{ Mode = "Duo", Size = 6 },
-		{ Mode = "Duo", Size = 8 },
 		{ Mode = "Trio", Size = 6 },
 		{ Mode = "Quads", Size = 8 },
 	},
@@ -38,10 +36,10 @@ local _settings = {
 	--- @type { [string]: string }
 	MODE_NAMES = {
 		Deathmatch = "Deathmatch",
-		Duo = "Duo team deathmatch",
-		Trio = "Trio team deathmatch",
-		Quads = "Quads team deathmatch",
-		Teams = "Team deathmatch",
+		Duo = "Duos",
+		Trio = "Trios",
+		Quads = "Quads",
+		Teams = "Teams",
 	},
 
 	-- The bots' difficulty in public matches
@@ -68,17 +66,36 @@ local _settings = {
 	--- @type { string }
 	MAP_POOL = { "PicnicPlains", "Desert" },
 
-	--%%%%%%%%%%%%%%%%%%%% Solo
+	--%%%%%%%%%%%%%%%%%%%% Solo And Party
 
-	-- The solo difficulties, in the order SoloSetup shows them
+	-- The bots' difficulties, in the order the setup panel shows them; a party can also play with "None" (no bots)
 	--- @type { string }
 	SOLO_DIFFICULTIES = { "Easy", "Medium", "Hard" },
+
+	-- What the setup panel says about each choice
+	--- @type { [string]: string }
+	DIFFICULTY_TEXT = {
+		Easy = "Gentle bots that miss a lot. A good warm-up.",
+		Medium = "Bots that hit more than half their shots.",
+		Hard = "Sharp bots with the best weapons. Bring your A game.",
+		None = "Only your party, no bots.",
+	},
+
+	-- What the setup panel says a match pays: solo, a party with bots, a party alone
+	--- @type { [string]: string }
+	REWARD_TEXT = {
+		Solo = "Only a win pays coins",
+		Party = "Pays coins like a public match",
+		PartyNoBots = "Pays half the coins of a public match",
+	},
+
+	-- A party match with bots adds this many bots per party member, up to PARTY_MAX_SIZE worms in all
+	PARTY_BOTS_PER_PLAYER = 1,
+	PARTY_MAX_SIZE = 8,
 
 	--%%%%%%%%%%%%%%%%%%%% Gui
 
 	BOARD_GUI_NAME = "MatchBoard",
-	MODES_GUI_NAME = "PlayModes",
-	SOLO_GUI_NAME = "SoloSetup",
 	CUSTOM_GUI_NAME = "CustomLobby",
 
 	-- A picked difficulty's or map's slot fill, and an unpicked one's (the gui kit's selected blue and its Slot)

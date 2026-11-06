@@ -63,21 +63,6 @@ function Module._addTag(model: Instance)
 
 	local nameLabel: TextLabel = tag:FindFirstChild("S_Name", true)
 	local levelLabel: TextLabel = tag:FindFirstChild("S_Level", true)
-	local healthBar: Frame = tag:FindFirstChild("S_Health", true)
-
-	--[[ Layout ]]
-
-	--[[
-		shortcut: the exported tag stacks down from its top, and ume-gui's Progress status label (TextScaled with
-		automatic height) grows tall in a live billboard; this pins the stack to the bottom and fixes the label's
-		height until the WormTag gui and the Progress control are fixed
-	]]
-	local stack: Frame = tag:FindFirstChild("U_Tag"):FindFirstChild("Stack")
-	local status: TextLabel = healthBar:FindFirstChild("Status")
-	stack.AnchorPoint = Vector2.new(0, 1)
-	stack.Position = UDim2.fromScale(0, 1)
-	status.AutomaticSize = Enum.AutomaticSize.None
-	status.Size = UDim2.new(1, 0, 0, healthBar:FindFirstChild("Track").Size.Y.Offset)
 
 	--[[ Building ]]
 
@@ -89,6 +74,7 @@ function Module._addTag(model: Instance)
 	nameLabel.TextColor3 = if model:GetAttribute("Vip") then _settings.VIP_NAME_COLOR else model:GetAttribute("Color")
 	levelLabel.Text = `Lv {model:GetAttribute("Level")}`
 	levelLabel.Visible = model:GetAttribute("Level") > 0
+	I.ScreenScale.AddBillboard(tag)
 
 	tag.Parent = root
 	Module._refreshTag(model, tag)
@@ -107,8 +93,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Tag
 
 --[[
-	Shows a worm's health and team colour on its tag, the turn marker while it's the active worm, and hides the tag
-	once it's a ghost.
+	Shows a worm's health on its tag, the bar green to yellow to red as it drops, the turn marker while it's the
+	active worm, and hides the tag once it's a ghost.
 ]]
 function Module._refreshTag(model: Instance, tag: BillboardGui)
 	--[[ Elements ]]
@@ -118,13 +104,17 @@ function Module._refreshTag(model: Instance, tag: BillboardGui)
 	local status: TextLabel = healthBar:FindFirstChild("Status")
 	local fill: Frame = healthBar:FindFirstChild("Track"):FindFirstChild("Fill")
 
+	--[[ Local Variables ]]
+
+	local share: number = math.clamp(model:GetAttribute("Health") / model:GetAttribute("MaxHealth"), 0, 1)
+
 	--[[ Applying ]]
 
 	tag.Enabled = not model:GetAttribute("Ghost")
 	active.Visible = model:GetAttribute("Active") == true
 	status.Text = tostring(model:GetAttribute("Health"))
-	fill.Size = UDim2.fromScale(model:GetAttribute("Health") / model:GetAttribute("MaxHealth"), 1)
-	fill.BackgroundColor3 = model:GetAttribute("Color")
+	fill.Size = UDim2.fromScale(share, 1)
+	fill.BackgroundColor3 = Module._getHealthColor(share)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Pop Damage
@@ -148,6 +138,7 @@ function Module._popDamage(root: BasePart, amount: number)
 	pop.AlwaysOnTop = true
 	pop.StudsOffset = Vector3.yAxis * _settings.TAG_OFFSET
 	amountLabel.Text = `-{amount}`
+	I.ScreenScale.AddBillboard(pop)
 	pop.Parent = root
 
 	--[[ Tweening ]]
@@ -169,6 +160,19 @@ function Module._popDamage(root: BasePart, amount: number)
 	Rise_Tween.Completed:Once(function()
 		pop:Destroy()
 	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Health Color
+
+--[[
+	Returns the health bar's colour for a share of health: full green, yellow at half, red when empty, blended in
+	between.
+]]
+--- @return Color3
+function Module._getHealthColor(share: number)
+	return if share >= 0.5 then _settings.HEALTH_HALF_COLOR:Lerp(_settings.HEALTH_FULL_COLOR, (share - 0.5) * 2) else _settings.HEALTH_EMPTY_COLOR:Lerp(_settings.HEALTH_HALF_COLOR, share * 2)
 end
 
 return Module

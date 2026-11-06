@@ -35,12 +35,12 @@ local _settings = {
 	THINK_TIME = { 2.5, 4 },
 
 	--[[
-		Then it holds its weapon and swings its aim from level to its shot over AIM_TIME seconds (sent every AIM_STEP,
-		power starting at AIM_START_POWER), shown to every player, and fires
+		Then it holds its weapon, swings its crosshair from level to its shot over AIM_TIME seconds, charges its power
+		as a player would (Combat's CHARGE_SECONDS for full power), all sent every AIM_STEP and shown to every player,
+		and fires
 	]]
 	AIM_TIME = 1.5,
 	AIM_STEP = 0.1,
-	AIM_START_POWER = 0.3,
 
 	-- How often each difficulty's shot lands where it aimed (the rest miss on purpose)
 	--- @type { [string]: number }

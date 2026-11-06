@@ -62,7 +62,6 @@ function Module.Start()
 	arenaFolder = I.Dirs.UmeWorkspace:WaitForChild("Arena")
 	wormsFolder = I.Dirs.UmeWorkspace:WaitForChild("Worms")
 	combatFolder = I.Dirs.UmeWorkspace:WaitForChild("Combat")
-	I.FOV_Controller.SetLock(_localName)
 	Module._createConnections()
 
 	-- Before CameraShake's step (Camera + 1), so Combat's blast shakes land on top of the view
@@ -189,12 +188,16 @@ function Module._update(deltaTime: number)
 	local center: Vector3 = if target then target:GetPivot().Position else bounds.Position
 	local goal: Vector3 = Module._getClamped(center + pan, bounds, camera)
 	pan = goal - Vector3.new(center.X, center.Y, goal.Z)
+
+	-- Taking the camera sets the FOV buff's base, so an open widget's FOV change still adds to it
+	if not focus then
+		I.Buff.Set("FOV", "Standard", _settings.FOV)
+	end
 	focus = if focus then focus:Lerp(goal, 1 - math.exp(-_settings.FOLLOW_SPEED * deltaTime)) else goal
 
 	--[[ Applying ]]
 
 	camera.CameraType = Enum.CameraType.Scriptable
-	camera.FieldOfView = _settings.FOV
 	camera.CFrame = CFrame.lookAt(focus + Vector3.zAxis * zoom, focus)
 end
 
@@ -297,7 +300,7 @@ end
 ]]
 --- @return number
 function Module._getHalfHeight()
-	return zoom * math.tan(math.rad(_settings.FOV / 2))
+	return zoom * math.tan(math.rad(I.S.Workspace.CurrentCamera.FieldOfView / 2))
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

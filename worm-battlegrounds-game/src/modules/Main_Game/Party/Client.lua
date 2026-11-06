@@ -9,10 +9,23 @@ local _localName = "Party"
 --- @type Party_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
+
+local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Invites = require(_scripts:FindFirstChild("Client"):FindFirstChild("Invites")) --- @type Party_Client_Invites
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local elems = {} --- @type { [string]: Instance }
 local prefabs = {} --- @type { [string]: Instance }
+
+--[[ General ]]
+
+-- Whether the panel is open under its tab: open on PC, folded on phones and tablets until tapped
+local open: boolean
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -38,6 +51,8 @@ function Module.Start()
 
 	Module._getElements()
 	Module._createConnections()
+	Invites.Start()
+	Module._onPlatformChanged()
 	Module._refresh()
 end
 
@@ -52,6 +67,12 @@ function Module._getElements()
 	--[[ General ]]
 
 	local moduleGui: ScreenGui = I.UserInterface.UI[_settings.GUI_NAME]
+	local party: Frame = moduleGui:FindFirstChild("U_Party", true)
+	elems["Tab"] = party:FindFirstChild("S_Tab", true) --- @type Frame
+	elems["TabText"] = elems["Tab"]:FindFirstChild("ButtonText", true) --- @type TextLabel
+	elems["TabFace"] = elems["Tab"]:FindFirstChild("Face", true) --- @type ImageLabel
+	elems["TabIcon"] = elems["Tab"]:FindFirstChild("Icon", true) --- @type ImageLabel
+	elems["Panel"] = party:FindFirstChild("S_Panel", true) --- @type Frame
 	elems["Members"] = moduleGui:FindFirstChild("U_Members", true) --- @type Frame
 	elems["Invite"] = moduleGui:FindFirstChild("U_Invite", true):FindFirstChild("Button") --- @type ImageButton
 	elems["InviteFriends"] = moduleGui:FindFirstChild("U_InviteFriends", true):FindFirstChild("Button") --- @type ImageButton
@@ -65,9 +86,17 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Connections
 
 --[[
-	Redraws the panel whenever anyone's party or level changes, and wires the buttons and invites.
+	Redraws the panel whenever anyone's party or level changes, and wires the tab, the buttons and invites.
 ]]
 function Module._createConnections()
+	--[[ Tab ]]
+
+	I.Interact.OnPress(elems["Tab"]:FindFirstChild("Button"), function()
+		open = not open
+		Module._refreshTab()
+	end)
+	I.Topic.Subscribe("Platform_Changed", Module._onPlatformChanged)
+
 	--[[ Players ]]
 
 	I.S.Players.PlayerAdded:Connect(Module._watchPlayer)
@@ -78,17 +107,15 @@ function Module._createConnections()
 
 	--[[ Buttons ]]
 
-	I.Interact.OnPress(elems["Invite"], Module._inviteNext)
+	I.Interact.OnPress(elems["Invite"], function()
+		I.WidgetManager.Open(_settings.INVITE_GUI_NAME)
+	end)
 	I.Interact.OnPress(elems["InviteFriends"], function()
 		I.Friends.PromptGameInvite()
 	end)
 	I.Interact.OnPress(elems["Leave"]:FindFirstChild("Button"), function()
 		I.Network.Fire("Party_Leave")
 	end)
-
-	--[[ Invites ]]
-
-	I.Network.Fired("Party_Invited", Module._onInvited)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -154,58 +181,32 @@ function Module._refresh()
 	--[[ Buttons ]]
 
 	elems["Leave"].Visible = partyId ~= nil
+	elems["TabText"].Text = `Party {#members}/{_settings.MAX_PARTY}`
 end
 
---%%%%%%%%%%%%%%%%%%%% Invite Next
+--%%%%%%%%%%%%%%%%%%%% On Platform Changed
 
 --[[
-	Offers to invite each player in this server who isn't in a party, one at a time: yes sends the invite, no moves to
-	the next. shortcut: no picker list in the Party gui yet, upgrade when it gets one.
+	Opens the panel on PC and console and folds it on phones and tablets, where it would cover the Loadout card.
 ]]
-function Module._inviteNext()
-	--[[ Local Variables ]]
+function Module._onPlatformChanged()
+	--[[ Applying ]]
 
-	local candidates = {} --- @type { Player }
-	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
-		if player ~= I.S.Players.LocalPlayer and not player:GetAttribute("PartyId") then
-			table.insert(candidates, player)
-		end
-	end
-
-	--[[ Checks ]]
-
-	-- Check if anyone can be invited
-	if #candidates == 0 then
-		I.WidgetManager.ShowMessage("Everyone here is already in a party. Invite friends instead!")
-		return
-	end
-
-	--[[ Asking ]]
-
-	for _index: number, player: Player in ipairs(candidates) do
-		I.WidgetManager.ShowConfirmation(`Invite {player.DisplayName} to your party?`, function()
-			I.Network.Fire("Party_Invite", player)
-		end)
-	end
+	open = I.Platform.Current ~= "Mobile"
+	Module._refreshTab()
 end
 
---%%%%%%%%%%%%%%%%%%%% On Invited
+--%%%%%%%%%%%%%%%%%%%% Refresh Tab
 
 --[[
-	Asks whether to join the party of the player who invited the local player.
+	Shows the panel while open, with the tab in the kit's selected skin and its arrow turned up; folded, only the tab.
 ]]
-function Module._onInvited(fromUserId: number)
-	--[[ Local Variables ]]
+function Module._refreshTab()
+	--[[ Applying ]]
 
-	local from: Player? = I.S.Players:GetPlayerByUserId(fromUserId)
-
-	--[[ Asking ]]
-
-	I.WidgetManager.ShowConfirmation(`{if from then from.DisplayName else "Someone"} invited you to their party. Join?`, function()
-		I.Network.Fire("Party_Answer", fromUserId, true)
-	end, function()
-		I.Network.Fire("Party_Answer", fromUserId, false)
-	end)
+	elems["Panel"].Visible = open
+	elems["TabFace"].Image = elems["TabFace"]:GetAttribute(if open then "Kit_SelectedImage" else "Kit_Image")
+	elems["TabIcon"].Rotation = if open then 180 else 0
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

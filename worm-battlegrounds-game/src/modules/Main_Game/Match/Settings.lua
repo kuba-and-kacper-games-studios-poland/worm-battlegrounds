@@ -32,11 +32,13 @@ local _settings = {
 	WIND_MAX = 10,
 
 	--[[
-		Sudden death starts at this round: the liquid rises SUDDEN_DEATH_RISE half-stud rows at the start of every turn
-		(the start is still asked on the wiki's Match modes & maps page)
+		Sudden death starts at SUDDEN_DEATH_ROUND: the liquid rises SUDDEN_DEATH_RISE half-stud rows at the start of
+		every turn, then SUDDEN_DEATH_FAST_RISE from SUDDEN_DEATH_FAST_ROUND, when the match drags on
 	]]
-	SUDDEN_DEATH_ROUND = 10,
-	SUDDEN_DEATH_RISE = 4,
+	SUDDEN_DEATH_ROUND = 4,
+	SUDDEN_DEATH_RISE = 1,
+	SUDDEN_DEATH_FAST_ROUND = 8,
+	SUDDEN_DEATH_FAST_RISE = 4,
 
 	--%%%%%%%%%%%%%%%%%%%% End
 

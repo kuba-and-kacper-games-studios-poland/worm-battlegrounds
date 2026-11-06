@@ -68,9 +68,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Wait For Players
 
 --[[
-	Waits until every player in the roster is in the server, or WAIT_FOR_PLAYERS seconds pass. On the Match map
-	alone in Studio, where every test player plays, it waits STUDIO_WAIT seconds after the first one arrives. Writes
-	the counts the waiting overlay shows.
+	Waits until every player in the roster is ready (in the server with their data loaded), or WAIT_FOR_PLAYERS
+	seconds pass. On the Match map alone in Studio, where every test player plays, it waits STUDIO_WAIT seconds after
+	the first one arrives. Writes the counts the waiting overlay shows.
 ]]
 function Module.WaitForPlayers(matchFolder: Folder)
 	--[[ Studio ]]
@@ -90,7 +90,8 @@ function Module.WaitForPlayers(matchFolder: Folder)
 		local arrived: number = 0
 		--- @param entry Match_RosterEntry
 		for _index: number, entry in ipairs(metadata.Roster) do
-			if I.S.Players:GetPlayerByUserId(entry.UserId) then
+			-- A teleported player's data loads a few seconds after they join, and seating reads it
+			if I.Player.Valid(I.S.Players:GetPlayerByUserId(entry.UserId)) then
 				arrived += 1
 			end
 		end
@@ -106,9 +107,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Build
 
 --[[
-	Makes the match's participants: the roster's players who arrived (every player on the Match map alone in Studio),
+	Makes the match's participants: the roster's players who are ready (every player on the Match map alone in Studio),
 	on the teams the lobby gave them or the first with room, then bots for every empty place up to the match's size
-	(a custom match drops its missing players instead). Gives everyone a colour, makes the Roblox teams in team modes,
+	(a custom match, or a party match without bots, drops its missing players instead). Gives everyone a colour, makes the Roblox teams in team modes,
 	and writes each participant into Workspace.Ume.Match.Participants.
 ]]
 function Module.Build()
@@ -143,6 +144,11 @@ function Module.Build()
 	--[[ Players ]]
 
 	for _index: number, player: Player in ipairs(players) do
+		-- Skip a player whose data hasn't loaded: their loadout and skin can't be read yet
+		if not I.Player.Valid(player) then
+			continue
+		end
+
 		local team: number? = Module._getTeamWithRoom(filled, teamSize, wanted[player.UserId])
 		if not team then
 			break
@@ -178,7 +184,7 @@ function Module.Build()
 
 	--[[ Bots ]]
 
-	if metadata.Kind ~= "Custom" then
+	if metadata.Kind ~= "Custom" and metadata.Difficulty ~= "None" then
 		while #order < metadata.Size do
 			local team: number? = Module._getTeamWithRoom(filled, teamSize, nil)
 			if not team then

@@ -39,8 +39,8 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Drop
 
 --[[
-	Walks the terrain from each seed through the parts it touches. A group that reaches no indestructible part is
-	welded together and falls.
+	Walks the terrain from each seed through the parts it touches. A group that reaches no bedrock standing on the
+	floor is welded together and falls.
 ]]
 --- @param seeds { BasePart }
 function Module.Drop(seeds)
@@ -217,10 +217,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Group
 
 --[[
-	Collects the parts connected to a start part, stopping early once it reaches indestructible ground, the search
-	limit, or a part an earlier search walked (an earlier floating group would hold this part too, so that search
-	ended on the ground). A whole group stays up too when its floating parts (`Arena_Floats`) cover at least
-	FLOAT_MIN_AREA on the plane. Returns the parts found and whether they are held up.
+	Collects the parts connected to a start part, stopping early once it reaches ground (bedrock, Arena_Indestructible,
+	whose bottom still reaches the map's floor), the search limit, or a part an earlier search walked (an earlier
+	floating group would hold this part too, so that search ended on the ground). A whole group stays up too when its
+	floating parts (`Arena_Floats`) cover at least FLOAT_MIN_AREA on the plane. Returns the parts found and whether
+	they are held up.
 ]]
 --- @param visited { [BasePart]: number }
 --- @return { BasePart }
@@ -232,6 +233,7 @@ function Module._getGroup(start: BasePart, visited, search: number)
 	local queue = { start } --- @type { BasePart }
 	local head: number = 1
 	local floatArea: number = 0
+	local groundHeight: number = Loader.GetFloor() + _settings.CONTACT_MARGIN
 	visited[start] = search
 
 	--[[ Searching ]]
@@ -240,7 +242,8 @@ function Module._getGroup(start: BasePart, visited, search: number)
 		local part: BasePart = queue[head]
 		head += 1
 		table.insert(group, part)
-		if part:GetAttribute("Arena_Indestructible") or #group >= _settings.SUPPORT_SEARCH_LIMIT then
+		local onFloor: boolean = part:GetAttribute("Arena_Indestructible") == true and part.ExtentsCFrame.Y - part.ExtentsSize.Y / 2 <= groundHeight
+		if onFloor or #group >= _settings.SUPPORT_SEARCH_LIMIT then
 			return group, true
 		end
 		if part:GetAttribute("Arena_Floats") then

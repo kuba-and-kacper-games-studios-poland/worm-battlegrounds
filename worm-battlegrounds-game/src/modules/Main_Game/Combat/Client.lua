@@ -2,8 +2,8 @@
 	Created By: 	Nari
 ]]
 
--- --- @type Ume
--- local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
+--- @type Ume
+local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "Combat"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
@@ -30,6 +30,25 @@ local Effects = require(_scripts:FindFirstChild("Client"):FindFirstChild("Effect
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 local Module = {}
+
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	----------------------------
+	---- ASSIGN TO INSTANCE ----
+	----------------------------
+
+	I.Combat = {
+
+		--[[ Control ]]
+
+		SetAim = Held.SetAim,
+
+		--[[ Methods ]]
+
+		GetMuzzle = Held.GetMuzzle,
+	}
+end
 
 --%%%%%%%%%%%%%%%%%%%% Start
 

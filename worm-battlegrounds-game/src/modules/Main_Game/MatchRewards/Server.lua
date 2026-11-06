@@ -192,8 +192,9 @@ end
 
 --[[
 	Returns the coins a place pays: public deathmatches by player count, public team matches by team count (75 for
-	winning a 2v2), solo matches a win by difficulty, custom and tutorial matches nothing. The last 2 places get
-	nothing before ANTI_FARM_ROUNDS unless another worm knocked them out.
+	winning a 2v2), solo matches a win by difficulty, party matches as a deathmatch of their size (PARTY_NO_BOTS_SHARE
+	of it without bots), custom and tutorial matches nothing. The last 2 places get nothing before ANTI_FARM_ROUNDS
+	unless another worm knocked them out.
 ]]
 --- @param placement Match_Placement
 --- @param entry Match_Stats?
@@ -213,6 +214,11 @@ function Module._getCoins(placement, entry, metadata, participantCount: number, 
 
 	if metadata.Kind == "Solo" then
 		return if placement.Place == 1 then _settings.SOLO_COINS[metadata.Difficulty] or 0 else 0
+	end
+	if metadata.Kind == "Party" then
+		local row = _settings.DEATHMATCH_COINS[participantCount] or _settings.DEATHMATCH_COINS[8] --- @type { number }
+		local share: number = if metadata.Difficulty == "None" then _settings.PARTY_NO_BOTS_SHARE else 1
+		return math.floor((row[placement.Place] or 0) * share)
 	end
 	if metadata.Kind ~= "Public" then
 		return 0

@@ -114,8 +114,8 @@ end
 
 --[[
 	**SERVER** |
-	Cuts a round hole through the terrain, lets the liquid flow into it and drops what no longer touches the ground.
-	Carves run one at a time, in the order they were asked for.
+	Cuts a round hole, stepped on the stud grid, through the terrain, lets the liquid flow into it and drops what no
+	longer touches the ground. Carves run one at a time, in the order they were asked for.
 ]]
 function Module.Carve(center: Vector3, radius: number)
 	--[[ Checks ]]
@@ -135,8 +135,10 @@ function Module.Carve(center: Vector3, radius: number)
 
 	--[[ Carving ]]
 
+	-- A stepped crater reaches up to half a square past the radius
+	local reach: number = radius + _settings.CARVE_CELL / 2
 	local seeds = Carver.Carve(center, radius) --- @type { BasePart }
-	Liquid.Refresh(center - Vector3.new(radius, radius, 0), center + Vector3.new(radius, radius, 0))
+	Liquid.Refresh(center - Vector3.new(reach, reach, 0), center + Vector3.new(reach, reach, 0))
 	Debris.Drop(seeds)
 	Props.Update(center, radius)
 

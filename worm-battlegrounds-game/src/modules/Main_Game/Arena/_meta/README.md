@@ -3,8 +3,10 @@
 The destructible arena a match is played on, all on the server. At start it caches every map template in
 `SAssets.Arenas` that has what a map needs, and readies it once (markers hidden, terrain in the `Terrain` group);
 `Load` clones a cached template into `Workspace.Ume.Arena`: its terrain is ordinary parts (long parts for the shapes, smaller ones for
-details) in the `2022 Stud` material. `Carve` subtracts a cylinder running along Z from every terrain part it touches
-(CSG, so craters are round and smooth), then drops each group of pieces that no longer reaches indestructible ground;
+details) in the `2022 Stud` material. `Carve` subtracts a stepped circle running along Z from every terrain part it
+touches (CSG with one box per row of the 1-stud squares whose centers are in the blast, so craters step like voxels on
+the maps' grid), bedrock included, then drops each group of pieces that no longer reaches bedrock
+standing on the map's floor;
 a dropped group falls with the server's physics and anchors again where it lands. Water and lava are a separate grid
 of half-stud cells stepped at 8 fps, so they move like a stop-motion brick film: they flow into craters, spill out of
 broken basins, level out (also under debris that dips into them, as if under pressure), and get pushed up by debris
@@ -26,10 +28,10 @@ part, so clients need no code. It creates no remotes or saved data.
 | --- | --- |
 | `Server.lua` | The entry: `I.Arena`, `Load` (template, then liquid, then `Arena_Loaded`), `Carve` (one carve at a time: cut, liquid, debris), `GetHazard`, the Studio test load |
 | `Settings.lua` | `Arena_Settings`: carving, debris and liquid numbers |
-| `Scripts/Server/Loader.lua` | Registers the collision groups; creates `Workspace.Ume.Arena`; caches the templates at start (checks each, hides its markers, puts its terrain in the `Terrain` group); clones a template's `Terrain`, `Decor` and `Markers`, makes the `Plane`; holds the references the other handlers read |
-| `Scripts/Server/Carver.lua` | The cylinder cut with `GeometryService:SubtractAsync` (`SplitApart`), copying name, attributes and collision group onto each piece |
-| `Scripts/Server/Debris.lua` | Contacts between parts, the support search from each carved piece (held up by indestructible ground, or by enough floating parts), welding and dropping the rest, anchoring them when they land |
-| `Scripts/Server/Props.lua` | The map's props (`Arena_Prop`: trees, bushes, rocks): after each blast, cuts the blast's cylinder through every part of the ones it reaches (CSG), throws each group of pieces no longer joined to the prop's base, drops the ones whose ground is gone, and fades what falls |
+| `Scripts/Server/Loader.lua` | Registers the collision groups; creates `Workspace.Ume.Arena`; caches the templates at start (checks each, hides its markers, puts its terrain in the `Terrain` group); clones a template's `Terrain`, `Decor` and `Markers`, notes its floor (the bottom of its lowest bedrock), makes the `Plane`; holds the references the other handlers read |
+| `Scripts/Server/Carver.lua` | `BuildCutter`, the blast's stepped shape (one box per row of the `CARVE_CELL` squares whose centers are within the radius), and the cut with `GeometryService:SubtractAsync` (`SplitApart`) through every anchored terrain part a box reaches, bedrock included, copying name, attributes and collision group onto each piece |
+| `Scripts/Server/Debris.lua` | Contacts between parts, the support search from each carved piece (held up by bedrock whose bottom still reaches the floor, or by enough floating parts), welding and dropping the rest, anchoring them when they land |
+| `Scripts/Server/Props.lua` | The map's props (`Arena_Prop`: trees, bushes, rocks): after each blast, cuts the blast's stepped shape (Carver's `BuildCutter`) through every part of the ones it reaches (CSG), throws each group of pieces no longer joined to the prop's base, drops the ones whose ground is gone, and fades what falls |
 | `Scripts/Server/Liquid.lua` | The liquid grid: filling it from the markers over several frames, probing which cells terrain fills, the 8 fps step (falling, spreading, then pressure across each connected body), drawing the liquid as merged rectangles |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `arena` command |
 | `_meta/_types.lua` | `Arena_LiquidRect`, one drawn rectangle of liquid |
@@ -41,7 +43,7 @@ part, so clients need no code. It creates no remotes or saved data.
 | Function | Returns | What it does |
 | --- | --- | --- |
 | `Load(mapId: string)` | `boolean` | Clears the arena, clones the cached `SAssets.Arenas.<mapId>` into it and fills its liquids. `false` and a warning when there's no such template; a template without `Terrain`, `Markers` or `Markers.Bounds` is skipped with a warning at start |
-| `Carve(center: Vector3, radius: number)` | | Cuts a round hole through the terrain at `center` (its Z is ignored), wakes the liquid around it and drops what lost its support. Carves wait for each other and run in order |
+| `Carve(center: Vector3, radius: number)` | | Cuts a round hole, stepped on the 1-stud grid, through the terrain at `center` (its Z is ignored), wakes the liquid around it and drops what lost its support. Carves wait for each other and run in order |
 | `GetBounds()` | `BasePart?` | The loaded map's `Bounds` marker |
 | `GetMarkers()` | `Folder?` | The loaded map's `Markers` folder (`Bounds`, liquids) |
 | `GetPlane()` | `Attachment?` | The attachment on the bounds' center whose axis runs along Z: a PlaneConstraint's `Attachment0` keeps a part on the plane |
@@ -76,7 +78,8 @@ No remotes: clients see the arena through Roblox's replication of its parts.
 | Key | Default | What |
 | --- | --- | --- |
 | `CARVE_DEPTH_MARGIN` | `2` | How much longer than the bounds are deep the cutter is, so it cuts all the way through |
-| `CONTACT_MARGIN` | `0.15` | How far apart, in studs, two pieces may sit and still hold each other up |
+| `CARVE_CELL` | `1` | The grid blasts cut on, in studs, lined up with the maps' 1-stud grid: a blast takes every square whose center is within its radius, so craters are stepped |
+| `CONTACT_MARGIN` | `0.15` | How far apart, in studs, two pieces may sit and still hold each other up, and how far above the floor a bedrock piece may end and still stand on it |
 | `SUPPORT_SEARCH_LIMIT` | `400` | The most parts one support search walks before it counts the group as grounded |
 | `FLOAT_MIN_AREA` | `24` | A cut-off group stays up when its `Arena_Floats` parts cover at least this many square studs on the plane; smaller crumbs fall |
 | `PROP_SUPPORT_DEPTH` | `1.5` | How far under a prop's base the ground may be before the prop falls |
@@ -108,7 +111,9 @@ No remotes: clients see the arena through Roblox's replication of its parts.
 | --- | --- |
 | `Workspace.Ume.Arena` | Created at start. Holds the loaded map's `Terrain` (its parts in the `Terrain` collision group), `Decor` and `Markers`, plus `Liquid` (the drawn rectangles), the probe part the liquid uses, and `Plane` (an invisible part at the bounds' center holding the `Plane` attachment) |
 | `SAssets.Arenas.<MapId>` | A map template, authored in `Workspace.Ume.ServerStorage_Assets/Arenas/`, which the Utils module moves into `ServerStorage.Ume.Assets` (`I.Dirs.SAssets`) when the game starts. A Model with the folders below |
-| `<MapId>.Terrain` | The map's parts, anchored. `Arena_Indestructible = true` marks ground blasts never cut, which holds everything else up: every map needs some. `Arena_Floats = true` marks floating terrain (ledges): a cut-off group of it stays up while it's big enough (`FLOAT_MIN_AREA`). Carved pieces keep both |
+| `<MapId>.Terrain` | The map's parts, anchored. `Arena_Indestructible = true` marks the map's bedrock (the name is from before blasts could cut it): blasts cut it like
+any terrain, and a piece of it whose bottom still reaches the map's floor (the bottom of its lowest bedrock part) holds
+up everything it touches, while a piece cut loose from the floor falls. Every map needs some. `Arena_Floats = true` marks floating terrain (ledges): a cut-off group of it stays up while it's big enough (`FLOAT_MIN_AREA`). Carved pieces keep both |
 | `<MapId>.Decor` | Parts never carved and touching nothing (no collision, queries or touches): the backdrop wall, trees, bushes. A Model or part with `Arena_Prop = true` stands on the terrain. A blast cuts its hole through a Model prop's parts and throws the pieces it frees from the base; a one-part prop (a mesh) it reaches is thrown whole; a prop falls when the ground under its base goes (under its pivot: a part-built prop's trunk, so a tree leaning over a drop stays up). What falls or flies fades out after `PROP_FADE_DELAY` |
 | `<MapId>.Markers.Bounds` | The play area: the liquid grid covers it, the cutter is its depth, debris below it is removed |
 | `<MapId>.Markers.<any>` with `Arena_Liquid` | A box filled with that liquid at load (`"Water"` or `"Lava"`); the grid reaches up to the highest one |
@@ -118,7 +123,7 @@ bounds' depth on Z. Inside `Terrain` and `Decor`, folders only organize the map:
 to `Terrain` itself. `PicnicPlains` (the first map, built by the studio, cleaned and rebuilt with MapLab, the game home's map kit) is
 three islands at the waterline and four floating ledges over a 282-stud sea (`Terrain/Island_1`–`3`,
 `Ledge_1`–`4`, left to right, 537 parts on the 1-stud grid named `Grass`, `Dirt`, `DarkDirt`, `Stone`, `DarkStone`;
-`Decor/Backdrop`, `Trees`, `Bushes`, `Rocks`): each island's bedrock under Y 8 is one `DarkStone` part with
+`Decor/Backdrop`, `Trees`, `Bushes`, `Rocks`): each island's bedrock (Y 4 to 8, half in the sea, whose surface is at Y 6.5) is a `DarkStone` part with
 `Arena_Indestructible`, every ledge part has `Arena_Floats`, and its 18 trees, bushes and rocks are part-built
 `Arena_Prop` Models (parts named `Trunk`, `Leaves`, `Needles`, `Spot`, `Bush`, `Rock`). The template it replaced is
 kept in the place's `Workspace._Labs.MapLab._Iterations` (`PicnicPlains_arena_1`); the greybox before it in

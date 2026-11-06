@@ -100,6 +100,11 @@ function Module._onKnockedOut(participantId: string, cause: string, killerId: st
 		end
 		line:Destroy()
 	end)
+
+	--[[ Height ]]
+
+	-- A line too long for the feed wraps onto a second line instead of shrinking
+	line.Size = UDim2.new(1, 0, 0, line.Size.Y.Offset * Module._getLineCount(line))
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -122,6 +127,34 @@ function Module._getName(participantId: string)
 
 	local color: Color3 = entry:GetAttribute("Color") or Color3.new(1, 1, 1)
 	return `<font color="#{color:ToHex()}">{entry:GetAttribute("DisplayName")}</font>`
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Line Count
+
+--[[
+	Returns how many lines a feed line's text takes at its design size in the feed's width: 2 when it doesn't fit on
+	one. One line when the font can't be measured.
+]]
+--- @return number
+function Module._getLineCount(line: TextLabel)
+	--[[ Local Variables ]]
+
+	local padding: UIPadding = elems["Feed"]:FindFirstChildOfClass("UIPadding")
+	local width: number = elems["Feed"].Size.X.Offset - padding.PaddingLeft.Offset - padding.PaddingRight.Offset
+	local params: GetTextBoundsParams = Instance.new("GetTextBoundsParams")
+	params.Text = line.ContentText
+	params.Font = line.FontFace
+	params.Size = line:FindFirstChildOfClass("UITextSizeConstraint").MaxTextSize
+
+	--[[ Measuring ]]
+
+	local success: boolean
+	local result: any | string?
+	success, result = pcall(I.S.TextService.GetTextBoundsAsync, I.S.TextService, params)
+
+	--[[ Returning ]]
+
+	return if success and result.X > width then 2 else 1
 end
 
 return Module

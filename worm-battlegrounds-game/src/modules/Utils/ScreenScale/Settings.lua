@@ -10,10 +10,10 @@ local _settings = {
 		"Results",
 		"Lobby",
 		"MatchBoard",
-		"PlayModes",
 		"CustomLobby",
-		"SoloSetup",
 		"Party",
+		"PartyInvite",
+		"PartyInvited",
 		"Loadout",
 		"LoadoutPicker",
 		"Crates",
@@ -37,6 +37,12 @@ local _settings = {
 	-- Mobile screens shorter than this many pixels scale the guis up by MOBILE_BOOST
 	SMALL_SCREEN = 500,
 	MOBILE_BOOST = 1.3,
+
+	--[[
+		The smallest screen scale on every device but Mobile (whose phones have their own sizes): small 4:3 PC screens
+		keep their text at 14 px or more instead of shrinking to 0.53
+	]]
+	MIN_SCALE = 0.6,
 
 	--[[
 		The UIScale attribute Utils_PlatformScale keeps a panel's device scale in (a panel tagged with it is sized per

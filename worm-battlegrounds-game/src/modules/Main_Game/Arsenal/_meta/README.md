@@ -1,7 +1,7 @@
 # Arsenal
 
 The weapon and utility rows: every number Combat and the guis read (damage, blast radius, knockback, uses, cooldown,
-speeds and each kind's own fields), and the weapons' models, cached at start on both sides.
+speeds and each kind's own fields), and the weapons' and utilities' models, cached at start on both sides.
 
 | | |
 | --- | --- |
@@ -29,9 +29,10 @@ speeds and each kind's own fields), and the weapons' models, cached at start on 
 | `GetAll()` | `{ [string]: row }` | Every row |
 | `GetDamage(itemId: string, distance: number, isShiny: boolean?)` | `number` | Damage at a distance from the blast's centre, from `DamageMax` to `DamageEdge`; shiny items ×`SHINY_DAMAGE_MULTIPLIER` |
 | `GetKnockback(class: string)` | `number` | Knockback speed for a class name |
-| `GetModel(itemId: string)` | `Model?` | The weapon's model (clone it), from `Assets/Arsenal/Models`; warns and returns nil when it has none |
-| `HasModel(itemId: string)` | `boolean` | Whether the weapon has a model, without a warning (the loadout bar shows the model when there's no icon) |
-| `GetProjectileModel(itemId: string)` | `Model?` | What its shot flies as: its model in `Assets/Arsenal/Projectiles`, else `GetModel` |
+| `GetModel(itemId: string)` | `Model?` | The weapon's or utility's model (clone it), from `Assets/Arsenal/Models`; warns and returns nil when it has none |
+| `HasModel(itemId: string)` | `boolean` | Whether the weapon or utility has a model, without a warning (the loadout bar shows the model when there's no icon) |
+| `GetProjectileModel(shotId: string)` | `Model?` | What a shot flies as: its model in `Assets/Arsenal/Projectiles` (a weapon's, or a burst's shot like `Snail`), else `GetModel` |
+| `HasProjectileModel(shotId: string)` | `boolean` | Whether a weapon or a burst's shot has a model of its own in `Projectiles` |
 | `IsWeapon(itemId)` / `IsUtility(itemId)` | `boolean` | Which kind of row it is |
 
 ## Data
@@ -49,20 +50,25 @@ wiki's Arsenal page.
 | --- | --- | --- |
 | `SHINY_DAMAGE_MULTIPLIER` | `1.05` | Extra damage from a shiny weapon |
 | `KNOCKBACK` | Small 20, Medium 45, High 70, VeryHigh 95, Extreme 130 | Knockback speed by class |
+| `BURST_SHOTS` | `{ "Snail" }` | Shots a weapon's burst sends out (by projectile part name) that may have a model in `Projectiles` |
 
 ## In the place
 
 Models are authored in `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/`, which the Utils module moves into
-`ReplicatedStorage.Ume.Assets` (`I.Dirs.Assets`) when the game starts. Each is a Model named after its weapon row, with
+`ReplicatedStorage.Ume.Assets` (`I.Dirs.Assets`) when the game starts. Each is a Model named after its weapon or utility row (or, in `Projectiles`, a burst's shot from `BURST_SHOTS`), with
 a `RootPart` (its PrimaryPart: anchored, hidden at start) the mesh parts are welded to; the meshes don't collide, query
 or touch and are massless. The model faces +X from its RootPart, as worms do, and sits at the grip of a held weapon
-or the centre of a thrown one. The loadout bar shows a weapon's model in its box when the weapon has no icon picture; Combat's clients
-put it in the active worm's hands and fly each shot as `GetProjectileModel` (the Bazooka's rocket as the homing
-missile's missile until it has its own).
+or the centre of a thrown one. Each held model's RootPart has a `Muzzle` Attachment where its shot leaves it: the
+barrel's tip for a gun (Bazooka, Shotgun, Uzi, HomingMissile), the front of a thrown weapon; the aim's power circles
+start there (Combat's `GetMuzzle`). A new held or thrown model gets one too. The loadout bar shows an item's model in its box when it has no icon
+picture; Combat's clients put a weapon's model in the active worm's hands and fly each shot as `GetProjectileModel`
+(the Bazooka's rocket as the homing missile's missile until it has its own); Worms' clients put the Parachute and
+Jetpack on a worm while they work (Worms' README → Gear).
 
 | Instance | What |
 | --- | --- |
-| `Assets/Arsenal/Models/<WeaponId>` | Bazooka, Shotgun, Uzi, HomingMissile (the launcher): held, RootPart at the grip. Grenade, Dynamite, ClusterBomb, SpiderBomb, BlackHoleGrenade: thrown, RootPart at the centre |
-| `Assets/Arsenal/Projectiles/<WeaponId>` | HomingMissile (the missile, nose along +X) |
+| `Assets/Arsenal/Models/<WeaponId>` | Bazooka, Shotgun, Uzi, HomingMissile (the launcher), Minigun: held, RootPart at the grip. Grenade, Dynamite, ClusterBomb, SpiderBomb, BlackHoleGrenade, VarietyGrenade, SpartanSpear: thrown, RootPart at the centre |
+| `Assets/Arsenal/Models/<UtilityId>` | Jetpack, SpeedPotion, Parachute, Bandage, Medkit: RootPart at the centre, no `Muzzle`. The Jetpack's straps face the RootPart's front (it's worn on the back); the Parachute's harness hangs at its bottom |
+| `Assets/Arsenal/Projectiles/<ShotId>` | HomingMissile (the missile, nose along +X); Snail (a Variety grenade's snail, its face on the RootPart's right side, which Combat turns to the camera) |
 
-Still without a model: Baseball Bat, Minigun, One Punch, Spartan Spear, Variety Grenade.
+Still without a model: Baseball Bat, One Punch, Low Gravity Potion, and the Cluster bomb's bomblets.

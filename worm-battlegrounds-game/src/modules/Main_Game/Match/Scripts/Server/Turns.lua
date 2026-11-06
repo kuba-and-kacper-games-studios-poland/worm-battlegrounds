@@ -136,9 +136,10 @@ function Module.RunTurn()
 
 	--[[ Sudden Death ]]
 
-	if matchFolder:GetAttribute("Round") >= _settings.SUDDEN_DEATH_ROUND then
+	local round: number = matchFolder:GetAttribute("Round")
+	if round >= _settings.SUDDEN_DEATH_ROUND then
 		matchFolder:SetAttribute("SuddenDeath", true)
-		I.Arena.RaiseLiquid(_settings.SUDDEN_DEATH_RISE)
+		I.Arena.RaiseLiquid(if round >= _settings.SUDDEN_DEATH_FAST_ROUND then _settings.SUDDEN_DEATH_FAST_RISE else _settings.SUDDEN_DEATH_RISE)
 	end
 
 	--[[ Starting ]]

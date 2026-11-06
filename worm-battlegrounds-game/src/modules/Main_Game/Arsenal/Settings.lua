@@ -11,6 +11,12 @@ local _settings = {
 	-- The speed each knockback class throws a worm at, in studs per second: a first proposal to tune
 	--- @type { [string]: number }
 	KNOCKBACK = { Small = 20, Medium = 45, High = 70, VeryHigh = 95, Extreme = 130 },
+
+	--%%%%%%%%%%%%%%%%%%%% Models
+
+	-- Shots a weapon's burst sends out (the projectile part's name) that may have a model in Assets/Arsenal/Projectiles
+	--- @type { string }
+	BURST_SHOTS = { "Snail" },
 }
 
 return _settings

@@ -6,14 +6,14 @@ while the player's `CameraFollowsShot` setting is on, else the active worm (its 
 player's worm, else the arena's middle, and stays inside the arena's bounds. Players pan by dragging with the right
 mouse button, two fingers on touch, or the right stick while LT is held; the pan resets when the camera follows
 another worm. They zoom with the mouse wheel (not over a gui that scrolls) or a pinch, between `ZOOM_MIN` and
-`ZOOM_MAX` studs from the plane; the zoom stays for the match. It locks the FOV_Controller while it runs, and updates at the `Camera` render priority, one step before ume's CameraShake, so Combat's blast shakes land on top of it. While the player isn't in the match (the `InMatch` Player
+`ZOOM_MAX` studs from the plane; the zoom stays for the match. When it takes the camera it sets the `FOV` buff's base (`Standard`) to `FOV`, so the FOV_Controller still adds an open widget's FOV change, and it updates at the `Camera` render priority, one step before ume's CameraShake, so Combat's blast shakes land on top of it. While the player isn't in the match (the `InMatch` Player
 attribute, on the Studio map's lobby) it gives Roblox's camera back. It creates no remotes, Topics or saved data.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/MatchCamera` |
 | Runs on | Client |
-| Uses | `I.Worms` (client), `I.FOV_Controller`, `I.PlayerSettings`, `UserInputService` |
+| Uses | `I.Worms` (client), `I.Buff` (the `FOV` buff), `I.PlayerSettings`, `UserInputService` |
 
 ## Files
 
@@ -26,7 +26,7 @@ attribute, on the Studio map's lobby) it gives Roblox's camera back. It creates 
 
 | Key | Default | What |
 | --- | --- | --- |
-| `FOV` | `30` | Field of view |
+| `FOV` | `30` | Field of view, before an open widget's FOV change |
 | `DISTANCE` | `110` | How far in front of the plane the camera sits at start |
 | `ZOOM_MIN`, `ZOOM_MAX` | `45`, `200` | The nearest and farthest the zoom goes, in studs from the plane |
 | `ZOOM_STEP`, `ZOOM_SPEED` | `0.15`, `10` | Each wheel notch changes the distance by this share of itself; how quickly the zoom eases there |

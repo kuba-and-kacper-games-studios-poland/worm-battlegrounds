@@ -36,6 +36,8 @@ function Module.Init()
 
 	I.Network.GetEvent("MatchBoard_PlaySolo", { "Player", "string" }, { RateLimit = 1 })
 	I.Network.Fired("MatchBoard_PlaySolo", Module.PlaySolo)
+	I.Network.GetEvent("MatchBoard_PlayParty", { "Player", "string" }, { RateLimit = 1 })
+	I.Network.Fired("MatchBoard_PlayParty", Module.PlayParty)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -106,15 +108,9 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 		return false
 	end
 
-	--[[ Studio ]]
-
-	if I.S.RunService:IsStudio() then
-		print(`[{_localName}::{script.Name}]: Studio can't teleport - the match would be:`, metadata)
-		Module._tell(players, "Matches start in a published place or on the Studio map (Studio printed the match).")
-		return false
-	end
-
 	--[[ Teleporting ]]
+
+	I.Transition.SetDestination(players, `Heading to {_settings.MAPS[mapId].Name}…`, _settings.MAPS[mapId].Thumbnail)
 
 	local success: boolean
 	local result: any | string?
@@ -159,6 +155,44 @@ function Module.PlaySolo(player: Player, difficulty: string)
 	--[[ Launching ]]
 
 	return Module.Launch({ player }, "Solo", "Deathmatch", 2, Module.GetMap(2), difficulty)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play Party
+
+--[[
+	**SERVER** |
+	Starts a friends-only deathmatch for the leader's party: with bots at a difficulty (PARTY_BOTS_PER_PLAYER per member),
+	or "None" for the party alone, which pays less. Refused unless the player leads a party of 2 or more here.
+]]
+--- @return boolean
+function Module.PlayParty(player: Player, difficulty: string)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return false
+	end
+
+	--[[ Data ]]
+
+	local partyId: string? = player:GetAttribute("PartyId")
+	local members = if partyId then I.Party.GetMembers(partyId) else {} --- @type { Player }
+
+	--[[ Checks ]]
+
+	-- Check if the difficulty exists
+	if difficulty ~= "None" and not table.find(_settings.SOLO_DIFFICULTIES, difficulty) then
+		return false
+	end
+
+	-- Check if the player leads a party of two or more
+	if #members < 2 or not I.Party.IsLeader(player) then
+		Module._tell({ player }, "Only a party's leader can start a party match.")
+		return false
+	end
+
+	--[[ Launching ]]
+
+	local size: number = if difficulty == "None" then #members else math.min(#members * (1 + _settings.PARTY_BOTS_PER_PLAYER), _settings.PARTY_MAX_SIZE)
+	return Module.Launch(members, "Party", "Deathmatch", size, Module.GetMap(size), difficulty)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Tell

@@ -28,3 +28,16 @@
 ---
 --- @field DamageTaken number?
 local _worms_Participant = {}
+
+--%%%%%%%%%%%%%%%%%%%% Gear
+
+--- @class Worms_Gear
+---
+--- # Showing #
+---
+--- @field Attribute string
+---
+--- # Placing #
+---
+--- @field Offset Vector3
+local _worms_Gear = {}

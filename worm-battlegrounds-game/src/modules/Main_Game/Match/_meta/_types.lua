@@ -17,11 +17,11 @@ local _match_RosterEntry = {}
 --- # General #
 ---
 --- @field MatchId string
---- @field Kind "Public" | "Solo" | "Custom" | "Tutorial"
+--- @field Kind "Public" | "Solo" | "Party" | "Custom" | "Tutorial"
 --- @field Mode "Deathmatch" | "Duo" | "Trio" | "Quads" | "Teams"
 --- @field Size number
 --- @field MapId string
---- @field Difficulty "Easy" | "Medium" | "Hard" | "Tutorial"
+--- @field Difficulty "Easy" | "Medium" | "Hard" | "Tutorial" | "None"
 ---
 --- # Players #
 ---

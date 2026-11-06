@@ -64,8 +64,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Send To Lobby
 
 --[[
-	Teleports players to a public lobby. On the Studio map they go back to the lobby on this server; on the Match map
-	alone in Studio, which can't teleport, it only says so.
+	Teleports players to a public lobby. Leaving the tutorial match counts as playing it, so the lobby doesn't send
+	them straight back. On the Studio map they go back to the lobby on this server; on the Match map alone in Studio,
+	which can't teleport, it only says so.
 ]]
 --- @param players { Player }
 function Module.SendToLobby(players)
@@ -74,6 +75,23 @@ function Module.SendToLobby(players)
 	-- Check if anyone is going
 	if #players == 0 then
 		return
+	end
+
+	--[[ Tutorial ]]
+
+	if Roster.GetMetadata().Kind == "Tutorial" then
+		for _index: number, player: Player in ipairs(players) do
+			local success: boolean
+			local result: any | string?
+			success, result = pcall(function()
+				if I.Tutorial.CompleteMatch(player) then
+					I.Player.GetProfile(player):Save()
+				end
+			end)
+			if not success then
+				warn(`[{_localName}::{script.Name}]: Failed to complete the tutorial for ({player.Name})! - ({result})`)
+			end
+		end
 	end
 
 	--[[ Studio Map ]]
@@ -86,16 +104,9 @@ function Module.SendToLobby(players)
 		return
 	end
 
-	--[[ Checks ]]
-
-	-- Check if Studio can teleport
-	if I.S.RunService:IsStudio() then
-		print(`[{_localName}::{script.Name}]: Studio - would send ({#players}) player(s) to the lobby.`)
-		return
-	end
-
 	--[[ Teleporting ]]
 
+	I.Transition.SetDestination(players, "Back to the lobby…", "")
 	I.TeleportExternal(players, I.Config.PlaceLoader.DefaultPlaceId, "TeleportGui")
 end
 

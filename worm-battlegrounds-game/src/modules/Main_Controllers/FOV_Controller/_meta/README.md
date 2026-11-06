@@ -1,6 +1,6 @@
 # FOV_Controller
 
-The camera's field of view follows the `FOV` buff. Whenever the buff's sum changes (`Buff_Updated-FOV`), the camera tweens to it, kept between `MIN_FOV` and `MAX_FOV`. Modules that need the camera to themselves (a cutscene, a scope) lock it by name so buff changes wait.
+The camera's field of view follows the `FOV` buff. Whenever the buff's sum changes (`Buff_Updated-FOV`), the camera tweens to it, kept between `MIN_FOV` and `MAX_FOV`. A camera with its own field of view (the lobby stage, MatchCamera) sets it as the buff's base, `I.Buff.Set("FOV", "Standard", fov)`, so other values (an open widget's) still add to it. Modules that need the camera to themselves (a cutscene, a scope) lock it by name so buff changes wait.
 
 | | |
 | --- | --- |

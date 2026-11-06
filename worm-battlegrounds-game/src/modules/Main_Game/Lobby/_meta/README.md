@@ -12,7 +12,7 @@ lobby's 3D stage, where the player's worm stands in their equipped skin.
 | --- | --- |
 | Folder | `src/modules/Main_Game/Lobby` |
 | Runs on | Server, Client · Lobby map, Studio map |
-| Uses | `I.Player`, `I.Tutorial`, `I.MatchBoard`, `I.TeleportExternal`, `I.TeleportToServer`, `I.WidgetManager`, `I.UserInterface`, `I.Replicator`, `I.G_Cosmetics` |
+| Uses | `I.Player`, `I.Tutorial`, `I.MatchBoard`, `I.TeleportExternal`, `I.TeleportToServer`, `I.WidgetManager`, `I.UserInterface`, `I.Replicator`, `I.G_Cosmetics`, `I.Buff` (the `FOV` buff) |
 | Saves | `Profile.Match` (read and cleared here, written by the Match server) |
 
 ## Files
@@ -48,7 +48,7 @@ lobby's 3D stage, where the player's worm stands in their equipped skin.
 | --- | --- | --- |
 | `LOBBY_GUIS` | Lobby, MatchBoard, Party, Loadout, Currency | The guis the client shows outside matches |
 | `STAGE_NAME`, `CAMERA_MARKER`, `WORM_MARKER` | `"LobbyStage"`, `"Camera"`, `"Worm"` | The stage Model in `Workspace.Ume`, and its markers: where the camera sits (looking along its front), where the worm stands |
-| `STAGE_FOV` | `40` | The stage camera's field of view |
+| `STAGE_FOV` | `40` | The stage camera's field of view, set as the `FOV` buff's base, before an open widget's FOV change |
 | `TELEPORT_GUI` | `"TeleportGui"` | The teleport screen |
 | `TUTORIAL_MAP`, `TUTORIAL_DIFFICULTY` | `"PicnicPlains"`, `"Tutorial"` | The tutorial match |
 | `STUDIO_TUTORIAL_ATTRIBUTE` | `"StudioTutorial"` | The Workspace attribute that plays the tutorial match in Studio (set it to true) |

@@ -12,6 +12,10 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Gui
 
 	GUI_NAME = "Party",
+
+	-- The box that lists who can be invited, and the box an invited player answers
+	INVITE_GUI_NAME = "PartyInvite",
+	INVITED_GUI_NAME = "PartyInvited",
 }
 
 return _settings

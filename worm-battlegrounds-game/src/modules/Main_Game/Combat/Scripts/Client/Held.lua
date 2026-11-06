@@ -25,6 +25,9 @@ local heldModel: Model? = nil
 local heldAngle: number = 0
 local stepConnection: RBXScriptConnection?
 
+-- The aim this screen draws for the holding worm (MatchHud's crosshair), which the weapon follows at once
+local drawnAngle: number? = nil
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -116,7 +119,7 @@ function Module._refresh()
 	--[[ Building ]]
 
 	heldModel = I.G_Arsenal.GetModel(itemId):Clone()
-	heldAngle = Module._getAimAngle(worm)
+	heldAngle = drawnAngle or Module._getAimAngle(worm)
 	Module._place(worm, heldAngle)
 	heldModel.Parent = effectsFolder
 
@@ -144,12 +147,36 @@ function Module._step(deltaTime: number)
 
 	--[[ Turning ]]
 
-	local turn: number = ((Module._getAimAngle(worm) - heldAngle + math.pi) % (2 * math.pi)) - math.pi
-	heldAngle += turn * (1 - math.exp(-_settings.HELD_TURN_SPEED * deltaTime))
+	if drawnAngle then
+		heldAngle = drawnAngle
+	else
+		local turn: number = ((Module._getAimAngle(worm) - heldAngle + math.pi) % (2 * math.pi)) - math.pi
+		heldAngle += turn * (1 - math.exp(-_settings.HELD_TURN_SPEED * deltaTime))
+	end
 
 	--[[ Placing ]]
 
 	Module._place(worm, heldAngle)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Aim
+
+--[[
+	**CLIENT** |
+	Points the held weapon along the aim this screen draws (the crosshair), at once, so it never trails the server's
+	copy of the aim. nil hands it back to the worm's replicated aim.
+]]
+function Module.SetAim(angle: number?)
+	--[[ Saving ]]
+
+	drawnAngle = angle
+
+	--[[ Placing ]]
+
+	if angle and holder and holder.PrimaryPart and heldModel then
+		heldAngle = angle
+		Module._place(holder, angle)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Place
@@ -172,6 +199,24 @@ function Module._place(worm: Model, angle: number)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Muzzle
+
+--[[
+	**CLIENT** |
+	Returns where the held weapon's shot leaves it (the `Muzzle` attachment on its RootPart), or nil when nothing is held
+	or the weapon has no muzzle.
+]]
+--- @return Vector3?
+function Module.GetMuzzle()
+	--[[ Data ]]
+
+	local muzzle: Attachment? = heldModel and heldModel.PrimaryPart and heldModel.PrimaryPart:FindFirstChild("Muzzle")
+
+	--[[ Returning ]]
+
+	return muzzle and muzzle.WorldPosition
+end
 
 --%%%%%%%%%%%%%%%%%%%% Get Holder
 

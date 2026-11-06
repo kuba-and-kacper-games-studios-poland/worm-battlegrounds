@@ -65,6 +65,12 @@ function Module.Start()
 	I.Interact.OnPress(elems["EmoteButton"]:FindFirstChild("Button"), function()
 		elems["Wheel"].Visible = not elems["Wheel"].Visible
 	end)
+	I.S.UserInputService.InputBegan:Connect(Module._onInput)
+	elems["EmoteButton"]:GetPropertyChangedSignal("Visible"):Connect(function()
+		if not elems["EmoteButton"].Visible then
+			elems["Wheel"].Visible = false
+		end
+	end)
 	I.Topic.Subscribe("Inventory_DataUpdated-Standard", Module._refresh)
 	I.Network.Fired("Cosmetics_EmotePlayed", Module._onEmotePlayed)
 	Module._refresh()
@@ -146,6 +152,29 @@ function Module._makeEmote(prefab: Instance, emoteId: string)
 	--[[ Returning ]]
 
 	return card
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Input
+
+--[[
+	Closes the emote wheel when the player clicks or taps anywhere but a button (the world, the wheel's gaps).
+]]
+function Module._onInput(input: InputObject, gameProcessed: boolean)
+	--[[ Checks ]]
+
+	-- Check if the wheel is open and a button didn't take the press
+	if not elems["Wheel"].Visible or gameProcessed then
+		return
+	end
+
+	-- Check if it's a click or a tap
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then
+		return
+	end
+
+	--[[ Closing ]]
+
+	elems["Wheel"].Visible = false
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Emote Played

@@ -40,9 +40,29 @@ local _settings = {
 	-- The name colour of a VIP player's worm
 	VIP_NAME_COLOR = Color3.fromRGB(255, 206, 46),
 
+	--[[
+		The health bar's colour at full, half and no health, blended in between (the GUI kit's Success, Warning and
+		Danger)
+	]]
+	HEALTH_FULL_COLOR = Color3.fromRGB(156, 240, 90),
+	HEALTH_HALF_COLOR = Color3.fromRGB(255, 176, 32),
+	HEALTH_EMPTY_COLOR = Color3.fromRGB(255, 110, 96),
+
 	-- A damage number rises POP_RISE studs while it fades
 	POP_RISE = 3,
 	POP_TWEENINFO = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+
+	--%%%%%%%%%%%%%%%%%%%% Gear
+
+	--[[
+		Utilities a worm wears while they work, drawn by every client from their Arsenal models: the worm attribute
+		that shows each one, and where its RootPart sits in the ball's space (−Z ahead of the worm, +Y up)
+	]]
+	--- @type { [string]: Worms_Gear }
+	GEAR = {
+		Parachute = { Attribute = "Parachute", Offset = Vector3.new(0, 4.3, 0) },
+		Jetpack = { Attribute = "JetpackFuel", Offset = Vector3.new(0, 0.8, 1.3) },
+	},
 }
 
 return _settings

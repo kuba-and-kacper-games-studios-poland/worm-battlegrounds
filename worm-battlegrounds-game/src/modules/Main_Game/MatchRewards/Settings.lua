@@ -25,6 +25,9 @@ local _settings = {
 	--- @type { [string]: number }
 	SOLO_COINS = { Easy = 20, Medium = 35, Hard = 60 },
 
+	-- A party match (friends only) pays like a public deathmatch of its size, times this share when it has no bots
+	PARTY_NO_BOTS_SHARE = 0.5,
+
 	-- The last 2 places are paid only after this many rounds, or when another worm knocked the player out
 	ANTI_FARM_ROUNDS = 2,
 
@@ -37,7 +40,7 @@ local _settings = {
 	XP_PER_MATCH = 100,
 
 	--- @type { [string]: boolean }
-	XP_KINDS = { Public = true, Solo = true, Custom = true },
+	XP_KINDS = { Public = true, Solo = true, Party = true, Custom = true },
 }
 
 return _settings

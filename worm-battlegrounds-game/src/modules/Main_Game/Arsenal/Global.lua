@@ -69,6 +69,7 @@ function Module.Init()
 		GetModel = Module.GetModel,
 		GetProjectileModel = Module.GetProjectileModel,
 		HasModel = Module.HasModel,
+		HasProjectileModel = Module.HasProjectileModel,
 		IsWeapon = Module.IsWeapon,
 		IsUtility = Module.IsUtility,
 	}
@@ -79,8 +80,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Cache Models
 
 --[[
-	Caches the weapon models in Assets/Arsenal/<folderName>, each named after its weapon row and with its RootPart (the
-	PrimaryPart) hidden. Skips, with a warn on the server, what isn't a Model with a PrimaryPart or has no weapon row.
+	Caches the models in Assets/Arsenal/<folderName>, each named after its weapon or utility row (or, in Projectiles, a
+	burst's shot from BURST_SHOTS) and with its RootPart (the PrimaryPart) hidden. Skips, with a warn on the server,
+	what isn't a Model with a PrimaryPart or has no row.
 ]]
 --- @param cache { [string]: Model }
 function Module._cacheModels(folderName: string, cache)
@@ -112,10 +114,11 @@ function Module._cacheModels(folderName: string, cache)
 			continue
 		end
 
-		-- Check if a weapon row uses it
-		if not weapons[model.Name] then
+		-- Check if a row uses it
+		local isShot: boolean = folderName == "Projectiles" and table.find(_settings.BURST_SHOTS, model.Name) ~= nil
+		if not weapons[model.Name] and not utilities[model.Name] and not isShot then
 			if I.Env.IsServer then
-				warn(`[{_localName}::{script.Name}]: Model (Assets/{_localName}/{folderName}/{model.Name}) has no weapon row in Data/Weapons - unused. -`, model)
+				warn(`[{_localName}::{script.Name}]: Model (Assets/{_localName}/{folderName}/{model.Name}) has no row in Data - unused. -`, model)
 			end
 			continue
 		end
@@ -230,11 +233,21 @@ end
 --%%%%%%%%%%%%%%%%%%%% Has Model
 
 --[[
-	Returns whether a weapon has a model, without warning when it doesn't.
+	Returns whether a weapon or utility has a model, without warning when it doesn't.
 ]]
 --- @return boolean
 function Module.HasModel(itemId: string)
 	return cachedModels[itemId] ~= nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Has Projectile Model
+
+--[[
+	Returns whether a weapon or a burst's shot (a snail) has a model of its own in Projectiles.
+]]
+--- @return boolean
+function Module.HasProjectileModel(shotId: string)
+	return cachedProjectiles[shotId] ~= nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Weapon

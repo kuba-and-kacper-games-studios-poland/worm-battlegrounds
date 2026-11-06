@@ -13,6 +13,7 @@ local _scripts = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Tags = require(_scripts:FindFirstChild("Client"):FindFirstChild("Tags")) --- @type Worms_Client_Tags
+local Gear = require(_scripts:FindFirstChild("Client"):FindFirstChild("Gear")) --- @type Worms_Client_Gear
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -63,6 +64,7 @@ function Module.Start()
 	----------------------------
 
 	Tags.Start(wormsFolder)
+	Gear.Start(wormsFolder)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

@@ -232,7 +232,7 @@ function Module._refreshBoxes()
 		local cooldown: number = combatRep:GetAttribute(`Cooldown_{itemId}`) or 0
 		local cover: Frame = box:FindFirstChild("S_Cooldown", true)
 		local body: Frame = box:FindFirstChild("Background", true):FindFirstChild("Body", true)
-		box:FindFirstChild("S_Uses", true).Text = if uses < 0 then "" else `×{uses}`
+		box:FindFirstChild("S_Uses", true).Text = if uses < 0 then "" else `x{uses}`
 		box:FindFirstChild("S_Key", true).Visible = I.Platform.Current == "Desktop"
 		cover.Visible = cooldown > 0
 		cover:FindFirstChild("S_Turns", true).Text = tostring(cooldown)

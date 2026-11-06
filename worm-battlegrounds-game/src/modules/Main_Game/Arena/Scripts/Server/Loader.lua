@@ -20,6 +20,9 @@ local markersFolder: Folder?
 local boundsPart: BasePart?
 local planeAttachment: Attachment?
 
+-- The bottom of the loaded map's lowest bedrock: bedrock that still reaches it holds the terrain up
+local floorHeight: number = -math.huge
+
 --- @type OverlapParams
 local terrainParams = OverlapParams.new()
 
@@ -131,8 +134,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Load
 
 --[[
-	Clears the arena and clones a map's cached template into it (its Terrain, Decor and Markers), then places a plane
-	part at the bounds for worms and projectiles to keep to.
+	Clears the arena and clones a map's cached template into it (its Terrain, Decor and Markers), notes its floor (the
+	bottom of its lowest bedrock), then places a plane part at the bounds for worms and projectiles to keep to.
 ]]
 --- @return boolean
 function Module.Load(mapId: string)
@@ -161,6 +164,16 @@ function Module.Load(mapId: string)
 	markersFolder = arenaFolder:FindFirstChild("Markers")
 	boundsPart = markersFolder:FindFirstChild("Bounds")
 	terrainParams.FilterDescendantsInstances = { terrainFolder }
+
+	--[[ Floor ]]
+
+	-- Arena_Indestructible marks a map's bedrock (named before blasts could cut it)
+	floorHeight = math.huge
+	for _partIndex: number, part: Instance in ipairs(terrainFolder:GetDescendants()) do
+		if part:IsA("BasePart") and part:GetAttribute("Arena_Indestructible") then
+			floorHeight = math.min(floorHeight, part.Position.Y - part.Size.Y / 2)
+		end
+	end
 
 	--[[ Plane ]]
 
@@ -198,6 +211,16 @@ end
 --- @return BasePart?
 function Module.GetBounds()
 	return boundsPart
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Floor
+
+--[[
+	Returns the height of the loaded map's floor: the bottom of its lowest bedrock (Arena_Indestructible) part.
+]]
+--- @return number
+function Module.GetFloor()
+	return floorHeight
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Plane

@@ -207,11 +207,6 @@ return function(_task)
 				return false
 			end
 
-			if not _task.MapHashMap then
-				warn(`[Ume::{_localName}]: Cannot teleport with reserved server: MapHashMap is not initialized.`)
-				return false
-			end
-
 			--%%%%%%%%%%%%%%%%%%%% Reserving Server
 
 			-- Reserving Server (on success: accessCode, reservedServerId; on failure: errorMessage)
@@ -231,20 +226,29 @@ return function(_task)
 			local localMetadata: { [string]: any } = (metadata and type(metadata) == "table") and table.clone(metadata) or {}
 			localMetadata.AccessCode = accessCode
 
-			-- Saving MapId
-			local setSuccess: boolean, setResult: any = pcall(function()
-				return _task.MapHashMap and _task.MapHashMap:UpdateAsync(reservedServerId, function(_value: any | nil)
-					return {
-						MapId = mapId,
-						Metadata = localMetadata,
-					}
-				end, 5 * 60)
-			end)
+			local mapData: { [string]: any } = {
+				MapId = mapId,
+				Metadata = localMetadata,
+			}
 
-			-- Updating HashMap Failed (pcall error or MapHashMap was missing)
-			if not setSuccess or setResult == nil then
-				warn(`[Ume::{_localName}]: Updating (MapHashMap) failed! - {setResult}`)
-				return false
+			-- Saving MapId (a Studio test gives no reservedServerId: the map goes in the teleport data instead)
+			if reservedServerId ~= "" then
+				if not _task.MapHashMap then
+					warn(`[Ume::{_localName}]: Cannot teleport with reserved server: MapHashMap is not initialized.`)
+					return false
+				end
+
+				local setSuccess: boolean, setResult: any = pcall(function()
+					return _task.MapHashMap and _task.MapHashMap:UpdateAsync(reservedServerId, function(_value: any | nil)
+						return mapData
+					end, 5 * 60)
+				end)
+
+				-- Updating HashMap Failed (pcall error or MapHashMap was missing)
+				if not setSuccess or setResult == nil then
+					warn(`[Ume::{_localName}]: Updating (MapHashMap) failed! - {setResult}`)
+					return false
+				end
 			end
 
 			--%%%%%%%%%%%%%%%%%%%% Teleporting
@@ -256,6 +260,9 @@ return function(_task)
 
 			local teleportOptions: TeleportOptions = Instance.new("TeleportOptions")
 			teleportOptions.ReservedServerAccessCode = accessCode
+			if reservedServerId == "" then
+				teleportOptions:SetTeleportData({ Ume_Map = mapData })
+			end
 
 			--[[ Teleporting ]]
 

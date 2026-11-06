@@ -334,3 +334,155 @@ render step earlier (`Camera` instead of `Camera + 1`) so the shake lands on top
 overwritten. Phones and pads vibrate through the Haptic module's presets: a tick on the player's own shot, a thump
 for blasts by size and distance, and a longer one when their worm is hurt. Rules: Worms → "Blasts are felt, not
 only seen".
+
+### Bedrock can be blasted down to the water (2026-11-05)
+
+**Before.** Each island's waterline blocks (`Arena_Indestructible`, Y 4 to 8 on both maps) were never cut: the carver
+skipped them and the debris search counted any of them as ground. Blasts could dig an island down to that layer
+but never through it, so there was always a floor under the worms.
+
+**Why it changed.** The owner asked for the bottom layer to be destructible too, so shots can open an island to the
+water. In the same change, sudden death starts sooner and gentler: from round 4 the water rises half a stud every
+turn, and from round 8, when the match drags on, two studs (it used to start at round 10 at two studs).
+
+**Now.** `Arena/Scripts/Server/Carver.lua` cuts bedrock like any terrain. The loader notes the map's floor (the
+bottom of its lowest bedrock part), and the debris search (`Debris.lua`) counts a bedrock piece as ground only while
+its bottom still reaches that floor, so a piece cut loose falls into the sea. The attribute keeps its old name, so
+the maps and MapLab need no change. Sudden death is Match's `SUDDEN_DEATH_ROUND` / `SUDDEN_DEATH_RISE` and
+`SUDDEN_DEATH_FAST_ROUND` / `SUDDEN_DEATH_FAST_RISE`. Rule: Arena → "Ground is bedrock on the floor".
+
+### Craters are stepped like voxels (2026-11-05)
+
+**Before.** Blasts subtracted a cylinder (CSG), so every crater was a smooth round bowl. The lesson "The arena is parts
+carved by CSG" picked that on purpose: a grid "would also make every crater stepped".
+
+**Why it changed.** The maps are drawn on the 1-stud grid, and the owner wants destruction to look voxelized on them
+too, not smooth.
+
+**Now.** The terrain is still long parts and the cut is still CSG; only the cutter changed. `Carver.BuildCutter` makes
+one box per row of the `CARVE_CELL` (1-stud) squares whose centers are within the blast's radius, lined up with the
+maps' grid, and `SubtractAsync` takes them all at once. Props use the same cutter. A test in Studio cut a 60-stud part
+in 11 ms with a radius of 6 (12 boxes) and 24 ms with 14 (28 boxes), against about 10 ms for the old cylinder, with
+clean pieces and no slivers. The crater can reach half a square past the radius, so the liquid refresh around a carve
+covers that too. Rule: Arena → "Blasts carve voxel craters with CSG".
+
+### World labels scale with the screen (2026-11-05)
+
+**Before.** The worm tag, the drop marker and the damage number were BillboardGuis of a fixed pixel size (WormTag
+240 × 200). On a 1080p screen that matched the hud, but on a 667 × 375 phone a tag was about half the screen's height,
+while the hud panels around it shrank with the screen. The tag's health number was also squeezed to the bar's 18 px,
+by a shortcut in `Worms/Scripts/Client/Tags.lua` that worked around ume-gui's `Progress` status label growing tall
+under a UIScale.
+
+**Why it changed.** A gui audit on phone sizes: the hud was fixed to scale with the screen, and the labels over the
+worms had to follow, or they covered the arena on small screens.
+
+**Now.** Each world label's root is laid out at its design size (WormTag 240 × 240, DropMarker 240 × 100, DamagePop
+160 × 100) with an `S_ScreenScale`, and the code that clones it calls `I.ScreenScale.AddBillboard`, which sets that
+scale to the screen's and the billboard's size to the root's times it, refitting when the screen changes. The kit
+theme has its own `Progress` control whose status line is one line tall, so the health number is big and centred
+(`Health` style) and the shortcut is gone. Rule: Maps and placeholders → "World labels scale with the screen too".
+
+### Capitals that stay capitals, and a floor for small PC screens (2026-11-05)
+
+**Before.** The kit's capitals styles (headings, titles, buttons) upper-cased their text only when the gui was built.
+Text game code wrote later showed as written, so the turn panel read "YOUR TURN!" on one turn and "Your turn in 3
+turns" on the next, and the waiting room's countdown and vote button were mixed case under capitals titles. On a PC
+at 1024 × 768 the screen scale was 0.533 (the width rule), times the kit's 0.75 on Desktop: most hud text was about 10
+to 12 px.
+
+**Why it changed.** A gui audit asked for clearer guis. The owner chose capitals everywhere, and a floor on the
+screen scale for small PC windows.
+
+**Now.** The theme's `Label`, `Button`, `Widget` and `Box` tag capitals text `TextCase_Upper`, and the TextCase module
+(Utils) writes it in capitals whenever it changes, keeping rich text tags and escapes; guis whose code writes into
+such text were exported again to carry the tag. ScreenScale never goes under `MIN_SCALE` 0.6 off Mobile. The floor
+wins over the width rule, which made the lobby's bottom row collide at 1024 × 768 (the Loadout card over Play by
+28 px), so Play and the waiting room moved to 55 % across: clear on every screen checked, phones included, where they
+had overlapped by 7 px. Rules: Guis → "Capitals stay capitals"; Maps and placeholders → "Panels scale with the screen
+in position and size", "Panels hang from a screen edge or corner".
+
+### Party folds on phones, and counts stay on one line (2026-11-05)
+
+**Before.** Party was a fixed 380-tall box whose header and two button rows took all of it, so the member list got no
+height and no members showed, on every screen. On a 667 × 375 phone the panel touched the Loadout card and the lobby's
+logo ran under Party and the currency bar. The coin count was a narrow centred label, so "100" wrapped onto two lines.
+
+**Why it changed.** The gui audit's batch 4. The owner chose: the panel grows with its members on PC, folds to a tab on
+phones, and the phone logo shrinks to fit.
+
+**Now.** Party is a slate tab ("Party 2/4") over a `Panel` box as tall as its members and buttons. Party's code opens it
+on PC and console, folds it on phones and tablets (`I.Platform.Current`, again on `Platform_Changed`), and a press
+toggles it; the tab shows the kit's selected skin and an upturned chevron while open. Loadout and MatchBoard dropped to
+`DisplayOrder` -1 so an opened panel draws over them. The logo is 0.4 on Mobile and the corner buttons sit at 16.5 %
+down, clear of the currency bar. Each count is 104 wide and left-aligned, and the slot writes 10,000 and up short
+(`Currency_ShortFrom`). Rules: Maps and placeholders → "Panels hang from a screen edge or corner", "Counts stay on one
+line".
+
+### Worms-style aiming, and a RoWorld-style lobby (2026-11-06)
+
+**Before.** A shot was aimed by dragging back from the worm: the drag's direction was the angle, its length the
+power, and dots showed the first part of the shot's path. The lobby had one yellow **Play** (a quick match into the
+fullest public row) and **Modes**, a window with Play solo (hidden a window deeper), Custom lobby and two random team
+rows, so a mode like Trios was often not on the board at all. Party invites were Roblox-style confirmations asked one
+player at a time.
+
+**Why it changed.** The owner asked for Worms' aiming (a crosshair for the direction, a held charge for the power,
+both seen by everyone) and a lobby like RoWorld's (their screenshots): Play solo up front, the public matches listed,
+bots filling any empty seat, and a friends-only party match with bots on or off (half the coins without bots).
+
+**Now.** A crosshair sits 9 studs from the worm toward the mouse, finger or right stick; holding charges a
+flame-coloured power cone, letting go fires, a full charge (1.6 s) fires by itself, and bots turn then charge the same
+way. The lobby's one panel holds the welcome line, Play solo (Play with party in a party), Custom and one card per
+public mode; the solo or party setup and the waiting room take its place. Invites are kit-style boxes: a list of
+players to invite, and an invite to answer. A match server now loads its map before waiting for its players, so a
+party whose last member is slow sees the arena instead of an empty sky. Rules: Worms → "Aiming is a crosshair and a
+held charge", "Everyone sees the active worm aim"; Maps and placeholders → "The lobby is a 3D stage", "Matchmaking
+fills with bots".
+
+### Two places, and Studio teleports that carry the match (2026-11-06)
+
+**Before.** One place held both maps: a lobby server reserved a server of the same place, and the match server found
+its map in ume's MemoryStore by its reserved-server id. Studio couldn't teleport, so the Studio map played the lobby
+and its matches on one server.
+
+**What we found.** Studio tests can teleport now (`TeleportAsync`, same experience), but `ReserveServerAsync` gives
+an empty reserved-server id there and the new server's `PrivateServerId` is empty, so `I.Teleport` failed writing the
+map (`InvalidParameter: The key field is required`), and needed the MemoryStore even when Studio has no API access.
+The new server also runs the destination place as last saved to Roblox, not the open session.
+
+**Why it changed.** The owner wants Roblox's analytics for the lobby and the matches apart (where players leave, what
+breaks), so the lobby and the matches get a place each, copies of one file.
+
+**Now.** The place loader's config boots `Lobby` on `LOBBY_PLACE_ID` and `Match` on `MATCH_PLACE_ID` (Arena,
+118265066788984; both places share one `MAP_CONFIGS`); MatchBoard teleports to its `MATCH_PLACE_ID`. In ume's place loader, `I.Teleport` without a
+reserved-server id sends `{ Ume_Map = { MapId, Metadata } }` as teleport data, and `Map.FetchMapId` in Studio reads it
+from the first player's join data (waiting up to 10 s for one), since teleport data passes through the client and
+only Studio may trust it. That is a framework change, to take to ume. Checked in Studio on 2026-11-06: Play solo in
+the lobby place teleported to Arena, which booted `Match` with the solo match; when it ended, the player went back to
+the lobby place's `Lobby`. Rule: Maps and placeholders → "Two places, one
+file, two maps", "Studio plays the `Studio` map".
+
+### The charge bounces, and power is circles (2026-11-06)
+
+**Before.** Holding the fire button charged a flame-coloured cone, and a full charge fired by itself.
+
+**Why it changed.** The owner wanted only the player's release to fire: a charge left at full kept firing shots the
+player hadn't chosen. They also wanted the power drawn as circles, like Worms', not a flat band.
+
+**Now.** Held, the power bounces from none to full and back (`CHARGE_SECONDS` each way) until it's let go, and a turn
+that runs out while charging drops it (Combat refuses a shot outside the `Turn` phase). The power is `POWER_DOTS`
+circles drawn over the arena (like the crosshair, so props never hide them) from the muzzle to the crosshair,
+growing and going from yellow to red, lit as the power fills; other players and bots draw the same. Rule: Worms → "Aiming is a crosshair and a held charge".
+
+### Power from the muzzle, sized for the screen (2026-11-06)
+
+**Before.** The power circles started a fixed gap from the worm's ball, not at the weapon, and the held weapon turned
+toward the aim the server sent back (`AimAngle`), so on the shooter's own screen it trailed the crosshair. Crosshair
+and circles were sized in studs, so they shrank as the camera zoomed out.
+
+**Now.** Every weapon model's RootPart has a `Muzzle` attachment (measured from side captures of each model), and the
+circles run from it to the crosshair. MatchHud's aim calls Combat's client `SetAim` every frame it draws, so the held
+weapon turns with the crosshair at once and the muzzle is where the circles start that frame. Sizes are studs at
+MatchCamera's `DISTANCE`, scaled by the camera's distance. The shot itself still leaves from `MUZZLE_GAP` past the
+worm's ball (the server's `Fire`), not from the barrel's tip. Rule: Worms → "Aiming is a crosshair and a held charge".

@@ -3,10 +3,16 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Terrain
 
-	-- How much longer than the terrain is deep the carving cylinder is, so it always cuts all the way through
+	-- How much longer than the terrain is deep the cutter is, so it always cuts all the way through
 	CARVE_DEPTH_MARGIN = 2,
 
-	-- How far apart two pieces may sit, in studs, and still hold each other up
+	--[[
+		The grid blasts cut on, in studs, lined up with the maps' 1-stud grid: a blast takes every square whose center is
+		within its radius, so craters are stepped like voxels
+	]]
+	CARVE_CELL = 1,
+
+	-- How far apart two pieces may sit, in studs, and still hold each other up; also how far above the floor bedrock may end
 	CONTACT_MARGIN = 0.15,
 
 	-- The most pieces one support search walks before it treats the group as grounded, so a carve stays cheap

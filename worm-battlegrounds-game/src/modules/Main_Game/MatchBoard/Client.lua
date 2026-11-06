@@ -13,7 +13,6 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Board = require(_scripts:FindFirstChild("Client"):FindFirstChild("Board")) --- @type MatchBoard_Client_Board
-local Solo = require(_scripts:FindFirstChild("Client"):FindFirstChild("Solo")) --- @type MatchBoard_Client_Solo
 local Custom = require(_scripts:FindFirstChild("Client"):FindFirstChild("Custom")) --- @type MatchBoard_Client_Custom
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,7 +38,6 @@ function Module.Start()
 	----------------------------
 
 	Board.Start()
-	Solo.Start()
 	Custom.Start()
 end
 

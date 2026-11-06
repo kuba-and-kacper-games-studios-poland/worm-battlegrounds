@@ -67,8 +67,8 @@ end
 
 --[[
 	Runs the match: waits for its players, plays it to the end, then plays it again with whoever voted for a rematch
-	while the rest go back to the lobby. A match server empties when nobody votes; the Studio map clears the arena and
-	waits for its lobby's next match.
+	while the rest go back to the lobby. A match that can't play sends everyone to the lobby. A match server empties
+	when nobody votes; the Studio map clears the arena and waits for its lobby's next match.
 ]]
 function Module._mainLoop()
 	repeat
@@ -85,12 +85,26 @@ function Module._mainLoop()
 		matchFolder:SetAttribute("Mode", metadata.Mode)
 		matchFolder:SetAttribute("MapId", metadata.MapId)
 		Module.SetPhase("Waiting")
+
+		-- The map shows while everyone arrives: a party's last member can take a while, and an empty arena looks broken
+		I.Worms.Clear()
+		local loaded: boolean = I.Arena.Load(metadata.MapId)
 		Roster.WaitForPlayers(matchFolder)
 
 		--[[ Playing ]]
 
 		while true do
-			Module.Play()
+			local success: boolean
+			local result: any | string?
+			success, result = pcall(Module.Play, loaded)
+			loaded = false
+
+			-- A match that broke would leave its players waiting forever
+			if not success or not result then
+				warn(`[{_localName}::{script.Name}]: Match ({metadata.Kind} on {metadata.MapId}) couldn't play! - ({result})`)
+				Connection.SendToLobby(Connection.GetPlayersInMatch())
+				break
+			end
 
 			-- The tutorial match always goes back to the lobby, after the results
 			local voters = Rematch.Run() --- @type { Player }
@@ -125,18 +139,21 @@ end
 
 --[[
 	**SERVER** |
-	Plays one match on this server: loads the map, seats the participants, runs the drop and the landing, then turns
-	until one team is left, and ends it.
+	Plays one match on this server: loads the map (unless `loaded` says it's fresh), seats the participants, runs the
+	drop and the landing, then turns until one team is left, and ends it. Returns false when the map didn't load.
 ]]
-function Module.Play()
+--- @return boolean
+function Module.Play(loaded: boolean?)
 	--[[ Loading ]]
 
 	--- @type Match_Metadata
 	local metadata = Roster.GetMetadata()
 	matchFolder:SetAttribute("MapId", metadata.MapId)
-	I.Worms.Clear()
-	if not I.Arena.Load(metadata.MapId) then
-		return
+	if not loaded then
+		I.Worms.Clear()
+		if not I.Arena.Load(metadata.MapId) then
+			return false
+		end
 	end
 
 	--[[ Seating ]]
@@ -159,7 +176,7 @@ function Module.Play()
 		-- The Studio map drops a match every player left, so its lobby can start another
 		if Connection.IsStudioMap() and #Connection.GetPlayersInMatch() == 0 then
 			Module.SetPhase("Ended")
-			return
+			return true
 		end
 		Turns.RunTurn()
 	end
@@ -173,6 +190,10 @@ function Module.Play()
 	end
 	Module.SetPhase("Ended")
 	I.Topic.Publish("Match_Ended", placements, Stats.Get(), metadata)
+
+	--[[ Returning ]]
+
+	return true
 end
 
 --%%%%%%%%%%%%%%%%%%%% Host

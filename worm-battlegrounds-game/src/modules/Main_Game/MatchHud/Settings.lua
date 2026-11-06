@@ -56,32 +56,39 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Aiming
 
-	-- A drag shorter than MIN_DRAG pixels cancels the shot; at MAX_DRAG pixels the power is full
-	MIN_DRAG = 24,
-	MAX_DRAG = 260,
-
-	-- How often the player's aim is sent to the other players while they aim, in seconds
+	-- How often the player's aim is sent to the other players during their turn, in seconds
 	AIM_SEND_INTERVAL = 0.1,
 
 	--[[
-		Another worm's aim line shows while its aim keeps arriving (none for AIM_SHOW_GRACE seconds hides it), eased
-		toward each update at AIM_SMOOTHING (higher is snappier)
+		Another worm's crosshair and power show while its aim keeps arriving (none for AIM_SHOW_GRACE seconds hides
+		them), eased toward each update at AIM_SMOOTHING (higher is snappier)
 	]]
 	AIM_SHOW_GRACE = 0.4,
 	AIM_SMOOTHING = 15,
 
-	-- The aim line: how many seconds of the path it shows, as how many placeholder dots
-	AIM_LINE_SECONDS = 0.6,
-	AIM_LINE_DOTS = 10,
-	AIM_DOT_SIZE = 0.35,
-	AIM_DOT_COLOR = Color3.fromRGB(255, 255, 255),
+	-- The crosshair: how far from the worm's middle it sits, its size and its colour (studs)
+	CROSSHAIR_DISTANCE = 9,
+	CROSSHAIR_SIZE = 3,
+	CROSSHAIR_COLOR = Color3.fromRGB(190, 235, 110),
+
+	--[[
+		The power, a row of POWER_DOTS circles from the muzzle to the crosshair that light up as it charges: their colours
+		and sizes (studs) from the first circle to the last, which sits on the crosshair and fills its ring (0.7 of
+		CROSSHAIR_SIZE)
+	]]
+	POWER_DOTS = 32,
+
+	--- @type { Color3 }
+	POWER_COLORS = { Color3.fromRGB(255, 220, 60), Color3.fromRGB(240, 60, 30) },
+
+	--- @type { number }
+	POWER_DOT_SIZE = { 0.5, 2.1 },
 
 	-- The marker on a homing missile's target
 	TARGET_COLOR = Color3.fromRGB(255, 70, 70),
 
-	-- On a pad: how far the right stick must lean to aim, and how many full sweeps of the power bar holding RT makes per second
+	-- On a pad: how far the right stick must lean to aim
 	STICK_DEADZONE = 0.3,
-	PAD_POWER_SPEED = 0.8,
 }
 
 return _settings

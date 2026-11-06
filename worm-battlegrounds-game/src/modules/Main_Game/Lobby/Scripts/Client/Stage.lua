@@ -140,6 +140,9 @@ function Module._refreshCamera()
 
 	holding = inLobby
 	if holding then
+		-- The FOV buff's base, so an open widget's FOV change still adds to it
+		I.Buff.Set("FOV", "Standard", _settings.STAGE_FOV)
+
 		-- After Roblox's camera scripts each frame, so nothing moves it off the stage
 		I.S.RunService:BindToRenderStep("Lobby_Stage", Enum.RenderPriority.Camera.Value + 1, Module._holdCamera)
 	else
@@ -159,7 +162,6 @@ function Module._holdCamera()
 	local camera: Camera = I.S.Workspace.CurrentCamera
 	camera.CameraType = Enum.CameraType.Scriptable
 	camera.CFrame = cameraMarker.CFrame
-	camera.FieldOfView = _settings.STAGE_FOV
 end
 
 return Module

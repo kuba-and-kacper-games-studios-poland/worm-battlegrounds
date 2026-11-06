@@ -9,6 +9,9 @@ local _settings = {
 	-- How far in front of the worm's ball a shot starts, in studs
 	MUZZLE_GAP = 0.8,
 
+	-- Seconds a held fire button takes to charge a shot from no power to full, then back down, for players and bots
+	CHARGE_SECONDS = 1.6,
+
 	-- For this long after leaving, a shot can't hit the worm that fired it, in seconds
 	SHOOTER_GRACE = 0.25,
 

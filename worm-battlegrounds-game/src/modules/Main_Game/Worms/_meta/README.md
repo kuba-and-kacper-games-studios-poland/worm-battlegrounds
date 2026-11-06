@@ -4,7 +4,8 @@ The worm bodies. Each participant's worm is an invisible ball held on the arena'
 model, with its state in attributes others read: health, team colour, alive or ghost. The server spawns worms, hurts,
 heals and throws them, knocks them out in liquid or out of bounds, charges fall damage when they land, and turns
 knocked-out worms into floating ghosts. Clients put a WormTag over every worm (name in team colour, health number
-and bar, the turn marker on the active worm) and pop a damage number when its health drops. Worm state travels as
+and a bar coloured by health, the turn marker on the active worm) and pop a damage number when its health drops, and draw the gear a worm wears while it works (an open parachute, a
+jetpack for the turn). Worm state travels as
 attributes on the worm model, so the module creates no remotes.
 
 | | |
@@ -12,21 +13,22 @@ attributes on the worm model, so the module creates no remotes.
 | Folder | `src/modules/Main_Game/Worms` |
 | Runs on | Server, Client |
 | Exposes | `I.Worms` (server: bodies and health; client: lookups) |
-| Uses | `I.Arena` (plane, hazards), `I.Create`, `I.Dirs.Assets` (skins), `I.AdminPanel_CommandBar` |
+| Uses | `I.Arena` (plane, hazards), `I.Create`, `I.Dirs.Assets` (skins), `I.G_Arsenal` (gear models), `I.AdminPanel_CommandBar` |
 
 ## Files
 
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | The entry: `I.Worms`, starting the hazard checks |
-| `Client.lua` | The entry: `I.Worms` lookups, starting the tags |
-| `Settings.lua` | `Worms_Settings`: health, falls, the body, ghosts, tags |
+| `Client.lua` | The entry: `I.Worms` lookups, starting the tags and the gear |
+| `Settings.lua` | `Worms_Settings`: health, falls, the body, ghosts, tags, gear |
 | `Scripts/Server/Bodies.lua` | `Workspace.Ume.Worms`, building a worm (ball, constraints, skin, attributes), ownership, lookups; moves the WormTag and DamagePop templates out of the gui loader's folder |
 | `Scripts/Server/Health.lua` | Damage, heal, knockback, kill credit, knockouts and ghosts, the `Worms_Died` Topic |
 | `Scripts/Server/Hazards.lua` | Each frame: liquid and bounds along each worm's path since the last frame, fall tracking and fall damage |
-| `Scripts/Client/Tags.lua` | WormTag billboards (team colour, gold for VIP, the level) and DamagePop numbers (when the player's `DamageNumbers` setting is on) |
+| `Scripts/Client/Tags.lua` | WormTag billboards (team colour, gold for VIP, the level, the health bar green to yellow to red) and DamagePop numbers (when the player's `DamageNumbers` setting is on), each sized with the screen by `I.ScreenScale.AddBillboard` |
+| `Scripts/Client/Gear.lua` | The gear a worm wears: a copy of each `GEAR` utility's Arsenal model while its attribute is set and the worm is in play, moved onto its ball every frame |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `worms` command |
-| `_meta/_types.lua` | `Worms_Participant`, who a worm belongs to |
+| `_meta/_types.lua` | `Worms_Participant`, who a worm belongs to; `Worms_Gear`, a `GEAR` row |
 
 ## API
 
@@ -87,7 +89,9 @@ No remotes: clients read the worm models' attributes.
 | `GHOST_RISE`, `GHOST_RISE_TIME`, `GHOST_TRANSPARENCY` | `4`, `1.5`, `0.6` | A ghost floats this many studs up over this many seconds, this see-through |
 | `TAG_OFFSET` | `1.8` | How far above a worm's center its tag's bottom sits |
 | `VIP_NAME_COLOR` | `(255, 206, 46)` | A VIP player's name colour on their worm's tag |
+| `HEALTH_FULL_COLOR`, `HEALTH_HALF_COLOR`, `HEALTH_EMPTY_COLOR` | `(156, 240, 90)`, `(255, 176, 32)`, `(255, 110, 96)` | The tag's health bar at full, half and no health, blended in between (the kit's Success, Warning and Danger) |
 | `POP_RISE`, `POP_TWEENINFO` | `3`, 1 s quad out | How far a damage number rises while it fades, and how |
+| `GEAR` | Parachute (`Parachute`, 4.3 up), Jetpack (`JetpackFuel`, 1.3 behind, 0.8 up) | The utilities a worm wears: the worm attribute that shows each, and its RootPart's offset in the ball's space (−Z ahead) |
 
 ## In the place
 
@@ -96,6 +100,7 @@ No remotes: clients read the worm models' attributes.
 | `Workspace.Ume.Worms` | Created at start. One Model per participant, named by its id (`P_<UserId>`, `B_<n>`), streamed to every client |
 | `<worm>.Root` | The invisible ball (`Worm` collision group): `Center` attachment, `Plane` (PlaneConstraint), `Upright` (AlignOrientation, facing ±X), `Walk` (LinearVelocity along X, off; WormControl's owner client turns it on), the client's WormTag |
 | `<worm>.Skin` | The skin's parts, welded to the ball, massless and non-colliding |
+| `<worm>.Parachute`, `<worm>.Jetpack` | Client only: the worn gear, copies of the Arsenal models, anchored and moved onto the ball every frame |
 | `<worm>` attributes | `ParticipantId`, `UserId`, `DisplayName`, `Team`, `Color`, `IsBot`, `Health`, `MaxHealth`, `Alive`, `Ghost`, `Facing` (−1 or 1), `Shiny`, `Vip`, `Level` (0 for bots, hidden on the tag), `DamageTaken` (damage multiplier, 1 but for the tutorial bot); WormControl adds `CanMove` and `Stamina`; Match sets `Active` (the tag's turn marker) |
 | `Assets.Skins.<SkinId>` | A skin: a Model whose pivot sits at the ball's center, facing its pivot's front (−Z). The placeholder `Classic` (pink balls with eyes) is staged under `ReplicatedStorage.Ume.Assets.PlaceLoader.Default.Skins` |
 | `ReplicatedStorage.Ume.Worms` | The WormTag and DamagePop billboards (exported guis), moved here at start so the gui loader leaves them alone |
