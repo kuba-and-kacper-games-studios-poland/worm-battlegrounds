@@ -73,7 +73,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Placements
 
 --[[
-	Returns every participant's place: teams still in come first, then teams by how late their last worm went out.
+	Returns every participant's place: teams still in come first, then teams by how late their last snail went out.
 	In team modes every member gets the team's place.
 ]]
 --- @return { Match_Placement }

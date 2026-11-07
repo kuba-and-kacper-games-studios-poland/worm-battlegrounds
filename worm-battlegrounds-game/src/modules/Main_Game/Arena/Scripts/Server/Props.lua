@@ -22,7 +22,7 @@ local standing = {} --- @type { PVInstance }
 -- Each standing prop's base height: its parts that start this low stand on the ground
 local bases = {} --- @type { [PVInstance]: number }
 
--- Prop parts never touch worms, so their pieces keep plain box collisions for the fall
+-- Prop parts never touch snails, so their pieces keep plain box collisions for the fall
 --- @type { [string]: any }
 local SUBTRACT_OPTIONS = {
 	SplitApart = true,

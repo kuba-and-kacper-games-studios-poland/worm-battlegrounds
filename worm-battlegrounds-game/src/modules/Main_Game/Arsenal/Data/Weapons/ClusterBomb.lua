@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Cluster bomb",
-	Icon = "rbxasset://textures/wb_guipreview/cluster_bomb_389e0749.png",
+	Icon = "rbxassetid://75424706546346",
 
 	--[[ Behavior ]]
 

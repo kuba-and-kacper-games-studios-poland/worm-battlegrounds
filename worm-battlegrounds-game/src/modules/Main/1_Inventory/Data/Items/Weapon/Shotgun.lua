@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Shotgun",
-	IconId = "rbxasset://textures/wb_guipreview/shotgun_77117b17.png",
+	IconId = "rbxassetid://98515712319931",
 
 	--[[ Classification ]]
 

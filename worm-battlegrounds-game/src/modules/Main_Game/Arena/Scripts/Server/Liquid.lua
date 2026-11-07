@@ -51,6 +51,9 @@ local changed: boolean = false
 local mapKind: string? = nil
 local blockParts = {} --- @type { Part }
 
+-- Each liquid's colour on this map: its marker's Arena_LiquidColor, else LIQUID_COLORS
+local colors = {} --- @type { [string]: Color3 }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
 
 --%%%%%%%%%%%%%%%%%%%% Is Free
@@ -167,17 +170,23 @@ function Module.Build()
 	changed = false
 	mapKind = if markers[1] then markers[1]:GetAttribute("Arena_Liquid") else nil
 	blockParts = {}
+	colors = table.clone(_settings.LIQUID_COLORS)
+	for _index: number, marker: BasePart in ipairs(markers) do
+		colors[marker:GetAttribute("Arena_Liquid")] = marker:GetAttribute("Arena_LiquidColor") or colors[marker:GetAttribute("Arena_Liquid")]
+	end
 	awake = false
 
 	--[[ Local Variables ]]
 
 	local bottom: number = bounds.Position.Y - bounds.Size.Y / 2
 	local top: number = bounds.Position.Y + bounds.Size.Y / 2
+	local ground: NumberRange = Loader.GetGroundDepth()
 
 	cols = math.floor(bounds.Size.X / CELL)
 	rows = math.ceil((top - bottom) / CELL)
-	origin = Vector3.new(bounds.Position.X - bounds.Size.X / 2, bottom, bounds.Position.Z)
-	depth = bounds.Size.Z
+	-- As deep as the map's ground, so the liquid never juts out in front of it or behind it
+	origin = Vector3.new(bounds.Position.X - bounds.Size.X / 2, bottom, (ground.Min + ground.Max) / 2)
+	depth = ground.Max - ground.Min
 	solid = buffer.create(cols * rows)
 	liquid = buffer.create(cols * rows)
 	moved = buffer.create(cols * rows)
@@ -606,8 +615,8 @@ function Module._render()
 		if part.CFrame ~= cframe then
 			part.CFrame = cframe
 		end
-		if part.Color ~= _settings.LIQUID_COLORS[name] then
-			part.Color = _settings.LIQUID_COLORS[name]
+		if part.Color ~= colors[name] then
+			part.Color = colors[name]
 			part.Transparency = _settings.LIQUID_TRANSPARENCY[name]
 		end
 		if part.Parent ~= liquidFolder then

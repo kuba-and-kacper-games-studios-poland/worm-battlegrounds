@@ -40,7 +40,7 @@ local Module = {}
 
 --[[
 	Guns: Pellets bullets fired straight from the muzzle within a Spread cone, all at once (Shotgun) or BurstInterval
-	apart (Uzi, Minigun). Each bullet hurts the first worm it reaches by PerBulletDamage and pushes it a little, or
+	apart (Uzi, Minigun). Each bullet hurts the first snail it reaches by PerBulletDamage and pushes it a little, or
 	chips the terrain where it lands. Every bullet's line is sent to clients as a tracer.
 ]]
 --- @param shot Combat_Shot
@@ -60,10 +60,10 @@ function Module.Run(shot)
 		local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
 		local result: RaycastResult? = Projectiles.Cast(shot.Origin, shot.Origin + direction * range, shot.Shooter)
 		local landed: Vector3 = if result then result.Position else shot.Origin + direction * range
-		local worm: Model? = Projectiles.GetWorm(result)
+		local snail: Model? = Projectiles.GetSnail(result)
 
-		if worm then
-			shot.Damage += Blast.Hit(worm.Name, row.PerBulletDamage or 0, direction * push, shot.ItemId, shot.ParticipantId, landed)
+		if snail then
+			shot.Damage += Blast.Hit(snail.Name, row.PerBulletDamage or 0, direction * push, shot.ItemId, shot.ParticipantId, landed)
 		elseif result then
 			task.spawn(I.Arena.Carve, landed, _settings.BULLET_CARVE)
 		end

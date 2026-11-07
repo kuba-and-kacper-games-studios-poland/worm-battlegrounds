@@ -163,8 +163,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the board: Play solo (Play with party in a party), each public row's mode, players and timer, or the waiting
-	room of the row the player is in, with everyone in it and the votes. The setup panel shows in the board's place.
+	Draws the board: Play solo (Play with party in a party), each public row's mode, map, players and Join (Join teams
+	for team modes), or the waiting room of the row the player is in, with everyone in it and the votes. The setup
+	panel shows in the board's place.
 ]]
 function Module._refresh()
 	--[[ Lines ]]
@@ -175,8 +176,11 @@ function Module._refresh()
 			continue
 		end
 		local players = Module._getPlayers(config) --- @type { number }
+		local mapRow = _settings.MAPS[config:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
+		line:FindFirstChild("S_Map", true).Text = if mapRow then mapRow.Name else ""
 		line:FindFirstChild("S_Players", true).Text = `{#players} / {config:GetAttribute("Size")}`
+		line:FindFirstChild("S_Join", true):FindFirstChild("ButtonText", true).Text = if config:GetAttribute("Mode") == "Deathmatch" then "Join" else "Join teams"
 	end
 
 	--[[ Play ]]
@@ -202,7 +206,7 @@ function Module._refresh()
 	end
 	local mapRow = _settings.MAPS[mine:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
 	local players = Module._getPlayers(mine) --- @type { number }
-	elems["Match"].Text = `{_settings.MODE_NAMES[mine:GetAttribute("Mode")] or mine:GetAttribute("Mode")} • {if mapRow then mapRow.Name else ""}`
+	elems["Match"].Text = `{_settings.MATCH_NAMES[mine:GetAttribute("Mode")] or mine:GetAttribute("Mode")} • {if mapRow then mapRow.Name else ""}`
 	elems["Count"].Text = `{#players} / {mine:GetAttribute("Size")} players`
 	elems["Vote"]:FindFirstChild("ButtonText", true).Text = `Vote to start  {mine:GetAttribute("Votes")} / {mine:GetAttribute("VotesNeeded")}`
 	for _index: number, child: Instance in ipairs(elems["Players"]:GetChildren()) do

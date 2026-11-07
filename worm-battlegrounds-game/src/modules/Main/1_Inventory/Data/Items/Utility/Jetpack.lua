@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Jetpack",
-	IconId = "rbxasset://textures/wb_guipreview/jetpack_69dfb937.png",
+	IconId = "rbxassetid://138428323433864",
 
 	--[[ Classification ]]
 

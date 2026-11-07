@@ -88,22 +88,22 @@ with the rows above it into one rectangle, since one transparent part per row sh
 
 **Rule.** `game/practices.md` → Arena.
 
-### Worms are balls their player's client drives (2026-11-03)
+### Snails are balls their player's client drives (2026-11-03)
 
 **Before.** The wiki planned stamina in the player's Replicator folder (`Match.Stamina`) and left open how the server
 and the moving client talk.
 
-**Why it changed.** Bots have worms too, and every client draws every worm's tag, so worm state is the worm's, not a
-player's. The first walking test also showed two traps. A worm with grip stuck against walls and crater lips under
-a strong walking force, so walking now drops the ball's friction to 0 and scales the force to its mass. And a worm
+**Why it changed.** Bots have snails too, and every client draws every snail's tag, so snail state is the snail's, not a
+player's. The first walking test also showed two traps. A snail with grip stuck against walls and crater lips under
+a strong walking force, so walking now drops the ball's friction to 0 and scales the force to its mass. And a snail
 its client moved could pass through shallow water between two server frames, so hazards are checked along the path
 since the last frame.
 
-**Now.** `Worms` keeps each worm's state in attributes on its model; `WormControl` gives the active worm to its
-player's client while `CanMove` is set, charges `Stamina` on the server and snaps the worm back when it moves too
+**Now.** `Snails` keeps each snail's state in attributes on its model; `SnailControl` gives the active snail to its
+player's client while `CanMove` is set, charges `Stamina` on the server and snaps the snail back when it moves too
 fast. Neither module has remotes.
 
-**Rule.** `game/practices.md` → Worms.
+**Rule.** `game/practices.md` → Snails.
 
 ### One place, two maps (2026-11-03)
 
@@ -141,7 +141,7 @@ it unless `Ume_StudioMapId` names another map.
 passes stay at id 0, and models and effects are stand-ins.
 
 **Now.** Marketplace entries have `Id = 0` (Marketplace warns about each at start), projectiles are plain parts,
-every skin falls back to the Classic worm, emotes show their name.
+every skin falls back to the Classic snail, emotes show their name.
 
 **Rule.** `game/practices.md` → Maps and placeholders.
 
@@ -231,18 +231,18 @@ marked too (`Arena_Indestructible`), so a ledge can be blasted away around it. T
 `Workspace.Ume.ServerStorage_Assets/Arenas/PicnicPlains` and cached by the Arena module at start. Rule: Arena →
 "Ground is what's `Arena_Indestructible`".
 
-### Worms start on land, not over the sea (2026-11-05)
+### Snails start on land, not over the sea (2026-11-05)
 
-**Before.** Every worm parachuted in from the top of the map's `DropZone`, spread evenly along its whole width. On
+**Before.** Every snail parachuted in from the top of the map's `DropZone`, spread evenly along its whole width. On
 the studio's Picnic Plains that width spans the gaps between islands, so bots (and players who didn't place) could
 float down into the sea and drown before the first turn.
 
-**Why it changed.** A start spot should never cost a worm. Players can now place their spot anywhere a worm fits,
+**Why it changed.** A start spot should never cost a snail. Players can now place their spot anywhere a snail fits,
 so the evenly spread line was only left for those who don't pick.
 
 **Now.** `I.Arena.GetLandSpots` casts a ray down every 2 studs, keeps flat enough ground out of liquid, and picks
 random spots 16 studs apart while there's room; bots and players who didn't place start standing there, with no
-parachute. The `DropZone` marker is gone. Rule: Worms → "A worm starts standing on land unless its player places it".
+parachute. The `DropZone` marker is gone. Rule: Snails → "A snail starts standing on land unless its player places it".
 
 ### Ledges float instead of hanging on one block (2026-11-05)
 
@@ -265,10 +265,10 @@ blasts".
 solo, three public match cards and Custom lobby, a Crates panel with every crate's buttons and Skins, plus a Shop
 button in the top bar. New players had too many things to press.
 
-**Why it changed.** The owner wanted the lobby to read like Fortnite's: your worm standing in front, the game's
+**Why it changed.** The owner wanted the lobby to read like Fortnite's: your snail standing in front, the game's
 name on top, and few buttons, so nobody gets confused about what to press.
 
-**Now.** The camera looks at the `LobbyStage` Model, where the player's worm stands in its skin. The screen keeps the
+**Now.** The camera looks at the `LobbyStage` Model, where the player's snail stands in its skin. The screen keeps the
 logo, one yellow **Play** (the quick match) with **Modes** beside it, Party, a slim Loadout bar and two corner
 buttons; solo, the public match list, custom lobbies and the crates moved into windows. The top bar's Shop button is
 gone (the currency bar's + opens the shop). Rule: Maps and placeholders → "The lobby is a 3D stage".
@@ -289,7 +289,7 @@ under blasts", "Maps are made in MapLab".
 
 ### The Desert, a map with two storeys (2026-11-05)
 
-**Before.** Every map had one storey: islands at the liquid with small ledges above. Worms that didn't place started
+**Before.** Every map had one storey: islands at the liquid with small ledges above. Snails that didn't place started
 on the highest ground in each column, and a prop stood while there was ground under the middle of its outline.
 
 **Why it changed.** The owner wanted a second map, a desert with lava at the bottom and an oasis, and after the first
@@ -299,24 +299,24 @@ was looked at, and a palm leaning over the pool was dropped after a blast elsewh
 hung over water.
 
 **Now.** The Desert (made in MapLab) is in the match pool beside Picnic Plains. `GetLandSpots` looks at every top in
-each column, so worms start on both storeys, and keeps spots apart by distance, not by X alone. A prop stands while
-there's ground under its pivot (a part-built prop's trunk). Rules: Worms → "A worm starts standing on land", Arena →
+each column, so snails start on both storeys, and keeps spots apart by distance, not by X alone. A prop stands while
+there's ground under its pivot (a part-built prop's trunk). Rules: Snails → "A snail starts standing on land", Arena →
 "Props break under blasts".
 
 ### Held weapons, and everyone sees the aim (2026-11-05)
 
-**Before.** Worms held nothing: the weapon picked in the loadout bar was only an attribute (`HeldItem`). The aim line
+**Before.** Snails held nothing: the weapon picked in the loadout bar was only an attribute (`HeldItem`). The aim line
 showed only on the aiming player's screen; the others got `AimAngle` and `AimPower` and drew nothing from them, and
 bots fired 1.5 to 3 seconds into their turn without any visible aim.
 
-**Why it changed.** The owner asked for worms to hold their weapon where players can see it, toward the camera, for
+**Why it changed.** The owner asked for snails to hold their weapon where players can see it, toward the camera, for
 the aim line to show for everyone when one player aims, and for bots to shoot slower.
 
-**Now.** Combat's client `Held` handler puts a copy of the active worm's weapon model in its hands during its turn,
+**Now.** Combat's client `Held` handler puts a copy of the active snail's weapon model in its hands during its turn,
 1.5 studs toward the camera, turned to its aim. Combat's `ShowAim` stamps each aim update with the server time
-(`AimTime`), and MatchHud's `Aim` draws any other worm's line while the stamps keep coming. Bots think 2.5 to 4
-seconds, then hold their weapon and swing their aim to the shot over 1.5 seconds before they fire. Rules: Worms →
-"The active worm holds its weapon on the camera's side", "Everyone sees the active worm aim".
+(`AimTime`), and MatchHud's `Aim` draws any other snail's line while the stamps keep coming. Bots think 2.5 to 4
+seconds, then hold their weapon and swing their aim to the shot over 1.5 seconds before they fire. Rules: Snails →
+"The active snail holds its weapon on the camera's side", "Everyone sees the active snail aim".
 
 ### Blasts that shake, rumble and throw the ground (2026-11-05)
 
@@ -329,17 +329,17 @@ every turn ends on, with screen shakes and haptics for phones.
 **Now.** Combat's client `Effects` handler draws a blast as a white flash, a fireball, a light, and bursts of fire,
 sparks and smoke (Roblox's own particle pictures until the studio makes its own), and throws chunks of the terrain and
 props it hit in their colours (0.3 to 1 stud, in Arena's `Chip` collision group, so they bounce on the terrain and
-lie there for 2.5 seconds but pass through worms and shots; the first version let them fall through everything). It shakes the camera with ume's CameraShake, which needed MatchCamera to update one
+lie there for 2.5 seconds but pass through snails and shots; the first version let them fall through everything). It shakes the camera with ume's CameraShake, which needed MatchCamera to update one
 render step earlier (`Camera` instead of `Camera + 1`) so the shake lands on top of the view instead of being
 overwritten. Phones and pads vibrate through the Haptic module's presets: a tick on the player's own shot, a thump
-for blasts by size and distance, and a longer one when their worm is hurt. Rules: Worms → "Blasts are felt, not
+for blasts by size and distance, and a longer one when their snail is hurt. Rules: Snails → "Blasts are felt, not
 only seen".
 
 ### Bedrock can be blasted down to the water (2026-11-05)
 
 **Before.** Each island's waterline blocks (`Arena_Indestructible`, Y 4 to 8 on both maps) were never cut: the carver
 skipped them and the debris search counted any of them as ground. Blasts could dig an island down to that layer
-but never through it, so there was always a floor under the worms.
+but never through it, so there was always a floor under the snails.
 
 **Why it changed.** The owner asked for the bottom layer to be destructible too, so shots can open an island to the
 water. In the same change, sudden death starts sooner and gentler: from round 4 the water rises half a stud every
@@ -368,16 +368,16 @@ covers that too. Rule: Arena → "Blasts carve voxel craters with CSG".
 
 ### World labels scale with the screen (2026-11-05)
 
-**Before.** The worm tag, the drop marker and the damage number were BillboardGuis of a fixed pixel size (WormTag
+**Before.** The snail tag, the drop marker and the damage number were BillboardGuis of a fixed pixel size (SnailTag
 240 × 200). On a 1080p screen that matched the hud, but on a 667 × 375 phone a tag was about half the screen's height,
 while the hud panels around it shrank with the screen. The tag's health number was also squeezed to the bar's 18 px,
-by a shortcut in `Worms/Scripts/Client/Tags.lua` that worked around ume-gui's `Progress` status label growing tall
+by a shortcut in `Snails/Scripts/Client/Tags.lua` that worked around ume-gui's `Progress` status label growing tall
 under a UIScale.
 
 **Why it changed.** A gui audit on phone sizes: the hud was fixed to scale with the screen, and the labels over the
-worms had to follow, or they covered the arena on small screens.
+snails had to follow, or they covered the arena on small screens.
 
-**Now.** Each world label's root is laid out at its design size (WormTag 240 × 240, DropMarker 240 × 100, DamagePop
+**Now.** Each world label's root is laid out at its design size (SnailTag 240 × 240, DropMarker 240 × 100, DamagePop
 160 × 100) with an `S_ScreenScale`, and the code that clones it calls `I.ScreenScale.AddBillboard`, which sets that
 scale to the screen's and the billboard's size to the root's times it, refitting when the screen changes. The kit
 theme has its own `Progress` control whose status line is one line tall, so the health number is big and centred
@@ -421,7 +421,7 @@ line".
 
 ### Worms-style aiming, and a RoWorld-style lobby (2026-11-06)
 
-**Before.** A shot was aimed by dragging back from the worm: the drag's direction was the angle, its length the
+**Before.** A shot was aimed by dragging back from the snail: the drag's direction was the angle, its length the
 power, and dots showed the first part of the shot's path. The lobby had one yellow **Play** (a quick match into the
 fullest public row) and **Modes**, a window with Play solo (hidden a window deeper), Custom lobby and two random team
 rows, so a mode like Trios was often not on the board at all. Party invites were Roblox-style confirmations asked one
@@ -431,13 +431,13 @@ player at a time.
 both seen by everyone) and a lobby like RoWorld's (their screenshots): Play solo up front, the public matches listed,
 bots filling any empty seat, and a friends-only party match with bots on or off (half the coins without bots).
 
-**Now.** A crosshair sits 9 studs from the worm toward the mouse, finger or right stick; holding charges a
+**Now.** A crosshair sits 9 studs from the snail toward the mouse, finger or right stick; holding charges a
 flame-coloured power cone, letting go fires, a full charge (1.6 s) fires by itself, and bots turn then charge the same
 way. The lobby's one panel holds the welcome line, Play solo (Play with party in a party), Custom and one card per
 public mode; the solo or party setup and the waiting room take its place. Invites are kit-style boxes: a list of
 players to invite, and an invite to answer. A match server now loads its map before waiting for its players, so a
-party whose last member is slow sees the arena instead of an empty sky. Rules: Worms → "Aiming is a crosshair and a
-held charge", "Everyone sees the active worm aim"; Maps and placeholders → "The lobby is a 3D stage", "Matchmaking
+party whose last member is slow sees the arena instead of an empty sky. Rules: Snails → "Aiming is a crosshair and a
+held charge", "Everyone sees the active snail aim"; Maps and placeholders → "The lobby is a 3D stage", "Matchmaking
 fills with bots".
 
 ### Two places, and Studio teleports that carry the match (2026-11-06)
@@ -473,11 +473,11 @@ player hadn't chosen. They also wanted the power drawn as circles, like Worms', 
 **Now.** Held, the power bounces from none to full and back (`CHARGE_SECONDS` each way) until it's let go, and a turn
 that runs out while charging drops it (Combat refuses a shot outside the `Turn` phase). The power is `POWER_DOTS`
 circles drawn over the arena (like the crosshair, so props never hide them) from the muzzle to the crosshair,
-growing and going from yellow to red, lit as the power fills; other players and bots draw the same. Rule: Worms → "Aiming is a crosshair and a held charge".
+growing and going from yellow to red, lit as the power fills; other players and bots draw the same. Rule: Snails → "Aiming is a crosshair and a held charge".
 
 ### Power from the muzzle, sized for the screen (2026-11-06)
 
-**Before.** The power circles started a fixed gap from the worm's ball, not at the weapon, and the held weapon turned
+**Before.** The power circles started a fixed gap from the snail's ball, not at the weapon, and the held weapon turned
 toward the aim the server sent back (`AimAngle`), so on the shooter's own screen it trailed the crosshair. Crosshair
 and circles were sized in studs, so they shrank as the camera zoomed out.
 
@@ -485,4 +485,148 @@ and circles were sized in studs, so they shrank as the camera zoomed out.
 circles run from it to the crosshair. MatchHud's aim calls Combat's client `SetAim` every frame it draws, so the held
 weapon turns with the crosshair at once and the muzzle is where the circles start that frame. Sizes are studs at
 MatchCamera's `DISTANCE`, scaled by the camera's distance. The shot itself still leaves from `MUZZLE_GAP` past the
-worm's ball (the server's `Fire`), not from the barrel's tip. Rule: Worms → "Aiming is a crosshair and a held charge".
+snail's ball (the server's `Fire`), not from the barrel's tip. Rule: Snails → "Aiming is a crosshair and a held charge".
+
+### Worms become snails, and the shell breaks (2026-11-06)
+
+**Before.** Every player and bot was a worm: the placeholder `Classic` skin (pink balls with eyes), the `Worms` and
+`WormControl` modules, the `WormTag` billboard and the lobby stage's `Worm` marker.
+
+**Why it changed.** The owner made a snail model, with its body and shell as separate parts, and the game becomes
+Snail Battlegrounds. They wanted the shell to break once a snail is badly hurt.
+
+**Now.** `Classic` is the owner's snail, scaled to the old worm's size, and every name in the code and the place says
+snail (`Snails`, `SnailControl`, `SnailTag`, the `Snail` collision group and marker). The game's name stays Worm
+Battlegrounds until the rename the owner planned for last. Below 50 health (`SHELL_BREAK_HEALTH`) each screen hides
+the skin's `Shell` part and throws chips in its colours, from the `Health` attribute alone; healing back up shows it
+again. Rule: Snails → "A snail's shell breaks below 50 health".
+
+### Back to the studio's wiki, and a bot match behind the lobby (2026-11-07)
+
+**Before.** The game had drifted from the studio's original wiki: a crosshair and held charge for aiming, sudden death
+from round 4, cut-off pieces of a ledge kept floating when big enough, bots and players who didn't place started
+standing on land, health bars coloured by health with no team outline and no timer over the active snail, and the
+lobby sat on a 3D stage with the player's snail on a podium.
+
+**Why it changed.** The owner compared the game with the studio's wiki as it came and asked for its design back,
+except where they had chosen otherwise (the RoWorld-style play panel, one public match per mode, party matches,
+snails). For the lobby they asked for a blurred bot match behind the guis, as RoWorld's lobby has.
+
+**Now.** Aiming is a drag on PC and touch (its direction the angle, its length the power, in shares of the screen's
+height), and the right stick with a rising and falling RT power bar on a pad; the crosshair and circles stay as the
+angle marker and power bar. Sudden death starts after 10 rounds. A cut ledge keeps only its biggest piece. Every snail
+parachutes in. Tags show health in the team's colour, an outline in the team's colour, and the turn's seconds over the
+active snail for everyone else. The mouse at the screen's side pans. The lobby server copies a random arena far away,
+and each client plays four bots on it (walking, aiming, shots under gravity, blasts with the Arsenal's damage and
+knockback, ghosts), blurred through ume's Lighting layers, with the camera following the action. Rules: Arena →
+"Floating ledges float, but what's cut off them falls"; Snails → "Every snail parachutes in", "Aiming is a drag";
+Maps and placeholders → "The lobby plays a bot match behind its guis".
+
+The first backdrop was too busy: a random arena, four weapons, quick turns under the match's gravity, and shots that
+blew up at once when a bot stood under a floating ledge. The owner asked for a small, slow match on Picnic Plains with
+the Bazooka, the Grenade and the jetpack. It now has its own gentle gravity, long thinking and resting between turns,
+short jetpack hops (4 studs up, landing at about the same height: higher looked bad on the close camera), weaker
+knockback, and bots that try several arcs for one no ledge overhead catches.
+
+### A map built in Studio, and a yellow sea (2026-11-07)
+
+**Before.** Every map came from MapLab, and each liquid had one colour in every map (Arena's `LIQUID_COLORS`).
+
+**Why it changed.** The owner built a rocky map by hand in Studio and asked for it in the game as it stood, with
+yellow water. Its look matches the wiki's planned Rockslide Ridge, which took its name.
+
+**Now.** The map was imported where it was built: its parts renamed by colour, moved to SmoothPlastic with
+`2022 Stud`, sorted into islands (standing on the floor, their floor parts bedrock), floating ledges and the backdrop
+wall, with a `Sea` and `Bounds` marker. A liquid marker's `Arena_LiquidColor` colours its liquid on that map. Rule:
+Arena → "Maps are made in MapLab" (the import line).
+
+### Maps in slots, on one plane (2026-11-07)
+
+**Before.** MapLab exported every map at the origin, so templates landed on top of each other; Desert had been moved
+22.75 studs back by hand, and Rockslide Ridge stood where it was built, 270 studs back. The drop picker assumes the
+play plane is Z = 0, so on both a landing pick missed where the mouse pointed.
+
+**Why it changed.** The owner asked for the asset folders sorted, nothing overlapping and easy to view.
+
+**Now.** Templates stand side by side along +X in 400-stud slots, MapLab's lab spacing (X = (slot − 1) × 400), all
+with their Bounds at Z = 0, and MapLab's export puts a map in its slot. Rule: Arena → "Maps are authored in …".
+
+### Billboard templates on holders (2026-11-07)
+
+**Before.** The SnailTag, DamagePop and DropMarker exports sat in StarterGui, where Studio drew them at 0, 0, 0 over
+the maps, and the Snails and Match servers moved them out of the gui loader's folder at start.
+
+**Why it changed.** The owner wanted them out of the way and easy to fetch.
+
+**Now.** Each lives with its module's assets as `PREFAB | <Gui>` (a Model with an invisible 1 × 1 × 1 `RootPart`, an
+`Attachment`, the BillboardGui `U_<Gui>`), in `ReplicatedStorage_Assets/Snails` and `/Match`; clients clone the
+billboard from `I.Dirs.Assets`, and the servers no longer move anything. Rule: Guis → "World labels scale with the
+screen too".
+
+### The server checks how high a snail climbs (2026-11-07)
+
+**Before.** While a player moved their snail, the server checked only its speed (sideways and up) and the stamina it
+walked. Nothing limited how high it climbed in a turn, and the jetpack's fuel was counted on the player's client alone,
+so a changed client could rise about 70 studs a second for the whole turn, or drop through a ledge in one step.
+
+**Why it changed.** An audit of the game's remotes and checks found it; the owner asked for the fix.
+
+**Now.** SnailControl's server check (`Scripts/Server/Control.lua`) also casts a ray along the snail's path each frame
+and takes it back when the path crosses the terrain, and it charges every stud the snail climbs above a jump's reach
+from the ground it last stood on to the jetpack: `JETPACK_SPEED` studs per second of the `JetpackFuel` it was given,
+plus `LIFT_GRACE`. Rule: Snails → "The active snail is moved by its player's client".
+
+### Icons uploaded instead of kept local (2026-11-07)
+
+**Before.** The first icon kit's pictures (weapons, utilities, emotes, coin, diamond, crate) and the Brawl kit's wind
+stayed local previews in Studio's content folder (`rbxasset://textures/wb_guipreview/…`) until the owner approved
+them, and a Studio update meant copying them in again.
+
+**Why it changed.** A Studio update wiped them and every icon went blank; the owner chose to upload them rather than
+copy them back.
+
+**Now.** All 17 are on Roblox, and the themes' `Icons.lua` and the item, currency, crate and shop data use their
+`rbxassetid://` ids (the kits' `uploaded.json`). Nothing in the game uses a local picture. Rule: Guis → "Pictures
+drawn for the game stay local until the owner approves them".
+
+### Spawns under the roof, water as deep as the ground (2026-11-07)
+
+**Before.** Land spots were looked for from the top of the bounds down, and a drop could be placed anywhere inside
+them; the liquid was drawn as deep as the bounds. On Rockslide Ridge, whose rock ceiling runs 10 studs under the top
+of its 25-deep bounds, snails spawned on top of the roof, and its sea stood far out in front of the ground.
+
+**Why it changed.** The owner saw both, and asked for a fix that no new map repeats.
+
+**Now.** Nothing starts in the bounds' top 20 studs (Arena's `START_TOP_GAP`, the drop height): `GetLandSpots` looks
+from there down, `IsFree` refuses it, and the drop picker's `DropMaxY` stops there. The liquid takes its depth from
+the map's bedrock at load (the middle of its blocks' backs and fronts, Loader's `GetGroundDepth`). Neither needs a
+value per map. Rule: Arena → "Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`".
+
+### Projectiles on the game's own simulation (2026-11-07)
+
+**Before.** Each shot was a server-owned Roblox physics ball (elasticity, a wind VectorForce, a PlaneConstraint),
+checked by raycasts between frames and replicated to clients by Roblox's physics. Grenades bounced the way Roblox's
+solver liked, shots in liquid passed through it and burst on the sea floor, and clients drew whatever replication
+gave them.
+
+**Why it changed.** The owner wanted the arcade feel of the original Worms (bounces, rolling, grenades that settle)
+and shots that look smooth on every screen while the server stays the authority. FastCast2 was looked at: it's built
+for thousands of fast 3D bullets and has no bouncing, rolling or settling, so the game has its own small 2D
+simulation instead.
+
+**Now.** Combat's `Ballistics` helper steps shots on both sides at 60 steps a second on the server's clock; the server
+launches them (`Combat_Shot`), sends their state every 0.1 s and ends them; clients predict, rewind and replay on a
+mismatch, and ease corrections out. Rule: Snails → "Shots fly by the game's own simulation, not Roblox physics".
+
+### Aiming from the snail to the mouse (2026-11-07)
+
+**Before.** The drag that came back from the studio's wiki measured everything from where the press began: its
+direction was the angle and its length the power. The weapon didn't move until a press, the crosshair never lined up
+with the mouse, and a drag toward the screen's side edge-panned the camera, so the view slid away mid-aim.
+
+**Why it changed.** The owner found the positions wrong and wanted the weapon to follow the mouse.
+
+**Now.** The weapon points from the snail toward the mouse every frame (through the arena's plane, so the crosshair
+lies on that line), held or not; while the button or a finger is held, the power is the pointer's distance from the
+snail on the screen (`MIN_PULL` to `MAX_PULL`); MatchCamera doesn't edge-pan while the left button is held. Rule:
+Snails → "Aiming points from the snail at the mouse".

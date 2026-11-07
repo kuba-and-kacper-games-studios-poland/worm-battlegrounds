@@ -105,10 +105,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Run Turn
 
 --[[
-	Plays the next turn: picks the next worm (team by team), starts a new round when the order wrapped, raises the
-	liquid in sudden death, rolls the wind, tells every client who plays after it (`TurnOrder`), hands the worm to
-	its player (or its bot), waits for a shot or the timer, takes the worm back, waits for the shot and then the
-	arena to settle, and knocks out every worm left at 0 health.
+	Plays the next turn: picks the next snail (team by team), starts a new round when the order wrapped, raises the
+	liquid in sudden death, rolls the wind, tells every client who plays after it (`TurnOrder`), hands the snail to
+	its player (or its bot), waits for a shot or the timer, takes the snail back, waits for the shot and then the
+	arena to settle, and knocks out every snail left at 0 health.
 ]]
 function Module.RunTurn()
 	--[[ Round ]]
@@ -132,14 +132,14 @@ function Module.RunTurn()
 		return
 	end
 	local participant = Roster.GetParticipant(participantId) --- @type Match_Participant
-	local model: Model = I.Worms.Get(participantId)
+	local model: Model = I.Snails.Get(participantId)
 
 	--[[ Sudden Death ]]
 
 	local round: number = matchFolder:GetAttribute("Round")
 	if round >= _settings.SUDDEN_DEATH_ROUND then
 		matchFolder:SetAttribute("SuddenDeath", true)
-		I.Arena.RaiseLiquid(if round >= _settings.SUDDEN_DEATH_FAST_ROUND then _settings.SUDDEN_DEATH_FAST_RISE else _settings.SUDDEN_DEATH_RISE)
+		I.Arena.RaiseLiquid(_settings.SUDDEN_DEATH_RISE)
 	end
 
 	--[[ Starting ]]
@@ -157,17 +157,17 @@ function Module.RunTurn()
 	if participant.IsBot then
 		task.spawn(I.Bots.TakeTurn, participantId)
 	else
-		I.WormControl.StartTurn(participantId)
+		I.SnailControl.StartTurn(participantId)
 	end
 
 	--[[ Waiting ]]
 
-	-- The turn ends with a shot, the timer, the worm going out, or its player leaving
+	-- The turn ends with a shot, the timer, the snail going out, or its player leaving
 	local deadline: number = os.clock() + _settings.TURN_SECONDS
 	while os.clock() < deadline and not shotFired and model:GetAttribute("Alive") and (participant.IsBot or participant.Connected) do
 		task.wait()
 	end
-	I.WormControl.EndTurn(participantId)
+	I.SnailControl.EndTurn(participantId)
 
 	if shotFired then
 		setPhase("Flight")
@@ -195,7 +195,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Shot Fired
 
 --[[
-	Marks the active worm's shot as fired, which ends its turn.
+	Marks the active snail's shot as fired, which ends its turn.
 ]]
 function Module.OnShotFired()
 	shotFired = true
@@ -213,7 +213,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Settle
 
 --[[
-	Waits until the worms, the falling debris and every projectile have been at rest for SETTLE_HOLD seconds, or
+	Waits until the snails, the falling debris and every projectile have been at rest for SETTLE_HOLD seconds, or
 	MAX_SETTLE seconds have passed.
 ]]
 function Module._settle()
@@ -225,7 +225,7 @@ function Module._settle()
 	--[[ Waiting ]]
 
 	while os.clock() < deadline do
-		if I.Worms.IsSettled() and I.Arena.IsSettled() and I.Combat.IsIdle() then
+		if I.Snails.IsSettled() and I.Arena.IsSettled() and I.Combat.IsIdle() then
 			calmSince = calmSince or os.clock()
 			if os.clock() - calmSince >= _settings.SETTLE_HOLD then
 				return
@@ -240,14 +240,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Resolve Deaths
 
 --[[
-	Knocks out every worm still in play at 0 health; the last worm that hurt it gets the knockout.
+	Knocks out every snail still in play at 0 health; the last snail that hurt it gets the knockout.
 ]]
 function Module._resolveDeaths()
 	--[[ Resolving ]]
 
-	for _index: number, model: Model in ipairs(I.Worms.GetAlive()) do
+	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
 		if model:GetAttribute("Health") <= 0 then
-			I.Worms.Kill(model.Name, "Damage")
+			I.Snails.Kill(model.Name, "Damage")
 		end
 	end
 end
@@ -257,8 +257,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Next
 
 --[[
-	Returns who plays next, moving the order on: the next team in order that still has a worm who can play, and the
-	next such worm in that team. Nil when nobody can play.
+	Returns who plays next, moving the order on: the next team in order that still has a snail who can play, and the
+	next such snail in that team. Nil when nobody can play.
 ]]
 --- @return string?
 function Module._getNext()
@@ -279,7 +279,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Upcoming
 
 --[[
-	Returns every worm that can play, in the order its next turn comes after the one playing now, walking a copy of
+	Returns every snail that can play, in the order its next turn comes after the one playing now, walking a copy of
 	the turn order so the real one doesn't move.
 ]]
 --- @return { string }
@@ -305,7 +305,7 @@ function Module._getUpcoming()
 
 	--[[ Walking ]]
 
-	-- A worm already listed comes up again before a bigger team's last members, so walk until each one came up
+	-- A snail already listed comes up again before a bigger team's last members, so walk until each one came up
 	for _step: number = 1, steps do
 		if #upcoming >= playable then
 			break
@@ -328,14 +328,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Can Play
 
 --[[
-	Returns whether a participant can take a turn: still in, with a worm in play, and here (bots always are).
+	Returns whether a participant can take a turn: still in, with a snail in play, and here (bots always are).
 ]]
 --- @return boolean
 function Module._canPlay(participantId: string)
 	--[[ Data ]]
 
 	local participant = Roster.GetParticipant(participantId) --- @type Match_Participant?
-	local model: Model? = I.Worms.Get(participantId)
+	local model: Model? = I.Snails.Get(participantId)
 
 	--[[ Returning ]]
 
@@ -345,8 +345,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Find Next
 
 --[[
-	Walks a turn order from a team's index to the next worm who can play, moving each team's `Next` on as it goes.
-	Returns that worm (nil when nobody can play), the index to start from next time, and whether it wrapped past the
+	Walks a turn order from a team's index to the next snail who can play, moving each team's `Next` on as it goes.
+	Returns that snail (nil when nobody can play), the index to start from next time, and whether it wrapped past the
 	last team.
 ]]
 --- @param order { Match_Team }

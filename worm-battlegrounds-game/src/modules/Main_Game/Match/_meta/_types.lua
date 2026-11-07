@@ -31,7 +31,7 @@ local _match_Metadata = {}
 
 --%%%%%%%%%%%%%%%%%%%% Participants
 
---- @class Match_Participant : Worms_Participant
+--- @class Match_Participant : Snails_Participant
 ---
 --- # Match #
 ---

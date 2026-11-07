@@ -36,11 +36,48 @@ local Module = {}
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
+--%%%%%%%%%%%%%%%%%%%% Label Ledges
+
+--[[
+	**SERVER** |
+	Numbers the loaded map's floating ledges: every group of touching `Arena_Floats` parts gets its own `Arena_Ledge`,
+	which carved pieces keep, so a carve knows which pieces were one ledge.
+]]
+function Module.LabelLedges()
+	--[[ Local Variables ]]
+
+	local ledges: number = 0
+
+	--[[ Labelling ]]
+
+	for _index: number, part: Instance in ipairs(Loader.GetTerrain():GetDescendants()) do
+		-- Skip ground, and ledge parts already numbered
+		if not part:IsA("BasePart") or not part:GetAttribute("Arena_Floats") or part:GetAttribute("Arena_Ledge") then
+			continue
+		end
+
+		ledges += 1
+		part:SetAttribute("Arena_Ledge", ledges)
+		local queue = { part } --- @type { BasePart }
+		local head: number = 1
+		while head <= #queue do
+			local current: BasePart = queue[head]
+			head += 1
+			for _contactIndex: number, contact: BasePart in ipairs(Module.GetContacts(current)) do
+				if contact:GetAttribute("Arena_Floats") and not contact:GetAttribute("Arena_Ledge") then
+					contact:SetAttribute("Arena_Ledge", ledges)
+					table.insert(queue, contact)
+				end
+			end
+		end
+	end
+end
+
 --%%%%%%%%%%%%%%%%%%%% Drop
 
 --[[
 	Walks the terrain from each seed through the parts it touches. A group that reaches no bedrock standing on the
-	floor is welded together and falls.
+	floor is welded together and falls, except a ledge's biggest piece, which keeps floating.
 ]]
 --- @param seeds { BasePart }
 function Module.Drop(seeds)
@@ -48,6 +85,10 @@ function Module.Drop(seeds)
 
 	-- Each part walked, by the number of the search that walked it
 	local visited = {} --- @type { [BasePart]: number }
+
+	-- Each ledge's biggest cut-off group so far, which keeps floating, and its area on the plane
+	local kept = {} --- @type { [number]: { BasePart } }
+	local keptArea = {} --- @type { [number]: number }
 
 	--[[ Searching ]]
 
@@ -58,9 +99,22 @@ function Module.Drop(seeds)
 		end
 
 		local group: { BasePart }
-		local grounded: boolean
-		group, grounded = Module._getGroup(seed, visited, index)
-		if not grounded then
+		local held: boolean
+		local ledge: number?
+		local area: number
+		group, held, ledge, area = Module._getGroup(seed, visited, index)
+		if held then
+			continue
+		end
+
+		-- Ground cut loose falls, and so does every piece of a ledge but its biggest
+		if ledge and area > (keptArea[ledge] or 0) then
+			if kept[ledge] then
+				Module._fall(kept[ledge])
+			end
+			kept[ledge] = group
+			keptArea[ledge] = area
+		else
 			Module._fall(group)
 		end
 	end
@@ -79,7 +133,11 @@ function Module._fall(group)
 
 	--[[ Welding ]]
 
+	-- A falling piece is no longer part of its ledge: where it lands, it's ground like any other
+
 	for index: number, part: BasePart in ipairs(group) do
+		part:SetAttribute("Arena_Floats", nil)
+		part:SetAttribute("Arena_Ledge", nil)
 		if index > 1 then
 			I.Create("WeldConstraint")({
 				Name = "ArenaWeld",
@@ -218,14 +276,16 @@ end
 
 --[[
 	Collects the parts connected to a start part, stopping early once it reaches ground (bedrock, Arena_Indestructible,
-	whose bottom still reaches the map's floor), the search limit, or a part an earlier search walked (an earlier
-	floating group would hold this part too, so that search ended on the ground). A whole group stays up too when its
-	floating parts (`Arena_Floats`) cover at least FLOAT_MIN_AREA on the plane. Returns the parts found and whether
-	they are held up.
+	whose bottom still reaches the map's floor) or a part an earlier search walked (an earlier floating group would hold
+	this part too, so that search ended on the ground). Returns the parts found, whether the ground holds them up, the
+	ledge they belong to (`Arena_Ledge`) and the area its parts cover on the plane. A group past the search limit counts
+	as held when it's ground, and as its ledge's biggest piece when it's a ledge.
 ]]
 --- @param visited { [BasePart]: number }
 --- @return { BasePart }
 --- @return boolean
+--- @return number?
+--- @return number
 function Module._getGroup(start: BasePart, visited, search: number)
 	--[[ Local Variables ]]
 
@@ -233,6 +293,7 @@ function Module._getGroup(start: BasePart, visited, search: number)
 	local queue = { start } --- @type { BasePart }
 	local head: number = 1
 	local floatArea: number = 0
+	local ledge: number? = nil
 	local groundHeight: number = Loader.GetFloor() + _settings.CONTACT_MARGIN
 	visited[start] = search
 
@@ -243,15 +304,19 @@ function Module._getGroup(start: BasePart, visited, search: number)
 		head += 1
 		table.insert(group, part)
 		local onFloor: boolean = part:GetAttribute("Arena_Indestructible") == true and part.ExtentsCFrame.Y - part.ExtentsSize.Y / 2 <= groundHeight
-		if onFloor or #group >= _settings.SUPPORT_SEARCH_LIMIT then
-			return group, true
+		if onFloor then
+			return group, true, nil, 0
 		end
 		if part:GetAttribute("Arena_Floats") then
 			floatArea += part.Size.X * part.Size.Y
+			ledge = ledge or part:GetAttribute("Arena_Ledge")
+		end
+		if #group >= _settings.SUPPORT_SEARCH_LIMIT then
+			return group, ledge == nil, ledge, math.huge
 		end
 		for _index: number, contact: BasePart in ipairs(Module.GetContacts(part)) do
 			if visited[contact] and visited[contact] ~= search then
-				return group, true
+				return group, true, nil, 0
 			end
 			if not visited[contact] then
 				visited[contact] = search
@@ -262,7 +327,7 @@ function Module._getGroup(start: BasePart, visited, search: number)
 
 	--[[ Returning ]]
 
-	return group, floatArea >= _settings.FLOAT_MIN_AREA
+	return group, false, ledge, floatArea
 end
 
 return Module

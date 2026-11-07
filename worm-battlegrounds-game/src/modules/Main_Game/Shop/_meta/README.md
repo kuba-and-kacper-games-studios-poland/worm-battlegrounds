@@ -3,7 +3,7 @@
 The Robux shop and VIP. The client draws the `Shop` widget: the diamond packs (developer products) and the game
 passes, each with its live price, bought through ume's Marketplace prompts. The currency bar's **+** opens it through
 its tags (the lobby keeps the top bar clear). The server marks VIP players (the `Vip` Player attribute,
-which gives a gold worm name and a chat tag) and keeps VIP's free skin crate, once per UTC day.
+which gives a gold snail name and a chat tag) and keeps VIP's free skin crate, once per UTC day.
 
 | | |
 | --- | --- |
@@ -47,7 +47,7 @@ No remotes of its own: purchases use Marketplace's `Marketplace_PromptProductPur
 | --- | --- | --- |
 | Profile | `Shop.VipCrateDay` | The UTC day (`os.time() // 86400`) of the last free crate |
 | Replicator `Shop` | `VipCrateReady` | Whether today's free crate waits |
-| Player attribute | `Vip` | Whether the player owns VIP (Match copies it to the worm) |
+| Player attribute | `Vip` | Whether the player owns VIP (Match copies it to the snail) |
 
 ## Settings
 

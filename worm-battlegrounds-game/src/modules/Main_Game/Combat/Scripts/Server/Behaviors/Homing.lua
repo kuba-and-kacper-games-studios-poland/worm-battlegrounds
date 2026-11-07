@@ -44,48 +44,33 @@ function Module.Run(shot)
 
 	local row = shot.Row --- @type Arsenal_WeaponData
 	local target: Vector3 = shot.Target or shot.Origin
-	local wind: number = I.G_Combat.GetWindAcceleration(shot.ItemId, I.Match.GetWind())
+	local lockDelay: number = row.LockDelay or 1
 	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(shot.ItemId, shot.Angle, shot.Power)
-	local part: Part = Projectiles.Spawn("Homing", shot.ItemId, shot.Origin, velocity, false, 0, wind)
-	local started: number = os.clock()
-	local last: Vector3 = part.Position
-	local locked: boolean = false
+	local options = Projectiles.GetOptions(shot) --- @type Combat_ShotOptions
+	options.Wind = I.G_Combat.GetWindAcceleration(shot.ItemId, I.Match.GetWind())
+	options.Target = target
+	options.HomingSpeed = row.HomingSpeed or 60
+	options.LockStep = math.round(lockDelay / _settings.PROJECTILE_STEP)
+	local body = Projectiles.Launch("Homing", shot.ItemId, shot.Origin, velocity, options) --- @type Combat_Body
 	local burst: Vector3? = nil
 
 	--[[ Flying ]]
 
-	while part.Parent do
-		I.S.RunService.Heartbeat:Wait()
-		local now: Vector3 = part.Position
-
-		-- Lock on: the wind lets go, and the missile steers straight at the target from now on
-		if not locked and os.clock() - started >= (row.LockDelay or 1) then
-			locked = true
-			local windForce: Instance? = part:FindFirstChild("Wind")
-			if windForce then
-				windForce:Destroy()
-			end
-		end
-		if locked then
-			local toTarget: Vector3 = target - now
-			if toTarget.Magnitude <= _settings.CONTACT_DISTANCE then
-				burst = now
-				break
-			end
-			part.AssemblyLinearVelocity = toTarget.Unit * (row.HomingSpeed or 60)
-		end
-
-		local shooter: Model? = if os.clock() - started < _settings.SHOOTER_GRACE then shot.Shooter else nil
-		local result: RaycastResult? = Projectiles.Cast(last, now, shooter)
-		if result then
-			burst = result.Position
+	-- From the lock on, the simulation drops the wind and steers it straight at the target
+	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
+		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif Projectiles.IsLost(now, started) then
+		elseif body.Sunk then
+			continue
+		elseif body.Stopped then
+			burst = if hit then hit.Position else body.Position
+			break
+		elseif elapsed >= lockDelay and (target - body.Position).Magnitude <= _settings.CONTACT_DISTANCE then
+			burst = body.Position
 			break
 		end
-		last = now
 	end
-	part:Destroy()
+	Projectiles.Land(body)
 
 	--[[ Exploding ]]
 

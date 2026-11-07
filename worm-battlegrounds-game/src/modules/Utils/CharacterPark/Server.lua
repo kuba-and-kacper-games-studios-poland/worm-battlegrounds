@@ -39,7 +39,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Park
 
 --[[
-	Anchors a new avatar at PARK_POSITION and hides it, with its name, since players play as worms, not as their
+	Anchors a new avatar at PARK_POSITION and hides it, with its name, since players play as snails, not as their
 	avatars. It runs as soon as the avatar spawns, before the player counts as loaded.
 ]]
 function Module._park(_player: Player, character: Model)

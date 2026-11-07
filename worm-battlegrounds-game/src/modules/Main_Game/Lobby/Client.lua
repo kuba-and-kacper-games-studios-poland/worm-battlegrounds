@@ -15,7 +15,7 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
-local Stage = require(_scripts:FindFirstChild("Client"):FindFirstChild("Stage")) --- @type Lobby_Client_Stage
+local Backdrop = require(_scripts:FindFirstChild("Client"):FindFirstChild("Backdrop")) --- @type Lobby_Client_Backdrop
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -42,7 +42,7 @@ function Module.Start()
 	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshGuis)
 	Module._refreshGuis()
 	I.Network.Fired("Lobby_RejoinOffer", Module._onRejoinOffer)
-	Stage.Start()
+	Backdrop.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -50,7 +50,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Guis
 
 --[[
-	Shows the lobby's screens, except while the player is in a match (the Studio map plays both on one server).
+	Shows the lobby's screens, except while the player is in a match (the Studio map plays both on one server), and
+	closes a lobby window still open (the custom lobby's) when the match starts.
 ]]
 function Module._refreshGuis()
 	--[[ Local Variables ]]
@@ -61,6 +62,9 @@ function Module._refreshGuis()
 
 	for _index: number, guiName: string in ipairs(_settings.LOBBY_GUIS) do
 		I.UserInterface.UI[guiName].Enabled = inLobby
+	end
+	if not inLobby then
+		I.WidgetManager.CloseCurrent()
 	end
 end
 

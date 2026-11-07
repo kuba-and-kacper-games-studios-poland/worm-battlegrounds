@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Tutorial crate",
-	Picture = "rbxasset://textures/wb_guipreview/crate_17762c23.png",
+	Picture = "rbxassetid://121731184312632",
 	LayoutOrder = 0,
 	Hidden = true,
 

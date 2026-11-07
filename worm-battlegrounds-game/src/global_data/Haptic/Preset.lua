@@ -82,7 +82,7 @@ local data = {
 		},
 	},
 
-	-- The local player's own worm is hurt
+	-- The local player's own snail is hurt
 	["Combat_Hurt"] = {
 		Mode = "Haptic",
 		Type = Enum.HapticEffectType.Custom,

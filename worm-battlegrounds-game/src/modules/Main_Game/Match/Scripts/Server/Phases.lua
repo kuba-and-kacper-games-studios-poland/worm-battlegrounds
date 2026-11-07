@@ -87,7 +87,7 @@ function Module._mainLoop()
 		Module.SetPhase("Waiting")
 
 		-- The map shows while everyone arrives: a party's last member can take a while, and an empty arena looks broken
-		I.Worms.Clear()
+		I.Snails.Clear()
 		local loaded: boolean = I.Arena.Load(metadata.MapId)
 		Roster.WaitForPlayers(matchFolder)
 
@@ -126,7 +126,7 @@ function Module._mainLoop()
 
 		--[[ Clearing ]]
 
-		I.Worms.Clear()
+		I.Snails.Clear()
 		Roster.Clear()
 		Module.SetPhase("Waiting")
 		hosted = false
@@ -150,7 +150,7 @@ function Module.Play(loaded: boolean?)
 	local metadata = Roster.GetMetadata()
 	matchFolder:SetAttribute("MapId", metadata.MapId)
 	if not loaded then
-		I.Worms.Clear()
+		I.Snails.Clear()
 		if not I.Arena.Load(metadata.MapId) then
 			return false
 		end
@@ -244,7 +244,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Pick Drop
 
 --[[
-	Places a player's landing spot during the drop phase: anywhere in the play area a worm fits, out of walls and
+	Places a player's landing spot during the drop phase: anywhere in the play area a snail fits, out of walls and
 	liquid. A spot that doesn't fit is ignored.
 ]]
 function Module.PickDrop(player: Player, x: number, y: number)
@@ -270,9 +270,9 @@ function Module.PickDrop(player: Player, x: number, y: number)
 		return
 	end
 
-	-- Check if a worm fits there
+	-- Check if a snail fits there
 	local spot: Vector2 = Vector2.new(x, y)
-	if not I.Arena.IsFree(Vector3.new(spot.X, spot.Y, 0), I.Settings["Worms"].ROOT_SIZE / 2) then
+	if not I.Arena.IsFree(Vector3.new(spot.X, spot.Y, 0), I.Settings["Snails"].ROOT_SIZE / 2) then
 		return
 	end
 
@@ -286,7 +286,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Drop
 
 --[[
-	The drop phase: everyone starts on a spread-out random spot standing on land, and players have DROP_SECONDS to place
+	The drop phase: everyone gets a spread-out random spot in the sky over land, and players have DROP_SECONDS to place
 	theirs anywhere in the play area; it ends early once every connected player has placed.
 ]]
 function Module._drop()
@@ -294,14 +294,14 @@ function Module._drop()
 
 	local bounds: BasePart = I.Arena.GetBounds()
 	local participants = Roster.GetParticipants() --- @type { Match_Participant }
-	local spots = I.Arena.GetLandSpots(#participants, I.Settings["Worms"].ROOT_SIZE / 2) --- @type { Vector3 }
+	local spots = I.Arena.GetLandSpots(#participants, I.Settings["Snails"].ROOT_SIZE / 2) --- @type { Vector3 }
 
 	--[[ Checks ]]
 
 	-- Check if the map has land for everyone to start on
 	if #spots == 0 then
-		warn(`[{_localName}::{script.Name}]: Map ({matchFolder:GetAttribute("MapId")}) has no land to start worms on - using the top of its bounds!`)
-		table.insert(spots, bounds.Position + Vector3.new(0, bounds.Size.Y / 2 - 5, 0))
+		warn(`[{_localName}::{script.Name}]: Map ({matchFolder:GetAttribute("MapId")}) has no land to start snails on - using the top of its bounds!`)
+		table.insert(spots, bounds.Position + Vector3.new(0, bounds.Size.Y / 2 - I.Settings["Arena"].START_TOP_GAP, 0))
 	end
 
 	--[[ Saving ]]
@@ -311,16 +311,15 @@ function Module._drop()
 	matchFolder:SetAttribute("DropMinX", bounds.Position.X - bounds.Size.X / 2)
 	matchFolder:SetAttribute("DropMaxX", bounds.Position.X + bounds.Size.X / 2)
 	matchFolder:SetAttribute("DropMinY", bounds.Position.Y - bounds.Size.Y / 2)
-	matchFolder:SetAttribute("DropMaxY", bounds.Position.Y + bounds.Size.Y / 2)
+	matchFolder:SetAttribute("DropMaxY", bounds.Position.Y + bounds.Size.Y / 2 - I.Settings["Arena"].START_TOP_GAP)
 	matchFolder:SetAttribute("DropEndsAt", I.S.Workspace:GetServerTimeNow() + _settings.DROP_SECONDS)
 
-	-- Bots keep their land spot; players start on one and can place their own (spots repeat when there are too few)
+	-- Bots keep the spot over their land; players start on one and can place their own (spots repeat when there are too few)
 	--- @param participant Match_Participant
 	for index: number, participant in ipairs(participants) do
-		local spot: Vector3 = spots[(index - 1) % #spots + 1]
 		placed[participant.Id] = participant.IsBot
 		Roster.SetInfo(participant.Id, "Placed", participant.IsBot)
-		Module._setDrop(participant.Id, Vector2.new(spot.X, spot.Y))
+		Module._setDrop(participant.Id, Module._getSkySpot(spots[(index - 1) % #spots + 1]))
 	end
 
 	--[[ Waiting ]]
@@ -338,8 +337,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Land
 
 --[[
-	The landing: every worm appears on its spot, a player's own pick with its parachute open (the rest stand on land),
-	and the match waits until they all landed (or went out), MAX_LANDING seconds at most.
+	The landing: every snail appears on its spot with its parachute open, and the match waits until they all landed (or
+	went out), MAX_LANDING seconds at most.
 ]]
 function Module._land()
 	--[[ Spawning ]]
@@ -347,10 +346,8 @@ function Module._land()
 	--- @param participant Match_Participant
 	for _index: number, participant in ipairs(Roster.GetParticipants()) do
 		local spot: Vector2 = drops[participant.Id]
-		I.Worms.Spawn(participant, Vector3.new(spot.X, spot.Y, 0))
-		if placed[participant.Id] and not participant.IsBot then
-			I.WormControl.ApplyEffect(participant.Id, "Parachute")
-		end
+		I.Snails.Spawn(participant, Vector3.new(spot.X, spot.Y, 0))
+		I.SnailControl.ApplyEffect(participant.Id, "Parachute")
 	end
 	Module.SetPhase("Landing")
 
@@ -359,7 +356,7 @@ function Module._land()
 	local deadline: number = os.clock() + _settings.MAX_LANDING
 	while os.clock() < deadline do
 		local landing: boolean = false
-		for _index: number, model: Model in ipairs(I.Worms.GetAlive()) do
+		for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
 			if model:GetAttribute("Parachute") then
 				landing = true
 				break
@@ -385,7 +382,32 @@ function Module._setDrop(participantId: string, spot: Vector2)
 	Roster.SetInfo(participantId, "DropY", spot.Y)
 end
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Sky Spot
+
+--[[
+	Returns where a snail parachutes from onto a land spot: DROP_HEIGHT above it, or lower where terrain over it (a
+	floating ledge) or the top of the play area is in the way.
+]]
+--- @return Vector2
+function Module._getSkySpot(land: Vector3)
+	--[[ Local Variables ]]
+
+	local radius: number = I.Settings["Snails"].ROOT_SIZE / 2
+	local height: number = 0
+
+	--[[ Calculating ]]
+
+	-- Climbs a stud at a time while the way down to the land stays clear
+	while height < _settings.DROP_HEIGHT and I.Arena.IsFree(land + Vector3.new(0, height + 1, 0), radius) do
+		height += 1
+	end
+
+	--[[ Returning ]]
+
+	return Vector2.new(land.X, land.Y + height)
+end
 
 --%%%%%%%%%%%%%%%%%%%% Is Everyone Placed
 

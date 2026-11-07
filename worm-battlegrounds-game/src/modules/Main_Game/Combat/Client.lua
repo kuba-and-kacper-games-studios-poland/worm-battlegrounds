@@ -14,6 +14,7 @@ local _scripts: Folder = script:FindFirstAncestor(_localName):FindFirstChild("Sc
 
 local Held = require(_scripts:FindFirstChild("Client"):FindFirstChild("Held")) --- @type Combat_Client_Held
 local Flight = require(_scripts:FindFirstChild("Client"):FindFirstChild("Flight")) --- @type Combat_Client_Flight
+local Shots = require(_scripts:FindFirstChild("Client"):FindFirstChild("Shots")) --- @type Combat_Client_Shots
 local Effects = require(_scripts:FindFirstChild("Client"):FindFirstChild("Effects")) --- @type Combat_Client_Effects
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -59,6 +60,7 @@ function Module.Start()
 
 	Held.Start()
 	Flight.Start()
+	Shots.Start()
 	Effects.Start()
 end
 

@@ -34,7 +34,7 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	A swing (Baseball bat, One Punch): the nearest worm within MELEE_BOX in front of the worm, toward the aimed side,
+	A swing (Baseball bat, One Punch): the nearest snail within MELEE_BOX in front of the snail, toward the aimed side,
 	takes DamageMax and is launched along that side, tilted up by the row's Lift (steeper for the punch).
 ]]
 --- @param shot Combat_Shot
@@ -44,13 +44,13 @@ function Module.Run(shot)
 	local row = shot.Row --- @type Arsenal_WeaponData
 	local root: BasePart = shot.Shooter.PrimaryPart
 	local side: number = if shot.Direction.X < 0 then -1 else 1
-	local center: Vector3 = root.Position + Vector3.xAxis * side * (I.Settings["Worms"].ROOT_SIZE / 2 + (row.Reach or 4) / 2)
+	local center: Vector3 = root.Position + Vector3.xAxis * side * (I.Settings["Snails"].ROOT_SIZE / 2 + (row.Reach or 4) / 2)
 	local victim: Model? = nil
 	local nearest: number = math.huge
 
 	--[[ Searching ]]
 
-	for _index: number, model: Model in ipairs(I.Worms.GetAlive()) do
+	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
 		local offset: Vector3 = model.PrimaryPart.Position - center
 		local inside: boolean = math.abs(offset.X) <= _settings.MELEE_BOX / 2 + 1 and math.abs(offset.Y) <= _settings.MELEE_BOX / 2 + 1
 		if model ~= shot.Shooter and inside and offset.Magnitude < nearest then
@@ -69,7 +69,7 @@ function Module.Run(shot)
 
 	--[[ Waiting ]]
 
-	-- Give the swing a moment, so the hit worm is already flying when the turn waits for things to settle
+	-- Give the swing a moment, so the hit snail is already flying when the turn waits for things to settle
 	task.wait(0.3)
 end
 

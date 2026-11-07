@@ -6,12 +6,15 @@ local _settings = {
 	-- How long the match waits for every player in its roster before it starts without them, in seconds
 	WAIT_FOR_PLAYERS = 20,
 
-	-- How long players have to pick where their worm lands, and the most the landing may take, in seconds
+	-- How long players have to pick where their snail lands, and the most the landing may take, in seconds
 	DROP_SECONDS = 15,
 	MAX_LANDING = 12,
 
 	-- How fast the left stick moves the drop spot at full lean, in studs per second
 	DROP_STICK_SPEED = 40,
+
+	-- How high over its land a snail that wasn't placed (a bot, a player who didn't place) starts its parachute, in studs
+	DROP_HEIGHT = 20,
 
 	--%%%%%%%%%%%%%%%%%%%% Turns
 
@@ -22,7 +25,7 @@ local _settings = {
 	MAX_FLIGHT = 20,
 
 	--[[
-		After a shot, the match waits until worms, debris and projectiles have been at rest for SETTLE_HOLD seconds,
+		After a shot, the match waits until snails, debris and projectiles have been at rest for SETTLE_HOLD seconds,
 		or MAX_SETTLE seconds have passed
 	]]
 	SETTLE_HOLD = 0.5,
@@ -31,18 +34,13 @@ local _settings = {
 	-- The wind each turn is a whole number from -WIND_MAX to WIND_MAX
 	WIND_MAX = 10,
 
-	--[[
-		Sudden death starts at SUDDEN_DEATH_ROUND: the liquid rises SUDDEN_DEATH_RISE half-stud rows at the start of
-		every turn, then SUDDEN_DEATH_FAST_RISE from SUDDEN_DEATH_FAST_ROUND, when the match drags on
-	]]
-	SUDDEN_DEATH_ROUND = 4,
-	SUDDEN_DEATH_RISE = 1,
-	SUDDEN_DEATH_FAST_ROUND = 8,
-	SUDDEN_DEATH_FAST_RISE = 4,
+	-- Sudden death starts at SUDDEN_DEATH_ROUND (after 10 rounds): the liquid rises SUDDEN_DEATH_RISE half-stud rows every turn
+	SUDDEN_DEATH_ROUND = 11,
+	SUDDEN_DEATH_RISE = 4,
 
 	--%%%%%%%%%%%%%%%%%%%% End
 
-	-- How long a dropped player has to come back before their worm is knocked out as a leaver, in seconds
+	-- How long a dropped player has to come back before their snail is knocked out as a leaver, in seconds
 	REJOIN_SECONDS = 60,
 
 	-- How long the rematch vote stays open after the results, in seconds
@@ -50,7 +48,7 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Teams
 
-	-- How many worms each team has in each mode; Deathmatch is everyone for themselves
+	-- How many snails each team has in each mode; Deathmatch is everyone for themselves
 	--- @type { [string]: number }
 	TEAM_SIZES = { Deathmatch = 1, Duo = 2, Trio = 3, Quads = 4 },
 
@@ -63,7 +61,7 @@ local _settings = {
 		{ Name = "Yellow", Color = Color3.fromRGB(255, 206, 64) },
 	},
 
-	-- Each worm's own colour in a free-for-all, in order
+	-- Each snail's own colour in a free-for-all, in order
 	--- @type { Color3 }
 	FFA_COLORS = {
 		Color3.fromRGB(255, 84, 84),

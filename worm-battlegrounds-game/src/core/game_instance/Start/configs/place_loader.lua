@@ -21,7 +21,7 @@ local ALWAYS_OFF = {
 } --- @type { string }
 
 -- Off on the Lobby map
-local MATCH_ONLY = { "Arena", "Worms", "WormControl", "Combat", "Match", "Bots", "MatchCamera", "MatchHud", "MatchRewards" } --- @type { string }
+local MATCH_ONLY = { "Arena", "Snails", "SnailControl", "Combat", "Match", "Bots", "MatchCamera", "MatchHud", "MatchRewards" } --- @type { string }
 
 -- Off on the Match map
 local LOBBY_ONLY = { "Lobby", "MatchBoard", "Party", "Crates" } --- @type { string }

@@ -180,14 +180,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Emote Played
 
 --[[
-	Shows a played emote's name over the player's worm in a match, or beside their name in the lobby's party list.
+	Shows a played emote's name over the player's snail in a match, or beside their name in the lobby's party list.
 ]]
 function Module._onEmotePlayed(userId: number, emoteId: string)
 	--[[ Data ]]
 
 	local item = I.G_Inventory.Items[emoteId] --- @type Inventory_ItemData?
-	local worms: Instance? = I.Dirs.UmeWorkspace:FindFirstChild("Worms")
-	local worm: Instance? = worms and worms:FindFirstChild(`P_{userId}`)
+	local snails: Instance? = I.Dirs.UmeWorkspace:FindFirstChild("Snails")
+	local snail: Instance? = snails and snails:FindFirstChild(`P_{userId}`)
 	local member: Instance? = elems["Party"]:FindFirstChild(tostring(userId))
 	if not item then
 		return
@@ -206,10 +206,10 @@ function Module._onEmotePlayed(userId: number, emoteId: string)
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
 	})
-	if worm and worm:FindFirstChild("Root") then
+	if snail and snail:FindFirstChild("Root") then
 		local billboard: BillboardGui = I.Create("BillboardGui")({
 			Name = `Emote_{userId}`,
-			Adornee = worm:FindFirstChild("Root"),
+			Adornee = snail:FindFirstChild("Root"),
 			Size = UDim2.fromScale(6, 1.5),
 			StudsOffset = Vector3.new(0, 5, 0),
 			AlwaysOnTop = true,

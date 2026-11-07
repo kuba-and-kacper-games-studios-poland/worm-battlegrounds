@@ -9,10 +9,21 @@ local _localName = "Lobby"
 --- @type Lobby_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
+
+local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Backdrop = require(_scripts:FindFirstChild("Server"):FindFirstChild("Backdrop")) --- @type Lobby_Server_Backdrop
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 -- The match each player was offered to rejoin, until they answer
 local offers = {} --- @type { [Player]: any }
+
+-- Workspace.Ume.Lobby, which holds the bot match's map behind the lobby
+local worldFolder: Folder
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -56,8 +67,8 @@ function Module.Init()
 	------ INITIALIZATION ------
 	----------------------------
 
-	-- Clients put their worm on the lobby's stage in here
-	I.Create("Folder")({
+	-- The backdrop's map, and the clients' bots playing on it
+	worldFolder = I.Create("Folder")({
 		Name = _localName,
 		Parent = I.Dirs.UmeWorkspace,
 	})
@@ -74,6 +85,7 @@ function Module.Start()
 	I.S.Players.PlayerRemoving:Connect(function(player: Player)
 		offers[player] = nil
 	end)
+	Backdrop.Start(worldFolder)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Player Control

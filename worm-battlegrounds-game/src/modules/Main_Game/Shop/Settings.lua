@@ -13,7 +13,7 @@ local _settings = {
 		{ Product = "Diamonds_Vault", Name = "Vault", Diamonds = "2500" },
 	},
 
-	PACK_ICON = "rbxasset://textures/wb_guipreview/diamond_48620100.png",
+	PACK_ICON = "rbxassetid://76353040161236",
 
 	--%%%%%%%%%%%%%%%%%%%% Game Passes
 

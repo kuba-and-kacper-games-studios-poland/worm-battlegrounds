@@ -51,7 +51,7 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% On Fire
 
 --[[
-	A player's fire request: fires their worm's weapon when it's their turn.
+	A player's fire request: fires their snail's weapon when it's their turn.
 ]]
 function Module._onFire(player: Player, itemId: string, angle: number, power: number, target: Vector3?)
 	-- Check if player is valid | SERVER
@@ -67,7 +67,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Use Utility
 
 --[[
-	A player's utility request: uses it on their worm when it's their turn.
+	A player's utility request: uses it on their snail when it's their turn.
 ]]
 function Module._onUseUtility(player: Player, itemId: string)
 	-- Check if player is valid | SERVER
@@ -99,7 +99,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Select
 
 --[[
-	A player picked an item in their loadout bar: their worm holds it, for everyone to see.
+	A player picked an item in their loadout bar: their snail holds it, for everyone to see.
 ]]
 function Module._onSelect(player: Player, itemId: string)
 	-- Check if player is valid | SERVER
@@ -109,7 +109,7 @@ function Module._onSelect(player: Player, itemId: string)
 
 	--[[ Data ]]
 
-	local model: Model? = I.Worms.Get(`P_{player.UserId}`)
+	local model: Model? = I.Snails.Get(`P_{player.UserId}`)
 
 	--[[ Checks ]]
 
@@ -126,7 +126,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Aim
 
 --[[
-	The active player's aim, sent ten times a second while they aim: shown on their worm for everyone.
+	The active player's aim, sent ten times a second while they aim: shown on their snail for everyone.
 ]]
 function Module._onAim(player: Player, angle: number, power: number)
 	-- Check if player is valid | SERVER
@@ -153,7 +153,7 @@ end
 --[[
 	**SERVER** |
 	Fires a participant's weapon (players through their remote, bots directly): checks it's their turn and they may
-	use it, takes a use, takes their worm back, ends their turn, runs the weapon, and publishes Combat_ShotResolved with
+	use it, takes a use, takes their snail back, ends their turn, runs the weapon, and publishes Combat_ShotResolved with
 	the damage it dealt once everything it spawned is done. `angle` is in radians (0 is right, counterclockwise);
 	`target` is for the homing missile. Returns whether it fired.
 ]]
@@ -162,11 +162,11 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 	--[[ Data ]]
 
 	local participant = I.Match.GetParticipant(participantId) --- @type Match_Participant?
-	local model: Model? = I.Worms.Get(participantId)
+	local model: Model? = I.Snails.Get(participantId)
 
 	--[[ Checks ]]
 
-	-- Check if it's this worm's turn
+	-- Check if it's this snail's turn
 	if not participant or not model or I.Match.GetActive() ~= participantId or I.Match.GetPhase() ~= "Turn" then
 		return false
 	end
@@ -192,7 +192,7 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 	--[[ Taking ]]
 
 	Uses.Take(participantId, itemId)
-	I.WormControl.EndTurn(participantId)
+	I.SnailControl.EndTurn(participantId)
 	root:FindFirstChild("Upright").CFrame = CFrame.lookAlong(Vector3.zero, Vector3.xAxis * facing)
 	model:SetAttribute("Facing", facing)
 
@@ -205,7 +205,7 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 		ItemId = itemId,
 		Row = row,
 		Shiny = Module._isShiny(participant, itemId),
-		Origin = root.Position + direction * (I.Settings["Worms"].ROOT_SIZE / 2 + _settings.MUZZLE_GAP),
+		Origin = root.Position + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + _settings.MUZZLE_GAP),
 		Direction = direction,
 		Angle = angle,
 		Power = math.clamp(power, 0, 1),
@@ -242,7 +242,7 @@ end
 
 --[[
 	**SERVER** |
-	Uses a utility from a participant's loadout on their worm during their turn, which goes on: a heal, or a movement
+	Uses a utility from a participant's loadout on their snail during their turn, which goes on: a heal, or a movement
 	effect. Returns whether it was used.
 ]]
 --- @return boolean
@@ -254,7 +254,7 @@ function Module.UseUtility(participantId: string, itemId: string)
 
 	--[[ Checks ]]
 
-	-- Check if it's this worm's turn
+	-- Check if it's this snail's turn
 	if not participant or I.Match.GetActive() ~= participantId or I.Match.GetPhase() ~= "Turn" then
 		return false
 	end
@@ -272,8 +272,8 @@ function Module.UseUtility(participantId: string, itemId: string)
 	--[[ Applying ]]
 
 	if row.Effect == "Heal" then
-		I.Worms.Heal(participantId, if shiny then row.ShinyAmount or row.Amount or 0 else row.Amount or 0)
-	elseif not I.WormControl.ApplyEffect(participantId, row.Effect, shiny) then
+		I.Snails.Heal(participantId, if shiny then row.ShinyAmount or row.Amount or 0 else row.Amount or 0)
+	elseif not I.SnailControl.ApplyEffect(participantId, row.Effect, shiny) then
 		return false
 	end
 	Uses.Take(participantId, itemId)
@@ -287,17 +287,17 @@ end
 
 --[[
 	**SERVER** |
-	Shows a worm's aim to every player: its angle and power, stamped with the server time (AimTime) so clients draw
+	Shows a snail's aim to every player: its angle and power, stamped with the server time (AimTime) so clients draw
 	its aim line while the stamps keep coming. `itemId`, when given, is the weapon it holds.
 ]]
 function Module.ShowAim(participantId: string, itemId: string?, angle: number, power: number)
 	--[[ Data ]]
 
-	local model: Model? = I.Worms.Get(participantId)
+	local model: Model? = I.Snails.Get(participantId)
 
 	--[[ Checks ]]
 
-	-- Check if the worm is still in play
+	-- Check if the snail is still in play
 	if not model then
 		return
 	end

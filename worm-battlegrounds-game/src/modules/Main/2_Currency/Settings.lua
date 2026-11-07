@@ -10,7 +10,7 @@ local _settings = {
 			--[[ General ]]
 
 			DefaultValue = "0",
-			IconId = "rbxasset://textures/wb_guipreview/coin_b3e36086.png",
+			IconId = "rbxassetid://108986846988315",
 
 			--[[ Range ]]
 
@@ -34,7 +34,7 @@ local _settings = {
 			--[[ General ]]
 
 			DefaultValue = "0",
-			IconId = "rbxasset://textures/wb_guipreview/diamond_48620100.png",
+			IconId = "rbxassetid://76353040161236",
 
 			--[[ Range ]]
 

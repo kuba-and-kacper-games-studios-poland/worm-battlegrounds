@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Bazooka",
-	Icon = "rbxasset://textures/wb_guipreview/bazooka_2c82e8ca.png",
+	Icon = "rbxassetid://134208977158560",
 
 	--[[ Behavior ]]
 

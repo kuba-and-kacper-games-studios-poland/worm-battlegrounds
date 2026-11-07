@@ -16,7 +16,7 @@ local random: Random = Random.new()
 -- Names already given out this match
 local usedNames = {} --- @type { [string]: boolean }
 
--- Casts that see what shots hit: terrain and worms in play
+-- Casts that see what shots hit: terrain and snails in play
 local arcParams: RaycastParams = RaycastParams.new()
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -108,7 +108,7 @@ function Module.TakeTurn(participantId: string)
 	--[[ Data ]]
 
 	local participant = I.Match.GetParticipant(participantId) --- @type Match_Participant?
-	local model: Model? = I.Worms.Get(participantId)
+	local model: Model? = I.Snails.Get(participantId)
 
 	--[[ Checks ]]
 
@@ -227,7 +227,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Target
 
 --[[
-	Returns the worm a bot aims at: Easy any enemy, Medium the nearest, Hard the one easiest to knock out (low health,
+	Returns the snail a bot aims at: Easy any enemy, Medium the nearest, Hard the one easiest to knock out (low health,
 	near liquid or the arena's edge), then the nearest.
 ]]
 --- @return Model?
@@ -236,7 +236,7 @@ function Module._getTarget(model: Model, difficulty: string)
 
 	local team: number = model:GetAttribute("Team")
 	local enemies = {} --- @type { Model }
-	for _index: number, other: Model in ipairs(I.Worms.GetAlive()) do
+	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
 		if other ~= model and other:GetAttribute("Team") ~= team then
 			table.insert(enemies, other)
 		end
@@ -341,7 +341,7 @@ function Module._solve(model: Model, itemId: string, aimAt: Vector3, difficulty:
 	--[[ Searching ]]
 
 	local wind: number = if difficulty == "Easy" then 0 else I.G_Combat.GetWindAcceleration(itemId, I.Match.GetWind())
-	local muzzle: number = I.Settings["Worms"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP
+	local muzzle: number = I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP
 	local bestAngle: number = straight
 	local bestPower: number = 0.6
 	local bestMiss: number = math.huge
@@ -375,7 +375,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Landing
 
 --[[
-	Returns where a predicted path first hits terrain or a worm, or its last point when it hits nothing.
+	Returns where a predicted path first hits terrain or a snail, or its last point when it hits nothing.
 ]]
 --- @param points { Vector3 }
 --- @return Vector3

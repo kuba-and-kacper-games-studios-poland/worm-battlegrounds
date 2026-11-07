@@ -16,53 +16,72 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Ground is bedrock on the floor:** each island's waterline blocks carry `Arena_Indestructible` (a name from before
   blasts could cut it). Blasts cut bedrock like any terrain, so an island can be blasted down to the water; a bedrock
   piece holds up what touches it while its bottom still reaches the map's floor (the bottom of its lowest bedrock),
-  and a piece cut loose falls. **Floating ledges float:** their parts carry `Arena_Floats`, and a cut-off group of
-  them stays up while it covers `FLOAT_MIN_AREA`; smaller crumbs fall. Never mark a ledge block as bedrock to hold it
-  up: it isn't on the floor, so it holds nothing.
+  and a piece cut loose falls. **Floating ledges float, but what's cut off them falls** (the studio's wiki: "blocks
+  left floating fall down"): their parts carry `Arena_Floats`, each ledge is numbered at load (`Arena_Ledge`), and when
+  a blast cuts one apart only its biggest piece keeps floating. Never mark a ledge block as bedrock to hold it up: it
+  isn't on the floor, so it holds nothing.
 - **Props break under blasts:** trees, bushes and rocks in a map's Decor are `Arena_Prop` Models built from parts
-  (never collidable for worms). A blast cuts its hole through them with the same stepped cutter as the terrain, and
+  (never collidable for snails). A blast cuts its hole through them with the same stepped cutter as the terrain, and
   the pieces no longer joined to the prop's base fly off; a prop whose ground is gone (under its trunk) falls. What
   falls fades out.
 - **Maps are made in MapLab** (the game home's map kit, `assets/_tools/map-kit/`): the land drawn on the 1-stud grid
   and built into parts, props part-built, checked, then exported into the arena templates after the owner approves.
-- **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), centred
-  on the arena's plane at Z = 0, and cached by the Arena module at start. Weapon models are authored in
+  A map the owner builds in Studio is imported where it stands (Rockslide Ridge): its parts renamed by look, in
+  SmoothPlastic with `2022 Stud`, sorted into islands, ledges and backdrop, with its own markers.
+- **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), their
+  play plane (Bounds) at Z = 0, side by side along +X in 400-stud slots (MapLab's: X = (slot − 1) × 400) so none
+  overlaps another, and cached by the Arena module at start. The drop picker reads the plane as Z = 0. Nothing starts
+  in the bounds' top 20 studs (Arena's `START_TOP_GAP`), so a map's roof is never a spawn, and the liquid is drawn as
+  deep as the map's bedrock, measured at load, never the bounds' depth: a map needs neither set by hand. Weapon models are authored in
   `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/` and cached by Arsenal (its README → In the place).
 - **Liquids are a stop-motion stud simulation:** water and lava live in a grid of half-stud cells stepped at 8 fps
   and drawn as merged rectangles in `2022 Small Stud`, so they hop like a brick film. They are the only thing in the
   arena on a grid, and the cells stay fine (never one-stud or bigger blocks).
 
-## Worms
+## Snails
 
-- **A worm's state lives in attributes on its model** (`Health`, `Alive`, `Ghost`, `CanMove`, `Stamina`, `Active`…),
-  written by the server and read by every client, so the worm modules need no remotes. Overrides `ume/values.md` →
-  where a per-player value lives: worm state belongs to the worm, which bots have too, not to a player.
-- **The active worm is moved by its player's client** through network ownership; the server only checks speed and
-  stamina and takes the worm back. Anything the server does to a worm (knockback, a knockout) happens while the
-  server owns it.
-- **A worm starts standing on land unless its player places it:** bots and players who don't place start on
-  `I.Arena.GetLandSpots` (on top of the ground on any storey, never over liquid); only a spot a player placed is
-  dropped onto with the parachute.
-- **The active worm holds its weapon on the camera's side** (+Z, in front of its body), turned to its aim, so every
-  player sees it; it's drawn by each client from the worm's `HeldItem` (Combat's `Held` handler), never welded on
+- **A snail's state lives in attributes on its model** (`Health`, `Alive`, `Ghost`, `CanMove`, `Stamina`, `Active`…),
+  written by the server and read by every client, so the snail modules need no remotes. Overrides `ume/values.md` →
+  where a per-player value lives: snail state belongs to the snail, which bots have too, not to a player.
+- **The active snail is moved by its player's client** through network ownership; the server only checks it (its path
+  through the terrain, its speed, how high it climbs past a jump with its jetpack fuel, and its stamina) and takes
+  the snail back. Anything the server does to a snail (knockback, a knockout) happens while the server owns it.
+- **Every snail parachutes in** (the studio's wiki): a player's placed spot, or for bots and players who don't place,
+  up to the Match module's `DROP_HEIGHT` over a spot from `I.Arena.GetLandSpots` (on top of the ground on any storey,
+  never over liquid), clear of the terrain above it.
+- **The active snail holds its weapon on the camera's side** (+Z, in front of its body), turned to its aim, so every
+  player sees it; it's drawn by each client from the snail's `HeldItem` (Combat's `Held` handler), never welded on
   the server.
-- **Aiming is a crosshair and a held charge, as in Worms:** the crosshair sits a fixed distance from the worm in the
-  aim's direction (it shows the direction only, never the shot's path), and holding the fire button charges the
-  power, drawn as a row of circles from the held weapon's `Muzzle` attachment to the crosshair that light up as it
-  fills. The crosshair and circles keep their size on the screen whatever the zoom, and the screen that draws an aim
-  turns the held weapon with it at once (no wait for the server's copy). Held, the power
-  bounces from none to full and back (Combat's `CHARGE_SECONDS` each way); only letting go fires, never a full charge
-  or the turn running out. Guns and melee weapons fire on the press.
-- **Everyone sees the active worm aim:** its crosshair and power show on every screen through its turn, players' and
-  bots' alike, from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots turn their
-  crosshair, then charge, before they fire.
+- **Aiming points from the snail at the mouse** (the owner's pick, 2026-11-07, after the drag measured from the
+  press felt off): on PC the weapon follows the mouse from the snail even before a press; holding the button (or a
+  finger on touch) sets the power by how far the pointer is from the snail on the screen, in shares of the screen's
+  height so it feels the same on every screen, and letting go fires. The camera doesn't edge-pan while the button is
+  held. On a pad the right stick aims and a held RT runs the power bar
+  up and down (Combat's `CHARGE_SECONDS` each way). The aim shows as an angle marker (a crosshair a fixed distance
+  from the snail, the direction only, never the shot's path) and a power bar (a row of circles from the held weapon's
+  `Muzzle` attachment to it, lit as the power fills). Both keep their size on the screen whatever the zoom, and the
+  screen that draws an aim turns the held weapon with it at once (no wait for the server's copy). Only letting go
+  fires, never the turn running out.
+- **Everyone sees the active snail aim:** its angle marker and power show on every screen through its turn, players'
+  and bots' alike, from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots turn their
+  marker, then fill their power, before they fire.
 - **Blasts are felt, not only seen:** Combat's client `Effects` shakes the camera with ume's CameraShake, on top of
   MatchCamera (which updates at the `Camera` render priority, one step before the shaker), and vibrates phones and
   pads through the Haptic module's `Combat_*` presets (`src/global_data/Haptic/Preset.lua`). How hard comes from the
   blast's size and its distance from the middle of the view, and nothing is felt outside a match. The player's own
-  shot ticks and a hit on their own worm thumps. The chunks of ground a blast throws are physics parts in Arena's
-  `Chip` collision group: they bounce on the terrain, never on worms or shots, and fade after `DEBRIS_LIFETIME`.
-- **A walking worm has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
+  shot ticks and a hit on their own snail thumps. The chunks of ground a blast throws are physics parts in Arena's
+  `Chip` collision group: they bounce on the terrain, never on snails or shots, and fade after `DEBRIS_LIFETIME`.
+- **A snail's shell breaks below 50 health:** each screen hides the skin's `Shell` part (its
+  `LocalTransparencyModifier`, so the server's ghost see-through can't bring it back) while `Health` is under the
+  Snails module's `SHELL_BREAK_HEALTH`, and throws chips in its colours as it breaks; healing back up shows it again.
+  It's driven by the `Health` attribute alone, with no remote. A skin without a `Shell` part never breaks.
+- **Shots fly by the game's own simulation, not Roblox physics:** Combat's `Ballistics` (Scripts/Helpers) steps every
+  flying shot the same on the server and every client, on the server's clock, with Worms' arcade rules (bounces that
+  lose speed along the ground, resting and rolling off ledges, shots that sink and fizzle in liquid). The server is
+  the authority (launch, states every 0.1 s, end; it alone decides blasts), and each client simulates its own copy for
+  smooth flight, rewinding to the server's state when it drifts. Never give a flying shot Roblox physics or move it by
+  replicated parts.
+- **A walking snail has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 
 ## Guis
@@ -84,11 +103,11 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Pictures drawn for the game stay local until the owner approves them:** a kit (the game home's
   `assets/_inbox/ui_kit_brawl/`) renders them into Studio's content folder (`rbxasset://textures/wb_brawlpreview/…`)
   and writes the theme's `Icons.lua` and `Skins.lua`. Nothing is uploaded to Roblox before the owner says so; then
-  the pictures get PrepKit's pixel-fix, are uploaded, and `Icons.lua` points at their `rbxassetid://` ids. The GUI
-  kit is uploaded (2026-11-04); the first kit's item, emote and skin pictures (`wb_guipreview`) are still local.
-  A Studio update installs a fresh content folder without them, and every gui showing one goes blank: copy them in
-  again (`assets/_inbox/ui_kit/README.md` → Rebuilding), then restart Studio, which remembers a failed picture for
-  the whole session.
+  the pictures get PrepKit's pixel-fix, are uploaded, and `Icons.lua` points at their `rbxassetid://` ids. Both kits
+  are uploaded: the GUI kit on 2026-11-04, the first kit's item, emote, currency and crate pictures and the wind on
+  2026-11-07, after a Studio update had wiped their local copies and blanked every icon. The game uses no local
+  picture now; a new one shows only on the PC that built it, and blanks after the next Studio update, until it's
+  uploaded (each kit's README → Uploading).
 - **The game's guis are built from the theme's controls** (`WormBattlegroundsBrawl`, over `WormBattlegrounds`),
   never from raw `Primitive` nodes holding their own colours and sizes (as ume-gui's System guis are): `Widget` for
   every WidgetManager widget, `Box` for panels and cards, `Item` for item cards, `Cells` for lists and grids code
@@ -131,13 +150,14 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   Studio); `"Match"` tests the match map alone. On the Studio map the lobby hands each match to `I.Match.Host`, and
   the `InMatch` Player attribute says which half a player is in: every screen, camera and hint that belongs to one
   half follows it instead of assuming its map. Studio saves nothing, so a playtest skips the tutorial match and opens
-  on the lobby; the Workspace attribute `StudioTutorial` (true) plays it.
+  on the lobby; the Workspace attribute `StudioTutorial` (true) plays it. A Studio playtest has one player, so there a
+  custom lobby's owner may start it alone, and bots fill its empty places (live custom matches stay 2 or more, no bots).
 - **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
-  the game starts: nothing in play stands on it (avatars are parked anchored, the lobby stage has its own ground).
+  the game starts: nothing in play stands on it (avatars are parked anchored, the lobby's backdrop has its own ground).
 - **Placeholders until the owner provides the real thing:** developer products and game passes keep `Id = 0`; weapon
-  projectiles, effects and skins other than Classic are made in code or fall back to the Classic worm. Each such spot
+  projectiles, effects and skins other than Classic are made in code or fall back to the Classic snail. Each such spot
   has a `shortcut:` comment or a README line saying it's a placeholder. Never create products, passes or models on
   the owner's behalf.
 - **Panels scale with the screen in position and size:** every game gui's panels are laid out for a 1920 × 1080
@@ -148,10 +168,13 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   A new gui joins its `GUIS` list instead of scaling itself. A button or tile
   placed on the screen by itself gets its own `S_ScreenScale` (the kit's `Screen` param: the touch buttons, the emote
   button).
-- **World labels scale with the screen too:** a billboard over the world (WormTag, DropMarker, DamagePop) lays its root
+- **World labels scale with the screen too:** a billboard over the world (SnailTag, DropMarker, DamagePop) lays its root
   out at its design size with an `S_ScreenScale`, and the code that clones it hands it to
   `I.ScreenScale.AddBillboard`, which sets that scale and the billboard's size to the root's times it (no device
-  scale). Never a fixed pixel billboard: on a phone it covers half the screen.
+  scale). Never a fixed pixel billboard: on a phone it covers half the screen. Its template lives with its module's
+  assets, not in StarterGui (where Studio draws it at 0, 0, 0): `ReplicatedStorage_Assets/<Module>/PREFAB | <Gui>`, a
+  Model with an invisible 1 × 1 × 1 `RootPart`, its `Attachment`, and the BillboardGui named `U_<Gui>`, which code
+  clones alone and names `<Gui>`. Narrows `ume/place.md` (holder parts): the holder is the `PREFAB`, the gui `U_`.
 - **Device sizes come from ume's platform tags:** a panel that differs per device carries `Utils_PlatformScale` (or
   `Utils_PlatformSize`), and ScreenScale multiplies the screen's scale by the device scale the tag keeps on the
   UIScale (`Utils_BaseScale`). No module or attribute of the game's own does per-device sizing. The GUI kit tags its
@@ -165,9 +188,12 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   it covers when opened (Loadout and MatchBoard at `DisplayOrder` -1, under Party's 0 and the windows' 1).
 - **Counts stay on one line:** a currency count gets the width of its longest text, and amounts from 10,000 up are
   written short by the slot (`Currency_ShortFrom`: "18.62k"), so a count never wraps.
-- **The lobby is a 3D stage, not a backdrop picture:** the camera sits on the `LobbyStage` Model's `Camera` marker and
-  the player's worm stands on its `Worm` marker (Lobby's README → In the place), with the lobby's guis see-through
-  over it. Keep the screen to a few things: the logo at the top, Party, the Loadout bar, the corner buttons, and one
+- **The lobby plays a bot match behind its guis** (the owner's pick, 2026-11-07, as RoWorld's lobby does): the lobby
+  server copies Picnic Plains (Lobby's `BACKDROP_MAP`) to Lobby's `BACKDROP_ORIGIN`, and each client plays its own
+  bots on it (Lobby's `Backdrop` handlers): a small, slow match with the Bazooka, the Grenade and short jetpack hops,
+  blurred through ume's Lighting layers over an open window's lighter blur, the first snail in the player's equipped
+  skin. It's built only from what the lobby has (the arena templates, skins and Arsenal rows and models), since the match modules don't run there; nothing it does reaches the server. Keep the
+  screen to a few things: the logo at the top, Party, the Loadout bar, the corner buttons, and one
   panel at the bottom laid out like RoWorld's (the owner's reference, 2026-11-06): a welcome line, the yellow **Play
   solo** (**Play with party** in a party) and the public matches, one card per mode. The solo or party setup and the
   waiting room take that panel's place; custom lobbies, crates and skins open in a window.

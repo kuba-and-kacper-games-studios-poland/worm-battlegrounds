@@ -59,7 +59,7 @@ end
 
 --[[
 	**SERVER** |
-	Makes a custom lobby the player owns, on a map from MAP_POOL, in Deathmatch or Teams, for 2 to 8 worms.
+	Makes a custom lobby the player owns, on a map from MAP_POOL, in Deathmatch or Teams, for 2 to 8 snails.
 ]]
 --- @return boolean
 function Module.Create(player: Player, mapId: string, mode: string, size: number)
@@ -166,7 +166,8 @@ end
 
 --[[
 	**SERVER** |
-	The lobby's owner starts it: everyone in it travels to the match, without bots.
+	The lobby's owner starts it: everyone in it travels to the match, without bots. In Studio the owner may start it
+	alone, and bots fill the empty places (Match's roster), so one tester can play it.
 ]]
 --- @return boolean
 function Module.Start(player: Player)
@@ -187,7 +188,7 @@ function Module.Start(player: Player)
 	end
 
 	-- Check if anyone else is in it
-	if #row.Players < 2 then
+	if #row.Players < 2 and not I.S.RunService:IsStudio() then
 		Launch._tell({ player }, "Invite at least one more player first.")
 		return false
 	end

@@ -86,7 +86,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Select
 
 --[[
-	Picks a box: a weapon becomes the one the worm holds and aims (Combat_Select); a utility is used at once on the
+	Picks a box: a weapon becomes the one the snail holds and aims (Combat_Select); a utility is used at once on the
 	player's turn (Combat_UseUtility), keeping the weapon in hand.
 ]]
 function Module.Select(itemId: string)

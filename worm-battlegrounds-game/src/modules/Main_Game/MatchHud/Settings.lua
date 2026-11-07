@@ -23,9 +23,9 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Top Bar
 
 	-- The match's top bar buttons (text until their icons exist), and the question Leave game asks first
-	LEAVE_TEXT = "Leave",
-	MUSIC_TEXT = "Music",
-	LEAVE_QUESTION = "Leave the match? Your worm will be knocked out.",
+	LEAVE_TEXT = "Leave game",
+	MUSIC_TEXT = "Mute music",
+	LEAVE_QUESTION = "Leave the match? Your snail will be knocked out.",
 
 	--%%%%%%%%%%%%%%%%%%%% Loadout Bar
 
@@ -60,19 +60,27 @@ local _settings = {
 	AIM_SEND_INTERVAL = 0.1,
 
 	--[[
-		Another worm's crosshair and power show while its aim keeps arriving (none for AIM_SHOW_GRACE seconds hides
+		The mouse or a held finger aims: the weapon points from the snail toward it, and while it's held the power is how
+		far it is from the snail on the screen, in shares of the screen's height: none at MIN_PULL (let go closer, it
+		cancels), full at MAX_PULL
+	]]
+	MIN_PULL = 0.02,
+	MAX_PULL = 0.3,
+
+	--[[
+		Another snail's angle marker and power show while its aim keeps arriving (none for AIM_SHOW_GRACE seconds hides
 		them), eased toward each update at AIM_SMOOTHING (higher is snappier)
 	]]
 	AIM_SHOW_GRACE = 0.4,
 	AIM_SMOOTHING = 15,
 
-	-- The crosshair: how far from the worm's middle it sits, its size and its colour (studs)
+	-- The angle marker, a crosshair: how far from the snail's middle it sits, its size and its colour (studs)
 	CROSSHAIR_DISTANCE = 9,
 	CROSSHAIR_SIZE = 3,
 	CROSSHAIR_COLOR = Color3.fromRGB(190, 235, 110),
 
 	--[[
-		The power, a row of POWER_DOTS circles from the muzzle to the crosshair that light up as it charges: their colours
+		The power bar, a row of POWER_DOTS circles from the muzzle to the crosshair that light up as it fills: their colours
 		and sizes (studs) from the first circle to the last, which sits on the crosshair and fills its ring (0.7 of
 		CROSSHAIR_SIZE)
 	]]

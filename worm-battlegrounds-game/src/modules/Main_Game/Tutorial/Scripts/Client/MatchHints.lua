@@ -17,7 +17,7 @@ local elems = {} --- @type { [string]: Instance }
 
 local moduleGui: ScreenGui
 local matchFolder: Folder
-local wormsFolder: Instance
+local snailsFolder: Instance
 
 --[[ State ]]
 
@@ -54,7 +54,7 @@ function Module.Start()
 	elems["Text"] = moduleGui:FindFirstChild("S_Text", true) --- @type TextLabel
 	elems["Arrow"] = moduleGui:FindFirstChild("S_Arrow", true) --- @type ImageLabel
 	matchFolder = I.Match.GetFolder()
-	wormsFolder = I.Dirs.UmeWorkspace:WaitForChild("Worms")
+	snailsFolder = I.Dirs.UmeWorkspace:WaitForChild("Snails")
 
 	--[[ Connections ]]
 
@@ -96,12 +96,12 @@ function Module._tick()
 	local myTurn: boolean = phase == "Turn" and I.Match.IsMyTurn()
 	local myShot: boolean = phase == "Flight" and I.Match.IsMyTurn()
 	local inMatch: boolean = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
-	local worm: Instance? = wormsFolder:FindFirstChild(I.Match.GetMyParticipantId())
-	local root: Instance? = worm and worm:FindFirstChild("Root")
+	local snail: Instance? = snailsFolder:FindFirstChild(I.Match.GetMyParticipantId())
+	local root: Instance? = snail and snail:FindFirstChild("Root")
 
 	--[[ Stepping ]]
 
-	if step == "Walk" and worm and (worm:GetAttribute("Stamina") or math.huge) < I.Settings["WormControl"].STAMINA_STUDS then
+	if step == "Walk" and snail and (snail:GetAttribute("Stamina") or math.huge) < I.Settings["SnailControl"].STAMINA_STUDS then
 		step = "Jump"
 	elseif step == "Jump" and root and root:IsA("BasePart") and root.AssemblyLinearVelocity.Y > _settings.JUMP_SPEED then
 		step = "Fire"

@@ -72,7 +72,7 @@ end
 
 --[[
 	Shows the turn panel while turns run, the stamina bar on the player's own turn, and whose turn it is: "Your turn!",
-	or another worm's name in its team colour with how many turns until the player's own; ticks only while it shows.
+	or another snail's name in its team colour with how many turns until the player's own; ticks only while it shows.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -82,7 +82,7 @@ function Module._refresh()
 	local myTurn: boolean = I.Match.IsMyTurn()
 	local turnsLeft: number? = if myTurn then nil else Module._getTurnsLeft()
 	local activeId: string? = I.Match.GetActive()
-	local active: Model? = if activeId and not myTurn then I.Worms.Get(activeId) else nil
+	local active: Model? = if activeId and not myTurn then I.Snails.Get(activeId) else nil
 
 	--[[ Banner ]]
 
@@ -130,7 +130,7 @@ end
 
 --[[
 	Counts the turn's seconds down on the turn panel, blank while a shot flies and settles, and fills the stamina bar
-	from the player's worm.
+	from the player's snail.
 ]]
 function Module._tick()
 	--[[ Local Variables ]]
@@ -150,11 +150,11 @@ function Module._tick()
 
 	--[[ Stamina ]]
 
-	local mine: Model? = I.Worms.GetMine()
+	local mine: Model? = I.Snails.GetMine()
 	if not elems["Stamina"].Visible or not mine then
 		return
 	end
-	local share: number = math.clamp((mine:GetAttribute("Stamina") or 0) / I.Settings["WormControl"].STAMINA_STUDS, 0, 1)
+	local share: number = math.clamp((mine:GetAttribute("Stamina") or 0) / I.Settings["SnailControl"].STAMINA_STUDS, 0, 1)
 	elems["StaminaFill"].Size = UDim2.fromScale(share, 1)
 	elems["StaminaStatus"].Text = `{staminaText} {math.round(share * 100)}%`
 end
@@ -165,17 +165,17 @@ end
 
 --[[
 	How many turns come before the player's own, counting the one playing now (1 when they're next), from the
-	match's `TurnOrder`. Nil when their worm can't play.
+	match's `TurnOrder`. Nil when their snail can't play.
 ]]
 --- @return number?
 function Module._getTurnsLeft()
 	--[[ Data ]]
 
-	local mine: Model? = I.Worms.GetMine()
+	local mine: Model? = I.Snails.GetMine()
 
 	--[[ Checks ]]
 
-	-- Check if the player's worm is still in play
+	-- Check if the player's snail is still in play
 	if not mine or not mine:GetAttribute("Alive") then
 		return nil
 	end

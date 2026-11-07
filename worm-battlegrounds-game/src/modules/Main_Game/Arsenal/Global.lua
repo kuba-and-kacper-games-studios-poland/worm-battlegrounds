@@ -192,7 +192,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Knockback
 
 --[[
-	Returns the speed a knockback class throws a worm at, in studs per second.
+	Returns the speed a knockback class throws a snail at, in studs per second.
 ]]
 --- @return number
 function Module.GetKnockback(class: string)
@@ -202,7 +202,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Model
 
 --[[
-	Returns a weapon's model (clone it): the one a worm holds, and throws when the weapon has no projectile model.
+	Returns a weapon's model (clone it): the one a snail holds, and throws when the weapon has no projectile model.
 	Faces +X from its RootPart, at the grip of a held weapon and the centre of a thrown one.
 ]]
 --- @return Model?

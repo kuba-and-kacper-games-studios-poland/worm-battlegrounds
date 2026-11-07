@@ -66,7 +66,7 @@ It listens to `Match_Ended` (Match map) and `Crates_Opened` (Lobby map) when tho
 | `STARTER_WEAPONS` | `{ "Grenade", "Shotgun" }` | What the crate gives, and what the equip step checks |
 | `MATCH_MAP`, `LOBBY_MAP`, `MATCH_KIND` | `"Match"`, `"Lobby"`, `"Tutorial"` | The maps that run only the match hints or only the lobby hints, and the match kind |
 | `HINTS` | Walk, Jump, Fire, BotTurn, Finish, Equip | What each hint says |
-| `JUMP_SPEED` | `6` | How fast a worm must rise to count as a jump, in studs per second |
+| `JUMP_SPEED` | `6` | How fast a snail must rise to count as a jump, in studs per second |
 | `HINT_GUI_NAME`, `LOBBY_GUI_NAME`, `LOADOUT_GUI_NAME` | | The hint bubble, and the guis the arrow lives in and points into |
 
 ## In the place

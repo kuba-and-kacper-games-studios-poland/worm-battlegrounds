@@ -76,7 +76,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Ask Leave
 
 --[[
-	Asks first, then leaves the match: a worm still in play dies as a leaver.
+	Asks first, then leaves the match: a snail still in play dies as a leaver.
 ]]
 function Module._askLeave()
 	--[[ Asking ]]

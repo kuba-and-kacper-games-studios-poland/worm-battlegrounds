@@ -58,34 +58,30 @@ function Module.Run(shot)
 	--[[ Local Variables ]]
 
 	local row = shot.Row --- @type Arsenal_WeaponData
-	local wind: number = I.G_Combat.GetWindAcceleration(shot.ItemId, I.Match.GetWind())
 	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(shot.ItemId, shot.Angle, shot.Power)
-	local bounces: boolean = not row.BurstOnContact
-	local part: Part = Projectiles.Spawn("Bouncer", shot.ItemId, shot.Origin, velocity, bounces, row.Elasticity, wind)
-	local started: number = os.clock()
-	local last: Vector3 = part.Position
+	local options = Projectiles.GetOptions(shot) --- @type Combat_ShotOptions
+	options.Wind = I.G_Combat.GetWindAcceleration(shot.ItemId, I.Match.GetWind())
+	options.Bounce = if row.BurstOnContact then nil else row.Elasticity or 0.5
+	local body = Projectiles.Launch("Bouncer", shot.ItemId, shot.Origin, velocity, options) --- @type Combat_Body
 	local burst: Vector3? = nil
 
 	--[[ Flying ]]
 
-	while part.Parent do
-		I.S.RunService.Heartbeat:Wait()
-		local now: Vector3 = part.Position
-		local shooter: Model? = if os.clock() - started < _settings.SHOOTER_GRACE then shot.Shooter else nil
-		local result: RaycastResult? = if bounces then nil else Projectiles.Cast(last, now, shooter)
-
-		if result then
-			burst = result.Position
+	-- One that sinks in liquid fizzles out, as in Worms
+	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
+		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif row.Fuse and os.clock() - started >= row.Fuse then
-			burst = now
+		elseif body.Sunk then
+			continue
+		elseif body.Stopped then
+			burst = if hit then hit.Position else body.Position
 			break
-		elseif Projectiles.IsLost(now, started) then
+		elseif row.Fuse and elapsed >= row.Fuse then
+			burst = body.Position
 			break
 		end
-		last = now
 	end
-	part:Destroy()
+	Projectiles.Land(body)
 
 	--[[ Bursting ]]
 
@@ -134,28 +130,28 @@ function Module._runBomblet(shot, from: Vector3)
 	local bomblets = shot.Row.Bomblets --- @type Arsenal_Bomblets
 	local angle: number = math.rad(random:NextNumber(30, 150))
 	local speed: number = random:NextNumber(_settings.BOMBLET_SPEED[1], _settings.BOMBLET_SPEED[2])
-	local part: Part = Projectiles.Spawn("Bomblet", "Bomblet", from + Vector3.yAxis * 1.5, Vector3.new(math.cos(angle), math.sin(angle), 0) * speed, false)
-	local started: number = os.clock()
-	local last: Vector3 = part.Position
+	local options = Projectiles.GetOptions(nil) --- @type Combat_ShotOptions
+	options.GhostSteps = math.round(_settings.BOMBLET_GHOST / _settings.PROJECTILE_STEP)
+	local velocity: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0) * speed
+	local body = Projectiles.Launch("Bomblet", "Bomblet", from + Vector3.yAxis * 1.5, velocity, options) --- @type Combat_Body
 
 	--[[ Flying ]]
 
-	while part.Parent do
-		I.S.RunService.Heartbeat:Wait()
-		local now: Vector3 = part.Position
-		local result: RaycastResult? = if os.clock() - started > 0.1 then Projectiles.Cast(last, now) else nil
-		if result then
-			shot.Damage += Blast.Explode(result.Position, bomblets.Radius, shot.ItemId, shot.ParticipantId, shot.Shiny, bomblets.DamageMax, bomblets.DamageEdge, "Small")
+	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
+		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif Projectiles.IsLost(now, started) then
+		elseif body.Sunk then
+			continue
+		elseif body.Stopped then
+			local center: Vector3 = if hit then hit.Position else body.Position
+			shot.Damage += Blast.Explode(center, bomblets.Radius, shot.ItemId, shot.ParticipantId, shot.Shiny, bomblets.DamageMax, bomblets.DamageEdge, "Small")
 			break
 		end
-		last = now
 	end
 
 	--[[ Cleaning ]]
 
-	part:Destroy()
+	Projectiles.Land(body)
 end
 
 return Module

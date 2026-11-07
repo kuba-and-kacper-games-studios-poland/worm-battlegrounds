@@ -24,13 +24,13 @@ local _settings = {
 	HINTS = {
 		Walk = "Walk with A and D, or the arrow keys",
 		Jump = "Jump with Space",
-		Fire = "Point the crosshair at the bot, then hold to charge and let go to fire",
+		Fire = "Drag toward the bot to aim: the longer the drag, the stronger the shot. Let go to fire",
 		BotTurn = "The bot's turn. Watch out!",
 		Finish = "Two hits knock it out. Finish it!",
 		Equip = "Put the Grenade and the Shotgun in your loadout",
 	},
 
-	-- How fast a worm must rise, in studs per second, to count as a jump
+	-- How fast a snail must rise, in studs per second, to count as a jump
 	JUMP_SPEED = 6,
 
 	--%%%%%%%%%%%%%%%%%%%% Gui

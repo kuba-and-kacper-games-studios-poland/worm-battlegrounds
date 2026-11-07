@@ -46,7 +46,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Launch Velocity
 
 --[[
-	Returns the velocity a weapon leaves the worm at: along the angle (radians, 0 is right, counterclockwise), from
+	Returns the velocity a weapon leaves the snail at: along the angle (radians, 0 is right, counterclockwise), from
 	MinSpeed at power 0 to MaxSpeed at power 1.
 ]]
 --- @return Vector3

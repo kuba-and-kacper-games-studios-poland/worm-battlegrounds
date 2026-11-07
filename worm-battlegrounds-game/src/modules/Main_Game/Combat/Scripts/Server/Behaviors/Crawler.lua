@@ -12,6 +12,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Projectiles = require(script.Parent.Parent:FindFirstChild("Projectiles")) --- @type Combat_Server_Projectiles
+local Ballistics = require(script.Parent.Parent.Parent:FindFirstChild("Helpers"):FindFirstChild("Ballistics")) --- @type Combat_Ballistics
 local Blast = require(script.Parent.Parent:FindFirstChild("Blast")) --- @type Combat_Server_Blast
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,7 +37,7 @@ local Module = {}
 
 --[[
 	The spider bomb: thrown like a grenade, it lands, then crawls along the ground and up walls toward the nearest
-	enemy worm for CrawlTime seconds, and explodes when it reaches one or its time runs out.
+	enemy snail for CrawlTime seconds, and explodes when it reaches one or its time runs out.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -56,14 +57,14 @@ function Module.Run(shot)
 		local now: Vector3 = part.Position
 		local shooter: Model? = if os.clock() - started < _settings.SHOOTER_GRACE then shot.Shooter else nil
 		local result: RaycastResult? = Projectiles.Cast(last, now, shooter)
-		if Projectiles.GetWorm(result) then
+		if Ballistics.GetSnail(result) then
 			shot.Damage += Module._explode(shot, result.Position)
 			part:Destroy()
 			return
 		elseif result then
 			landed = result.Position + result.Normal * 0.5
 			break
-		elseif Projectiles.IsLost(now, started) then
+		elseif Projectiles.IsLost(now, os.clock() - started) then
 			part:Destroy()
 			return
 		end
@@ -88,7 +89,7 @@ function Module.Run(shot)
 		end
 		position = Module._getNextStep(position, math.sign(target.PrimaryPart.Position.X - position.X), (row.CrawlSpeed or 10) * deltaTime)
 		part.Position = position
-		if Projectiles.IsLost(position, started) then
+		if Projectiles.IsLost(position, os.clock() - started) then
 			part:Destroy()
 			return
 		end
@@ -123,7 +124,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Target
 
 --[[
-	Returns the nearest worm in play that isn't on the shooter's team.
+	Returns the nearest snail in play that isn't on the shooter's team.
 ]]
 --- @param shot Combat_Shot
 --- @return Model?
@@ -136,7 +137,7 @@ function Module._getTarget(shot, position: Vector3)
 
 	--[[ Searching ]]
 
-	for _index: number, model: Model in ipairs(I.Worms.GetAlive()) do
+	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
 		local distance: number = (model.PrimaryPart.Position - position).Magnitude
 		if model:GetAttribute("Team") ~= team and distance < bestDistance then
 			best = model
@@ -171,7 +172,7 @@ function Module._getNextStep(position: Vector3, side: number, distance: number)
 
 	--[[ Returning ]]
 
-	if ground and not Projectiles.GetWorm(ground) then
+	if ground and not Ballistics.GetSnail(ground) then
 		return ground.Position + Vector3.yAxis * 0.5
 	end
 	return ahead - Vector3.yAxis * distance * 2

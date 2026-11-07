@@ -11,7 +11,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
--- The participants another worm knocked out this match
+-- The participants another snail knocked out this match
 local knockedOutByOther = {} --- @type { [string]: boolean }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,7 +57,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Participant Out
 
 --[[
-	Remembers a knockout by another worm, which pays the last places even before ANTI_FARM_ROUNDS.
+	Remembers a knockout by another snail, which pays the last places even before ANTI_FARM_ROUNDS.
 ]]
 function Module._onParticipantOut(participantId: string, _cause: string, killerId: string?, _itemId: string?)
 	--[[ Saving ]]
@@ -194,7 +194,7 @@ end
 	Returns the coins a place pays: public deathmatches by player count, public team matches by team count (75 for
 	winning a 2v2), solo matches a win by difficulty, party matches as a deathmatch of their size (PARTY_NO_BOTS_SHARE
 	of it without bots), custom and tutorial matches nothing. The last 2 places get nothing before ANTI_FARM_ROUNDS
-	unless another worm knocked them out.
+	unless another snail knocked them out.
 ]]
 --- @param placement Match_Placement
 --- @param entry Match_Stats?

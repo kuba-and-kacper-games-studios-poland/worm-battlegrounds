@@ -14,7 +14,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 -- Every S_ScreenScale in the game's guis
 local scales = {} --- @type { UIScale }
 
--- The world labels sized with the screen (worm tags, drop markers, damage numbers), each with its S_ScreenScale
+-- The world labels sized with the screen (snail tags, drop markers, damage numbers), each with its S_ScreenScale
 local billboards = {} --- @type { [BillboardGui]: UIScale }
 
 -- The screen's scale, set on every S_ScreenScale times its device scale
@@ -86,7 +86,7 @@ end
 --[[
 	**CLIENT** |
 	Sizes a world label with the screen until it's destroyed: a BillboardGui whose root is laid out at its design size
-	with an S_ScreenScale, as the game's WormTag, DropMarker and DamagePop are.
+	with an S_ScreenScale, as the game's SnailTag, DropMarker and DamagePop are.
 ]]
 function Module.AddBillboard(billboard: BillboardGui)
 	--[[ Saving ]]

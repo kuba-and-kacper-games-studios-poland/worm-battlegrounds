@@ -63,13 +63,6 @@ function Module.Init()
 	Phases.Init(matchFolder)
 	Connection.Init(matchFolder)
 
-	-- The drop marker billboard waits here for clients to clone, where the gui loader leaves it alone
-	local templates: Folder = I.Create("Folder")({
-		Name = _localName,
-		Parent = I.Dirs.UmeReplicated,
-	})
-	I.Dirs.UmeReplicated.UserInterface:FindFirstChild("DropMarker").Parent = templates
-
 	----------------------------
 	--------- REGISTRY ---------
 	----------------------------
@@ -117,7 +110,7 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
-	I.Topic.Subscribe("Worms_Died", Module._onWormDied)
+	I.Topic.Subscribe("Snails_Died", Module._onSnailDied)
 	I.Topic.Subscribe("Combat_ShotFired", Turns.OnShotFired)
 	I.Topic.Subscribe("Combat_ShotResolved", Module._onShotResolved)
 	Connection.Start()
@@ -126,16 +119,16 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
---%%%%%%%%%%%%%%%%%%%% On Worm Died
+--%%%%%%%%%%%%%%%%%%%% On Snail Died
 
 --[[
-	Takes a knocked-out worm's participant out of the match, credits the knockout, and tells every client for the
+	Takes a knocked-out snail's participant out of the match, credits the knockout, and tells every client for the
 	kill feed.
 ]]
-function Module._onWormDied(participantId: string, cause: string, killerId: string?, itemId: string?)
+function Module._onSnailDied(participantId: string, cause: string, killerId: string?, itemId: string?)
 	--[[ Checks ]]
 
-	-- Check if the worm plays in this match
+	-- Check if the snail plays in this match
 	if not Roster.GetParticipant(participantId) then
 		return
 	end
@@ -210,7 +203,7 @@ end
 
 --[[
 	**SERVER** |
-	Returns whether it's this player's worm's turn.
+	Returns whether it's this player's snail's turn.
 ]]
 --- @return boolean
 function Module.IsActivePlayer(player: Player)

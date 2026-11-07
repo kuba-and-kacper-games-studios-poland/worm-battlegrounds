@@ -1,6 +1,6 @@
 # CharacterPark
 
-Parks every player's Roblox avatar out of sight. Players play as worms (the `Worms` module), but ume still spawns each
+Parks every player's Roblox avatar out of sight. Players play as snails (the `Snails` module), but ume still spawns each
 player's avatar once, so this anchors it at `PARK_POSITION`, below the arena, as soon as it spawns, and hides it
 (through `I.HideOnPlay`, with the clothes, hats and face that load later) and its name, since Roblox's camera still
 looks at it until a game camera takes over (the match's waiting screen). That spot stays above `Fall_Controller`'s

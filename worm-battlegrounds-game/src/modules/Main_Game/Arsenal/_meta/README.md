@@ -55,15 +55,17 @@ wiki's Arsenal page.
 ## In the place
 
 Models are authored in `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/`, which the Utils module moves into
-`ReplicatedStorage.Ume.Assets` (`I.Dirs.Assets`) when the game starts. Each is a Model named after its weapon or utility row (or, in `Projectiles`, a burst's shot from `BURST_SHOTS`), with
+`ReplicatedStorage.Ume.Assets` (`I.Dirs.Assets`) when the game starts. In Studio they stand in rows left of the
+maps, 8 studs apart from X −300 on Z = 0: weapons at Y 14, utilities at Y 7, `Projectiles` at Y 0, in the data's
+order (where they stand doesn't matter to the game: every copy is moved to where it's used). Each is a Model named after its weapon or utility row (or, in `Projectiles`, a burst's shot from `BURST_SHOTS`), with
 a `RootPart` (its PrimaryPart: anchored, hidden at start) the mesh parts are welded to; the meshes don't collide, query
-or touch and are massless. The model faces +X from its RootPart, as worms do, and sits at the grip of a held weapon
+or touch and are massless. The model faces +X from its RootPart, as snails do, and sits at the grip of a held weapon
 or the centre of a thrown one. Each held model's RootPart has a `Muzzle` Attachment where its shot leaves it: the
 barrel's tip for a gun (Bazooka, Shotgun, Uzi, HomingMissile), the front of a thrown weapon; the aim's power circles
 start there (Combat's `GetMuzzle`). A new held or thrown model gets one too. The loadout bar shows an item's model in its box when it has no icon
-picture; Combat's clients put a weapon's model in the active worm's hands and fly each shot as `GetProjectileModel`
-(the Bazooka's rocket as the homing missile's missile until it has its own); Worms' clients put the Parachute and
-Jetpack on a worm while they work (Worms' README → Gear).
+picture; Combat's clients put a weapon's model in the active snail's hands and fly each shot as `GetProjectileModel`
+(the Bazooka's rocket as the homing missile's missile until it has its own); Snails' clients put the Parachute and
+Jetpack on a snail while they work (Snails' README → Gear).
 
 | Instance | What |
 | --- | --- |

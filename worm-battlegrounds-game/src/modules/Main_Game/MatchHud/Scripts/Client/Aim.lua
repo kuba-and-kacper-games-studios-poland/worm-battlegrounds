@@ -19,14 +19,16 @@ local elems = {} --- @type { [string]: Instance }
 
 --[[ Aim ]]
 
--- The crosshair's direction (0 is right, counterclockwise), and the last screen point the mouse or finger was at
+-- The aim's direction (0 is right, counterclockwise) and power
 local angle: number = math.rad(45)
-local pointer: Vector2? = nil
-
--- What holds the fire button down: "Mouse", "Touch", "Pad", or nil while not charging
-local charging: string? = nil
-local chargeStart: number = 0
 local power: number = 0
+
+-- How the player aims now: "Drag" (mouse or finger held down), "Pad" (right stick and RT), or nil
+local aiming: string? = nil
+local padStart: number = 0
+
+-- Where the mouse or finger last pointed, in screen pixels: the aim points from the snail toward it (nil on a pad)
+local pointer: Vector2? = nil
 
 local target: Vector3? = nil
 local lastSent: number = 0
@@ -37,7 +39,7 @@ local firedItem: string? = nil
 
 --[[ Others' Aim ]]
 
--- The worm whose aim this player watches (the active one, while its aim keeps arriving), and the aim drawn
+-- The snail whose aim this player watches (the active one, while its aim keeps arriving), and the aim drawn
 local watched: Model? = nil
 local watchedAngle: number = 0
 local watchedPower: number = 0
@@ -92,11 +94,11 @@ function Module.Start(gui: ScreenGui)
 	I.S.UserInputService.InputEnded:Connect(Module._onInputEnded)
 	I.Topic.Subscribe("Match_MyTurn", Module._onMyTurn)
 
-	-- Every worm's aim (players' and bots'), to draw its crosshair and power for this player too
-	local wormsFolder: Instance = I.Dirs.UmeWorkspace:WaitForChild("Worms")
-	wormsFolder.ChildAdded:Connect(Module._watchWorm)
-	for _index: number, model: Instance in ipairs(wormsFolder:GetChildren()) do
-		Module._watchWorm(model)
+	-- Every snail's aim (players' and bots'), to draw its crosshair and power for this player too
+	local snailsFolder: Instance = I.Dirs.UmeWorkspace:WaitForChild("Snails")
+	snailsFolder.ChildAdded:Connect(Module._watchSnail)
+	for _index: number, model: Instance in ipairs(snailsFolder:GetChildren()) do
+		Module._watchSnail(model)
 	end
 end
 
@@ -212,8 +214,8 @@ end
 
 --[[
 	A press (mouse, finger or RT) on the player's turn: fires a Feet weapon at once, picks a homing missile's target with
-	the first press, fires a gun or melee weapon where the crosshair points, and starts charging anything thrown or
-	launched. Right click, Esc and B let go of a charge without firing; a second finger cancels it (the camera pans).
+	the first press, and starts a drag (mouse, finger) or the power bar (RT). Right click, Esc and B cancel the aim; a
+	second finger cancels it too (the camera pans).
 ]]
 function Module._onInputBegan(input: InputObject, processed: boolean)
 	--[[ Local Variables ]]
@@ -223,11 +225,11 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 	--[[ Cancelling ]]
 
 	if input.UserInputType == Enum.UserInputType.MouseButton2 or input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.ButtonB then
-		Module._stopCharging()
+		Module._cancel()
 		return
 	end
-	if charging == "Touch" and input.UserInputType == Enum.UserInputType.Touch then
-		Module._stopCharging()
+	if aiming == "Drag" and input.UserInputType == Enum.UserInputType.Touch then
+		Module._cancel()
 		return
 	end
 
@@ -245,16 +247,16 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 	end
 
 	-- Check if the player may shoot now
-	if charging or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" then
+	if aiming or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" then
 		return
 	end
 
 	--[[ Aiming ]]
 
 	local row = I.G_Arsenal.Get(LoadoutBar.GetSelected()) --- @type Arsenal_WeaponData
-	if press then
-		pointer = Vector2.new(input.Position.X, input.Position.Y)
-		Module._aimAtPointer()
+	if row.Aim == "Feet" then
+		Module._fire()
+		return
 	end
 	if row.Aim == "Target" and not target and press then
 		target = Module._getPlanePoint(Vector2.new(input.Position.X, input.Position.Y))
@@ -262,27 +264,27 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 		targetMarker.Transparency = 0.2
 		return
 	end
-	if row.Aim == "Feet" or row.Aim == "Straight" or row.Aim == "Melee" then
-		Module._fire()
-		return
+
+	--[[ Starting ]]
+
+	aiming = if press then "Drag" else "Pad"
+	if press then
+		pointer = Vector2.new(input.Position.X, input.Position.Y)
 	end
-
-	--[[ Charging ]]
-
-	charging = if input.UserInputType == Enum.UserInputType.MouseButton1 then "Mouse" elseif press then "Touch" else "Pad"
-	chargeStart = os.clock()
+	padStart = os.clock()
 	power = 0
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Input Changed
 
 --[[
-	The crosshair follows the mouse, a charging finger, or the right stick's direction.
+	Follows the mouse (held or not) and a held finger, which the aim points at every frame (Step), or the right stick's
+	direction.
 ]]
 function Module._onInputChanged(input: InputObject, _processed: boolean)
-	--[[ Pointer ]]
+	--[[ Pointing ]]
 
-	if input.UserInputType == Enum.UserInputType.MouseMovement or (charging == "Touch" and input.UserInputType == Enum.UserInputType.Touch) then
+	if input.UserInputType == Enum.UserInputType.MouseMovement or (aiming == "Drag" and input.UserInputType == Enum.UserInputType.Touch) then
 		pointer = Vector2.new(input.Position.X, input.Position.Y)
 		return
 	end
@@ -299,56 +301,63 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Input Ended
 
 --[[
-	Letting go of the button that charges fires the shot at the power it shows. A turn that ended first dropped the
-	charge, so nothing fires.
+	Fires on release at the aim shown: the mouse or finger let go far enough from the snail (closer than MIN_PULL
+	cancels), or RT. A turn that ended first dropped the aim, so nothing fires.
 ]]
 function Module._onInputEnded(input: InputObject, _processed: boolean)
-	--[[ Checks ]]
+	--[[ Dragging ]]
 
-	-- Check if this is the button that charges
-	local released: string? = if input.UserInputType == Enum.UserInputType.MouseButton1
-		then "Mouse"
-		elseif input.UserInputType == Enum.UserInputType.Touch then "Touch"
-		elseif input.KeyCode == Enum.KeyCode.ButtonR2 then "Pad"
-		else nil
-	if not charging or released ~= charging then
+	if aiming == "Drag" and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+		local mine: Model? = I.Snails.GetMine()
+		pointer = Vector2.new(input.Position.X, input.Position.Y)
+		if not mine or Module._getPull(mine, pointer).Magnitude < _settings.MIN_PULL then
+			Module._cancel()
+		else
+			Module._aimAtPointer(mine)
+			Module._fire()
+		end
 		return
 	end
 
-	--[[ Firing ]]
+	--[[ Pad ]]
 
-	Module._fire()
+	if aiming == "Pad" and input.KeyCode == Enum.KeyCode.ButtonR2 then
+		Module._fire()
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Every frame of the player's turn: points the crosshair at the mouse or finger, charges the power while the button is
-	held (up to full, back down to none and up again, every CHARGE_SECONDS), draws the crosshair and power circles,
-	shows the power and angle, and sends the aim to the other players every AIM_SEND_INTERVAL.
+	Every frame of the player's turn: runs the pad's power bar while RT is held (up to full, back down to none and up
+	again, every CHARGE_SECONDS), draws the angle marker and power circles, shows the power and angle, and sends the
+	aim to the other players every AIM_SEND_INTERVAL.
 ]]
 function Module._step()
 	--[[ Checks ]]
 
 	-- Hide the aim between shots and for weapons fired at the feet
 	local itemId: string = LoadoutBar.GetSelected()
-	local mine: Model? = I.Worms.GetMine()
+	local mine: Model? = I.Snails.GetMine()
 	if I.Match.GetPhase() ~= "Turn" or not mine or I.G_Arsenal.Get(itemId).Aim == "Feet" then
-		Module._stopCharging()
+		Module._cancel()
 		Module._hideLook()
 		elems["Power"].Visible = false
 		return
 	end
 
-	--[[ Aiming ]]
+	--[[ Pointing ]]
 
-	Module._aimAtPointer()
+	-- Every frame, as the camera and the snail move under a still mouse too
+	if pointer and aiming ~= "Pad" then
+		Module._aimAtPointer(mine)
+	end
 
-	--[[ Charging ]]
+	--[[ Power Bar ]]
 
-	-- The power bounces between none and full until the button is let go; it never fires by itself
-	if charging then
-		local cycle: number = ((os.clock() - chargeStart) / I.Settings["Combat"].CHARGE_SECONDS) % 2
+	-- The pad's power bounces between none and full until RT is let go; it never fires by itself
+	if aiming == "Pad" then
+		local cycle: number = ((os.clock() - padStart) / I.Settings["Combat"].CHARGE_SECONDS) % 2
 		power = 1 - math.abs(cycle - 1)
 	end
 
@@ -371,39 +380,42 @@ end
 --%%%%%%%%%%%%%%%%%%%% Aim At Pointer
 
 --[[
-	Turns the crosshair toward the mouse or finger, from wherever the player's worm stands now.
+	Points the aim from the player's snail toward the mouse or finger (through the arena's plane, so the crosshair lies
+	on the line to it), and while it's held sets the power by how far it is from the snail: none at MIN_PULL, full at
+	MAX_PULL.
 ]]
-function Module._aimAtPointer()
+function Module._aimAtPointer(model: Model)
 	--[[ Local Variables ]]
 
-	local mine: Model? = I.Worms.GetMine()
+	local toPointer: Vector3 = Module._getPlanePoint(pointer) - model.PrimaryPart.Position
+	local pull: number = Module._getPull(model, pointer).Magnitude
 
 	--[[ Checks ]]
 
-	-- Check if a pointer aims and the worm is still in play
-	if not pointer or not mine or not mine.PrimaryPart then
+	-- Check if it points away from the snail's middle
+	if Vector2.new(toPointer.X, toPointer.Y).Magnitude < 1e-3 then
 		return
 	end
 
-	--[[ Calculating ]]
+	--[[ Aiming ]]
 
-	local offset: Vector3 = Module._getPlanePoint(pointer) - mine.PrimaryPart.Position
-	if offset.Magnitude > 0.5 then
-		angle = math.atan2(offset.Y, offset.X)
+	angle = math.atan2(toPointer.Y, toPointer.X)
+	if aiming == "Drag" then
+		power = math.clamp((pull - _settings.MIN_PULL) / (_settings.MAX_PULL - _settings.MIN_PULL), 0, 1)
 	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Draw
 
 --[[
-	Puts the crosshair CROSSHAIR_DISTANCE studs from a worm in its aim's direction, turns the held weapon with it, and
+	Puts the crosshair CROSSHAIR_DISTANCE studs from a snail in its aim's direction, turns the held weapon with it, and
 	lights as many power circles from the weapon's muzzle toward it as the power fills. Both keep their size on the
 	screen whatever the camera's zoom.
 ]]
 function Module._draw(model: Model, aimAngle: number, aimPower: number)
 	--[[ Checks ]]
 
-	-- Check if the worm is still in play
+	-- Check if the snail is still in play
 	if not model.PrimaryPart then
 		Module._hideLook()
 		return
@@ -422,7 +434,7 @@ function Module._draw(model: Model, aimAngle: number, aimPower: number)
 
 	-- The held weapon turns with this screen's aim at once; without one, the circles start at the old muzzle gap
 	I.Combat.SetAim(aimAngle)
-	local muzzle: Vector3 = I.Combat.GetMuzzle() or center + direction * (I.Settings["Worms"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP)
+	local muzzle: Vector3 = I.Combat.GetMuzzle() or center + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP)
 
 	--[[ Crosshair ]]
 
@@ -444,7 +456,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Hide Look
 
 --[[
-	Hides the crosshair and the power circles, and hands the held weapon back to the worm's replicated aim.
+	Hides the crosshair and the power circles, and hands the held weapon back to the snail's replicated aim.
 ]]
 function Module._hideLook()
 	--[[ Hiding ]]
@@ -460,19 +472,19 @@ end
 --%%%%%%%%%%%%%%%%%%%% Fire
 
 --[[
-	Sends the shot (Combat_Fire) with the angle, the charged power and a homing missile's target, ticks a phone or pad,
-	then clears the charge.
+	Sends the shot (Combat_Fire) with the angle, the power and a homing missile's target, ticks a phone or pad, then
+	clears the aim.
 ]]
 function Module._fire()
 	--[[ Local Variables ]]
 
 	local itemId: string = LoadoutBar.GetSelected()
-	local mine: Model? = I.Worms.GetMine()
+	local mine: Model? = I.Snails.GetMine()
 	local aim: string = I.G_Arsenal.Get(itemId).Aim
 	local shotAngle: number = angle
 	local shotPower: number = power
 
-	-- A weapon fired at the feet goes the way the worm faces; guns and melee weapons need no power
+	-- A weapon fired at the feet goes the way the snail faces; guns and melee weapons need no power
 	if aim == "Feet" then
 		shotAngle = if mine and mine:GetAttribute("Facing") == -1 then math.pi else 0
 		shotPower = 0
@@ -488,34 +500,34 @@ function Module._fire()
 
 	--[[ Clearing ]]
 
-	Module._stopCharging()
+	Module._cancel()
 	Module._hideLook()
 	target = nil
 	targetMarker.Transparency = 1
 end
 
---%%%%%%%%%%%%%%%%%%%% Stop Charging
+--%%%%%%%%%%%%%%%%%%%% Cancel
 
 --[[
-	Lets go of a charge without firing. A homing missile's target stays picked.
+	Stops aiming without firing, and empties the power. A homing missile's target stays picked.
 ]]
-function Module._stopCharging()
+function Module._cancel()
 	--[[ Saving ]]
 
-	charging = nil
+	aiming = nil
 	power = 0
 end
 
 --%%%%%%%%%%%%%%%%%%%% On My Turn
 
 --[[
-	Shows the crosshair through the player's turn, starting the way their worm faces, and clears it and a picked target
-	when the turn ends.
+	Shows the angle marker through the player's turn, starting the way their snail faces, and clears it and a picked
+	target when the turn ends.
 ]]
 function Module._onMyTurn(myTurn: boolean)
 	--[[ Clearing ]]
 
-	Module._stopCharging()
+	Module._cancel()
 	Module._hideLook()
 	target = nil
 	targetMarker.Transparency = 1
@@ -534,19 +546,19 @@ function Module._onMyTurn(myTurn: boolean)
 
 	--[[ Starting ]]
 
-	local mine: Model? = I.Worms.GetMine()
+	local mine: Model? = I.Snails.GetMine()
 	angle = if mine and mine:GetAttribute("Facing") == -1 then math.rad(135) else math.rad(45)
 	firedItem = nil
 	Module._stopWatching()
 	stepConnection = I.S.RunService.RenderStepped:Connect(Module._step)
 end
 
---%%%%%%%%%%%%%%%%%%%% Watch Worm
+--%%%%%%%%%%%%%%%%%%%% Watch Snail
 
 --[[
-	Listens for a worm's aim stamps (AimTime, which the server sets with each aim update, players' and bots').
+	Listens for a snail's aim stamps (AimTime, which the server sets with each aim update, players' and bots').
 ]]
-function Module._watchWorm(model: Instance)
+function Module._watchSnail(model: Instance)
 	--[[ Connections ]]
 
 	model:GetAttributeChangedSignal("AimTime"):Connect(function()
@@ -557,14 +569,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Other Aim
 
 --[[
-	Another worm aims: starts drawing its crosshair and power for this player. This player's own worm draws its aim on
+	Another snail aims: starts drawing its crosshair and power for this player. This player's own snail draws its aim on
 	their turn.
 ]]
 function Module._onOtherAim(model: Model)
 	--[[ Checks ]]
 
-	-- Skip this player's own worm, and a shot just fired (AimTime 0)
-	if model == I.Worms.GetMine() or (model:GetAttribute("AimTime") or 0) == 0 then
+	-- Skip this player's own snail, and a shot just fired (AimTime 0)
+	if model == I.Snails.GetMine() or (model:GetAttribute("AimTime") or 0) == 0 then
 		return
 	end
 
@@ -586,13 +598,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Step
 
 --[[
-	Draws the watched worm's crosshair and power, eased toward its latest aim, until its aim stops arriving or the
+	Draws the watched snail's crosshair and power, eased toward its latest aim, until its aim stops arriving or the
 	player's own turn starts.
 ]]
 function Module._watchStep(deltaTime: number)
 	--[[ Checks ]]
 
-	-- Check if the watched worm still aims, with a weapon that has a crosshair
+	-- Check if the watched snail still aims, with a weapon that has a crosshair
 	local model: Model? = watched
 	local itemId: string? = model and model:GetAttribute("HeldItem")
 	local fresh: boolean = model ~= nil and model.Parent ~= nil and I.S.Workspace:GetServerTimeNow() - (model:GetAttribute("AimTime") or 0) <= _settings.AIM_SHOW_GRACE
@@ -616,7 +628,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Stop Watching
 
 --[[
-	Stops drawing another worm's aim and hides it.
+	Stops drawing another snail's aim and hides it.
 ]]
 function Module._stopWatching()
 	--[[ Checks ]]
@@ -638,6 +650,24 @@ function Module._stopWatching()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Pull
+
+--[[
+	Returns how far a screen position is from a snail's middle on the screen, in shares of the screen's height (up is
+	negative Y), so the power fills at the same distance on a phone and on a big monitor.
+]]
+--- @return Vector2
+function Module._getPull(model: Model, position: Vector2)
+	--[[ Local Variables ]]
+
+	local camera: Camera = I.S.Workspace.CurrentCamera
+	local center: Vector3 = camera:WorldToScreenPoint(model.PrimaryPart.Position)
+
+	--[[ Returning ]]
+
+	return (position - Vector2.new(center.X, center.Y)) / camera.ViewportSize.Y
+end
 
 --%%%%%%%%%%%%%%%%%%%% Get Plane Point
 

@@ -69,7 +69,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Entry
 
 --[[
-	Refreshes the panels when a participant's entry appears or changes (when the player's worm goes out).
+	Refreshes the panels when a participant's entry appears or changes (when the player's snail goes out).
 ]]
 function Module._watchEntry(entry: Instance)
 	--[[ Connections ]]
@@ -99,7 +99,7 @@ end
 
 --[[
 	Shows each phase's panel: who has arrived while waiting, the drop timer, the knocked-out panel once the player's
-	worm is out, and the loadout bar while the player's worm is in play.
+	snail is out, and the loadout bar while the player's snail is in play.
 ]]
 function Module._refresh()
 	--[[ Data ]]

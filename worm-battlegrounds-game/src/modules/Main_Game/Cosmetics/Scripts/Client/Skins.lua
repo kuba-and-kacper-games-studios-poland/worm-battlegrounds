@@ -118,7 +118,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Draw
 
 --[[
-	Draws one tile per owned skin: its worm in a 3D preview, its name and copies toward shiny, and Equip (or Equipped
+	Draws one tile per owned skin: its snail in a 3D preview, its name and copies toward shiny, and Equip (or Equipped
 	on the worn one).
 ]]
 function Module._draw()
@@ -164,20 +164,20 @@ end
 --%%%%%%%%%%%%%%%%%%%% Preview
 
 --[[
-	Puts a skin's worm in a tile's viewport, seen from the front.
+	Puts a skin's snail in a tile's viewport, seen from the front.
 ]]
 function Module._preview(viewport: ViewportFrame, modelName: string)
 	--[[ Data ]]
 
 	local skins: Instance? = I.Dirs.Assets:FindFirstChild("Skins")
-	local source: Instance? = skins and (skins:FindFirstChild(modelName) or skins:FindFirstChild(I.Settings["Worms"].DEFAULT_SKIN))
+	local source: Instance? = skins and (skins:FindFirstChild(modelName) or skins:FindFirstChild(I.Settings["Snails"].DEFAULT_SKIN))
 	if not source or not source:IsA("Model") then
 		return
 	end
 
 	--[[ Building ]]
 
-	-- shortcut: every skin without its own model shows the default worm; drop the fallback once each skin has one
+	-- shortcut: every skin without its own model shows the default snail; drop the fallback once each skin has one
 	local model: Model = source:Clone()
 	model:PivotTo(CFrame.identity)
 	model.Parent = viewport

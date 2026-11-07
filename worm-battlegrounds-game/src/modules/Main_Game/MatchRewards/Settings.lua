@@ -28,7 +28,7 @@ local _settings = {
 	-- A party match (friends only) pays like a public deathmatch of its size, times this share when it has no bots
 	PARTY_NO_BOTS_SHARE = 0.5,
 
-	-- The last 2 places are paid only after this many rounds, or when another worm knocked the player out
+	-- The last 2 places are paid only after this many rounds, or when another snail knocked the player out
 	ANTI_FARM_ROUNDS = 2,
 
 	-- The game pass that doubles every coin reward

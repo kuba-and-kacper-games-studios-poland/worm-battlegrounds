@@ -109,7 +109,8 @@ end
 --[[
 	Makes the match's participants: the roster's players who are ready (every player on the Match map alone in Studio),
 	on the teams the lobby gave them or the first with room, then bots for every empty place up to the match's size
-	(a custom match, or a party match without bots, drops its missing players instead). Gives everyone a colour, makes the Roblox teams in team modes,
+	(a custom match, or a party match without bots, drops its missing players instead; in Studio a custom match gets
+	bots too, so one tester can play it). Gives everyone a colour, makes the Roblox teams in team modes,
 	and writes each participant into Workspace.Ume.Match.Participants.
 ]]
 function Module.Build()
@@ -184,7 +185,7 @@ function Module.Build()
 
 	--[[ Bots ]]
 
-	if metadata.Kind ~= "Custom" and metadata.Difficulty ~= "None" then
+	if (metadata.Kind ~= "Custom" or I.S.RunService:IsStudio()) and metadata.Difficulty ~= "None" then
 		while #order < metadata.Size do
 			local team: number? = Module._getTeamWithRoom(filled, teamSize, nil)
 			if not team then
@@ -360,7 +361,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Team Size
 
 --[[
-	Returns how many worms a team has in this match's mode (a custom Teams match splits the size in two).
+	Returns how many snails a team has in this match's mode (a custom Teams match splits the size in two).
 ]]
 --- @return number
 function Module._getTeamSize()

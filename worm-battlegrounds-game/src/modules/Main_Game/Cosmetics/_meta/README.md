@@ -4,7 +4,7 @@ Skins and emotes. Owned skins and emotes are Inventory items; this module saves 
 the starter skin and emote, sells emotes for coins once the player's level is high enough, and plays emotes for
 everyone. The client draws the `Skins` widget (a 3D preview per owned skin, **Equip**), the `EmoteShop` widget, the
 emote row in the lobby's `Loadout` panel, the emote wheel in `MatchHud`, and a played emote's name over the player's
-worm in a match or beside their name in the lobby's party list.
+snail in a match or beside their name in the lobby's party list.
 
 | | |
 | --- | --- |
@@ -86,7 +86,7 @@ worm in a match or beside their name in the lobby's party list.
 
 ## In the place
 
-- Creates `Workspace.Ume.Cosmetics`; clients put the emote labels (BillboardGuis on the worm's `Root`) there.
-- Skin previews clone `Assets.Skins.<Model>`, falling back to the Worms module's `DEFAULT_SKIN` model while a skin
+- Creates `Workspace.Ume.Cosmetics`; clients put the emote labels (BillboardGuis on the snail's `Root`) there.
+- Skin previews clone `Assets.Skins.<Model>`, falling back to the Snails module's `DEFAULT_SKIN` model while a skin
   has no model of its own.
 - Emote animations and voice lines aren't played yet: a label shows the emote's name instead.

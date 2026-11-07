@@ -26,6 +26,10 @@ local _settings = {
 	-- Panning with the right stick (while LT is held), in studs per second at full lean, and how far it must lean
 	STICK_PAN_SPEED = 60,
 	STICK_DEADZONE = 0.2,
+
+	-- The mouse this close to the screen's left or right edge (a share of its height) pans at EDGE_PAN_SPEED studs per second
+	EDGE_PAN_MARGIN = 0.015,
+	EDGE_PAN_SPEED = 60,
 }
 
 return _settings

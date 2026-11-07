@@ -36,19 +36,19 @@ local Module = {}
 
 --[[
 	One of a variety grenade's snails: it crawls one way at SNAIL_SPEED, eating the terrain in front of it, and hurts
-	every worm it touches by the row's Damage a hit, Hits times at most, until SNAIL_LIFETIME runs out.
+	every snail it touches by the row's Damage a hit, Hits times at most, until SNAIL_LIFETIME runs out.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot, from: Vector3, direction: Vector3)
 	--[[ Local Variables ]]
 
 	local snails = shot.Row.Snails --- @type Arsenal_Snails
-	local part: Part = Projectiles.Spawn("Snail", "Snail", from, Vector3.zero, false, 0, 0, true)
+	local part: Part = Projectiles.Spawn("Snail", "Snail", from, Vector3.zero, false, 0, true)
 	local started: number = os.clock()
 	local lastBite: number = 0
 	local lastHit = {} --- @type { [Model]: number }
 	local hits: number = 0
-	local rootRadius: number = I.Settings["Worms"].ROOT_SIZE / 2
+	local rootRadius: number = I.Settings["Snails"].ROOT_SIZE / 2
 
 	--[[ Crawling ]]
 
@@ -62,8 +62,8 @@ function Module.Run(shot, from: Vector3, direction: Vector3)
 			task.spawn(I.Arena.Carve, part.Position, snails.Radius)
 		end
 
-		-- Bite every worm close enough, once a second each
-		for _index: number, model: Model in ipairs(I.Worms.GetAlive()) do
+		-- Bite every snail close enough, once a second each
+		for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
 			local close: boolean = (model.PrimaryPart.Position - part.Position).Magnitude <= snails.Radius + rootRadius
 			if close and os.clock() - (lastHit[model] or 0) >= 1 and hits < snails.Hits then
 				lastHit[model] = os.clock()
@@ -73,7 +73,7 @@ function Module.Run(shot, from: Vector3, direction: Vector3)
 			end
 		end
 
-		if Projectiles.IsLost(part.Position, started) then
+		if Projectiles.IsLost(part.Position, os.clock() - started) then
 			break
 		end
 	end

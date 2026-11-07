@@ -40,7 +40,7 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	The black hole grenade: released at the worm's feet, it rolls the way the worm faces at RollSpeed, hopping over
+	The black hole grenade: released at the snail's feet, it rolls the way the snail faces at RollSpeed, hopping over
 	bumps, and never explodes on its own: its owner blows it up (Detonate), or it bursts after MaxRollTime.
 ]]
 --- @param shot Combat_Shot
@@ -48,40 +48,32 @@ function Module.Run(shot)
 	--[[ Local Variables ]]
 
 	local row = shot.Row --- @type Arsenal_WeaponData
-	local rootRadius: number = I.Settings["Worms"].ROOT_SIZE / 2
+	local rootRadius: number = I.Settings["Snails"].ROOT_SIZE / 2
 	local feet: Vector3 = shot.Shooter.PrimaryPart.Position + Vector3.new(shot.Facing * (rootRadius + 0.8), -rootRadius * 0.4, 0)
-	local part: Part = Projectiles.Spawn("Roller", shot.ItemId, feet, Vector3.zero, true, 0)
-	local started: number = os.clock()
-	local lastX: number = part.Position.X
-	local stuckFor: number = 0
+	local options = Projectiles.GetOptions(shot) --- @type Combat_ShotOptions
+	options.Bounce = 0
+	options.Drive = shot.Facing * (row.RollSpeed or 10)
+	options.HopSpeed = _settings.ROLL_HOP_SPEED
+	local body = Projectiles.Launch("Roller", shot.ItemId, feet, Vector3.zero, options) --- @type Combat_Body
 	detonations[shot.ParticipantId] = nil
 
 	--[[ Rolling ]]
 
-	while part.Parent and not detonations[shot.ParticipantId] and os.clock() - started < (row.MaxRollTime or 8) do
-		local deltaTime: number = I.S.RunService.Heartbeat:Wait()
-		local velocity: Vector3 = part.AssemblyLinearVelocity
-		part.AssemblyLinearVelocity = Vector3.new(shot.Facing * (row.RollSpeed or 10), velocity.Y, 0)
-
-		-- Blocked by a bump: hop over it
-		stuckFor = if math.abs(part.Position.X - lastX) < 0.02 then stuckFor + deltaTime else 0
-		lastX = part.Position.X
-		if stuckFor > 0.15 then
-			stuckFor = 0
-			part.AssemblyLinearVelocity = Vector3.new(velocity.X, _settings.ROLL_HOP_SPEED, 0)
-		end
-
-		if Projectiles.IsLost(part.Position, started) then
-			part:Destroy()
+	-- The simulation drives it along the ground and hops it over bumps in its way
+	for elapsed: number, _hit: RaycastResult? in Projectiles.Fly(body) do
+		if Projectiles.IsGone(body, elapsed) then
+			Projectiles.Land(body)
 			return
+		elseif detonations[shot.ParticipantId] or elapsed >= (row.MaxRollTime or 8) then
+			break
 		end
 	end
 
 	--[[ Exploding ]]
 
 	detonations[shot.ParticipantId] = nil
-	local center: Vector3 = part.Position
-	part:Destroy()
+	local center: Vector3 = body.Position
+	Projectiles.Land(body)
 	shot.Damage += Blast.Explode(center, row.BlastRadius, shot.ItemId, shot.ParticipantId, shot.Shiny, row.DamageMax, row.DamageEdge, row.Knockback)
 end
 

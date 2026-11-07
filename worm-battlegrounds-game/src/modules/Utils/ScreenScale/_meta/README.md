@@ -12,7 +12,7 @@ same UIScale and keeps it in its `Utils_BaseScale` attribute. This module multip
 attribute, and sets it again whenever the component writes over it. ume's own guis (Settings, HoverInfo) scale
 themselves.
 
-World labels (BillboardGuis cloned at runtime: WormTag, DropMarker, DamagePop) are handed to it with `AddBillboard`:
+World labels (BillboardGuis cloned at runtime: SnailTag, DropMarker, DamagePop) are handed to it with `AddBillboard`:
 their root is laid out at its design size with an `S_ScreenScale`, and this module sets that scale to the screen's
 (no device scale) and the billboard's `Size` to the root's size times it, until the billboard is destroyed.
 

@@ -98,7 +98,7 @@ On join, a saved field that holds a whole number as a Lua number or a scientific
 | Key | Coins / Diamonds | What |
 | --- | --- | --- |
 | `DefaultValue` | `"0"` | Amount a new player starts with |
-| `IconId` | the local coin and diamond icons (`rbxasset://textures/wb_guipreview/…`) | Returned by `GetCurrencyIcon` |
+| `IconId` | the first icon kit's coin and diamond (`rbxassetid://`) | Returned by `GetCurrencyIcon` |
 | `MinValue`, `RespectMinValue` | `"0"`, `true` | Floor, and whether it's enforced |
 | `MaxValue`, `RespectMaxValue` | `"0"`, `false` | Cap, and whether it's enforced |
 | `ServerUpdate`, `ServerUpdateIndividual` | `true`, `false` | Server Topics (see Network) |

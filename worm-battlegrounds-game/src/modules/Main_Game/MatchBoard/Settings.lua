@@ -28,18 +28,27 @@ local _settings = {
 		{ Mode = "Quads", Size = 8 },
 	},
 
-	-- Worms in a team, by mode (custom Teams lobbies play in two teams)
+	-- Snails in a team, by mode (custom Teams lobbies play in two teams)
 	--- @type { [string]: number }
 	TEAM_SIZES = { Deathmatch = 1, Duo = 2, Trio = 3, Quads = 4 },
 
-	-- How each mode reads on the board
+	-- How each mode reads on the board's cards, and in full in the waiting room ("Duo team deathmatch • Picnic Plains")
 	--- @type { [string]: string }
 	MODE_NAMES = {
 		Deathmatch = "Deathmatch",
-		Duo = "Duos",
-		Trio = "Trios",
+		Duo = "Duo",
+		Trio = "Trio",
 		Quads = "Quads",
 		Teams = "Teams",
+	},
+
+	--- @type { [string]: string }
+	MATCH_NAMES = {
+		Deathmatch = "Deathmatch",
+		Duo = "Duo team deathmatch",
+		Trio = "Trio team deathmatch",
+		Quads = "Quads team deathmatch",
+		Teams = "Team deathmatch",
 	},
 
 	-- The bots' difficulty in public matches
@@ -64,7 +73,7 @@ local _settings = {
 		made for plays on any map in it
 	]]
 	--- @type { string }
-	MAP_POOL = { "PicnicPlains", "Desert" },
+	MAP_POOL = { "PicnicPlains", "Desert", "RockslideRidge" },
 
 	--%%%%%%%%%%%%%%%%%%%% Solo And Party
 
@@ -89,7 +98,7 @@ local _settings = {
 		PartyNoBots = "Pays half the coins of a public match",
 	},
 
-	-- A party match with bots adds this many bots per party member, up to PARTY_MAX_SIZE worms in all
+	-- A party match with bots adds this many bots per party member, up to PARTY_MAX_SIZE snails in all
 	PARTY_BOTS_PER_PLAYER = 1,
 	PARTY_MAX_SIZE = 8,
 

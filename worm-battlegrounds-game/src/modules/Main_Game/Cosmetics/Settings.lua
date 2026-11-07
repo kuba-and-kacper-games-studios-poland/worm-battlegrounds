@@ -18,7 +18,7 @@ local _settings = {
 	-- Seconds a player waits between two emotes
 	EMOTE_COOLDOWN = 5,
 
-	-- How long an emote's placeholder label shows over the worm, in seconds
+	-- How long an emote's placeholder label shows over the snail, in seconds
 	EMOTE_SECONDS = 2.5,
 
 	-- How far from the wheel's centre its emotes sit, as a share of its size
@@ -26,7 +26,7 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Previews
 
-	-- How far the skin preview's camera stands from the worm, in the model's sizes
+	-- How far the skin preview's camera stands from the snail, in the model's sizes
 	PREVIEW_DISTANCE = 1.6,
 
 	--%%%%%%%%%%%%%%%%%%%% Gui

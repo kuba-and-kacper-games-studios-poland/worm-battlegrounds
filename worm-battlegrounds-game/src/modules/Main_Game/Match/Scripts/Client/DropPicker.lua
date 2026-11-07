@@ -15,6 +15,8 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 local matchFolder: Folder
 local arenaFolder: Folder
+
+-- The DropMarker billboard's holder (PREFAB | DropMarker) in Assets.Match
 local templates: Folder
 
 -- The markers shown during the drop, by participant id
@@ -52,7 +54,7 @@ function Module.Start(folder: Folder)
 
 	matchFolder = folder
 	arenaFolder = I.Dirs.UmeWorkspace:WaitForChild("Arena")
-	templates = I.Dirs.UmeReplicated:WaitForChild(_localName)
+	templates = I.Dirs.Assets:FindFirstChild(_localName)
 	terrainParams.FilterType = Enum.RaycastFilterType.Include
 
 	--[[ Connections ]]
@@ -155,12 +157,12 @@ end
 --%%%%%%%%%%%%%%%%%%%% Place
 
 --[[
-	Sends the picked spot to the server when a worm fits there; the server checks it again.
+	Sends the picked spot to the server when a snail fits there; the server checks it again.
 ]]
 function Module._place()
 	--[[ Checks ]]
 
-	-- Check if a worm fits on the spot
+	-- Check if a snail fits on the spot
 	if not Module._isFree(pick) then
 		return
 	end
@@ -174,7 +176,7 @@ end
 
 --[[
 	While the drop runs: moves the spot with the stick and keeps a marker over every participant's spot. The local
-	player's marker follows their pick until they place it, faded where a worm doesn't fit; others' are faded until
+	player's marker follows their pick until they place it, faded where a snail doesn't fit; others' are faded until
 	they place theirs.
 ]]
 function Module._update(deltaTime: number)
@@ -228,7 +230,7 @@ function Module._createMarker(entry: Instance)
 		Transparency = 1,
 		Parent = matchFolder,
 	})
-	local marker: BillboardGui = templates:FindFirstChild("DropMarker"):Clone()
+	local marker: BillboardGui = templates:FindFirstChild("U_DropMarker", true):Clone()
 
 	--[[ Elements ]]
 
@@ -237,6 +239,7 @@ function Module._createMarker(entry: Instance)
 
 	--[[ Applying ]]
 
+	marker.Name = "DropMarker"
 	marker.Adornee = part
 	marker.AlwaysOnTop = true
 	marker.SizeOffset = Vector2.new(0, 0.5)
@@ -281,7 +284,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Free
 
 --[[
-	Returns whether a worm fits on a spot as this client sees the arena: touching no terrain and out of liquid, inside
+	Returns whether a snail fits on a spot as this client sees the arena: touching no terrain and out of liquid, inside
 	the play area. The server's I.Arena.IsFree decides.
 ]]
 --- @return boolean
@@ -293,7 +296,7 @@ function Module._isFree(spot: Vector2)
 
 	--[[ Local Variables ]]
 
-	local radius: number = I.Settings["Worms"].ROOT_SIZE / 2
+	local radius: number = I.Settings["Snails"].ROOT_SIZE / 2
 	local position: Vector3 = Vector3.new(spot.X, spot.Y, 0)
 
 	--[[ Checks ]]

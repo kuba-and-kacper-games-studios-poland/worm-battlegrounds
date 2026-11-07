@@ -95,7 +95,7 @@ local _settings = {
 
 			Section = "Gameplay",
 			Text = "Damage Numbers",
-			Detail = "Numbers that pop up when a worm is hit",
+			Detail = "Numbers that pop up when a snail is hit",
 			LayoutOrder = 1,
 
 			--[[ Value ]]

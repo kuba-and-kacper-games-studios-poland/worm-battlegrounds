@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Dynamite",
-	IconId = "rbxasset://textures/wb_guipreview/crate_17762c23.png",
+	IconId = "rbxassetid://121731184312632",
 
 	--[[ Classification ]]
 

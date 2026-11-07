@@ -23,6 +23,9 @@ local planeAttachment: Attachment?
 -- The bottom of the loaded map's lowest bedrock: bedrock that still reaches it holds the terrain up
 local floorHeight: number = -math.huge
 
+-- How deep the loaded map's ground is along Z, back to front: its bedrock's (the liquid is drawn this deep)
+local groundDepth: NumberRange = NumberRange.new(0)
+
 --- @type OverlapParams
 local terrainParams = OverlapParams.new()
 
@@ -135,7 +138,7 @@ end
 
 --[[
 	Clears the arena and clones a map's cached template into it (its Terrain, Decor and Markers), notes its floor (the
-	bottom of its lowest bedrock), then places a plane part at the bounds for worms and projectiles to keep to.
+	bottom of its lowest bedrock), then places a plane part at the bounds for snails and projectiles to keep to.
 ]]
 --- @return boolean
 function Module.Load(mapId: string)
@@ -169,11 +172,24 @@ function Module.Load(mapId: string)
 
 	-- Arena_Indestructible marks a map's bedrock (named before blasts could cut it)
 	floorHeight = math.huge
+	local backs = {} --- @type { number }
+	local fronts = {} --- @type { number }
 	for _partIndex: number, part: Instance in ipairs(terrainFolder:GetDescendants()) do
 		if part:IsA("BasePart") and part:GetAttribute("Arena_Indestructible") then
 			floorHeight = math.min(floorHeight, part.Position.Y - part.Size.Y / 2)
+			table.insert(backs, part.Position.Z - part.ExtentsSize.Z / 2)
+			table.insert(fronts, part.Position.Z + part.ExtentsSize.Z / 2)
 		end
 	end
+
+	--[[ Ground Depth ]]
+
+	-- Most of its bedrock's backs and fronts (the middle ones), so a stray deep or jutting block doesn't thicken it
+	table.sort(backs)
+	table.sort(fronts)
+	groundDepth = if backs[1]
+		then NumberRange.new(backs[math.ceil(#backs / 2)], fronts[math.ceil(#fronts / 2)])
+		else NumberRange.new(boundsPart.Position.Z - boundsPart.Size.Z / 2, boundsPart.Position.Z + boundsPart.Size.Z / 2)
 
 	--[[ Plane ]]
 
@@ -223,10 +239,21 @@ function Module.GetFloor()
 	return floorHeight
 end
 
+--%%%%%%%%%%%%%%%%%%%% Get Ground Depth
+
+--[[
+	Returns how deep the loaded map's ground is along Z, back to front: the middle of its bedrock's backs and fronts, or
+	the bounds' depth on a map without bedrock.
+]]
+--- @return NumberRange
+function Module.GetGroundDepth()
+	return groundDepth
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Plane
 
 --[[
-	Returns the attachment worms and projectiles keep to the plane with, as their PlaneConstraint's Attachment0.
+	Returns the attachment snails and projectiles keep to the plane with, as their PlaneConstraint's Attachment0.
 ]]
 --- @return Attachment?
 function Module.GetPlane()

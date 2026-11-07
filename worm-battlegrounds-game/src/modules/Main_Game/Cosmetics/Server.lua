@@ -46,7 +46,7 @@ function Module.Init()
 	------ INITIALIZATION ------
 	----------------------------
 
-	-- Where clients show emotes over worms
+	-- Where clients show emotes over snails
 	I.Create("Folder")({
 		Name = _localName,
 		Parent = I.Dirs.UmeWorkspace,

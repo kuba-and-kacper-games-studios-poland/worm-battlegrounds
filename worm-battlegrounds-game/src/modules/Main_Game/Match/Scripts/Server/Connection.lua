@@ -17,7 +17,7 @@ local Roster = require(script.Parent:FindFirstChild("Roster")) --- @type Match_S
 
 local matchFolder: Folder
 
--- When each dropped player's worm is knocked out if they don't come back, by participant id
+-- When each dropped player's snail is knocked out if they don't come back, by participant id
 local rejoinDeadlines = {} --- @type { [string]: number }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -127,7 +127,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Leave
 
 --[[
-	A player pressed Leave game (or Leave on the knocked-out panel): a worm still in play is knocked out as a leaver,
+	A player pressed Leave game (or Leave on the knocked-out panel): a snail still in play is knocked out as a leaver,
 	which places it last among those still alive, and the player goes back to the lobby.
 ]]
 function Module._onLeave(player: Player)
@@ -145,7 +145,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Player Removing
 
 --[[
-	A player dropped: their worm stays and skips its turns for REJOIN_SECONDS, and their profile remembers the match
+	A player dropped: their snail stays and skips its turns for REJOIN_SECONDS, and their profile remembers the match
 	so the lobby can offer to send them back.
 ]]
 function Module._onPlayerRemoving(player: Player)
@@ -180,7 +180,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Player Added
 
 --[[
-	A dropped player came back in time: their worm is theirs again from its next turn.
+	A dropped player came back in time: their snail is theirs again from its next turn.
 ]]
 function Module._onPlayerAdded(player: Player)
 	--[[ Data ]]
@@ -226,7 +226,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Check Deadlines
 
 --[[
-	Knocks out the worms of players who didn't come back within REJOIN_SECONDS, as leavers.
+	Knocks out the snails of players who didn't come back within REJOIN_SECONDS, as leavers.
 ]]
 function Module._checkDeadlines()
 	--[[ Checking ]]
@@ -242,13 +242,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Knock Out Leaver
 
 --[[
-	Knocks out a leaver's worm when it's still in play in a running match.
+	Knocks out a leaver's snail when it's still in play in a running match.
 ]]
 --- @param participant Match_Participant?
 function Module._knockOutLeaver(participant)
 	--[[ Checks ]]
 
-	-- Check if the worm is still in play
+	-- Check if the snail is still in play
 	if not participant or participant.Out or not Module._isRunning() then
 		return
 	end
@@ -256,7 +256,7 @@ function Module._knockOutLeaver(participant)
 	--[[ Knocking Out ]]
 
 	participant.Connected = false
-	I.Worms.Kill(participant.Id, "Left")
+	I.Snails.Kill(participant.Id, "Left")
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -317,7 +317,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Running
 
 --[[
-	Returns whether worms are in play: between the drop and the end.
+	Returns whether snails are in play: between the drop and the end.
 ]]
 --- @return boolean
 function Module._isRunning()

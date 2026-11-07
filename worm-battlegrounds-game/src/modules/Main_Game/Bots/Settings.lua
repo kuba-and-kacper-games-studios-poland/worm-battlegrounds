@@ -10,7 +10,7 @@ local _settings = {
 		"Ninja",
 		"Pickles",
 		"Bricky",
-		"Wormzilla",
+		"Snailzilla",
 		"Noodle",
 		"Sprocket",
 		"Gizmo",

@@ -15,7 +15,7 @@ local effectsFolder: Instance
 
 -- Each shot in flight drawn as a model: the server's projectile part, its model, how it turns, and where it was
 local flying = {} --- @type { [BasePart]: Combat_FlyingShot }
-local stepConnection: RBXScriptConnection?
+local drawing: boolean = false
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -88,8 +88,10 @@ function Module._addShot(child: Instance)
 			Module._removeShot(child)
 		end
 	end)
-	if not stepConnection then
-		stepConnection = I.S.RunService.RenderStepped:Connect(Module._step)
+	-- After Shots moved the simulated shots' parts, before the camera follows them
+	if not drawing then
+		drawing = true
+		I.S.RunService:BindToRenderStep("Combat_Flight", Enum.RenderPriority.Camera.Value - 1, Module._step)
 	end
 end
 
@@ -111,9 +113,9 @@ function Module._removeShot(part: BasePart)
 
 	shot.Model:Destroy()
 	flying[part] = nil
-	if not next(flying) and stepConnection then
-		stepConnection:Disconnect()
-		stepConnection = nil
+	if not next(flying) and drawing then
+		drawing = false
+		I.S.RunService:UnbindFromRenderStep("Combat_Flight")
 	end
 end
 
@@ -165,7 +167,7 @@ function Module._place(part: BasePart, deltaTime: number)
 		-- The model's right side (where a snail's face is) toward the camera, whichever way it moves
 		shot.Model:PivotTo(CFrame.lookAlong(position, Vector3.xAxis, Vector3.yAxis))
 	else
-		-- The part's own turning, from the model's front along +X and its side to the camera, as a worm holds it
+		-- The part's own turning, from the model's front along +X and its side to the camera, as a snail holds it
 		shot.Model:PivotTo(part.CFrame * CFrame.lookAlong(Vector3.zero, Vector3.xAxis))
 	end
 end

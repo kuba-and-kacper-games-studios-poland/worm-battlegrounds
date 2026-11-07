@@ -174,7 +174,7 @@ end
 
 --[[
 	**CLIENT** |
-	Returns whether it's the local player's worm's turn.
+	Returns whether it's the local player's snail's turn.
 ]]
 --- @return boolean
 function Module.IsMyTurn()

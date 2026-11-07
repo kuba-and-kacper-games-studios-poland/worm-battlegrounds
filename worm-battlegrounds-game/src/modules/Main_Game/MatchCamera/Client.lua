@@ -14,7 +14,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --[[ Folders ]]
 
 local arenaFolder: Instance
-local wormsFolder: Instance
+local snailsFolder: Instance
 local combatFolder: Instance
 
 --[[ View ]]
@@ -33,6 +33,7 @@ local zoom: number = _settings.DISTANCE
 
 local dragging: boolean = false
 local lastMouse: Vector2 = Vector2.zero
+local windowFocused: boolean = true
 local stickPan: Vector2 = Vector2.zero
 local lastTouchPan: Vector2 = Vector2.zero
 local pinchStart: number = _settings.DISTANCE
@@ -60,7 +61,7 @@ function Module.Start()
 	----------------------------
 
 	arenaFolder = I.Dirs.UmeWorkspace:WaitForChild("Arena")
-	wormsFolder = I.Dirs.UmeWorkspace:WaitForChild("Worms")
+	snailsFolder = I.Dirs.UmeWorkspace:WaitForChild("Snails")
 	combatFolder = I.Dirs.UmeWorkspace:WaitForChild("Combat")
 	Module._createConnections()
 
@@ -73,10 +74,19 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Connections
 
 --[[
-	Wires the pan inputs (dragging with the right mouse button, two fingers on touch, LT with the right stick) and the
-	zoom inputs (the mouse wheel, a pinch).
+	Wires the pan inputs (dragging with the right mouse button, two fingers on touch, LT with the right stick, and
+	whether the window has focus for the edge pan) and the zoom inputs (the mouse wheel, a pinch).
 ]]
 function Module._createConnections()
+	--[[ Window ]]
+
+	I.S.UserInputService.WindowFocused:Connect(function()
+		windowFocused = true
+	end)
+	I.S.UserInputService.WindowFocusReleased:Connect(function()
+		windowFocused = false
+	end)
+
 	--[[ Mouse ]]
 
 	-- Roblox's own camera script claims the right button, so its presses arrive as processed: take them anyway
@@ -142,7 +152,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Update
 
 --[[
-	Points the camera along -Z at what it follows (the active worm, else the local player's worm, else the arena's
+	Points the camera along -Z at what it follows (the active snail, else the local player's snail, else the arena's
 	middle), plus the player's pan, kept inside the arena's bounds. Nothing changes until a map is loaded, or while
 	the player is in the Studio map's lobby, which gets Roblox's camera back.
 ]]
@@ -171,16 +181,17 @@ function Module._update(deltaTime: number)
 	local camera: Camera = I.S.Workspace.CurrentCamera
 	local target: PVInstance? = Module._getTarget()
 
-	-- A new worm to follow drops the pan
+	-- A new snail to follow drops the pan
 	if target ~= followed then
 		followed = target
 		pan = Vector3.zero
 	end
 
-	-- LT with the right stick pans
+	-- LT with the right stick pans, and so does the mouse at the screen's left or right edge
 	if stickPan.Magnitude >= _settings.STICK_DEADZONE and I.S.UserInputService:IsGamepadButtonDown(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonL2) then
 		pan += Vector3.new(stickPan.X, stickPan.Y, 0) * _settings.STICK_PAN_SPEED * deltaTime
 	end
+	pan += Vector3.xAxis * Module._getEdgePan(camera) * _settings.EDGE_PAN_SPEED * deltaTime
 
 	-- Ease the zoom first, so the bounds clamp the view at its new size
 	zoom += (zoomGoal - zoom) * (1 - math.exp(-_settings.ZOOM_SPEED * deltaTime))
@@ -230,11 +241,37 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
+--%%%%%%%%%%%%%%%%%%%% Get Edge Pan
+
+--[[
+	Returns which way the mouse at the screen's edge pans: -1 at the left edge, 1 at the right, 0 elsewhere, or with no
+	mouse or no focus. Only the sides pan: Roblox's buttons sit along the top and the loadout bar along the bottom.
+]]
+--- @return number
+function Module._getEdgePan(camera: Camera)
+	--[[ Checks ]]
+
+	-- Check if a mouse points into the focused window, not dragging the view or holding an aim (left button)
+	local holding: boolean = I.S.UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+	if not windowFocused or dragging or holding or not I.S.UserInputService.MouseEnabled then
+		return 0
+	end
+
+	--[[ Local Variables ]]
+
+	local mouse: Vector2 = I.S.UserInputService:GetMouseLocation()
+	local margin: number = _settings.EDGE_PAN_MARGIN * camera.ViewportSize.Y
+
+	--[[ Returning ]]
+
+	return if mouse.X <= margin then -1 elseif mouse.X >= camera.ViewportSize.X - margin then 1 else 0
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Target
 
 --[[
 	Returns what the camera follows: a shot in flight (the first part with the Projectile attribute) when
-	the player's CameraFollowsShot setting is on, else the worm whose turn it is (its Active attribute), else the local player's.
+	the player's CameraFollowsShot setting is on, else the snail whose turn it is (its Active attribute), else the local player's.
 ]]
 --- @return PVInstance?
 function Module._getTarget()
@@ -248,9 +285,9 @@ function Module._getTarget()
 		end
 	end
 
-	--[[ Worms ]]
+	--[[ Snails ]]
 
-	for _index: number, model: Instance in ipairs(wormsFolder:GetChildren()) do
+	for _index: number, model: Instance in ipairs(snailsFolder:GetChildren()) do
 		if model:IsA("Model") and model:GetAttribute("Active") and model.PrimaryPart then
 			return model
 		end
@@ -258,7 +295,7 @@ function Module._getTarget()
 
 	--[[ Returning ]]
 
-	local mine: Model? = I.Worms.GetMine()
+	local mine: Model? = I.Snails.GetMine()
 	return if mine and mine.PrimaryPart then mine else nil
 end
 

@@ -98,6 +98,7 @@ function Module.Load(mapId: string)
 	if not Loader.Load(mapId) then
 		return false
 	end
+	Debris.LabelLedges()
 	Props.Collect()
 	Liquid.Build()
 
@@ -154,8 +155,8 @@ end
 --[[
 	**SERVER** |
 	Returns `count` random spots where a ball of `radius` stands on top of the terrain on any storey (under a floating
-	ledge too), out of liquid, kept LAND_SPOT_GAP studs apart while there's room (closer when there isn't). Empty when
-	the map has no such ground.
+	ledge too), out of liquid and below the bounds' top START_TOP_GAP, kept LAND_SPOT_GAP studs apart while there's room
+	(closer when there isn't). Empty when the map has no such ground.
 ]]
 --- @return { Vector3 }
 function Module.GetLandSpots(count: number, radius: number)
@@ -172,7 +173,7 @@ function Module.GetLandSpots(count: number, radius: number)
 	local params: RaycastParams = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = { terrain }
-	local top: number = bounds.Position.Y + bounds.Size.Y / 2
+	local top: number = bounds.Position.Y + bounds.Size.Y / 2 - _settings.START_TOP_GAP
 	local bottom: number = bounds.Position.Y - bounds.Size.Y / 2
 	local left: number = bounds.Position.X - bounds.Size.X / 2 + radius
 	local right: number = bounds.Position.X + bounds.Size.X / 2 - radius
@@ -244,7 +245,7 @@ end
 
 --[[
 	**SERVER** |
-	Returns what knocks out a worm at a position: "Water" or "Lava" in liquid, "Bounds" beside or below the play
+	Returns what knocks out a snail at a position: "Water" or "Lava" in liquid, "Bounds" beside or below the play
 	area, or nil when it's safe there.
 ]]
 --- @return string?
@@ -272,7 +273,8 @@ end
 
 --[[
 	**SERVER** |
-	Returns whether a ball of `radius` fits at a position: inside the play area, out of liquid and touching no terrain.
+	Returns whether a ball of `radius` fits at a position for a snail to start from: inside the play area below its top
+	START_TOP_GAP, out of liquid and touching no terrain.
 ]]
 --- @return boolean
 function Module.IsFree(position: Vector3, radius: number)
@@ -289,8 +291,8 @@ function Module.IsFree(position: Vector3, radius: number)
 
 	--[[ Checks ]]
 
-	-- Check if the ball is inside the play area
-	if math.abs(inside.X) > bounds.Size.X / 2 - radius or math.abs(inside.Y) > bounds.Size.Y / 2 - radius then
+	-- Check if the ball is inside the play area, under its top band
+	if math.abs(inside.X) > bounds.Size.X / 2 - radius or inside.Y < radius - bounds.Size.Y / 2 or inside.Y > bounds.Size.Y / 2 - _settings.START_TOP_GAP - radius then
 		return false
 	end
 

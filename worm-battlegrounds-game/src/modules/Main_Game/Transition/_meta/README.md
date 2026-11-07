@@ -8,11 +8,15 @@ ReplicatedFirst) puts that copy up at once, removes the place's own loading scre
 player's avatar and ume's client have started, then slides the card off downwards. Joins from the website keep the
 place's loading screen.
 
+A teleport Roblox accepted can still fail on the way (`TeleportInitFailed`). The server then tries it again
+(`TELEPORT_RETRIES`, for `Failure` and `Flooded`), and if it still fails it removes the card from the player's screen
+and tells them (`TELEPORT_FAILED_MESSAGE`), so nobody is left on a card that never goes away.
+
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Transition` |
 | Runs on | Server, Client (both maps) |
-| Uses | `I.Network`, `TeleportService` (`SetTeleportGui`, `GetArrivingTeleportGui`) |
+| Uses | `I.Network`, `I.Notify`, `TeleportService` (`SetTeleportGui`, `GetArrivingTeleportGui`, `TeleportInitFailed`) |
 
 ## API
 
@@ -35,9 +39,9 @@ Callers: MatchBoard's `Launch` ("Heading to <map>…", the map's `Thumbnail`), M
 
 | File | What it controls |
 | --- | --- |
-| `Server.lua` | `SetDestination` and its remote |
+| `Server.lua` | `SetDestination` and its remote; retrying a failed teleport, or taking its card down |
 | `Client.lua` | Filling the card, its slide in, the copy handed to Roblox |
-| `Settings.lua` | The card's name and its slide |
+| `Settings.lua` | The card's name and its slide, the teleport retries |
 | `src/replicated_first/Transition.client.lua` | Outside the module: the card on arrival, and its slide off |
 
 ## Settings
@@ -46,3 +50,7 @@ Callers: MatchBoard's `Launch` ("Heading to <map>…", the map's `Thumbnail`), M
 | --- | --- | --- |
 | `GUI_NAME` | `"TeleportGui"` | The card the teleports clone |
 | `WIPE_TWEENINFO` | 0.4 s, Quad Out | The slide in, shorter than the gui's `GuiAnimDuration` (0.45 s) |
+| `TELEPORT_RETRIES` | `2` | How many times a teleport that failed on the way is tried again |
+| `TELEPORT_RETRY_DELAY` | `2` | Seconds between those tries |
+| `TELEPORT_RETRY_RESULTS` | `Failure`, `Flooded` | The failures worth trying again; any other drops the card at once |
+| `TELEPORT_FAILED_MESSAGE` | `"Couldn't get you there. Try again!"` | What the player is told when it failed for good |

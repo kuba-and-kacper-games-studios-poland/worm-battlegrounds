@@ -14,7 +14,7 @@ aims beside the player, never hits, and takes `DAMAGE_TAKEN` times each hit.
 | Folder | `src/modules/Main_Game/Bots` |
 | Runs on | Server · Match map |
 | Exposes | `I.Bots` (server) |
-| Uses | `I.Match`, `I.Combat`, `I.G_Combat`, `I.G_Arsenal`, `I.Worms` |
+| Uses | `I.Match`, `I.Combat`, `I.G_Combat`, `I.G_Arsenal`, `I.Snails` |
 
 ## Files
 

@@ -131,16 +131,16 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Hit
 
 --[[
-	Vibrates a phone or pad when the local player's own worm is hurt.
+	Vibrates a phone or pad when the local player's own snail is hurt.
 ]]
 function Module._onHit(participantId: string, damage: number, _position: Vector3)
 	--[[ Data ]]
 
-	local mine: Model? = I.Worms.GetMine()
+	local mine: Model? = I.Snails.GetMine()
 
 	--[[ Checks ]]
 
-	-- Check if it hurt the local player's worm
+	-- Check if it hurt the local player's snail
 	if not mine or mine.Name ~= participantId or damage <= 0 then
 		return
 	end
@@ -252,7 +252,7 @@ end
 
 --[[
 	Throws chunks of the terrain and props around a blast up and away from it, in their colours: they bounce on the
-	terrain (never on worms or shots), lie there a moment, then fade. A blast in the air throws nothing.
+	terrain (never on snails or shots), lie there a moment, then fade. A blast in the air throws nothing.
 ]]
 function Module._throwDebris(position: Vector3, size: number)
 	--[[ Local Variables ]]

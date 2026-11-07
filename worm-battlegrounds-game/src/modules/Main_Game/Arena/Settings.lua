@@ -15,41 +15,41 @@ local _settings = {
 	-- How far apart two pieces may sit, in studs, and still hold each other up; also how far above the floor bedrock may end
 	CONTACT_MARGIN = 0.15,
 
-	-- The most pieces one support search walks before it treats the group as grounded, so a carve stays cheap
+	-- The most pieces one support search walks before it treats the group as held up, so a carve stays cheap
 	SUPPORT_SEARCH_LIMIT = 400,
-
-	--[[
-		A cut-off group stays up when its floating parts (`Arena_Floats`, a map's floating ledges) cover at least this
-		many square studs on the plane (each part's width × height); smaller crumbs fall
-	]]
-	FLOAT_MIN_AREA = 24,
 
 	--%%%%%%%%%%%%%%%%%%%% Land Spots
 
 	--[[
-		Where worms stand when they don't pick a spot (bots, players who don't place theirs): the ground is looked for
+		Where snails stand when they don't pick a spot (bots, players who don't place theirs): the ground is looked for
 		every LAND_SPOT_STEP studs along the arena, and spots are kept at least LAND_SPOT_GAP studs apart while there's room
 	]]
 	LAND_SPOT_STEP = 2,
 	LAND_SPOT_GAP = 16,
 
-	-- How steep ground a worm may stand on: the lowest Y of the ground's normal (1 is flat)
+	-- How steep ground a snail may stand on: the lowest Y of the ground's normal (1 is flat)
 	LAND_SPOT_MIN_NORMAL = 0.7,
+
+	--[[
+		Nothing starts in the top START_TOP_GAP studs of the bounds: land that high has no room to parachute onto (Match's
+		DROP_HEIGHT), and is a map's roof, like Rockslide Ridge's rock ceiling
+	]]
+	START_TOP_GAP = 20,
 
 	--%%%%%%%%%%%%%%%%%%%% Collision
 
 	--[[
-		The collision groups registered at start, each with the groups it never collides with: worms stand on terrain
+		The collision groups registered at start, each with the groups it never collides with: snails stand on terrain
 		but pass through each other and the place's own parts, ghosts touch nothing, and the chips blasts throw
 		(Combat's client effects) bounce on terrain only
 	]]
 	--- @type { [string]: { string } }
 	COLLISION_GROUPS = {
 		Terrain = {},
-		Worm = { "Worm", "Default" },
+		Snail = { "Snail", "Default" },
 		Projectile = { "Projectile", "Default" },
-		Ghost = { "Default", "Terrain", "Worm", "Projectile", "Ghost" },
-		Chip = { "Chip", "Default", "Worm", "Projectile", "Ghost" },
+		Ghost = { "Default", "Terrain", "Snail", "Projectile", "Ghost" },
+		Chip = { "Chip", "Default", "Snail", "Projectile", "Ghost" },
 	},
 
 	--%%%%%%%%%%%%%%%%%%%% Debris

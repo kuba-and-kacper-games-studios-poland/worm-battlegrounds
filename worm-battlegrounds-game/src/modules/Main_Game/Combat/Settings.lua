@@ -6,22 +6,67 @@ local _settings = {
 	-- Each point of wind pushes wind-affected shots this hard along X, in studs per second squared
 	WIND_ACCEL = 3,
 
-	-- How far in front of the worm's ball a shot starts, in studs
+	-- How far in front of the snail's ball a shot starts, in studs
 	MUZZLE_GAP = 0.8,
 
-	-- Seconds a held fire button takes to charge a shot from no power to full, then back down, for players and bots
+	-- Seconds a held RT takes to fill a pad player's power bar from no power to full, then back down; bots charge as fast
 	CHARGE_SECONDS = 1.6,
 
-	-- For this long after leaving, a shot can't hit the worm that fired it, in seconds
+	-- For this long after leaving, a shot can't hit the snail that fired it, in seconds
 	SHOOTER_GRACE = 0.25,
 
 	-- The most a projectile may fly before it bursts where it is, in seconds
 	MAX_PROJECTILE_TIME = 12,
 
+	--%%%%%%%%%%%%%%%%%%%% Projectile Physics
+
+	--[[
+		Flying shots move by the game's own simulation (Ballistics), the same on the server and on every client, in fixed
+		steps of PROJECTILE_STEP seconds; a step resolves at most PROJECTILE_MAX_CONTACTS touches, and a shot is set
+		PROJECTILE_SKIN studs off what it touched
+	]]
+	PROJECTILE_STEP = 1 / 60,
+	PROJECTILE_MAX_CONTACTS = 4,
+	PROJECTILE_SKIN = 0.02,
+
+	--[[
+		A bouncing shot keeps BOUNCE_FRICTION of its speed along the surface at each bounce (its row's Elasticity of its
+		speed into it); one that hits softer than REST_SPEED (studs per second, into the surface) stays on it and rolls
+	]]
+	BOUNCE_FRICTION = 0.8,
+	REST_SPEED = 8,
+
+	--[[
+		A rolling shot slows by ROLL_DRAG studs per second squared, and stops below STOP_SPEED on ground flatter than
+		REST_NORMAL_Y (the Y of its normal; 1 is flat): on a slope gravity keeps it rolling down
+	]]
+	ROLL_DRAG = 12,
+	STOP_SPEED = 1.5,
+	REST_NORMAL_Y = 0.9,
+
+	--[[
+		A shot in water or lava sinks, as in Worms: gravity pulls it at SINK_GRAVITY of its strength, it keeps SINK_KEEP of
+		its speed each second, and it's gone after SINK_SECONDS without a blast
+	]]
+	SINK_GRAVITY = 0.15,
+	SINK_KEEP = 0.05,
+	SINK_SECONDS = 1.5,
+
+	--[[
+		The server sends each shot's state every STATE_INTERVAL seconds; a client whose copy was more than
+		CORRECTION_TOLERANCE studs off at that step goes back to it (it keeps HISTORY_SECONDS of steps to rewind) and steps
+		again, easing the jump out over about CORRECTION_SMOOTH seconds, and steps at most MAX_CATCH_UP in one frame
+	]]
+	STATE_INTERVAL = 0.1,
+	CORRECTION_TOLERANCE = 0.15,
+	HISTORY_SECONDS = 2,
+	CORRECTION_SMOOTH = 0.1,
+	MAX_CATCH_UP = 240,
+
 	--%%%%%%%%%%%%%%%%%%%% Blasts
 
 	--[[
-		A blast throws worms away from its center tilted up by UPWARD_BIAS (0 is straight away, 1 is 45° up), and at
+		A blast throws snails away from its center tilted up by UPWARD_BIAS (0 is straight away, 1 is 45° up), and at
 		its edge with KNOCKBACK_EDGE of the speed it throws at its center
 	]]
 	UPWARD_BIAS = 0.5,
@@ -70,24 +115,27 @@ local _settings = {
 	--- @type { number }
 	BOMBLET_SPEED = { 20, 40 },
 
+	-- For this long a bomblet flies through everything, so it leaves its cluster bomb's crater, in seconds
+	BOMBLET_GHOST = 0.1,
+
 	-- Snails crawl at SNAIL_SPEED, take a bite of terrain every SNAIL_BITE seconds, and stop after SNAIL_LIFETIME
 	SNAIL_SPEED = 6,
 	SNAIL_BITE = 0.3,
 	SNAIL_LIFETIME = 6,
 
-	-- A crawling spider bomb or a homing missile bursts once this close to a worm, in studs
+	-- A crawling spider bomb or a homing missile bursts once this close to a snail, in studs
 	CONTACT_DISTANCE = 2.5,
 
 	-- A rolling black hole grenade hops over bumps with this upward speed
 	ROLL_HOP_SPEED = 22,
 
-	-- The box a melee swing checks in front of the worm, in studs on each side
+	-- The box a melee swing checks in front of the snail, in studs on each side
 	MELEE_BOX = 4,
 
 	--%%%%%%%%%%%%%%%%%%%% Held Weapon
 
 	--[[
-		Where the active worm holds its weapon, from its ball's center: HELD_FORWARD studs along its aim, HELD_HEIGHT up
+		Where the active snail holds its weapon, from its ball's center: HELD_FORWARD studs along its aim, HELD_HEIGHT up
 		and HELD_DEPTH toward the camera (+Z), so the weapon is always on the side players see; it turns to a new aim at
 		HELD_TURN_SPEED (higher is snappier)
 	]]

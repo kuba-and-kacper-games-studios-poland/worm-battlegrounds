@@ -53,7 +53,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Hold
 
 --[[
-	Presses or releases a walk or jump button for the player's worm.
+	Presses or releases a walk or jump button for the player's snail.
 ]]
 function Module._hold(control: string, input: InputObject, state: boolean)
 	--[[ Checks ]]
@@ -65,7 +65,7 @@ function Module._hold(control: string, input: InputObject, state: boolean)
 
 	--[[ Holding ]]
 
-	I.WormControl.Hold(control, state)
+	I.SnailControl.Hold(control, state)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh
