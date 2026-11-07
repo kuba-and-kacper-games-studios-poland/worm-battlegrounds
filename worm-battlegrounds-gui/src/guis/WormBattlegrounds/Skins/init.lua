@@ -14,7 +14,7 @@ local _gui = {
 
 	--[[ Tree ]]
 
-	-- The worm skins the player owns, each in a 3D preview
+	-- The snail skins the player owns, each in a 3D preview
 	Root = {
 		Control = "Widget",
 		Id = "U_Widget",
@@ -29,7 +29,7 @@ local _gui = {
 	--[[ Prefabs ]]
 
 	Templates = {
-		-- A skin: Cosmetics puts the worm model in S_Preview's ViewportFrame; Equip (Equipped when worn)
+		-- A skin: Cosmetics puts the snail model in S_Preview's ViewportFrame; Equip (Equipped when worn)
 		["PREFAB | SkinTile"] = {
 			Control = "Box",
 			Parent = "U_Skins",

@@ -28,10 +28,11 @@ local _gui = {
 				Screen = true,
 				-- On phones and tablets: shorter, its list scrolling instead, and drawn at 0.9
 				Style = { "Panel", "Fixed", PlatformScale = { Utils_MobileScale = 0.9 } },
+				Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(800, 700) } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 1),
 					Position = UDim2.fromScale(0.55, 0.978),
-					Size = UDim2.fromOffset(800, 700),
+					Size = UDim2.fromOffset(800, 800),
 				},
 				Children = {
 					{ Control = "Label", Id = "S_Welcome", Text = "Welcome, PlayerName", Align = "Center", Style = "Dim" },
@@ -168,8 +169,8 @@ local _gui = {
 
 	Templates = {
 		--[[
-			One open public match on a purple card, as modes are: the mode, its players and timer, then Join, blue since
-			a list of matches has no one next step
+			One open public match on a purple card, as modes are: the mode with its players and timer across the top, then
+			its map and Join (Join teams for team modes), blue since a list of matches has no one next step
 		]]
 		["PREFAB | Row"] = {
 			Control = "Box",
@@ -180,23 +181,18 @@ local _gui = {
 					Control = "Stack",
 					Direction = "Horizontal",
 					Children = {
-						{
-							Control = "Stack",
-							Grow = 1,
-							Style = "None",
-							Children = {
-								{ Control = "Label", Id = "S_Mode", Text = "Deathmatch", Style = "Strong" },
-								{
-									Control = "Stack",
-									Direction = "Horizontal",
-									Children = {
-										{ Control = "Label", Id = "S_Players", Text = "3 / 6", Style = "Small" },
-										{ Control = "Label", Id = "S_Timer", Text = "0:30", Style = { "Small", "Warning" } },
-									},
-								},
-							},
-						},
-						{ Control = "Button", Id = "S_Join", Text = "Join", AutoWidth = true },
+						{ Control = "Label", Id = "S_Mode", Text = "Deathmatch", Grow = 1, Style = "Strong" },
+						{ Control = "Label", Id = "S_Players", Text = "3 / 6", Style = "Small" },
+						{ Control = "Label", Id = "S_Timer", Text = "0:30", Style = { "Small", "Warning" } },
+					},
+				},
+				{
+					Control = "Stack",
+					Direction = "Horizontal",
+					Children = {
+						{ Control = "Label", Id = "S_Map", Text = "Picnic Plains", Grow = 1, Style = "Small" },
+						-- Sized for "Join teams", so both labels read the same; small, as list rows' buttons are
+						{ Control = "Button", Id = "S_Join", Text = "Join teams", AutoWidth = true, Style = "Small" },
 					},
 				},
 			},

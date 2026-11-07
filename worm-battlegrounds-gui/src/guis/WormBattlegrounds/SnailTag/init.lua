@@ -7,8 +7,8 @@ local _gui = {
 
 	--[[ General ]]
 
-	-- A template: Worms clones it over every worm's head
-	Name = "WormTag",
+	-- A template: Snails clones it over every snail's head
+	Name = "SnailTag",
 	Kind = "Billboard",
 	Theme = "WormBattlegroundsBrawl",
 	-- The billboard's size at design scale: the tag's own, which code scales with the screen
@@ -23,14 +23,14 @@ local _gui = {
 		Children = {
 			-- Set with the billboard's size by ScreenScale, so the tag is as big for the screen as the hud
 			{ Primitive = "UIScale", Id = "S_ScreenScale" },
-			-- Stacks up from the billboard's bottom edge, the health bar nearest the worm
+			-- Stacks up from the billboard's bottom edge, the health bar nearest the snail
 			{
 				Control = "Stack",
 				Align = "Center",
 				Style = "None",
 				Props = { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1) },
 				Children = {
-					-- Over the worm whose turn it is: a marker (the turn's seconds are on the turn panel)
+					-- Over the snail whose turn it is: a marker and the turn's seconds (hidden for its own player)
 					{
 						Control = "Stack",
 						Id = "S_Active",
@@ -38,6 +38,7 @@ local _gui = {
 						Align = "Center",
 						Style = "None",
 						Children = {
+							{ Control = "Label", Id = "S_Timer", Text = "15", Style = "Strong" },
 							{ Control = "Picture", Image = "chevron-small-down", Style = "Glyph" },
 						},
 					},
@@ -50,7 +51,7 @@ local _gui = {
 						Align = "Center",
 						Style = { "Small", "Dim" },
 					},
-					-- Health number (big, centred) and bar, green to yellow to red with health; worms start at 200
+					-- Health number (big, centred) and bar, in the team's colour; snails start at 200
 					{ Control = "Progress", Id = "S_Health", Text = "200", Value = 1, Style = "Health" },
 				},
 			},

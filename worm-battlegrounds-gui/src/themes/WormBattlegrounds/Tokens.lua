@@ -98,7 +98,7 @@ local _tokens = {
 		Display = 48,
 	},
 
-	-- The kit's pictures, as local previews until they're uploaded (written by the kit's build script)
+	-- The kit's pictures, uploaded (written by the kit's build script, then pointed at their ids)
 	Icons = require(script.Parent:FindFirstChild("Icons")),
 
 	--[[ Shape ]]

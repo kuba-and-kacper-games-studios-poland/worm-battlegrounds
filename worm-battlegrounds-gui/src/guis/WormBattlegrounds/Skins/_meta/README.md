@@ -1,6 +1,6 @@
 # Skins
 
-The worm skins the player owns, each in a 3D preview with its copies toward shiny and **Equip**.
+The snail skins the player owns, each in a 3D preview with its copies toward shiny and **Equip**.
 
 **Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Equip is blue: a grid of skins has no one next step.
 
@@ -22,7 +22,7 @@ The worm skins the player owns, each in a 3D preview with its copies toward shin
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | SkinTile` | `U_Skins` | `S_Preview` (Viewport: its `ViewportFrame` and `Camera` take the worm model; caption = name and copies), `S_Equip` ("Equip", or "Equipped" on the worn skin) |
+| `PREFAB | SkinTile` | `U_Skins` | `S_Preview` (Viewport: its `ViewportFrame` and `Camera` take the snail model; caption = name and copies), `S_Equip` ("Equip", or "Equipped" on the worn skin) |
 
 ## Driven by
 

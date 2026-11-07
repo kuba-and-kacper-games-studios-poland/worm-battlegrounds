@@ -17,7 +17,7 @@ local _gui = {
 
 	--[[
 		The match screen. MatchHud shows each block in its phase: U_Waiting, then U_Drop, then the turn blocks,
-		U_KnockedOut once the player's worm is out
+		U_KnockedOut once the player's snail is out
 	]]
 	Root = {
 		Primitive = "Folder",
@@ -37,9 +37,9 @@ local _gui = {
 					Size = UDim2.fromOffset(480, 0),
 				},
 				Children = {
-					-- "Your turn!" on the player's own turn; on other worms' turns "Bax's turn", in their team colour
+					-- "Your turn!" on the player's own turn; on other snails' turns "Bax's turn", in their team colour
 					{ Control = "Label", Id = "S_Banner", Text = "Your turn!", Align = "Center", Style = "Title" },
-					-- On other worms' turns: how long until the player's own ("You're next!", "Your turn in 3 turns")
+					-- On other snails' turns: how long until the player's own ("You're next!", "Your turn in 3 turns")
 					{
 						Control = "Label",
 						Id = "S_Wait",
@@ -124,7 +124,7 @@ local _gui = {
 						Fill = true,
 						Style = "Loose",
 						Children = {
-							-- On the player's turn: how far the worm can still walk
+							-- On the player's turn: how far the snail can still walk
 							{
 								Control = "Stack",
 								Id = "U_Stamina",
@@ -282,7 +282,7 @@ local _gui = {
 					{ Control = "Label", Id = "S_Timer", Text = "15", Align = "Center", Style = "Display" },
 				},
 			},
-			-- The player's worm is out: watch the rest, or leave keeping their place
+			-- The player's snail is out: watch the rest, or leave keeping their place
 			{
 				Control = "Box",
 				Id = "U_KnockedOut",

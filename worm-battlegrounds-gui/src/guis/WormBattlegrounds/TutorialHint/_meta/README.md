@@ -2,7 +2,7 @@
 
 The tutorial's speech bubble: a line of text and an arrow, placed beside the element or spot it points at.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). 640 wide (was 440), so the hint fits on one line at the kit's heading size. It hangs from 27 % down the screen, under a match's turn panel (taller on other worms' turns, with the player's wait) and above the lobby's Play panel, instead of being centred at 35 % (where it covered Play). At 0.75 on phones and tablets (16 px text on a 667 × 375 phone), clear of the turn panel there too, the bot's turn included.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). 640 wide (was 440), so the hint fits on one line at the kit's heading size. It hangs from 27 % down the screen, under a match's turn panel (taller on other snails' turns, with the player's wait) and above the lobby's Play panel, instead of being centred at 35 % (where it covered Play). At 0.75 on phones and tablets (16 px text on a 667 × 375 phone), clear of the turn panel there too, the bot's turn included.
 
 |  |  |
 | --- | --- |

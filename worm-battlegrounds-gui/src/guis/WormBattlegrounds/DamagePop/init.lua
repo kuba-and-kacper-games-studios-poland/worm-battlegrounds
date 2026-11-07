@@ -7,7 +7,7 @@ local _gui = {
 
 	--[[ General ]]
 
-	-- A template: Worms clones it where a worm is hit, rises and fades it (only with the DamageNumbers setting on)
+	-- A template: Snails clones it where a snail is hit, rises and fades it (only with the DamageNumbers setting on)
 	Name = "DamagePop",
 	Kind = "Billboard",
 	Theme = "WormBattlegroundsBrawl",

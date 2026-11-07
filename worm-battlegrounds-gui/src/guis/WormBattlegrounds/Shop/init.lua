@@ -68,7 +68,7 @@ local _gui = {
 				{
 					Control = "Label",
 					Id = "S_Benefits",
-					Text = "A gold name and VIP tag in chat, an exclusive VIP worm skin, and one free skin crate every day",
+					Text = "A gold name and VIP tag in chat, an exclusive VIP snail skin, and one free skin crate every day",
 					Style = { "Small", "Dim", "Paragraph" },
 				},
 				-- The price beside a green Buy: a price is green, and the shop has no one next step

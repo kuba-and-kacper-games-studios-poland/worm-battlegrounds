@@ -7,26 +7,26 @@ local _icons = {
 
 	--[[ Replaced System Icons ]]
 
-	["chevron-small-down"] = "rbxasset://textures/wb_guipreview/arrow_down_c3dbf468.png",
-	["chevron-small-right"] = "rbxasset://textures/wb_guipreview/arrow_right_c6cb3745.png",
-	["four-squares-grid"] = "rbxasset://textures/wb_guipreview/crate_17762c23.png",
-	["plus-large"] = "rbxasset://textures/wb_guipreview/plus_1eedc8c6.png",
+	["chevron-small-down"] = "rbxassetid://114953173843830",
+	["chevron-small-right"] = "rbxassetid://138975877289841",
+	["four-squares-grid"] = "rbxassetid://121731184312632",
+	["plus-large"] = "rbxassetid://105170609946702",
 
 	--[[ Game Icons ]]
 
-	["wb-crate"] = "rbxasset://textures/wb_guipreview/crate_17762c23.png",
-	["wb-airstrike"] = "rbxasset://textures/wb_guipreview/airstrike_c456f101.png",
-	["wb-bazooka"] = "rbxasset://textures/wb_guipreview/bazooka_2c82e8ca.png",
-	["wb-black-hole-grenade"] = "rbxasset://textures/wb_guipreview/black_hole_grenade_dc69a16b.png",
-	["wb-cluster-bomb"] = "rbxasset://textures/wb_guipreview/cluster_bomb_389e0749.png",
-	["wb-coin"] = "rbxasset://textures/wb_guipreview/coin_b3e36086.png",
-	["wb-crown"] = "rbxasset://textures/wb_guipreview/crown_c3b43332.png",
-	["wb-diamond"] = "rbxasset://textures/wb_guipreview/diamond_48620100.png",
-	["wb-grenade"] = "rbxasset://textures/wb_guipreview/grenade_5bb5dee8.png",
-	["wb-jetpack"] = "rbxasset://textures/wb_guipreview/jetpack_69dfb937.png",
-	["wb-shotgun"] = "rbxasset://textures/wb_guipreview/shotgun_77117b17.png",
-	["wb-smiley"] = "rbxasset://textures/wb_guipreview/smiley_a1ded54f.png",
-	["wb-stripes"] = "rbxasset://textures/wb_guipreview/stripes_a1495a46.png",
+	["wb-crate"] = "rbxassetid://121731184312632",
+	["wb-airstrike"] = "rbxassetid://115087563446330",
+	["wb-bazooka"] = "rbxassetid://134208977158560",
+	["wb-black-hole-grenade"] = "rbxassetid://89182342013631",
+	["wb-cluster-bomb"] = "rbxassetid://75424706546346",
+	["wb-coin"] = "rbxassetid://108986846988315",
+	["wb-crown"] = "rbxassetid://92114882349999",
+	["wb-diamond"] = "rbxassetid://76353040161236",
+	["wb-grenade"] = "rbxassetid://127460985028992",
+	["wb-jetpack"] = "rbxassetid://138428323433864",
+	["wb-shotgun"] = "rbxassetid://98515712319931",
+	["wb-smiley"] = "rbxassetid://75798902746408",
+	["wb-stripes"] = "rbxassetid://81566977120567",
 }
 
 return _icons

@@ -102,7 +102,7 @@ function Module.Apply(preview)
 
 	--[[ Turn ]]
 
-	-- On another worm's turn the banner names it in its team colour, with the player's wait under it
+	-- On another snail's turn the banner names it in its team colour, with the player's wait under it
 	view:Get("U_Turn", "S_Banner").SetText(if preview.Values.S_MyTurn then "Your turn!" else `{OTHER_NAME}'s turn`)
 	view:Get("U_Turn", "S_Banner").SetTone(if preview.Values.S_MyTurn then "Text" else OTHER_COLOR)
 	view:Get("U_Turn", "S_Wait").Instance.Visible = not preview.Values.S_MyTurn

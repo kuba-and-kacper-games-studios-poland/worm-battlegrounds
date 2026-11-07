@@ -11,7 +11,7 @@ A player's chosen landing spot in the drop phase: their name and a pin, in their
 | Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
 | Devices | Desktop (Mobile and Console look the same) |
-| Export | A BillboardGui named `DropMarker` (a template) |
+| Export | A BillboardGui named `DropMarker` (a template), moved into its `PREFAB \| DropMarker` holder as `U_DropMarker` (Integration → Setup) |
 
 ## Elements
 
@@ -29,7 +29,7 @@ The game's `Match` module clones one per player during the drop.
 
 ### Setup
 
-Export it with the Gui tool: a BillboardGui named `DropMarker` in StarterGui. Its module moves it where it keeps templates and clones it onto parts; the clone's `StudsOffset` is set by that code, and the game's ScreenScale module sizes the clone to the screen: it sets `S_ScreenScale` to the screen's scale (height / 1080, width / 1920 on screens narrower than 16:9, ×1.3 on Mobile screens shorter than 500 px, never under 0.6 on other devices; no device scale) and the billboard's `Size` to the root's design size times it. The Gui tool previews it at 240 × 100 (`Preview`).
+Export it with the Gui tool (a BillboardGui named `DropMarker` in StarterGui), then move it into its holder in place of the old one: `Workspace.Ume.ReplicatedStorage_Assets/Match/PREFAB | DropMarker` › `RootPart` › `Attachment`, renamed `U_DropMarker` (StarterGui would draw it at 0, 0, 0 in Studio). Its module clones it onto parts; the clone's `StudsOffset` is set by that code, and the game's ScreenScale module sizes the clone to the screen: it sets `S_ScreenScale` to the screen's scale (height / 1080, width / 1920 on screens narrower than 16:9, ×1.3 on Mobile screens shorter than 500 px, never under 0.6 on other devices; no device scale) and the billboard's `Size` to the root's design size times it. The Gui tool previews it at 240 × 100 (`Preview`).
 
 ### Input
 

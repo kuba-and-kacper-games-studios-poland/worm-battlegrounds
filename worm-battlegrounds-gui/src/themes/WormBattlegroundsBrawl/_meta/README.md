@@ -58,8 +58,8 @@ Style records merge over the base theme's, so each file lists only what changes.
 | `Item.lua` | Default: a thing on a slot, the picture over its name and one line. `Square`, `Small` (112), `Difficulty` (200 × 220, the line in the coins' colour). Rewards `Common` … `Legendary`: a framed tile, the rarity's stage inside (`Stage`), silver for common to rare and gold with light behind (`Glow`, rays) for epic and legendary |
 | `Label.lua` | Default: the ink outline. `Heading`, `Title`, `Hero` (capitals, heavy outline). Tones `Accent`, `Map`, `Cream`, `Gold`, `Price` |
 | `Picture.lua` | `Avatar`, `AvatarLarge` (a light well, the 6 px ink outline), `Thumbnail` (rounded, ink outline), `Icon` (a bare picture bigger than a glyph) |
-| `Cells.lua` | `Players`, `Slots` (grids of player cards), `Matches` (the lobby's public match cards, two a row, 344 × 152) |
-| `Progress.lua` | Default: the status line left-aligned (`StatusAlign`) with the ink outline (`TextStroke`, `TextStrokeThickness`). `Health`: the number big (`Heading`) and centred (a worm's tag) |
+| `Cells.lua` | `Players`, `Slots` (grids of player cards), `Matches` (the lobby's public match cards, two a row, 344 × 200) |
+| `Progress.lua` | Default: the status line left-aligned (`StatusAlign`) with the ink outline (`TextStroke`, `TextStrokeThickness`). `Health`: the number big (`Heading`) and centred (a snail's tag) |
 | `Ribbon.lua` | From the first Brawl options, used by no gui now; `Blue` and `Red` name tokens this palette no longer has |
 
 ## Controls
@@ -147,8 +147,7 @@ to get it.
 - `Icons.lua` and `Skins.lua` are written by the kit's build script, made outside this repo (the game home's
   `assets/_inbox/ui_kit_brawl/`: `skins.py` and `banners.py` draw the SVGs, `build.py` renders them). `Skins.lua`
   holds each sliced skin's `SliceCenter` in its PNG's pixels. The kit was uploaded on 2026-11-04: every `Icons.lua`
-  line is an `rbxassetid://` except `wb-wind` (the turn panel's wind, added 2026-11-05), a local preview until the
-  owner approves uploading it. A rebuild writes local previews (`rbxasset://textures/wb_brawlpreview/…`, which only
+  line is an `rbxassetid://` (`wb-wind`, the turn panel's wind added 2026-11-05, since 2026-11-07). A rebuild writes local previews (`rbxasset://textures/wb_brawlpreview/…`, which only
   the PC that built them shows) until the changed pictures are uploaded and the ids put back (the kit's README →
   Uploading).
 - No `Gamepad.lua`: the theme uses System's gamepad icons.

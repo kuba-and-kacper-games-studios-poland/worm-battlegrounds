@@ -106,7 +106,7 @@ An image that isn't a button (`Image`: an icon name or an image id), framed by i
 ## Generated
 
 - `Icons.lua` is written by the icon kit's build script, made outside this repo (the game home's
-  `assets/_inbox/ui_kit/`). Until the owner approves the kit and it's uploaded, its images are local previews:
-  `rbxasset://textures/wb_guipreview/<name>_<hash>.png`, files in Studio's own content folder that only this PC's
-  Studio shows. After the upload each line becomes an `rbxassetid://`.
+  `assets/_inbox/ui_kit/`). The kit was uploaded on 2026-11-07: every line is an `rbxassetid://` (the ids are in
+  the kit's `uploaded.json`). A rebuild writes local previews again (`rbxasset://textures/wb_guipreview/…`, which
+  only the PC that built them shows) until the changed pictures are uploaded and the ids put back.
 - No `Gamepad.lua`: the theme uses System's gamepad icons.

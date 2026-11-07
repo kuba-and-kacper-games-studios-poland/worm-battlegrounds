@@ -12,7 +12,7 @@ local _styles = {
 
 	--[[ Bars ]]
 
-	-- A worm's health: the number big and centred over the bar
+	-- A snail's health: the number big and centred over the bar
 	Health = { StatusAlign = "Center", TextSize = "Heading" },
 }
 

@@ -1,8 +1,8 @@
 # MatchBoard
 
-The lobby's one panel, laid out like RoWorld's: a welcome line, **Play solo** with **Custom** beside it, and the public matches as cards, two a row (Deathmatch, Duos, Trios, Quads), each with its players, timer and **Join**. In the same spot it shows the setup for a solo or party match (the bots' difficulty, what it means, what it pays, **Start**) or, after joining a public match, the waiting room: the match, the countdown, the players, **Vote to start** and **Leave match**.
+The lobby's one panel, laid out like RoWorld's: a welcome line, **Play solo** with **Custom** beside it, and the public matches as cards, two a row (Deathmatch, Duo, Trio, Quads), each with its mode, players and timer across the top, then its map and **Join** (**Join teams** for team modes, both small list buttons). In the same spot it shows the setup for a solo or party match (the bots' difficulty, what it means, what it pays, **Start**) or, after joining a public match, the waiting room: the match, the countdown, the players, **Vote to start** and **Leave match**.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Every panel is a `Box` `Panel` hanging from the bottom at 55 % across (0.75 on Desktop, 0.9 on Mobile): `U_Play` 800 × 700, `U_Setup` 800 × 660, `U_WaitingRoom` 720 × 860 (560 × 600 on phones and tablets). Play solo and Start are the panels' yellow; the match cards are purple, as modes are (`Box` `Card`, `Event`), in the theme's `Matches` grid (344 × 152 cells); Join and Custom are blue; the difficulties are slate `Tab` buttons that turn blue when picked. Titles, buttons and the countdown are capitals, whatever the code writes.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Every panel is a `Box` `Panel` hanging from the bottom at 55 % across (0.75 on Desktop, 0.9 on Mobile): `U_Play` 800 × 800 (800 × 700 on phones and tablets, its list scrolling), `U_Setup` 800 × 660, `U_WaitingRoom` 720 × 860 (560 × 600 on phones and tablets). Play solo and Start are the panels' yellow; the match cards are purple, as modes are (`Box` `Card`, `Event`), in the theme's `Matches` grid (344 × 200 cells); Join and Custom are blue; the difficulties are slate `Tab` buttons that turn blue when picked. Titles, buttons and the countdown are capitals, whatever the code writes.
 
 |  |  |
 | --- | --- |
@@ -40,7 +40,7 @@ The lobby's one panel, laid out like RoWorld's: a welcome line, **Play solo** wi
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | Row` | `U_Rows` | `S_Mode`, `S_Players`, `S_Timer`, `S_Join` |
+| `PREFAB | Row` | `U_Rows` | `S_Mode`, `S_Map`, `S_Players`, `S_Timer`, `S_Join` |
 | `PREFAB | PlayerName` | `U_Players` | `S_Avatar`, `S_Name` |
 
 ## Driven by
