@@ -104,6 +104,12 @@ local _settings = {
 	-- How many grid rows a map's load probes before it gives the server a frame
 	LIQUID_BUILD_ROWS_PER_FRAME = 8,
 
+	--[[
+		Only the sea knocks snails out (the liquid at the map's floor, which sudden death raises), up to this many studs
+		above its level as its surface ripples; ponds higher up are safe to fall in
+	]]
+	SEA_SLACK = 1,
+
 	-- The liquid kinds, in the order of their ids in the grid (a map's liquid marker names one)
 	--- @type { string }
 	LIQUID_KINDS = { "Water", "Lava" },

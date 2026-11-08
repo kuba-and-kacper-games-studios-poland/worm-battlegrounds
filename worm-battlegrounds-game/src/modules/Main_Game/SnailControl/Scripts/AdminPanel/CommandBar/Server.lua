@@ -36,7 +36,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Register Commands
 
 --[[
-	Registers the commands that start and end a snail's turn by hand, for testing. Each one acts on the invoker's own
+	Registers the commands that start and end a snail's turn and fill its stamina by hand, for testing. Each one acts on the invoker's own
 	snail unless it names a participant id.
 ]]
 function Module._registerCommands()
@@ -79,6 +79,23 @@ function Module._registerCommands()
 		return true, `Ended the turn of $|cr$|{id}#|`
 	end
 
+	local function refill(invoker: Player | number, participantId: string?)
+		--[[ Local Variables ]]
+
+		local id: string = getId(invoker, participantId)
+
+		--[[ Executing ]]
+
+		-- Check if the stamina was filled
+		if not I.SnailControl.Refill(id) then
+			return false, `$|cr$|{id}#| has no snail in play`
+		end
+
+		--[[ Returning ]]
+
+		return true, `Filled the stamina of $|cr$|{id}#|`
+	end
+
 	--%%%%%%%%%%%%%%%%%%%% Commands
 
 	--[[ Variants ]]
@@ -102,6 +119,14 @@ function Module._registerCommands()
 			},
 			PassInvoker = true,
 			Callback = stop,
+		},
+		{
+			Aliases = { "refill" },
+			Args = {
+				{ name = "participantId", types = { "string" }, optional = true },
+			},
+			PassInvoker = true,
+			Callback = refill,
 		},
 	}
 

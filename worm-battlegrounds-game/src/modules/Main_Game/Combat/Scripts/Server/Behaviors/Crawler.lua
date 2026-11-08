@@ -36,8 +36,9 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	The spider bomb: thrown like a grenade, it lands, then crawls along the ground and up walls toward the nearest
-	enemy snail for CrawlTime seconds, and explodes when it reaches one or its time runs out.
+	The spider bomb: thrown on the shared simulation like a grenade, it lands on the first thing it touches, then crawls
+	along the ground and up walls toward the nearest enemy snail for CrawlTime seconds, and explodes when it reaches
+	one, touches water or lava, or its time runs out.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -45,49 +46,50 @@ function Module.Run(shot)
 
 	local row = shot.Row --- @type Arsenal_WeaponData
 	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(shot.ItemId, shot.Angle, shot.Power)
-	local part: Part = Projectiles.Spawn("Crawler", shot.ItemId, shot.Origin, velocity, false)
-	local started: number = os.clock()
-	local last: Vector3 = part.Position
+	local options = Projectiles.GetOptions(shot) --- @type Combat_ShotOptions
+	local body = Projectiles.Launch("Crawler", shot.ItemId, shot.Origin, velocity, options) --- @type Combat_Body
 	local landed: Vector3? = nil
 
 	--[[ Flying ]]
 
-	while part.Parent do
-		I.S.RunService.Heartbeat:Wait()
-		local now: Vector3 = part.Position
-		local shooter: Model? = if os.clock() - started < _settings.SHOOTER_GRACE then shot.Shooter else nil
-		local result: RaycastResult? = Projectiles.Cast(last, now, shooter)
-		if Ballistics.GetSnail(result) then
-			shot.Damage += Module._explode(shot, result.Position)
-			part:Destroy()
-			return
-		elseif result then
-			landed = result.Position + result.Normal * 0.5
+	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
+		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif Projectiles.IsLost(now, os.clock() - started) then
-			part:Destroy()
-			return
+		elseif body.Sunk or (body.Stopped and Ballistics.GetSnail(hit)) then
+			shot.Damage += Module._explode(shot, if hit and not body.Sunk then hit.Position else body.Position)
+			break
+		elseif body.Stopped then
+			landed = if hit then hit.Position + hit.Normal * _settings.PROJECTILE_SIZE / 2 else body.Position
+			break
 		end
-		last = now
+	end
+	Projectiles.Land(body)
+
+	-- Check if it landed on the ground
+	if not landed then
+		return
 	end
 
 	--[[ Crawling ]]
 
-	part.Anchored = true
-	part.Position = landed
-	local crawlStart: number = os.clock()
+	local part: Part = Projectiles.Spawn("Crawler", shot.ItemId, landed, Vector3.zero, false, 0, true)
+	local started: number = os.clock()
 	local position: Vector3 = landed
 
-	while os.clock() - crawlStart < (row.CrawlTime or 5) do
+	while os.clock() - started < (row.CrawlTime or 5) do
 		local deltaTime: number = I.S.RunService.Heartbeat:Wait()
 		local target: Model? = Module._getTarget(shot, position)
 		if not target then
 			break
 		end
-		if (target.PrimaryPart.Position - position).Magnitude <= _settings.CONTACT_DISTANCE then
+		local offset: Vector3 = target.PrimaryPart.Position - position
+		if offset.Magnitude <= _settings.CONTACT_DISTANCE or I.Arena.GetLiquid(position) then
 			break
 		end
-		position = Module._getNextStep(position, math.sign(target.PrimaryPart.Position.X - position.X), (row.CrawlSpeed or 10) * deltaTime)
+
+		-- Right under or over its target it waits instead of turning back and forth
+		local side: number = if math.abs(offset.X) < _settings.CRAWL_STOP then 0 else math.sign(offset.X)
+		position = Module._getNextStep(position, side, (row.CrawlSpeed or 10) * deltaTime)
 		part.Position = position
 		if Projectiles.IsLost(position, os.clock() - started) then
 			part:Destroy()
@@ -153,29 +155,43 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Next Step
 
 --[[
-	Returns where a crawler on the ground goes next, one step of a distance toward a side: up a wall in front, else
-	along and down onto the ground, else falling.
+	Returns where a crawler goes next, one step of a distance toward a side (0 stays): up a wall taller than
+	CRAWL_STEP_UP in front, else along the ground, easing up onto a ledge and down off one rather than jumping the
+	stud grid's steps, else falling.
 ]]
 --- @return Vector3
 function Module._getNextStep(position: Vector3, side: number, distance: number)
+	--[[ Local Variables ]]
+
+	local radius: number = _settings.PROJECTILE_SIZE / 2
+	local high: Vector3 = position + Vector3.yAxis * _settings.CRAWL_STEP_UP
+
 	--[[ Climbing ]]
 
-	-- A wall in front: climb it
-	if Projectiles.Cast(position, position + Vector3.xAxis * side * 0.8) then
+	-- A wall in front, taller than a step: climb it
+	if side ~= 0 and Projectiles.Cast(high, high + Vector3.xAxis * side * (radius + distance)) then
 		return position + Vector3.yAxis * distance
 	end
 
 	--[[ Walking ]]
 
 	local ahead: Vector3 = position + Vector3.xAxis * side * distance
-	local ground: RaycastResult? = Projectiles.Cast(ahead + Vector3.yAxis * 0.5, ahead - Vector3.yAxis * 3)
+	local ground: RaycastResult? = Projectiles.Cast(ahead + Vector3.yAxis * _settings.CRAWL_STEP_UP, ahead - Vector3.yAxis * (radius + _settings.CRAWL_STEP_DOWN))
+
+	-- Nothing under it: fall
+	if not ground or Ballistics.GetSnail(ground) then
+		return ahead - Vector3.yAxis * distance * 2
+	end
+
+	-- A step up: rise in place first, then move on once level with it
+	local rise: number = ground.Position.Y + radius - position.Y
+	if rise > distance then
+		return position + Vector3.yAxis * distance
+	end
 
 	--[[ Returning ]]
 
-	if ground and not Ballistics.GetSnail(ground) then
-		return ground.Position + Vector3.yAxis * 0.5
-	end
-	return ahead - Vector3.yAxis * distance * 2
+	return Vector3.new(ahead.X, position.Y + math.max(rise, -distance * 2), ahead.Z)
 end
 
 return Module

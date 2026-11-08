@@ -19,13 +19,13 @@ local Snail = require(script.Parent:FindFirstChild("Snail")) --- @type Combat_Sn
 
 local random: Random = Random.new()
 
--- The four ways a variety grenade's snails crawl off: down-left, down-right, left, right
+-- The four ways a variety grenade's worms dig off, fanned out downward
 --- @type { Vector3 }
 local snailDirections = {
-	Vector3.new(-1, -1, 0).Unit,
-	Vector3.new(1, -1, 0).Unit,
-	Vector3.new(-1, 0, 0),
-	Vector3.new(1, 0, 0),
+	Vector3.new(-0.7, -1, 0).Unit,
+	Vector3.new(-0.25, -1, 0).Unit,
+	Vector3.new(0.25, -1, 0).Unit,
+	Vector3.new(0.7, -1, 0).Unit,
 }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -49,9 +49,10 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	A thrown bomb. One with a Fuse bounces around and explodes when it runs out (the Grenade); one that bursts on
-	contact explodes on the first thing it touches (Dynamite, Cluster bomb, Variety grenade). Then a cluster bomb
-	scatters its bomblets and a variety grenade lets out its snails.
+	A thrown or placed bomb. One with a Fuse bounces around and explodes when it runs out (the Grenade, the Dynamite
+	placed at the feet); one that bursts on contact explodes on the first thing it touches (Cluster bomb, Variety
+	grenade); any explodes as it touches water or lava. Then a cluster bomb scatters its bomblets and a variety grenade
+	lets out its snails.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -65,18 +66,19 @@ function Module.Run(shot)
 	local body = Projectiles.Launch("Bouncer", shot.ItemId, shot.Origin, velocity, options) --- @type Combat_Body
 	local burst: Vector3? = nil
 
+	-- A thrown bomb's fuse runs in its slowed flight time, a placed one's in real seconds
+	local fuse: number? = if row.Fuse and row.Aim ~= "Feet" then row.Fuse / _settings.PROJECTILE_TIME_SCALE else row.Fuse
+
 	--[[ Flying ]]
 
-	-- One that sinks in liquid fizzles out, as in Worms
+	-- One that touches water or lava blows up there
 	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
 		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif body.Sunk then
-			continue
-		elseif body.Stopped then
+		elseif body.Stopped and not body.Sunk then
 			burst = if hit then hit.Position else body.Position
 			break
-		elseif row.Fuse and elapsed >= row.Fuse then
+		elseif body.Sunk or fuse and elapsed >= fuse then
 			burst = body.Position
 			break
 		end
@@ -87,6 +89,11 @@ function Module.Run(shot)
 
 	if not burst then
 		return
+	end
+
+	-- A snail still running from its Dynamite is the server's again before the blast can throw it
+	if row.Retreat then
+		I.SnailControl.EndTurn(shot.ParticipantId)
 	end
 	shot.Damage += Blast.Explode(burst, row.BlastRadius, shot.ItemId, shot.ParticipantId, shot.Shiny, row.DamageMax, row.DamageEdge, row.Knockback)
 
@@ -140,10 +147,8 @@ function Module._runBomblet(shot, from: Vector3)
 	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
 		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif body.Sunk then
-			continue
-		elseif body.Stopped then
-			local center: Vector3 = if hit then hit.Position else body.Position
+		elseif body.Stopped or body.Sunk then
+			local center: Vector3 = if hit and not body.Sunk then hit.Position else body.Position
 			shot.Damage += Blast.Explode(center, bomblets.Radius, shot.ItemId, shot.ParticipantId, shot.Shiny, bomblets.DamageMax, bomblets.DamageEdge, "Small")
 			break
 		end

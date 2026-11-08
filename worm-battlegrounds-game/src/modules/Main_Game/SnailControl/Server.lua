@@ -43,6 +43,8 @@ function Module.Init()
 
 		StartTurn = Control.StartTurn,
 		EndTurn = Control.EndTurn,
+		Retreat = Control.Retreat,
+		Refill = Control.Refill,
 		ApplyEffect = Effects.ApplyEffect,
 	}
 end

@@ -7,7 +7,7 @@ local _settings = {
 	WAIT_FOR_PLAYERS = 20,
 
 	-- How long players have to pick where their snail lands, and the most the landing may take, in seconds
-	DROP_SECONDS = 15,
+	DROP_SECONDS = 10,
 	MAX_LANDING = 12,
 
 	-- How fast the left stick moves the drop spot at full lean, in studs per second
@@ -45,6 +45,13 @@ local _settings = {
 
 	-- How long the rematch vote stays open after the results, in seconds
 	REMATCH_SECONDS = 20,
+
+	--[[
+		A player sent to the lobby isn't sent again for LOBBY_RESEND_SECONDS while the teleport runs; one that can't start
+		shows LOBBY_FAILED_MESSAGE, and Lobby works again at once
+	]]
+	LOBBY_RESEND_SECONDS = 15,
+	LOBBY_FAILED_MESSAGE = "Couldn't get you to the lobby. Try again!",
 
 	--%%%%%%%%%%%%%%%%%%%% Teams
 

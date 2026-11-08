@@ -330,8 +330,9 @@ end
 
 --[[
 	Every frame of the player's turn: runs the pad's power bar while RT is held (up to full, back down to none and up
-	again, every CHARGE_SECONDS), draws the angle marker and power circles, shows the power and angle, and sends the
-	aim to the other players every AIM_SEND_INTERVAL.
+	again, every CHARGE_SECONDS), draws the angle marker and power circles, shows the power and angle (with a homing
+	missile, "Click on a target", then "Shoot!" until the aim starts), and sends the aim to the other players every
+	AIM_SEND_INTERVAL.
 ]]
 function Module._step()
 	--[[ Checks ]]
@@ -368,6 +369,11 @@ function Module._step()
 	elems["PowerFill"].Size = UDim2.fromScale(power, 1)
 	elems["PowerStatus"].Text = `{powerText} {math.round(power * 100)}%`
 	elems["Angle"].Text = `{math.round(math.deg(math.asin(math.sin(angle))))}°`
+
+	-- A homing missile asks for its target first, then to shoot
+	if I.G_Arsenal.Get(itemId).Aim == "Target" and not aiming then
+		elems["PowerStatus"].Text = if target then _settings.TARGET_HINTS.Shoot else _settings.TARGET_HINTS.Pick
+	end
 
 	--[[ Sending ]]
 

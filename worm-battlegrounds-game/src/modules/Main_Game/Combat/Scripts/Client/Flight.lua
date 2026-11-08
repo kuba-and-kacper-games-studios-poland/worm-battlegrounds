@@ -74,7 +74,19 @@ function Module._addShot(child: Instance)
 	local model: Model = I.G_Arsenal.GetProjectileModel(modelId):Clone()
 	local row = if isWeapon then I.G_Arsenal.Get(child.Name) else nil --- @type Arsenal_WeaponData?
 	child.LocalTransparencyModifier = 1
-	flying[child] = { Model = model, Kind = if row then row.Kind else "Shot", Last = child.Position, Facing = if child.AssemblyLinearVelocity.X < 0 then -1 else 1 }
+
+	-- Drawn bigger so shots read from the match camera; a placed one keeps its own size
+	if not row or row.Aim ~= "Feet" then
+		model:ScaleTo(model:GetScale() * _settings.PROJECTILE_DRAW_SCALE)
+	end
+	flying[child] = {
+		Model = model,
+		Kind = if row then row.Kind else "Shot",
+		Last = child.Position,
+		Facing = if child.AssemblyLinearVelocity.X < 0 then -1 else 1,
+		Heading = -Vector3.yAxis,
+		Drawn = child.Position,
+	}
 	Module._place(child, 0)
 	model.Parent = effectsFolder
 
@@ -136,8 +148,9 @@ end
 
 --[[
 	Puts a shot's model on its part: rockets and missiles point along their flight, thrown and rolled weapons tumble
-	with the part, a crawling spider bomb stands upright facing the way it crawls, and a burst's shot (a snail) stands
-	upright with its face to the camera.
+	with the part, a crawling spider bomb stands upright facing the way it crawls, and a variety grenade's worm points
+	the way it digs, swaying. The server moves the spider bomb and the worms, so their models glide after their parts
+	instead of jumping with each update.
 ]]
 function Module._place(part: BasePart, deltaTime: number)
 	--[[ Local Variables ]]
@@ -146,6 +159,13 @@ function Module._place(part: BasePart, deltaTime: number)
 	local position: Vector3 = part.Position
 	local moved: Vector3 = if deltaTime > 0 then (position - shot.Last) / deltaTime else part.AssemblyLinearVelocity
 	shot.Last = position
+
+	--[[ Gliding ]]
+
+	if part.Anchored and not part:GetAttribute("Simulated") and deltaTime > 0 then
+		shot.Drawn = shot.Drawn:Lerp(position, 1 - math.exp(-_settings.CRAWL_GLIDE * deltaTime))
+		position = shot.Drawn
+	end
 
 	--[[ Applying ]]
 
@@ -164,8 +184,12 @@ function Module._place(part: BasePart, deltaTime: number)
 		end
 		shot.Model:PivotTo(CFrame.lookAlong(position, Vector3.xAxis * shot.Facing, Vector3.yAxis))
 	elseif shot.Kind == "Shot" then
-		-- The model's right side (where a snail's face is) toward the camera, whichever way it moves
-		shot.Model:PivotTo(CFrame.lookAlong(position, Vector3.xAxis, Vector3.yAxis))
+		-- Head first along its tunnel (the last way it moved), swaying in the arena's plane
+		if moved.Magnitude > 0.1 then
+			shot.Heading = Vector3.new(moved.X, moved.Y, 0).Unit
+		end
+		local sway: number = math.sin(os.clock() * _settings.WORM_SWAY_SPEED * 2 * math.pi) * _settings.WORM_SWAY
+		shot.Model:PivotTo(CFrame.lookAlong(position, shot.Heading, Vector3.zAxis) * CFrame.Angles(0, sway, 0))
 	else
 		-- The part's own turning, from the model's front along +X and its side to the camera, as a snail holds it
 		shot.Model:PivotTo(part.CFrame * CFrame.lookAlong(Vector3.zero, Vector3.xAxis))

@@ -18,6 +18,34 @@ local Liquid = require(script.Parent:FindFirstChild("Liquid")) --- @type Arena_S
 
 local fallingGroups: number = 0
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
+
+--%%%%%%%%%%%%%%%%%%%% Get Box
+
+--[[
+	Returns the corners of a box around every part of a group, with room for each part's turn.
+]]
+--- @param group { BasePart }
+--- @return Vector3, Vector3
+local function getBox(group)
+	--[[ Local Variables ]]
+
+	local low: Vector3 = group[1].Position
+	local high: Vector3 = group[1].Position
+
+	--[[ Measuring ]]
+
+	for _index: number, part: BasePart in ipairs(group) do
+		local reach: Vector3 = Vector3.one * part.Size.Magnitude / 2
+		low = low:Min(part.Position - reach)
+		high = high:Max(part.Position + reach)
+	end
+
+	--[[ Returning ]]
+
+	return low, high
+end
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -162,7 +190,8 @@ end
 
 --[[
 	Waits until a falling group lands, then anchors it where it lies and lets the liquid around it move. A group that
-	falls far below the arena is removed.
+	falls far below the arena is removed. Either way the liquid looks again at where the group fell from, which is
+	empty now.
 ]]
 --- @param group { BasePart }
 function Module._watch(group, root: BasePart)
@@ -175,6 +204,9 @@ function Module._watch(group, root: BasePart)
 	local killHeight: number = bounds.Position.Y - bounds.Size.Y / 2 - _settings.DEBRIS_KILL_DEPTH
 	local started: number = os.clock()
 	local slowSince: number? = nil
+	local fromLow: Vector3
+	local fromHigh: Vector3
+	fromLow, fromHigh = getBox(group)
 
 	--[[ Watching ]]
 
@@ -201,21 +233,24 @@ function Module._watch(group, root: BasePart)
 
 		--[[ Anchoring ]]
 
-		local low: Vector3 = root.Position
-		local high: Vector3 = root.Position
 		for _index: number, part: BasePart in ipairs(group) do
 			part.Anchored = true
 			local weld: Instance? = part:FindFirstChild("ArenaWeld")
 			if weld then
 				weld:Destroy()
 			end
-			local reach: Vector3 = Vector3.one * part.Size.Magnitude / 2
-			low = low:Min(part.Position - reach)
-			high = high:Max(part.Position + reach)
 		end
+		local low: Vector3
+		local high: Vector3
+		low, high = getBox(group)
 		Liquid.Refresh(low, high)
 		break
 	end
+
+	--[[ Clearing ]]
+
+	-- Where it hung is open now: without this the liquid kept treating it as ground
+	Liquid.Refresh(fromLow, fromHigh)
 
 	--[[ Saving ]]
 

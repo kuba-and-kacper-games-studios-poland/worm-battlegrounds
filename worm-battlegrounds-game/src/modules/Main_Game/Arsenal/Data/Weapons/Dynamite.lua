@@ -9,7 +9,7 @@ local _data = {
 	--[[ Behavior ]]
 
 	Kind = "Bouncer",
-	Aim = "Arc",
+	Aim = "Feet",
 	Wind = false,
 
 	--[[ Damage ]]
@@ -26,13 +26,14 @@ local _data = {
 
 	--[[ Launch ]]
 
-	MinSpeed = 15,
-	MaxSpeed = 80,
+	MinSpeed = 0,
+	MaxSpeed = 0,
 
 	--[[ Extras ]]
 
+	Fuse = 3.5,
 	Elasticity = 0.2,
-	BurstOnContact = true,
+	Retreat = 3,
 }
 
 return _data

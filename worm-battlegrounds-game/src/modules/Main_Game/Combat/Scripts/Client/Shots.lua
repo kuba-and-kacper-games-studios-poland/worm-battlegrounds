@@ -87,6 +87,10 @@ function Module._onShot(id: number, kind: string, name: string, start: number, p
 	body.Start = start
 
 	local part: Part = Ballistics.MakePart(kind, name, body.Position)
+	part.Size *= _settings.PROJECTILE_DRAW_SCALE
+
+	-- Moved here every frame, so Flight draws its model right on it
+	part:SetAttribute("Simulated", true)
 	part.Parent = effectsFolder
 
 	--[[ Saving ]]
@@ -97,6 +101,7 @@ function Module._onShot(id: number, kind: string, name: string, start: number, p
 		Part = part,
 		History = { [0] = Ballistics.GetState(body) },
 		Offset = Vector3.zero,
+		LastBounce = 0,
 	}
 	shots[id] = shot
 
@@ -213,7 +218,7 @@ end
 
 --[[
 	Steps a shot's copy up to a step, keeping each step's state for rewinding, never more than MAX_CATCH_UP steps at
-	once, so a long stall doesn't freeze the screen.
+	once, so a long stall doesn't freeze the screen. A bounce on the way plays Shot_Bounce.
 ]]
 --- @param shot Combat_ClientShot
 function Module._catchUp(shot, target: number)
@@ -225,9 +230,26 @@ function Module._catchUp(shot, target: number)
 	--[[ Stepping ]]
 
 	while body.Step < target and body.Step < limit do
+		local before: Vector3 = body.Velocity
 		Ballistics.Step(body, world)
 		shot.History[body.Step] = Ballistics.GetState(body)
 		shot.History[body.Step - HISTORY_STEPS] = nil
+
+		-- A stopped or sunk shot is bursting, not bouncing
+		local change: number = (body.Velocity - before).Magnitude
+		if change >= _settings.BOUNCE_SOUND_SPEED and not body.Stopped and not body.Sunk and os.clock() - shot.LastBounce >= _settings.BOUNCE_SOUND_GAP then
+			shot.LastBounce = os.clock()
+			I.Sound.Play({
+				Name = "Shot_Bounce",
+				Location = body.Position,
+				SoundGroup = "SFX",
+				Volume = math.clamp(change / 80, 0.15, 0.6),
+				RollOffMin = _settings.SOUND_ROLLOFF_MIN,
+				RollOffMax = _settings.SOUND_ROLLOFF_MAX,
+				PitchMin = 0.9,
+				PitchMax = 1.15,
+			})
+		end
 	end
 end
 

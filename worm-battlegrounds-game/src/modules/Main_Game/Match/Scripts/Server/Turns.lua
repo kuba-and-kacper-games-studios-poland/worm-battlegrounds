@@ -31,6 +31,10 @@ local shotFired: boolean = false
 local shotResolved: boolean = false
 local random: Random = Random.new()
 
+-- When the turn playing now runs out (os.clock), and the length an admin set for every turn (nil is TURN_SECONDS)
+local turnDeadline: number = 0
+local turnSeconds: number? = nil
+
 --[[ World ]]
 
 local matchFolder: Folder
@@ -150,7 +154,7 @@ function Module.RunTurn()
 	matchFolder:SetAttribute("Wind", random:NextInteger(-_settings.WIND_MAX, _settings.WIND_MAX))
 	matchFolder:SetAttribute("TurnOrder", table.concat(Module._getUpcoming(), ","))
 	matchFolder:SetAttribute("ActiveId", participantId)
-	matchFolder:SetAttribute("TurnEndsAt", I.S.Workspace:GetServerTimeNow() + _settings.TURN_SECONDS)
+	Module._setDeadline(turnSeconds or _settings.TURN_SECONDS)
 	setPhase("Turn")
 	I.Topic.Publish("Match_TurnStarted", participantId)
 
@@ -162,13 +166,12 @@ function Module.RunTurn()
 
 	--[[ Waiting ]]
 
-	-- The turn ends with a shot, the timer, the snail going out, or its player leaving
-	local deadline: number = os.clock() + _settings.TURN_SECONDS
-	while os.clock() < deadline and not shotFired and model:GetAttribute("Alive") and (participant.IsBot or participant.Connected) do
+	-- The turn ends with a shot, the timer (or an admin skipping it), the snail going out, or its player leaving
+	while os.clock() < turnDeadline and not shotFired and model:GetAttribute("Alive") and (participant.IsBot or participant.Connected) do
 		task.wait()
 	end
-	I.SnailControl.EndTurn(participantId)
 
+	-- Firing took the snail back already, or left it running from its Dynamite until the shot is over
 	if shotFired then
 		setPhase("Flight")
 		local flightEnd: number = os.clock() + _settings.MAX_FLIGHT
@@ -176,6 +179,7 @@ function Module.RunTurn()
 			task.wait()
 		end
 	end
+	I.SnailControl.EndTurn(participantId)
 
 	--[[ Settling ]]
 
@@ -208,6 +212,45 @@ end
 ]]
 function Module.OnShotResolved()
 	shotResolved = true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Skip
+
+--[[
+	Ends the turn playing now, as if its timer ran out. A shot already in flight still lands first.
+]]
+function Module.Skip()
+	turnDeadline = 0
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Turn Seconds
+
+--[[
+	Sets how long every turn lasts from now on, the one playing now too, until the server closes; nil goes back to
+	TURN_SECONDS. For testing.
+]]
+function Module.SetTurnSeconds(seconds: number?)
+	--[[ Saving ]]
+
+	turnSeconds = seconds
+
+	--[[ Applying ]]
+
+	if matchFolder:GetAttribute("Phase") == "Turn" then
+		Module._setDeadline(seconds or _settings.TURN_SECONDS)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Deadline
+
+--[[
+	Makes the turn playing now run out in a number of seconds, on the server and on every player's timer.
+]]
+function Module._setDeadline(seconds: number)
+	--[[ Saving ]]
+
+	turnDeadline = os.clock() + seconds
+	matchFolder:SetAttribute("TurnEndsAt", I.S.Workspace:GetServerTimeNow() + seconds)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Settle

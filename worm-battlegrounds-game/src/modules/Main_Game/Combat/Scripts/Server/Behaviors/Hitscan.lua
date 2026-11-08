@@ -13,6 +13,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 local Projectiles = require(script.Parent.Parent:FindFirstChild("Projectiles")) --- @type Combat_Server_Projectiles
 local Blast = require(script.Parent.Parent:FindFirstChild("Blast")) --- @type Combat_Server_Blast
+local Ballistics = require(script.Parent.Parent.Parent:FindFirstChild("Helpers"):FindFirstChild("Ballistics")) --- @type Combat_Ballistics
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -60,7 +61,7 @@ function Module.Run(shot)
 		local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
 		local result: RaycastResult? = Projectiles.Cast(shot.Origin, shot.Origin + direction * range, shot.Shooter)
 		local landed: Vector3 = if result then result.Position else shot.Origin + direction * range
-		local snail: Model? = Projectiles.GetSnail(result)
+		local snail: Model? = Ballistics.GetSnail(result)
 
 		if snail then
 			shot.Damage += Blast.Hit(snail.Name, row.PerBulletDamage or 0, direction * push, shot.ItemId, shot.ParticipantId, landed)

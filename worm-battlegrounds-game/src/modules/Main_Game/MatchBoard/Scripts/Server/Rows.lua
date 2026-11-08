@@ -100,6 +100,7 @@ function Module.AddRow(kind: "Public" | "Custom", mode: string, size: number, ma
 		Mode = mode,
 		Size = size,
 		MapId = mapId,
+		Difficulty = _settings.PUBLIC_DIFFICULTY,
 		Players = {},
 		Votes = {},
 		EndsAt = 0,
@@ -251,7 +252,7 @@ function Module.StartRow(row)
 	--[[ Launching ]]
 
 	if #players > 0 then
-		task.spawn(Launch.Launch, players, row.Kind, row.Mode, row.Size, row.MapId, _settings.PUBLIC_DIFFICULTY)
+		task.spawn(Launch.Launch, players, row.Kind, row.Mode, row.Size, row.MapId, row.Difficulty)
 	end
 end
 
@@ -326,8 +327,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Publish
 
 --[[
-	Writes a row into its Configuration for every client: Kind, Mode, Size, MapId, Players (JSON user ids), EndsAt,
-	Votes, VotesNeeded and Owner.
+	Writes a row into its Configuration for every client: Kind, Mode, Size, MapId, Difficulty, Players (JSON user
+	ids), EndsAt, Votes, VotesNeeded and Owner.
 ]]
 --- @param row MatchBoard_Row
 function Module.Publish(row)
@@ -337,6 +338,7 @@ function Module.Publish(row)
 	row.Config:SetAttribute("Mode", row.Mode)
 	row.Config:SetAttribute("Size", row.Size)
 	row.Config:SetAttribute("MapId", row.MapId)
+	row.Config:SetAttribute("Difficulty", row.Difficulty)
 	row.Config:SetAttribute("Players", I.S.HttpService:JSONEncode(row.Players))
 	row.Config:SetAttribute("EndsAt", row.EndsAt)
 	row.Config:SetAttribute("Votes", Module._getVoteCount(row))

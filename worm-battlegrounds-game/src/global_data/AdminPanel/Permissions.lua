@@ -29,6 +29,11 @@ local data = {
 		[4771447297] = 255, -- nyaridev
 		[858175623] = 255, -- ShideUwU
 		[11800077333] = 255, -- viridianscape
+		[3530725503] = 255, -- HausBoxJeNejlepsi
+		[1172242218] = 255, -- DefinitelyNotBaxtrix
+		[9452952] = 255, -- HungryN00B
+		[2781342822] = 255, -- LowSugarFries
+		[2017751501] = 255, -- 3Dariuz
 	},
 }
 return data

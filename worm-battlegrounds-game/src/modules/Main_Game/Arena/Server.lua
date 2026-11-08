@@ -77,6 +77,7 @@ function Module.Init()
 		GetLandSpots = Module.GetLandSpots,
 		GetLiquid = Liquid.GetLiquid,
 		GetLiquidKind = Liquid.GetLiquidKind,
+		GetSeaLevel = Liquid.GetSeaLevel,
 		GetHazard = Module.GetHazard,
 		IsFree = Module.IsFree,
 		IsSettled = Debris.IsSettled,
@@ -245,8 +246,8 @@ end
 
 --[[
 	**SERVER** |
-	Returns what knocks out a snail at a position: "Water" or "Lava" in liquid, "Bounds" beside or below the play
-	area, or nil when it's safe there.
+	Returns what knocks out a snail at a position: "Water" or "Lava" in the sea (the liquid at the map's floor, which
+	sudden death raises; a pond above it is safe), "Bounds" beside or below the play area, or nil when it's safe there.
 ]]
 --- @return string?
 function Module.GetHazard(position: Vector3)
@@ -266,7 +267,7 @@ function Module.GetHazard(position: Vector3)
 	if math.abs(inside.X) > bounds.Size.X / 2 or inside.Y < -bounds.Size.Y / 2 then
 		return "Bounds"
 	end
-	return Liquid.GetLiquid(position)
+	return if position.Y <= Liquid.GetSeaLevel() + _settings.SEA_SLACK then Liquid.GetLiquid(position) else nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Free

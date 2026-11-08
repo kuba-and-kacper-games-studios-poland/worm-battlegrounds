@@ -16,7 +16,7 @@ local _settings = {
 
 	-- Shots a weapon's burst sends out (the projectile part's name) that may have a model in Assets/Arsenal/Projectiles
 	--- @type { string }
-	BURST_SHOTS = { "Snail" },
+	BURST_SHOTS = { "Worm" },
 }
 
 return _settings

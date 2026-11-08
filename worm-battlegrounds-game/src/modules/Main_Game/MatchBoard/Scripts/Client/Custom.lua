@@ -24,6 +24,7 @@ local boardFolder: Folder
 local pickedMap: string = _settings.MAP_POOL[1]
 local pickedMode: string = "Deathmatch"
 local pickedSize: number = 4
+local pickedDifficulty: string = "None"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -88,8 +89,14 @@ function Module.Start()
 			Module._refreshChoices()
 		end)
 	end
+	for _index: number, difficulty: string in ipairs(_settings.CUSTOM_DIFFICULTIES) do
+		I.Interact.OnPress(Module._getButton(`S_Bots{difficulty}`), function()
+			pickedDifficulty = difficulty
+			Module._refreshChoices()
+		end)
+	end
 	I.Interact.OnPress(Module._getButton("S_Create"), function()
-		I.Network.Fire("MatchBoard_CreateCustom", pickedMap, pickedMode, pickedSize)
+		I.Network.Fire("MatchBoard_CreateCustom", pickedMap, pickedMode, pickedSize, pickedDifficulty)
 	end)
 	I.Interact.OnPress(Module._getButton("S_Start"), function()
 		I.Network.Fire("MatchBoard_StartCustom")
@@ -141,7 +148,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Choices
 
 --[[
-	Marks the picked map, mode and player count.
+	Marks the picked map, mode, player count and bots.
 ]]
 function Module._refreshChoices()
 	--[[ Applying ]]
@@ -154,6 +161,9 @@ function Module._refreshChoices()
 	end
 	for _index: number, size: number in ipairs({ 2, 4, 6, 8 }) do
 		Module._setPicked(elems["Create"]:FindFirstChild(`S_Players{size}`, true), size == pickedSize)
+	end
+	for _index: number, difficulty: string in ipairs(_settings.CUSTOM_DIFFICULTIES) do
+		Module._setPicked(elems["Create"]:FindFirstChild(`S_Bots{difficulty}`, true), difficulty == pickedDifficulty)
 	end
 end
 
@@ -191,7 +201,9 @@ function Module._refreshRoom()
 	local members = I.S.HttpService:JSONDecode(room:GetAttribute("Players") or "[]") --- @type { number }
 	local mapRow = _settings.MAPS[room:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
 	local owner: boolean = room:GetAttribute("Owner") == I.S.Players.LocalPlayer.UserId
-	elems["Info"].Text = `{room:GetAttribute("Mode")} • {if mapRow then mapRow.Name else ""} • {#members} / {room:GetAttribute("Size")} players`
+	local difficulty: string = room:GetAttribute("Difficulty")
+	local bots: string = if difficulty == "None" then "No bots" else `{difficulty} bots`
+	elems["Info"].Text = `{room:GetAttribute("Mode")} • {if mapRow then mapRow.Name else ""} • {#members} / {room:GetAttribute("Size")} players • {bots}`
 	Module._getButton("S_Start").Parent.Visible = owner
 
 	--[[ Members ]]

@@ -6,6 +6,9 @@
 local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "Match"
 
+--- @type Match_Settings
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
 
 local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
@@ -89,6 +92,10 @@ function Module.Init()
 
 		Play = Phases.Play,
 		Host = Phases.Host,
+		SkipTurn = Turns.Skip,
+		SetTurnSeconds = Turns.SetTurnSeconds,
+		SetWind = Module.SetWind,
+		SetRound = Module.SetRound,
 
 		--[[ Methods ]]
 
@@ -118,6 +125,26 @@ function Module.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Set Wind
+
+--[[
+	**SERVER** |
+	Sets this turn's wind, kept between -WIND_MAX and WIND_MAX; the next turn rolls its own. For testing.
+]]
+function Module.SetWind(wind: number)
+	matchFolder:SetAttribute("Wind", math.clamp(math.round(wind), -_settings.WIND_MAX, _settings.WIND_MAX))
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Round
+
+--[[
+	**SERVER** |
+	Sets the round the match is on; from SUDDEN_DEATH_ROUND, the next turn starts sudden death. For testing.
+]]
+function Module.SetRound(round: number)
+	matchFolder:SetAttribute("Round", math.max(math.round(round), 1))
+end
 
 --%%%%%%%%%%%%%%%%%%%% On Snail Died
 

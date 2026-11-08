@@ -47,8 +47,11 @@ local liquidFolder: Folder?
 local probe: Part?
 local changed: boolean = false
 
--- The liquid the map was built with, which sudden death raises
+-- The liquid of the map's sea, which sudden death raises
 local mapKind: string? = nil
+
+-- The sea's surface: the top of the liquid that starts at the map's floor, raised by sudden death; ponds above it are safe
+local seaLevel: number = -math.huge
 local blockParts = {} --- @type { Part }
 
 -- Each liquid's colour on this map: its marker's Arena_LiquidColor, else LIQUID_COLORS
@@ -168,7 +171,8 @@ function Module.Build()
 	cols = 0
 	rows = 0
 	changed = false
-	mapKind = if markers[1] then markers[1]:GetAttribute("Arena_Liquid") else nil
+	mapKind = nil
+	seaLevel = -math.huge
 	blockParts = {}
 	colors = table.clone(_settings.LIQUID_COLORS)
 	for _index: number, marker: BasePart in ipairs(markers) do
@@ -181,6 +185,14 @@ function Module.Build()
 	local bottom: number = bounds.Position.Y - bounds.Size.Y / 2
 	local top: number = bounds.Position.Y + bounds.Size.Y / 2
 	local ground: NumberRange = Loader.GetGroundDepth()
+
+	-- The sea is the liquid that starts at the map's floor (a pond on the ground above it isn't)
+	for _index: number, marker: BasePart in ipairs(markers) do
+		if marker.Position.Y - marker.Size.Y / 2 <= bottom + CELL then
+			mapKind = marker:GetAttribute("Arena_Liquid")
+			seaLevel = math.max(seaLevel, marker.Position.Y + marker.Size.Y / 2)
+		end
+	end
 
 	cols = math.floor(bounds.Size.X / CELL)
 	rows = math.ceil((top - bottom) / CELL)
@@ -328,6 +340,7 @@ function Module.RaiseLiquid(rowsToFill: number)
 		end
 		if any then
 			filled += 1
+			seaLevel = math.max(seaLevel, origin.Y + (cy + 1) * CELL)
 			if filled >= rowsToFill then
 				break
 			end
@@ -679,10 +692,22 @@ function Module.GetLiquid(position: Vector3)
 	return _settings.LIQUID_KINDS[buffer.readu8(liquid, cy * cols + cx)]
 end
 
+--%%%%%%%%%%%%%%%%%%%% Get Sea Level
+
+--[[
+	**SERVER** |
+	Returns the height of the sea's surface: the liquid that starts at the map's floor, raised by sudden death
+	(-math.huge on a map without a sea, until sudden death raises one).
+]]
+--- @return number
+function Module.GetSeaLevel()
+	return seaLevel
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Liquid Kind
 
 --[[
-	Returns the liquid the loaded map was built with ("Water" or "Lava"), or nil when it has none.
+	Returns the liquid of the loaded map's sea ("Water" or "Lava"), or nil when it has none.
 ]]
 --- @return string?
 function Module.GetLiquidKind()

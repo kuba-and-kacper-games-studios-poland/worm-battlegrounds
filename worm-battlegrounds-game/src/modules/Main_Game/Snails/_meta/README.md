@@ -2,7 +2,7 @@
 
 The snail bodies. Each participant's snail is an invisible ball held on the arena's plane and upright, wearing a skin
 model, with its state in attributes others read: health, team colour, alive or ghost. The server spawns snails, hurts,
-heals and throws them, knocks them out in liquid or out of bounds, charges fall damage when they land, and turns
+heals and throws them, knocks them out in the sea (Arena's `GetHazard`: a pond above it is safe) or out of bounds, charges fall damage when they land, and turns
 knocked-out snails into floating ghosts. Clients put a SnailTag over every snail (name, health number and bar in team
 colour, the turn marker on the active snail with the turn's seconds for everyone but its own player) and an outline in
 its team's colour around it, pop a damage number when its health drops, draw the gear a snail wears while it works (an open parachute, a
@@ -14,7 +14,7 @@ attributes on the snail model, so the module creates no remotes.
 | Folder | `src/modules/Main_Game/Snails` |
 | Runs on | Server, Client |
 | Exposes | `I.Snails` (server: bodies and health; client: lookups) |
-| Uses | `I.Arena` (plane, hazards), `I.Create`, `I.Dirs.Assets` (skins), `I.G_Arsenal` (gear models), `I.AdminPanel_CommandBar` |
+| Uses | `I.Arena` (plane, hazards), `I.Create`, `I.Dirs.Assets` (skins), `I.G_Arsenal` (gear models), `I.Sound`, `I.AdminPanel_CommandBar` |
 
 ## Files
 
@@ -27,10 +27,11 @@ attributes on the snail model, so the module creates no remotes.
 | `Scripts/Server/Health.lua` | Damage, heal, knockback, kill credit, knockouts and ghosts, the `Snails_Died` Topic |
 | `Scripts/Server/Hazards.lua` | Each frame: liquid and bounds along each snail's path since the last frame, fall tracking and fall damage |
 | `Scripts/Client/Tags.lua` | SnailTag billboards (team colour, gold for VIP, the level, the health number and bar in team colour, the active snail's marker and turn timer), the `TeamOutline` Highlight, and DamagePop numbers (when the player's `DamageNumbers` setting is on), each sized with the screen by `I.ScreenScale.AddBillboard` |
-| `Scripts/Client/Shell.lua` | The shell break: hides the skin's `SHELL_PART` on this screen while the snail's health is under `SHELL_BREAK_HEALTH` and throws chips in its colours when it breaks; healing back up shows it again |
+| `Scripts/Client/Shell.lua` | The shell break: hides the skin's `SHELL_PART` on this screen while the snail's health is under `SHELL_BREAK_HEALTH` and throws chips in its colours when it breaks, with `Snail_ShellBreak`; healing back up shows it again |
+| `Scripts/Client/Sounds.lua` | Every snail's sounds on this client, from its ball's speed and its attributes: `Snail_Land` after a fall, and for the active snail `Snail_Step` while it walks, `Snail_Jump`, and `Snail_Jetpack` (looped) while its jetpack climbs; `Snail_Hurt` when it loses health; `Snail_Splash`, `Snail_Burn` or `Snail_KnockedOut` when it's knocked out in water, lava or otherwise (`Match_KnockedOut`) |
 | `Scripts/Client/Gear.lua` | The gear a snail wears: a copy of each `GEAR` utility's Arsenal model while its attribute is set and the snail is in play, moved onto its ball every frame |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `snails` command |
-| `_meta/_types.lua` | `Snails_Participant`, who a snail belongs to; `Snails_Gear`, a `GEAR` row |
+| `_meta/_types.lua` | `Snails_Participant`, who a snail belongs to; `Snails_Gear`, a `GEAR` row; `Snails_SoundState`, what a snail's sounds remember between frames |
 
 ## API
 
@@ -68,7 +69,7 @@ I.Snails.Damage(participant.Id, 45, attackerId, "Bazooka")
 
 ## Network
 
-No remotes: clients read the snail models' attributes.
+No remotes: clients read the snail models' attributes. The server also writes `LastAttacker` (the id of whoever last hurt or pushed the snail, never itself), which bots read to hold a grudge.
 
 ### Server
 
@@ -98,6 +99,10 @@ No remotes: clients read the snail models' attributes.
 
 | `POP_RISE`, `POP_TWEENINFO` | `3`, 1 s quad out | How far a damage number rises while it fades, and how |
 | `GEAR` | Parachute (`Parachute`, 4.9 up), Jetpack (`JetpackFuel`, 2.4 behind, 0.4 up, on the back of the shell) | The utilities a snail wears: the snail attribute that shows each, and its RootPart's offset in the ball's space (−Z ahead) |
+| `STEP_SOUND_DISTANCE`, `STEP_SOUND_MAX_RISE` | `1.6`, `4` | The active snail squishes a step every this many studs walked, while its upward speed stays under the second |
+| `JUMP_SOUND_SPEED`, `JUMP_SOUND_FROM` | `25`, `5` | It boings when it shoots up past the first from below the second (studs a second) |
+| `LAND_SOUND_SPEED`, `LAND_SOUND_STOP` | `30`, `5` | Any snail thuds when a fall faster than the first stops below the second |
+| `JETPACK_SOUND_RISE`, `JETPACK_SOUND_HOLD` | `8`, `0.12` | The jetpack hums while the active snail wears one and climbs between this and `JUMP_SOUND_SPEED` for the hold, and stops a hold after |
 
 ## In the place
 

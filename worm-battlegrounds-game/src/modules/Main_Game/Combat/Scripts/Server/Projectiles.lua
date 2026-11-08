@@ -154,10 +154,19 @@ function Module.Spawn(kind: string, name: string, position: Vector3, velocity: V
 
 	--[[ Launching ]]
 
+	-- Slowed like simulated shots: the same arc at PROJECTILE_TIME_SCALE of the speed, under that scale squared of gravity
+	local scale: number = _settings.PROJECTILE_TIME_SCALE
 	part.Parent = combatFolder
 	if not anchored then
+		I.Create("VectorForce")({
+			Attachment0 = part:FindFirstChildOfClass("Attachment"),
+			RelativeTo = Enum.ActuatorRelativeTo.World,
+			ApplyAtCenterOfMass = true,
+			Force = Vector3.yAxis * part.AssemblyMass * I.S.Workspace.Gravity * (1 - scale * scale),
+			Parent = part,
+		})
 		part:SetNetworkOwner(nil)
-		part.AssemblyLinearVelocity = velocity
+		part.AssemblyLinearVelocity = velocity * scale
 	end
 
 	--[[ Saving ]]

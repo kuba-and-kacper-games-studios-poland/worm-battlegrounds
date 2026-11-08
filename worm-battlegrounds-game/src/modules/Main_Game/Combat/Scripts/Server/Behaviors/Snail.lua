@@ -35,15 +35,16 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	One of a variety grenade's snails: it crawls one way at SNAIL_SPEED, eating the terrain in front of it, and hurts
-	every snail it touches by the row's Damage a hit, Hits times at most, until SNAIL_LIFETIME runs out.
+	One of a variety grenade's worms: it digs one way at SNAIL_SPEED, eating a tunnel through the terrain, and hurts
+	every snail it touches by the row's Damage a hit, Hits times at most, until SNAIL_LIFETIME runs out or it digs
+	into water or lava.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot, from: Vector3, direction: Vector3)
 	--[[ Local Variables ]]
 
 	local snails = shot.Row.Snails --- @type Arsenal_Snails
-	local part: Part = Projectiles.Spawn("Snail", "Snail", from, Vector3.zero, false, 0, true)
+	local part: Part = Projectiles.Spawn("Snail", "Worm", from, Vector3.zero, false, 0, true)
 	local started: number = os.clock()
 	local lastBite: number = 0
 	local lastHit = {} --- @type { [Model]: number }
@@ -73,7 +74,8 @@ function Module.Run(shot, from: Vector3, direction: Vector3)
 			end
 		end
 
-		if Projectiles.IsLost(part.Position, os.clock() - started) then
+		-- A worm that digs into water or lava drowns there
+		if Projectiles.IsLost(part.Position, os.clock() - started) or I.Arena.GetLiquid(part.Position) then
 			break
 		end
 	end

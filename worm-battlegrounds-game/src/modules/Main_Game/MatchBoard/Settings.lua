@@ -102,6 +102,12 @@ local _settings = {
 	PARTY_BOTS_PER_PLAYER = 1,
 	PARTY_MAX_SIZE = 8,
 
+	--%%%%%%%%%%%%%%%%%%%% Custom
+
+	-- The bots a custom lobby can fill its empty places with, in the order its Bots row shows them; Nightmare is only here
+	--- @type { string }
+	CUSTOM_DIFFICULTIES = { "None", "Easy", "Medium", "Hard", "Nightmare" },
+
 	--%%%%%%%%%%%%%%%%%%%% Gui
 
 	BOARD_GUI_NAME = "MatchBoard",

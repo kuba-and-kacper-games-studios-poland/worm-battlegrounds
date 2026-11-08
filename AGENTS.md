@@ -23,6 +23,7 @@ The game's own decisions (how it uses ume and ume-gui, and its gui look) are in
 | Skill | Use when |
 | --- | --- |
 | `brawl-gui` (`worm-battlegrounds-gui/.claude/skills/brawl-gui/SKILL.md`) | Asked to make or restyle a gui in the game's GUI kit look (Brawl Stars style, the `WormBattlegroundsBrawl` theme), in the gui or as a design option |
+| `train-bots` (`worm-battlegrounds-game/.claude/skills/train-bots/SKILL.md`) | Asked to train, retrain or recalibrate the bots (self-play in Studio), or to teach them something the game added. Only when asked |
 
 ## Working here
 

@@ -106,7 +106,10 @@ function Module._mainLoop()
 				break
 			end
 
-			-- The tutorial match always goes back to the lobby, after the results
+			-- The tutorial match counts as played once it ends, and always goes back to the lobby after the results
+			if metadata.Kind == "Tutorial" then
+				Connection.CompleteTutorial(Connection.GetPlayersInMatch())
+			end
 			local voters = Rematch.Run() --- @type { Player }
 			if metadata.Kind == "Tutorial" then
 				voters = {}
@@ -314,12 +317,16 @@ function Module._drop()
 	matchFolder:SetAttribute("DropMaxY", bounds.Position.Y + bounds.Size.Y / 2 - I.Settings["Arena"].START_TOP_GAP)
 	matchFolder:SetAttribute("DropEndsAt", I.S.Workspace:GetServerTimeNow() + _settings.DROP_SECONDS)
 
-	-- Bots keep the spot over their land; players start on one and can place their own (spots repeat when there are too few)
+	-- Bots pick their land (the tutorial bot keeps its own); players start on one and can place their own (spots repeat when there are too few)
+	local taken = {} --- @type { Vector3 }
 	--- @param participant Match_Participant
 	for index: number, participant in ipairs(participants) do
+		local picks: boolean = participant.IsBot and participant.Difficulty ~= "Tutorial"
+		local spot: Vector3 = if picks then I.Bots.GetStart(participant.Difficulty or "Easy", spots, taken) else spots[(index - 1) % #spots + 1]
+		table.insert(taken, spot)
 		placed[participant.Id] = participant.IsBot
 		Roster.SetInfo(participant.Id, "Placed", participant.IsBot)
-		Module._setDrop(participant.Id, Module._getSkySpot(spots[(index - 1) % #spots + 1]))
+		Module._setDrop(participant.Id, Module._getSkySpot(spot))
 	end
 
 	--[[ Waiting ]]

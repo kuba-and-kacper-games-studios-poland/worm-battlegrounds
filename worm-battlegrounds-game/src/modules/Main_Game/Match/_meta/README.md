@@ -3,12 +3,12 @@
 The match's rules on a match server. It reads the match's metadata (sent by MatchBoard with the teleport; on the
 Studio map, handed over through `I.Match.Host`; on the Match map alone in Studio, `STUDIO_METADATA`), loads the map
 so it shows while everyone arrives, waits for the players (until each one's data has loaded, so their loadout and skin
-can be read), seats them and fills the rest with bots (not in a custom match outside Studio, nor a party match without bots), then
+can be read), seats them and fills the rest with bots (unless the match has none: a party's or a custom lobby's without bots), then
 plays: the drop (each player
 clicks or taps anywhere in the arena a snail fits, out of walls and liquid, to place where their snail lands; it
 ends as soon as every connected player has placed, or after `DROP_SECONDS`), the landing (every snail parachutes
 in: a placed one from its spot, bots and players who didn't place from up to `DROP_HEIGHT` over a spot of land from
-`I.Arena.GetLandSpots`), then turns (`TURN_SECONDS` each, with wind) until one team is left, with
+`I.Arena.GetLandSpots`, which each bot but the tutorial's picks with `I.Bots.GetStart`), then turns (`TURN_SECONDS` each, with wind) until one team is left, with
 sudden death from `SUDDEN_DEATH_ROUND`, after 10 rounds (the liquid rises every turn). Then it ends the match (MatchRewards pays and shows Results), runs the rematch
 vote and sends everyone who didn't vote to the lobby. A player who drops out keeps their seat for `REJOIN_SECONDS`
 and can come back from the lobby; a player who leaves is knocked out. A match that can't play (its map doesn't load, or
@@ -27,7 +27,7 @@ player left stops at the next turn. One match plays at a time.
 | Folder | `src/modules/Main_Game/Match` |
 | Runs on | Server, Client · Match map, Studio map |
 | Exposes | `I.Match` (server, client) |
-| Uses | `I.Snails`, `I.Combat`, `I.Bots`, `I.Arena`, `I.Loadout`, `I.Cosmetics`, `I.Team`, `I.Player`, `I.Config.Metadata`, `I.TeleportExternal`, `I.Tutorial` |
+| Uses | `I.Snails`, `I.Combat`, `I.Bots`, `I.Arena`, `I.Loadout`, `I.Cosmetics`, `I.Team`, `I.Player`, `I.Config.Metadata`, `I.TeleportExternal`, `I.Tutorial`, `I.AdminPanel_CommandBar` |
 | Saves | `Profile.Match` (writes `Rejoin` when a player drops) |
 
 ## Files
@@ -44,6 +44,7 @@ player left stops at the next turn. One match plays at a time.
 | `Scripts/Server/Rematch.lua` | The rematch vote |
 | `Client.lua` | Match state for other client modules |
 | `Scripts/Client/DropPicker.lua` | Picking the drop point: the marker follows the mouse (or the left stick), faded where a snail doesn't fit; a click, a tap or the gamepad's A places it; each DropMarker is sized with the screen by `I.ScreenScale.AddBillboard` |
+| `Scripts/AdminPanel/CommandBar/Server.lua` | The `match` command |
 | `Settings.lua` | `Match_Settings` |
 | `_meta/_types.lua` | `Match_Metadata`, `Match_RosterEntry`, `Match_Participant`, `Match_Placement`, `Match_Stats`, … |
 
@@ -55,6 +56,10 @@ player left stops at the next turn. One match plays at a time.
 | --- | --- | --- |
 | `Play(loaded: boolean?)` | `boolean` | Plays one match on this server (the main loop calls it), loading the map unless `loaded` says it's fresh; `false` when the map didn't load |
 | `Host(players, metadata)` | `boolean` | Studio map only: plays a match the lobby hands over, with these players. `false` while another plays |
+| `SkipTurn()` | | Ends the turn playing now as if its timer ran out; a shot in flight still lands. For testing |
+| `SetTurnSeconds(seconds: number?)` | | How long every turn lasts from now on, the one playing now too, until the server closes; nil is `TURN_SECONDS` again. For testing |
+| `SetWind(wind: number)` | | This turn's wind, kept within ±`WIND_MAX`. For testing |
+| `SetRound(round: number)` | | The round the match is on; from `SUDDEN_DEATH_ROUND` the next turn starts sudden death. For testing |
 | `GetParticipant(participantId)`, `GetParticipantOf(player)` | `Match_Participant?` | A participant by id, or a player's |
 | `GetParticipants()` | `{ Match_Participant }` | Everyone in the match, in roster order |
 | `GetMetadata()` | `Match_Metadata` | The match this server plays |
@@ -114,11 +119,12 @@ player left stops at the next turn. One match plays at a time.
 | Key | Default | What |
 | --- | --- | --- |
 | `WAIT_FOR_PLAYERS` | `20` | Seconds to wait for the roster (each player in the server with their data loaded) before starting |
-| `DROP_SECONDS`, `MAX_LANDING`, `DROP_STICK_SPEED`, `DROP_HEIGHT` | `15`, `12`, `40`, `20` | The drop phase, and how high over its land a snail nobody placed starts its parachute |
+| `DROP_SECONDS`, `MAX_LANDING`, `DROP_STICK_SPEED`, `DROP_HEIGHT` | `10`, `12`, `40`, `20` | The drop phase, and how high over its land a snail nobody placed starts its parachute |
 | `TURN_SECONDS`, `MAX_FLIGHT`, `SETTLE_HOLD`, `MAX_SETTLE` | `15`, `20`, `0.5`, `8` | Turn timing |
 | `WIND_MAX` | `10` | Strongest wind |
 | `SUDDEN_DEATH_ROUND`, `SUDDEN_DEATH_RISE` | `11`, `4` | The round sudden death starts at (after 10 rounds), and how many half-stud rows the liquid rises at the start of every turn from then |
 | `REJOIN_SECONDS`, `REMATCH_SECONDS` | `60`, `20` | How long a dropped seat waits; the rematch vote |
+| `LOBBY_RESEND_SECONDS`, `LOBBY_FAILED_MESSAGE` | `15`, "Couldn't get you to the lobby. Try again!" | A player on the way to the lobby isn't sent again for this long; a teleport that can't start says so, and Lobby works again at once |
 | `TEAM_SIZES`, `TEAMS`, `FFA_COLORS` | | Teams by mode, team names and colours, deathmatch colours |
 | `STUDIO_MAP` | `"Studio"` | The map that runs the lobby and its matches on one server |
 | `STUDIO_METADATA`, `STUDIO_WAIT` | | The Match map alone in Studio: its stand-in match and wait |
@@ -126,5 +132,18 @@ player left stops at the next turn. One match plays at a time.
 ## In the place
 
 Creates `Workspace.Ume.Match`. The DropMarker billboard's holder is `Assets.Match` › `PREFAB | DropMarker` (authored in `Workspace.Ume.ReplicatedStorage_Assets/Match/`: a 1 × 1 × 1 invisible `RootPart`, its `Attachment`, the BillboardGui `U_DropMarker`); clients clone only the billboard and name the copy `DropMarker`. The tutorial match (`Kind = "Tutorial"`) skips the
-rematch: everyone goes back to the lobby after the results. Leaving it early (Leave game, or a match that can't play)
-counts as playing it (`I.Tutorial.CompleteMatch`), so the lobby doesn't send the player straight back.
+rematch: everyone goes back to the lobby after the results. It counts as played (`I.Tutorial.CompleteMatch`, saved at
+once) when it ends, and when a player leaves it early (Leave game, or a match that can't play), so the lobby doesn't
+send the player straight back.
+
+## Commands
+
+`match` (server, level 255):
+
+| Subcommand | Arguments | What |
+| --- | --- | --- |
+| `skip` | | Ends the turn playing now |
+| `time` | `seconds` | Every turn lasts this long, until the server closes; `0` is `TURN_SECONDS` again |
+| `wind` | `wind` | This turn's wind |
+| `round` | `round` | The round (`11` starts sudden death next turn) |
+| `win` | `participantId?` | Knocks out every other team's snails and skips the turn, so the invoker's team wins |

@@ -192,7 +192,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Attacker
 
 --[[
-	Remembers who last hurt or pushed a snail, and with what, unless it did so itself.
+	Remembers who last hurt or pushed a snail, and with what, unless it did so itself; bots read who in its LastAttacker
+	attribute.
 ]]
 function Module._setAttacker(participantId: string, sourceId: string?, itemId: string?)
 	--[[ Checks ]]
@@ -206,6 +207,7 @@ function Module._setAttacker(participantId: string, sourceId: string?, itemId: s
 
 	lastAttackers[participantId] = sourceId
 	lastItems[participantId] = itemId
+	Bodies.Get(participantId):SetAttribute("LastAttacker", sourceId)
 end
 
 return Module

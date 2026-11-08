@@ -37,6 +37,9 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Liquids are a stop-motion stud simulation:** water and lava live in a grid of half-stud cells stepped at 8 fps
   and drawn as merged rectangles in `2022 Small Stud`, so they hop like a brick film. They are the only thing in the
   arena on a grid, and the cells stay fine (never one-stud or bigger blocks).
+- **Only the sea knocks snails out** (the owner's pick, 2026-11-08): the liquid whose marker starts at the bounds'
+  bottom, raised by sudden death (Arena's `GetHazard`, `SEA_SLACK`). A pond higher up, like Desert's oasis, is safe to
+  fall in. Any liquid, ponds too, sets off an explosive shot that touches it.
 
 ## Snails
 
@@ -77,10 +80,33 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   It's driven by the `Health` attribute alone, with no remote. A skin without a `Shell` part never breaks.
 - **Shots fly by the game's own simulation, not Roblox physics:** Combat's `Ballistics` (Scripts/Helpers) steps every
   flying shot the same on the server and every client, on the server's clock, with Worms' arcade rules (bounces that
-  lose speed along the ground, resting and rolling off ledges, shots that sink and fizzle in liquid). The server is
+  lose speed along the ground, resting and rolling off ledges, explosive shots that blow up as they touch liquid). The server is
   the authority (launch, states every 0.1 s, end; it alone decides blasts), and each client simulates its own copy for
   smooth flight, rewinding to the server's state when it drifts. Never give a flying shot Roblox physics or move it by
   replicated parts.
+- **Shots fly in slow motion** (the tester's notes, 2026-11-08): the simulation runs at Combat's
+  `PROJECTILE_TIME_SCALE` (0.5, half speed) along the same paths, so eyes can follow a shot. A thrown bomb's `Fuse`
+  counts its own slowed flight time, so it bursts where it did at full speed; a placed one's (Dynamite) stays in real
+  seconds. Anything that steps a shot (bots' predictions too) counts flight in the shot's own time. Only the piercing spear sinks in liquid; every other shot blows up there.
+- **Strong items start on their cooldown** (2026-11-08): an item with a `Cooldown` waits that many of the player's
+  own turns before its first use too (Combat's `Uses.Reset`, mirrored in the bots' `Sim`), so nobody opens a match
+  with the strongest weapons. Admin `give` and `refill` clear it, for testing.
+- **Server-moved shots glide on clients:** the spider bomb's crawl and the variety grenade's worms move as server
+  parts after landing; clients draw their models gliding after them (Combat's `CRAWL_GLIDE`), and the spider bomb walks
+  up 1-stud steps rather than jumping them. Their throws fly on `Ballistics` like every other shot. Flying shots are
+  drawn `PROJECTILE_DRAW_SCALE` (2) times their size, hits unchanged.
+- **Dynamite is placed, not thrown:** it drops at the snail's feet (`Aim = "Feet"`, no launch speed), the stamina bar
+  fills again and the player keeps moving for its `Retreat` (3 s) before the server takes the snail back, and the fuse
+  (3.5 s) goes off after that.
+- **Bots play like players** (2026-11-08): they walk, climb, jump and fly their jetpack with SnailControl's speeds and
+  stamina (Bots' `Move`), never step into the sea or down a drop that hurts, walk to a spot their shot lands from,
+  close in to swing or place Dynamite and run, and heal when hurt. Their snails stay server-owned.
+- **Bots think with a trained brain** (2026-11-08): each turn the Bots module's brain plans with the game's own
+  simulation (Combat's shot bodies, blasts, throws, craters and the sea) and scores every plan with its difficulty's
+  genome (`Data/Brains.lua`), which self-play in Studio trains (the gym, the `train-bots` skill). Difficulty is skill
+  (`SKILLS`: the hand's error, the wind read, how far it looks, how much it minds the map), never deliberate misses.
+  Nightmare is a secret difficulty, offered only in a custom lobby's Bots row (the owner's pick, 2026-11-08). Retraining, and teaching the bots something the game adds (a
+  weapon, a map object, a hazard), happens only when the owner asks.
 - **A walking snail has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 
@@ -150,8 +176,9 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   Studio); `"Match"` tests the match map alone. On the Studio map the lobby hands each match to `I.Match.Host`, and
   the `InMatch` Player attribute says which half a player is in: every screen, camera and hint that belongs to one
   half follows it instead of assuming its map. Studio saves nothing, so a playtest skips the tutorial match and opens
-  on the lobby; the Workspace attribute `StudioTutorial` (true) plays it. A Studio playtest has one player, so there a
-  custom lobby's owner may start it alone, and bots fill its empty places (live custom matches stay 2 or more, no bots).
+  on the lobby; the Workspace attribute `StudioTutorial` (true) plays it. A custom lobby picks its bots (Off to
+  Nightmare) and its owner may start it alone with bots, which is how one tester plays it in Studio; without bots it needs
+  2 or more players.
 - **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
@@ -160,6 +187,14 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   projectiles, effects and skins other than Classic are made in code or fall back to the Classic snail. Each such spot
   has a `shortcut:` comment or a README line saying it's a placeholder. Never create products, passes or models on
   the owner's behalf.
+- **Match sounds are free Creator Store ids, played by name** (the owner, 2026-11-08: "find roblox ids, no
+  uploading"): every id lives once in `src/global_data/Sound/SoundsList.lua` under its name (`Fire_<itemId>`,
+  `Use_<itemId>`, `Explosion_*`, `Snail_*`, `Turn_*`, `Match_*`), checked to load in Studio, and code plays the
+  name in the `SFX` group. Prefer Roblox's licensed uploads (creators `ProSoundEffects`, `APMOfficial`, `Roblox`) and
+  plain sound effects over rips from other games or memes. Sounds in the world play where they happen within Combat's
+  `SOUND_ROLLOFF_MIN`/`MAX` (the camera sits 45 to 200 studs away, past Roblox's default 100-stud fade); turn and
+  result sounds are 2D. A new weapon or utility gets its `Fire_` or `Use_` row in the same change. They're
+  placeholders until the studio's own sounds: swapping one is a one-line id change.
 - **Panels scale with the screen in position and size:** every game gui's panels are laid out for a 1920 × 1080
   screen. Their positions are screen fractions (`UDim2.fromScale`, never pixel offsets, which don't scale), and their
   size is an `S_ScreenScale` UIScale the ScreenScale module (Utils) sets: by height, by width on a screen narrower
@@ -203,3 +238,10 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   (MatchRewards' `PARTY_NO_BOTS_SHARE`).
 - **Check guis shown together for overlaps** before calling a layout done: PC sizes from 1024 × 768 to 3840 × 2160,
   tablets, and phones down to 667 × 375.
+
+## Loading
+
+- **A client's Init and Start never wait on other players,** or on anything the server makes once a player has
+  loaded (their data, Replicator folders, `I.G_Player.OnPlayerAdded` instances). The server loads a player's data
+  only after their client has finished starting every module, so such a wait holds up the load of everyone who joins
+  together. Wait on a thread of its own (`task.spawn`), or in `I.OnLoaded`.

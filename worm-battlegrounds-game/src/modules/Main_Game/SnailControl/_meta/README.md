@@ -38,6 +38,8 @@ applies, and the match HUD's touch buttons press the controls through `Hold`.
 | --- | --- | --- |
 | `StartTurn(participantId: string)` | `boolean` | Gives the snail to its player: ownership, full `Stamina`, `CanMove`. False for a snail out of play or one no player here moves (a bot's) |
 | `EndTurn(participantId: string)` | | Takes the snail back: `CanMove` off, server ownership, facing kept, the turn's effects cleared. Call it before anything hits the snail |
+| `Retreat(participantId: string, seconds: number)` | | After the snail placed Dynamite: fills its `Stamina` again and leaves its player moving it for `seconds`, then takes it back (`EndTurn`) |
+| `Refill(participantId: string)` | `boolean` | Fills the snail's `Stamina` again, forgiving what it overspent; `false` when it isn't in play |
 | `ApplyEffect(participantId: string, effect: string, shiny: boolean?)` | `boolean` | `"Parachute"` (falls slowly, no fall damage until it lands), `"Jetpack"` (fuel to fly while holding jump), `"Speed"` (walks faster and further this turn) or `"LowGravity"` (jumps higher, falls slower this turn); shiny copies give a little more |
 
 ### Client: `I.SnailControl`
@@ -99,3 +101,4 @@ Snail attributes it writes: `CanMove` (the owner may move it), `Stamina` (studs 
 | --- | --- |
 | `turn` | `participantId?` |
 | `end` | `participantId?` |
+| `refill` | `participantId?` |

@@ -9,6 +9,14 @@ local _localName = "Combat"
 --- @type Combat_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
+
+local _scripts = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Ballistics = require(_scripts:FindFirstChild("Helpers"):FindFirstChild("Ballistics")) --- @type Combat_Ballistics
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -38,6 +46,12 @@ function Module.Init()
 		GetLaunchVelocity = Module.GetLaunchVelocity,
 		GetWindAcceleration = Module.GetWindAcceleration,
 		PredictArc = Module.PredictArc,
+
+		--[[ Simulation ]]
+
+		NewBody = Ballistics.New,
+		StepBody = Ballistics.Step,
+		GetBodySnail = Ballistics.GetSnail,
 	}
 end
 

@@ -20,6 +20,11 @@ local _settings = {
 	TILE_COLOR = Color3.fromRGB(0, 0, 0),
 	TILE_TRANSPARENCY = 0.7,
 
+	--%%%%%%%%%%%%%%%%%%%% Turn
+
+	-- On the player's own turn, the timer ticks (Turn_Tick) each second from this many seconds left
+	TICK_SOUND_FROM = 5,
+
 	--%%%%%%%%%%%%%%%%%%%% Top Bar
 
 	-- The match's top bar buttons (text until their icons exist), and the question Leave game asks first
@@ -94,6 +99,10 @@ local _settings = {
 
 	-- The marker on a homing missile's target
 	TARGET_COLOR = Color3.fromRGB(255, 70, 70),
+
+	-- The power bar's text with a homing missile in hand: before its target is picked, then until the player aims
+	--- @type { [string]: string }
+	TARGET_HINTS = { Pick = "Click on a target", Shoot = "Shoot!" },
 
 	-- On a pad: how far the right stick must lean to aim
 	STICK_DEADZONE = 0.3,

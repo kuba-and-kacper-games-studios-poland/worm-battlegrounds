@@ -83,6 +83,7 @@ function Module._onResults(placements, stats, earned)
 
 	local myId: string = I.Match.GetMyParticipantId()
 	local myStats = stats[myId] --- @type Match_Stats?
+	local myPlace: number? = nil
 	voted = false
 
 	--[[ Clearing ]]
@@ -114,6 +115,7 @@ function Module._onResults(placements, stats, earned)
 		end
 		row.Parent = elems["Placings"]
 		if placement.ParticipantId == myId then
+			myPlace = placement.Place
 			elems["Result"].Text = `You placed {Module._getOrdinal(placement.Place)}!`
 		end
 	end
@@ -141,6 +143,13 @@ function Module._onResults(placements, stats, earned)
 	I.WidgetManager.Open(_settings.RESULTS_GUI_NAME)
 	if not tickConnection then
 		tickConnection = I.S.RunService.Heartbeat:Connect(Module._tick)
+	end
+
+	--[[ Sound ]]
+
+	-- A fanfare for first place, a sad trombone for the rest; nothing for a spectator
+	if myPlace then
+		I.Sound.Play({ Name = if myPlace == 1 then "Match_Win" else "Match_Lose", SoundGroup = "SFX" })
 	end
 end
 

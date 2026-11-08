@@ -77,6 +77,31 @@ local _settings = {
 		Parachute = { Attribute = "Parachute", Offset = Vector3.new(0, 4.9, 0) },
 		Jetpack = { Attribute = "JetpackFuel", Offset = Vector3.new(0, 0.4, 2.4) },
 	},
+
+	--%%%%%%%%%%%%%%%%%%%% Sounds
+
+	--[[
+		Every client hears a snail from how its ball moves: the active snail squishes a step (Snail_Step) every
+		STEP_SOUND_DISTANCE studs it walks while its upward speed stays under STEP_SOUND_MAX_RISE
+	]]
+	STEP_SOUND_DISTANCE = 1.6,
+	STEP_SOUND_MAX_RISE = 4,
+
+	-- The active snail jumps (Snail_Jump) when it shoots up past JUMP_SOUND_SPEED from below JUMP_SOUND_FROM, in studs a second
+	JUMP_SOUND_SPEED = 25,
+	JUMP_SOUND_FROM = 5,
+
+	-- Any snail lands (Snail_Land) when a fall faster than LAND_SOUND_SPEED stops (slower than LAND_SOUND_STOP)
+	LAND_SOUND_SPEED = 30,
+	LAND_SOUND_STOP = 5,
+
+	--[[
+		The active snail's jetpack hums (Snail_Jetpack, looped) while it wears one and climbs between JETPACK_SOUND_RISE
+		studs a second and JUMP_SOUND_SPEED for JETPACK_SOUND_HOLD seconds (a jump passes through faster), and stops
+		JETPACK_SOUND_HOLD after the climb ends
+	]]
+	JETPACK_SOUND_RISE = 8,
+	JETPACK_SOUND_HOLD = 0.12,
 }
 
 return _settings

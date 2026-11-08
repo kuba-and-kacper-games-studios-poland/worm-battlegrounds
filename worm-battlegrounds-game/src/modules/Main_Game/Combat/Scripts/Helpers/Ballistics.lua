@@ -11,8 +11,11 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
--- One fixed step of the simulation, in seconds: the server and every client step a shot the same way
-local STEP: number = _settings.PROJECTILE_STEP
+--[[
+	The shot's own time in one fixed step of the simulation, in seconds: a real step (PROJECTILE_STEP) slowed by
+	PROJECTILE_TIME_SCALE, so shots fly their usual paths slower. The server and every client step a shot the same way
+]]
+local STEP: number = _settings.PROJECTILE_STEP * _settings.PROJECTILE_TIME_SCALE
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __

@@ -27,7 +27,7 @@ local _data = {
 	--[[ Launch ]]
 
 	MinSpeed = 20,
-	MaxSpeed = 120,
+	MaxSpeed = 150,
 }
 
 return _data

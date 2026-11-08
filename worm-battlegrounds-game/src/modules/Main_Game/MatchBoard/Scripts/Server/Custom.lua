@@ -40,7 +40,7 @@ local Module = {}
 function Module.Init()
 	--[[ Network ]]
 
-	I.Network.GetEvent("MatchBoard_CreateCustom", { "Player", "string", "string", { Type = "number", Min = 2, Max = 8 } }, { RateLimit = 1 })
+	I.Network.GetEvent("MatchBoard_CreateCustom", { "Player", "string", "string", { Type = "number", Min = 2, Max = 8 }, "string" }, { RateLimit = 1 })
 	I.Network.Fired("MatchBoard_CreateCustom", Module.Create)
 	I.Network.GetEvent("MatchBoard_InviteCustom", { "Player", "Player" }, { RateLimit = 2 })
 	I.Network.Fired("MatchBoard_InviteCustom", Module.Invite)
@@ -59,10 +59,11 @@ end
 
 --[[
 	**SERVER** |
-	Makes a custom lobby the player owns, on a map from MAP_POOL, in Deathmatch or Teams, for 2 to 8 snails.
+	Makes a custom lobby the player owns, on a map from MAP_POOL, in Deathmatch or Teams, for 2 to 8 snails, its empty
+	places filled with bots of a CUSTOM_DIFFICULTIES difficulty, or with none.
 ]]
 --- @return boolean
-function Module.Create(player: Player, mapId: string, mode: string, size: number)
+function Module.Create(player: Player, mapId: string, mode: string, size: number, difficulty: string)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return false
@@ -75,10 +76,16 @@ function Module.Create(player: Player, mapId: string, mode: string, size: number
 		return false
 	end
 
+	-- Check if the bots' difficulty is allowed
+	if not table.find(_settings.CUSTOM_DIFFICULTIES, difficulty) then
+		return false
+	end
+
 	--[[ Creating ]]
 
 	Rows.Leave(player)
 	local row = Rows.AddRow("Custom", mode, size, mapId, player.UserId) --- @type MatchBoard_Row
+	row.Difficulty = difficulty
 	table.insert(row.Players, player.UserId)
 	Rows.Publish(row)
 
@@ -166,8 +173,8 @@ end
 
 --[[
 	**SERVER** |
-	The lobby's owner starts it: everyone in it travels to the match, without bots. In Studio the owner may start it
-	alone, and bots fill the empty places (Match's roster), so one tester can play it.
+	The lobby's owner starts it: everyone in it travels to the match, and its bots fill the empty places (Match's
+	roster). A lobby without bots needs 2 or more players; with bots the owner may start it alone.
 ]]
 --- @return boolean
 function Module.Start(player: Player)
@@ -187,9 +194,9 @@ function Module.Start(player: Player)
 		return false
 	end
 
-	-- Check if anyone else is in it
-	if #row.Players < 2 and not I.S.RunService:IsStudio() then
-		Launch._tell({ player }, "Invite at least one more player first.")
+	-- Check if anyone else, or bots, will play
+	if #row.Players < 2 and row.Difficulty == "None" then
+		Launch._tell({ player }, "Invite at least one more player, or add bots.")
 		return false
 	end
 

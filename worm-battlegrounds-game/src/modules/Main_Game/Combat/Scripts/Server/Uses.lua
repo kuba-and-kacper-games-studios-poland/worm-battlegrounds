@@ -57,8 +57,9 @@ end
 
 --[[
 	**SERVER** |
-	Fills every participant's uses for a new match from their loadout (the Bazooka always), with no cooldowns, and
-	tells each player their loadout and uses.
+	Fills every participant's uses for a new match from their loadout (the Bazooka always), each item with a Cooldown
+	already on it, so it waits that many of the player's own turns before its first use, and tells each player their
+	loadout and uses.
 ]]
 function Module.Reset()
 	--[[ Saving ]]
@@ -74,7 +75,9 @@ function Module.Reset()
 			local row = I.G_Arsenal.Get(itemId) --- @type (Arsenal_WeaponData | Arsenal_UtilityData)?
 			if row then
 				uses[participant.Id][itemId] = row.Uses
-				cooldowns[participant.Id][itemId] = 0
+
+				-- Strong items start on their cooldown, as if used just before the first turn (Take)
+				cooldowns[participant.Id][itemId] = if row.Cooldown and row.Cooldown > 0 then row.Cooldown + 1 else 0
 			end
 		end
 		Module._publish(participant)
@@ -107,6 +110,77 @@ function Module.Take(participantId: string, itemId: string)
 	--[[ Publishing ]]
 
 	Module._publish(I.Match.GetParticipant(participantId))
+end
+
+--%%%%%%%%%%%%%%%%%%%% Give
+
+--[[
+	**SERVER** |
+	Adds an item to a participant's loadout for the rest of the match, with its full uses and no cooldown, or fills it
+	again when they have it. Returns false when they aren't in the match or the item doesn't exist. For testing.
+]]
+--- @return boolean
+function Module.Give(participantId: string, itemId: string)
+	--[[ Data ]]
+
+	local participant = I.Match.GetParticipant(participantId) --- @type Match_Participant?
+	local row = I.G_Arsenal.GetAll()[itemId] --- @type (Arsenal_WeaponData | Arsenal_UtilityData)?
+
+	--[[ Checks ]]
+
+	-- Check if they play this match and the item exists
+	if not participant or not uses[participantId] or not row then
+		return false
+	end
+
+	--[[ Saving ]]
+
+	if itemId ~= "Bazooka" and not table.find(participant.Loadout, itemId) then
+		table.insert(participant.Loadout, itemId)
+	end
+	uses[participantId][itemId] = row.Uses
+	cooldowns[participantId][itemId] = 0
+
+	--[[ Publishing ]]
+
+	Module._publish(participant)
+
+	--[[ Returning ]]
+
+	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Refill
+
+--[[
+	**SERVER** |
+	Fills every item a participant has to its full uses and clears its cooldowns. Returns false when they aren't in
+	the match. For testing.
+]]
+--- @return boolean
+function Module.Refill(participantId: string)
+	--[[ Checks ]]
+
+	-- Check if they play this match
+	if not uses[participantId] then
+		return false
+	end
+
+	--[[ Saving ]]
+
+	for itemId: string, _left: number in pairs(uses[participantId]) do
+		local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
+		uses[participantId][itemId] = row.Uses
+		cooldowns[participantId][itemId] = 0
+	end
+
+	--[[ Publishing ]]
+
+	Module._publish(I.Match.GetParticipant(participantId))
+
+	--[[ Returning ]]
+
+	return true
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Turn Started

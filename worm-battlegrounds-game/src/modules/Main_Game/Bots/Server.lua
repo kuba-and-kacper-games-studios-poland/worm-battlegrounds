@@ -9,6 +9,23 @@ local _localName = "Bots"
 --- @type Bots_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
+
+local _scripts = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
+local _data = script:FindFirstAncestor(_localName):FindFirstChild("Data")
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Data
+
+local Brains = require(_data:FindFirstChild("Brains")) --- @type { [string]: Bots_Genome }
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Aim = require(_scripts:FindFirstChild("Server"):FindFirstChild("Aim")) --- @type Bots_Server_Aim
+local Brain = require(_scripts:FindFirstChild("Server"):FindFirstChild("Brain")) --- @type Bots_Server_Brain
+local Gym = require(_scripts:FindFirstChild("Server"):FindFirstChild("Gym")) --- @type Bots_Server_Gym
+local Move = require(_scripts:FindFirstChild("Server"):FindFirstChild("Move")) --- @type Bots_Server_Move
+local Predict = require(_scripts:FindFirstChild("Server"):FindFirstChild("Predict")) --- @type Bots_Server_Predict
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local random: Random = Random.new()
@@ -16,8 +33,8 @@ local random: Random = Random.new()
 -- Names already given out this match
 local usedNames = {} --- @type { [string]: boolean }
 
--- Casts that see what shots hit: terrain and snails in play
-local arcParams: RaycastParams = RaycastParams.new()
+-- Each bot's run of shots at one target from about one spot, which steadies its hand (Aim.GetShaken)
+local rangings = {} --- @type { [string]: Bots_Ranging }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -41,8 +58,11 @@ function Module.Init()
 	------ INITIALIZATION ------
 	----------------------------
 
-	arcParams.CollisionGroup = "Projectile"
-	arcParams.FilterType = Enum.RaycastFilterType.Exclude
+	Aim.Init()
+	Brain.Init()
+	Move.Init()
+	Predict.Init()
+	Gym.Init()
 
 	----------------------------
 	---- ASSIGN TO INSTANCE ----
@@ -54,17 +74,31 @@ function Module.Init()
 
 		CreateParticipant = Module.CreateParticipant,
 		TakeTurn = Module.TakeTurn,
+
+		--[[ Methods ]]
+
+		GetStart = Module.GetStart,
 	}
 end
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+--%%%%%%%%%%%%%%%%%%%% Start
+
+function Module.Start()
+	----------------------------
+	-------- CONNECTIONS -------
+	----------------------------
+
+	Gym.Start()
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
 --%%%%%%%%%%%%%%%%%%%% Create Participant
 
 --[[
 	**SERVER** |
 	Returns a new bot participant for a match: an unused name, its difficulty's loadout and the default skin. The
-	match gives it its team and colour. The first bot of a match (number 1) starts the name list over.
+	match gives it its team and colour. The first bot of a match (number 1) starts the names and the bots' memory over.
 ]]
 --- @return Match_Participant
 function Module.CreateParticipant(difficulty: string, number: number)
@@ -72,6 +106,7 @@ function Module.CreateParticipant(difficulty: string, number: number)
 
 	if number == 1 then
 		usedNames = {}
+		rangings = {}
 	end
 	local name: string = Module._getName()
 
@@ -96,66 +131,175 @@ end
 
 --[[
 	**SERVER** |
-	Plays a bot's turn: thinks for a moment, picks a target and a weapon for its difficulty, solves the shot, misses on
-	purpose often enough to match its HIT_RATE, and fires through Combat like a player. Gives up quietly when the turn
-	ends meanwhile.
+	Plays a bot's turn as a player would. While it thinks (THINK_TIME) its brain plans the turn with its difficulty's
+	trained genome (Data/Brains) and skill (SKILLS): it heals when hurt, walks or flies its jetpack to the spot it
+	picked, plans again from where it ended up if the walk fell short, and fires with its hand's error, which narrows
+	as it keeps shooting at the same target. Gives up quietly when the turn ends meanwhile.
 ]]
 function Module.TakeTurn(participantId: string)
-	--[[ Thinking ]]
-
-	task.wait(random:NextNumber(_settings.THINK_TIME[1], _settings.THINK_TIME[2]))
-
 	--[[ Data ]]
 
 	local participant = I.Match.GetParticipant(participantId) --- @type Match_Participant?
 	local model: Model? = I.Snails.Get(participantId)
 
+	--[[ Local Variables ]]
+
+	local thinkUntil: number = os.clock() + random:NextNumber(_settings.THINK_TIME[1], _settings.THINK_TIME[2])
+
 	--[[ Checks ]]
 
 	-- Check if it's still this bot's turn
-	if not participant or not model or I.Match.GetActive() ~= participantId or I.Match.GetPhase() ~= "Turn" then
+	if not participant or not model or not Module._isTurn(participantId) then
 		return
 	end
 
-	--[[ Choosing ]]
+	-- The tutorial bot only shoots beside the player
+	if participant.Difficulty == "Tutorial" then
+		task.wait(thinkUntil - os.clock())
+		Module._playTutorial(participantId, model)
+		return
+	end
+
+	--[[ Healing ]]
 
 	local difficulty: string = participant.Difficulty or "Easy"
-	local target: Model? = Module._getTarget(model, difficulty)
-	if not target then
+	local genome = Brains[difficulty] or Brains.Hard --- @type Bots_Genome
+	local skill = _settings.SKILLS[difficulty] or _settings.SKILLS.Easy --- @type Bots_Skill
+	model:SetAttribute("Stamina", I.Settings["SnailControl"].STAMINA_STUDS)
+	local heal: string? = Brain.GetHeal(Module._getView(participantId, model), genome)
+	if heal and I.Combat.UseUtility(participantId, heal) then
+		task.wait(_settings.ACTION_PAUSE)
+	end
+
+	--[[ Planning ]]
+
+	local plan = Brain.GetPlan(Module._getView(participantId, model), genome, skill) --- @type Bots_Plan?
+	task.wait(math.max(thinkUntil - os.clock(), 0))
+	if not plan or not Module._isTurn(participantId) or not model:GetAttribute("Alive") then
 		return
 	end
+
+	--[[ Moving ]]
+
+	local row = I.G_Arsenal.Get(plan.ItemId) --- @type Arsenal_WeaponData
+	local flying: boolean = false
+	if plan.Spot.Walk > 0 then
+		flying = Module._walk(participantId, model, plan, row.Retreat ~= nil)
+	end
+
+	-- Check if the turn lasted the walk
+	if not Module._isTurn(participantId) or not model:GetAttribute("Alive") then
+		return
+	end
+
+	-- A walk that ended off its spot plans the shot again from where it stands
+	if (model.PrimaryPart.Position - plan.Spot.Position).Magnitude > _settings.ARRIVE_DISTANCE + _settings.CLOSE_SLACK then
+		plan = Brain.GetPlan(Module._getView(participantId, model), genome, skill, true)
+		if not plan or not Module._isTurn(participantId) then
+			return
+		end
+		row = I.G_Arsenal.Get(plan.ItemId)
+	end
+
+	--[[ Firing ]]
+
+	local angle: number = plan.Angle
+	local power: number = plan.Power
+	if row.Aim ~= "Melee" and row.Aim ~= "Feet" then
+		angle, power = Aim.GetShaken(plan.Angle, plan.Power, skill, Module._countShots(participantId, plan))
+	end
+	if not Module._showAim(participantId, plan.ItemId, angle, if row.Aim == "Feet" then 0 else power) then
+		return
+	end
+	if not I.Combat.Fire(participantId, plan.ItemId, angle, power, plan.Target) then
+		I.Combat.Fire(participantId, "Bazooka", angle, power)
+		return
+	end
+
+	--[[ Running ]]
+
+	-- From placed Dynamite: toward the side with more ground, up into the air when it has fuel
+	if row.Retreat then
+		local position: Vector3 = model.PrimaryPart.Position
+		local reach: number = I.Settings["SnailControl"].WALK_SPEED * row.Retreat
+		local away: number = if Move.GetRunway(position, -1, reach) > Move.GetRunway(position, 1, reach) then -1 else 1
+		Move.WalkTo(model, position.X + away * reach, row.Retreat, if flying then position.Y + _settings.ESCAPE_HEIGHT else nil, function()
+			return true
+		end)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Walk
+
+--[[
+	Walks a bot to its plan's spot, putting its jetpack on first when the spot needs it (higher than a jump, or over a
+	gap) or when it's about to place Dynamite and run, then waits until it stands on the ground. Returns whether it
+	wears a jetpack.
+]]
+--- @param plan Bots_Plan
+--- @return boolean
+function Module._walk(participantId: string, model: Model, plan, placing: boolean)
+	--[[ Local Variables ]]
+
 	local origin: Vector3 = model.PrimaryPart.Position
-	local aimAt: Vector3 = target.PrimaryPart.Position
-
-	-- The tutorial bot shoots at the ground beside the player, never at them
-	if difficulty == "Tutorial" then
-		aimAt += Vector3.new(random:NextNumber(-8, 8), -2, 0)
-	end
-	local itemId: string = Module._getWeapon(participantId, difficulty, (aimAt - origin).Magnitude)
-
-	--[[ Solving ]]
-
-	local angle: number
-	local power: number
-	angle, power = Module._solve(model, itemId, aimAt, difficulty)
-
-	-- Miss on purpose often enough to match the difficulty
-	if random:NextNumber() > (_settings.HIT_RATE[difficulty] or 0.5) then
-		angle += (if random:NextNumber() < 0.5 then -1 else 1) * random:NextNumber(0.08, _settings.MISS_ANGLE)
-		power = math.clamp(power * (1 + random:NextNumber(-_settings.MISS_POWER, _settings.MISS_POWER)), 0, 1)
+	local jump: number = I.Settings["SnailControl"].JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity)
+	local climbTo: number? = if plan.Spot.Position.Y - origin.Y > jump then plan.Spot.Position.Y else nil
+	local keepGoing: () -> boolean = function()
+		return Module._isTurn(participantId)
 	end
 
-	--[[ Aiming ]]
+	--[[ Flying ]]
 
-	-- Everyone watches the bot take aim; the turn may run out meanwhile
-	if not Module._showAim(participantId, itemId, angle, power) then
+	local flying: boolean = (plan.Spot.Fly or climbTo ~= nil or placing) and I.Combat.CanUse(participantId, "Jetpack") and I.Combat.UseUtility(participantId, "Jetpack")
+
+	--[[ Walking ]]
+
+	Move.WalkTo(model, plan.Spot.Position.X, _settings.MOVE_SECONDS, climbTo, keepGoing)
+
+	--[[ Landing ]]
+
+	-- Shoot from the ground, never in mid-air
+	local deadline: number = os.clock() + _settings.LAND_SECONDS
+	task.wait(_settings.ACTION_PAUSE)
+	while not I.Snails.IsGrounded(model.Name) and os.clock() < deadline and keepGoing() do
+		task.wait(0.1)
+	end
+
+	--[[ Returning ]]
+
+	return flying
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play Tutorial
+
+--[[
+	The tutorial bot's turn: it stays put and fires the Bazooka at the ground beside the nearest enemy, never at it.
+]]
+function Module._playTutorial(participantId: string, model: Model)
+	--[[ Local Variables ]]
+
+	local origin: Vector3 = model.PrimaryPart.Position
+	local target: Model? = nil
+	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
+		if other ~= model and (not target or (other.PrimaryPart.Position - origin).Magnitude < (target.PrimaryPart.Position - origin).Magnitude) then
+			target = other
+		end
+	end
+
+	--[[ Checks ]]
+
+	-- Check if anyone is left to aim near
+	if not target then
 		return
 	end
 
 	--[[ Firing ]]
 
-	if not I.Combat.Fire(participantId, itemId, angle, power, aimAt) then
-		I.Combat.Fire(participantId, "Bazooka", angle, power)
+	local aimAt: Vector3 = target.PrimaryPart.Position + Vector3.new(random:NextNumber(4, 8) * (if random:NextNumber() < 0.5 then -1 else 1), -2, 0)
+	local wind: number = I.G_Combat.GetWindAcceleration("Bazooka", I.Match.GetWind())
+	local arc: Vector2 = Aim.GetArcs(origin, aimAt, "Bazooka", wind)[1] or Vector2.new(math.rad(45), 0.6)
+	if Module._showAim(participantId, "Bazooka", arc.X, arc.Y) then
+		I.Combat.Fire(participantId, "Bazooka", arc.X, arc.Y)
 	end
 end
 
@@ -179,7 +323,7 @@ function Module._showAim(participantId: string, itemId: string, angle: number, p
 
 	while true do
 		-- The turn may have run out while the bot solved or aimed
-		if I.Match.GetActive() ~= participantId or I.Match.GetPhase() ~= "Turn" then
+		if not Module._isTurn(participantId) then
 			return false
 		end
 
@@ -200,6 +344,114 @@ function Module._showAim(participantId: string, itemId: string, angle: number, p
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Start
+
+--[[
+	**SERVER** |
+	Returns the land spot a bot parachutes onto, picked by its difficulty's trained genome from the match's spots, apart
+	from those taken already.
+]]
+--- @param spots { Vector3 }
+--- @param taken { Vector3 }
+--- @return Vector3
+function Module.GetStart(difficulty: string, spots, taken)
+	return Brain.GetStart(spots, taken, Brains[difficulty] or Brains.Hard)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Turn
+
+--[[
+	Returns whether a bot may still act: it's its turn, before its shot.
+]]
+--- @return boolean
+function Module._isTurn(participantId: string)
+	return I.Match.GetActive() == participantId and I.Match.GetPhase() == "Turn"
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get View
+
+--[[
+	Returns what a bot knows at this moment, for its brain: its snail and every other one in play, the wind, the
+	round, its stamina, the items it may use now with their uses left, and who hurt it last.
+]]
+--- @return Bots_View
+function Module._getView(participantId: string, model: Model)
+	--[[ Data ]]
+
+	local participant = I.Match.GetParticipant(participantId) --- @type Match_Participant
+
+	--[[ Local Variables ]]
+
+	local snails = {} --- @type { Bots_Snail }
+	local uses = {} --- @type { [string]: number }
+	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
+		if other ~= model then
+			table.insert(snails, Module._getSnail(other))
+		end
+	end
+	for _index: number, itemId: string in ipairs({ "Bazooka", table.unpack(participant.Loadout) }) do
+		if I.Combat.CanUse(participantId, itemId) then
+			uses[itemId] = I.Combat.GetUses(participantId, itemId)
+		end
+	end
+
+	--[[ Returning ]]
+
+	--- @type Bots_View
+	local view = {
+		Self = Module._getSnail(model),
+		Snails = snails,
+		Wind = I.Match.GetWind(),
+		Round = I.Dirs.UmeWorkspace:FindFirstChild("Match"):GetAttribute("Round") or 1,
+		Stamina = model:GetAttribute("Stamina") or 0,
+		Uses = uses,
+		LastAttacker = model:GetAttribute("LastAttacker"),
+	}
+	return view
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Snail
+
+--[[
+	Returns a snail in play as a bot's brain sees it.
+]]
+--- @return Bots_Snail
+function Module._getSnail(model: Model)
+	--- @type Bots_Snail
+	local snail = {
+		Id = model.Name,
+		Model = model,
+		Team = model:GetAttribute("Team"),
+		Position = model.PrimaryPart.Position,
+		Health = model:GetAttribute("Health"),
+	}
+	return snail
+end
+
+--%%%%%%%%%%%%%%%%%%%% Count Shots
+
+--[[
+	Returns how many shots in a row a bot has fired at its plan's target from about the plan's spot, and counts this
+	one: a new target or a spot more than MOVE_STEP studs away starts over.
+]]
+--- @param plan Bots_Plan
+--- @return number
+function Module._countShots(participantId: string, plan)
+	--[[ Local Variables ]]
+
+	local ranging = rangings[participantId] --- @type Bots_Ranging?
+	local same: boolean = ranging ~= nil and ranging.TargetId == plan.TargetId and (ranging.From - plan.Spot.Position).Magnitude <= _settings.MOVE_STEP
+	local shots: number = if same and ranging then ranging.Shots else 0
+
+	--[[ Saving ]]
+
+	rangings[participantId] = { TargetId = plan.TargetId, From = plan.Spot.Position, Shots = shots + 1 }
+
+	--[[ Returning ]]
+
+	return shots
+end
 
 --%%%%%%%%%%%%%%%%%%%% Get Name
 
@@ -224,177 +476,7 @@ function Module._getName()
 	return name
 end
 
---%%%%%%%%%%%%%%%%%%%% Get Target
-
---[[
-	Returns the snail a bot aims at: Easy any enemy, Medium the nearest, Hard the one easiest to knock out (low health,
-	near liquid or the arena's edge), then the nearest.
-]]
---- @return Model?
-function Module._getTarget(model: Model, difficulty: string)
-	--[[ Local Variables ]]
-
-	local team: number = model:GetAttribute("Team")
-	local enemies = {} --- @type { Model }
-	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
-		if other ~= model and other:GetAttribute("Team") ~= team then
-			table.insert(enemies, other)
-		end
-	end
-
-	--[[ Checks ]]
-
-	-- Check if anyone is left to aim at
-	if #enemies == 0 then
-		return nil
-	end
-
-	--[[ Returning ]]
-
-	if difficulty == "Easy" then
-		return enemies[random:NextInteger(1, #enemies)]
-	end
-
-	local origin: Vector3 = model.PrimaryPart.Position
-	local best: Model = enemies[1]
-	local bestScore: number = math.huge
-	for _index: number, enemy: Model in ipairs(enemies) do
-		local position: Vector3 = enemy.PrimaryPart.Position
-		local score: number = (position - origin).Magnitude
-		if difficulty == "Hard" then
-			score += enemy:GetAttribute("Health") * 0.3
-			if I.Arena.GetHazard(position - Vector3.yAxis * 6) then
-				score -= 40
-			end
-		end
-		if score < bestScore then
-			best = enemy
-			bestScore = score
-		end
-	end
-	return best
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Weapon
-
---[[
-	Returns the weapon a bot uses at a distance: Easy mostly the Bazooka; harder bots swing a melee weapon up close,
-	fire a gun at mid range, and otherwise throw their strongest usable arc weapon.
-]]
---- @return string
-function Module._getWeapon(participantId: string, difficulty: string, distance: number)
-	--[[ Local Variables ]]
-
-	local participant = I.Match.GetParticipant(participantId) --- @type Match_Participant
-	local usable = {} --- @type { string }
-	for _index: number, itemId: string in ipairs(participant.Loadout) do
-		if I.G_Arsenal.IsWeapon(itemId) and I.Combat.CanUse(participantId, itemId) then
-			table.insert(usable, itemId)
-		end
-	end
-
-	--[[ Choosing ]]
-
-	if difficulty == "Easy" or difficulty == "Tutorial" then
-		return if #usable > 0 and random:NextNumber() < 0.2 then usable[random:NextInteger(1, #usable)] else "Bazooka"
-	end
-
-	local best: string = "Bazooka"
-	local bestDamage: number = I.G_Arsenal.Get("Bazooka").DamageMax
-	for _index: number, itemId: string in ipairs(usable) do
-		local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
-		local fits: boolean = if row.Aim == "Melee" then distance <= _settings.MELEE_RANGE elseif row.Aim == "Straight" then distance <= _settings.GUN_RANGE elseif row.Aim == "Feet" then false else true
-		local damage: number = row.DamageMax + (row.PerBulletDamage or 0) * (row.Pellets or 0)
-		if fits and damage > bestDamage then
-			best = itemId
-			bestDamage = damage
-		end
-	end
-
-	--[[ Returning ]]
-
-	return best
-end
-
---%%%%%%%%%%%%%%%%%%%% Solve
-
---[[
-	Returns the angle and power a bot fires at to reach a point: straight at it for guns, melee and the homing missile
-	(which steers itself); for arcs, the tried angle and power whose path lands nearest it, with the wind counted on
-	Medium and Hard.
-]]
---- @return number, number
-function Module._solve(model: Model, itemId: string, aimAt: Vector3, difficulty: string)
-	--[[ Local Variables ]]
-
-	local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
-	local origin: Vector3 = model.PrimaryPart.Position
-	local toTarget: Vector3 = aimAt - origin
-	local straight: number = math.atan2(toTarget.Y, toTarget.X)
-
-	--[[ Straight ]]
-
-	if row.Aim ~= "Arc" then
-		return if row.Aim == "Target" then math.rad(if toTarget.X < 0 then 110 else 70) else straight, 0.7
-	end
-
-	--[[ Searching ]]
-
-	local wind: number = if difficulty == "Easy" then 0 else I.G_Combat.GetWindAcceleration(itemId, I.Match.GetWind())
-	local muzzle: number = I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP
-	local bestAngle: number = straight
-	local bestPower: number = 0.6
-	local bestMiss: number = math.huge
-	local tried: number = 0
-	arcParams.FilterDescendantsInstances = { model, I.Dirs.UmeWorkspace:FindFirstChild("Combat") }
-
-	for degrees: number = 5, 175, _settings.ANGLE_STEP do
-		local angle: number = math.rad(degrees)
-		local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
-		for power: number = _settings.POWER_STEP, 1, _settings.POWER_STEP do
-			local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(itemId, angle, power)
-			local landed: Vector3 = Module._getLanding(I.G_Combat.PredictArc(origin + direction * muzzle, velocity, wind, _settings.ARC_SECONDS, _settings.ARC_STEP))
-			local miss: number = (landed - aimAt).Magnitude
-			if miss < bestMiss then
-				bestAngle = angle
-				bestPower = power
-				bestMiss = miss
-			end
-			tried += 1
-			if tried % _settings.SEARCH_BATCH == 0 then
-				task.wait()
-			end
-		end
-	end
-
-	--[[ Returning ]]
-
-	return bestAngle, bestPower
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Landing
-
---[[
-	Returns where a predicted path first hits terrain or a snail, or its last point when it hits nothing.
-]]
---- @param points { Vector3 }
---- @return Vector3
-function Module._getLanding(points)
-	--[[ Searching ]]
-
-	for index: number = 2, #points do
-		local result: RaycastResult? = I.S.Workspace:Raycast(points[index - 1], points[index] - points[index - 1], arcParams)
-		if result then
-			return result.Position
-		end
-	end
-
-	--[[ Returning ]]
-
-	return points[#points]
-end
-
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning
 
 return {
 	_init = Module.Init,

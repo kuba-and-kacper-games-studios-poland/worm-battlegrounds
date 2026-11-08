@@ -21,7 +21,7 @@ local _match_RosterEntry = {}
 --- @field Mode "Deathmatch" | "Duo" | "Trio" | "Quads" | "Teams"
 --- @field Size number
 --- @field MapId string
---- @field Difficulty "Easy" | "Medium" | "Hard" | "Tutorial" | "None"
+--- @field Difficulty "Easy" | "Medium" | "Hard" | "Nightmare" | "Tutorial" | "None"
 ---
 --- # Players #
 ---

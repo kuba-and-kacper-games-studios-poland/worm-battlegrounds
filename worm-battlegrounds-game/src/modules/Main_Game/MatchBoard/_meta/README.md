@@ -10,7 +10,7 @@ the waiting room in the panel's place (the match, the countdown, the players, **
 party leader joins a row for the whole party; a row's `ROW_SECONDS` timer starts when its first player joins, and the
 row starts when it's full, when its timer runs out (bots fill every empty seat, so one player can play Trios alone), or
 when `VOTE_FRACTION` of its players vote to start early. A started row is replaced by a fresh one of its mode.
-**Custom** makes a room that friends are invited into and its owner starts (with 2 or more players; in Studio alone too, the empty places filled with bots, so one tester can play it). Launching builds the match's teams
+**Custom** makes a room that friends are invited into and its owner starts, its empty places filled with bots of the difficulty picked in its Bots row (`CUSTOM_DIFFICULTIES`: Off, Easy, Medium, Hard, and Nightmare, which plays only here). Without bots it needs 2 or more players; with bots its owner may start it alone. Launching builds the match's teams
 (parties stay together), writes the match's metadata and teleports everyone to a reserved server of the Match map.
 On the Studio map (the lobby and the match on one Studio server) it hands the match to `I.Match.Host` instead, and
 refuses while one plays.
@@ -57,10 +57,10 @@ refuses while one plays.
 - `MatchBoard_Vote @ (player: Player)`: vote to start the row early
 - `MatchBoard_PlaySolo @ (player: Player, difficulty: string)`: refused in a party of 2 or more
 - `MatchBoard_PlayParty @ (player: Player, difficulty: string)`: a difficulty or `"None"` (no bots); the leader of a party of 2 or more
-- `MatchBoard_CreateCustom @ (player: Player, mapId: string, mode: string, size: number)`
+- `MatchBoard_CreateCustom @ (player: Player, mapId: string, mode: string, size: number, difficulty: string)`: `difficulty` from `CUSTOM_DIFFICULTIES` (`"None"` for no bots)
 - `MatchBoard_InviteCustom @ (player: Player, target: Player)`
 - `MatchBoard_InviteAnswer @ (player: Player, roomId: string, accept: boolean)`
-- `MatchBoard_StartCustom @ (player: Player)`: the owner, with 2 or more players (any number in Studio)
+- `MatchBoard_StartCustom @ (player: Player)`: the owner, with 2 or more players, or alone with bots
 - `MatchBoard_LeaveCustom @ (player: Player)`
 
 **Send: RemoteEvents**
@@ -70,7 +70,7 @@ refuses while one plays.
 ## Data
 
 Rows are `Configuration`s in `ReplicatedStorage.Ume.MatchBoard`, one per row, with the attributes `Kind`, `Mode`,
-`Size`, `MapId`, `Players` (JSON list of user ids), `Votes`, `VotesNeeded`, `EndsAt` (server time) and `Owner`
+`Size`, `MapId`, `Difficulty` (the bots: `PUBLIC_DIFFICULTY`, or a custom room's pick), `Players` (JSON list of user ids), `Votes`, `VotesNeeded`, `EndsAt` (server time) and `Owner`
 (custom rooms). The match metadata it sends is `Match_Metadata` (Match's types).
 
 ## Settings
@@ -86,6 +86,7 @@ Rows are `Configuration`s in `ReplicatedStorage.Ume.MatchBoard`, one per row, wi
 | `PUBLIC_DIFFICULTY` | `"Medium"` | Bots that fill public matches |
 | `MAPS`, `MAP_POOL` | 7 map rows; `{ "PicnicPlains", "Desert", "RockslideRidge" }` | Map names and sizes; the maps in rotation |
 | `SOLO_DIFFICULTIES` | Easy, Medium, Hard | The bots' difficulties in the setup (a party also gets No bots) |
+| `CUSTOM_DIFFICULTIES` | None, Easy, Medium, Hard, Nightmare | The custom lobby's Bots row; Nightmare is only here |
 | `DIFFICULTY_TEXT`, `REWARD_TEXT` | | What the setup says about each choice, and what a solo match, a party match and a party match without bots pay |
 | `PARTY_BOTS_PER_PLAYER`, `PARTY_MAX_SIZE` | `1`, `8` | Bots per member in a party match with bots, and its most snails |
 | `BOARD_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |

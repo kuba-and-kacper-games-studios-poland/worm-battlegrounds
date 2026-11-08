@@ -20,6 +20,9 @@ local matchFolder: Folder
 -- When each dropped player's snail is knocked out if they don't come back, by participant id
 local rejoinDeadlines = {} --- @type { [string]: number }
 
+-- When each player was last sent to the lobby, so one already on the way isn't sent twice
+local sentAt = setmetatable({}, { __mode = "k" }) --- @type { [Player]: number }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -65,8 +68,9 @@ end
 
 --[[
 	Teleports players to a public lobby. Leaving the tutorial match counts as playing it, so the lobby doesn't send
-	them straight back. On the Studio map they go back to the lobby on this server; on the Match map alone in Studio,
-	which can't teleport, it only says so.
+	them straight back. A player already on the way (the Lobby button, then the rematch vote closing) isn't sent again
+	for LOBBY_RESEND_SECONDS; a teleport that can't start tells the player, who can press again. On the Studio map they
+	go back to the lobby on this server; on the Match map alone in Studio, which can't teleport, it only says so.
 ]]
 --- @param players { Player }
 function Module.SendToLobby(players)
@@ -80,18 +84,7 @@ function Module.SendToLobby(players)
 	--[[ Tutorial ]]
 
 	if Roster.GetMetadata().Kind == "Tutorial" then
-		for _index: number, player: Player in ipairs(players) do
-			local success: boolean
-			local result: any | string?
-			success, result = pcall(function()
-				if I.Tutorial.CompleteMatch(player) then
-					I.Player.GetProfile(player):Save()
-				end
-			end)
-			if not success then
-				warn(`[{_localName}::{script.Name}]: Failed to complete the tutorial for ({player.Name})! - ({result})`)
-			end
-		end
+		Module.CompleteTutorial(players)
 	end
 
 	--[[ Studio Map ]]
@@ -104,10 +97,58 @@ function Module.SendToLobby(players)
 		return
 	end
 
+	--[[ Local Variables ]]
+
+	local going = {} --- @type { Player }
+	for _index: number, player: Player in ipairs(players) do
+		if os.clock() - (sentAt[player] or -math.huge) >= _settings.LOBBY_RESEND_SECONDS then
+			sentAt[player] = os.clock()
+			table.insert(going, player)
+		end
+	end
+
+	-- Check if anyone isn't on the way already
+	if #going == 0 then
+		return
+	end
+
 	--[[ Teleporting ]]
 
-	I.Transition.SetDestination(players, "Back to the lobby…", "")
-	I.TeleportExternal(players, I.Config.PlaceLoader.DefaultPlaceId, "TeleportGui")
+	I.Transition.SetDestination(going, "Back to the lobby…", "")
+	if I.TeleportExternal(going, I.Config.PlaceLoader.DefaultPlaceId, "TeleportGui") then
+		return
+	end
+
+	--[[ Failing ]]
+
+	for _index: number, player: Player in ipairs(going) do
+		sentAt[player] = nil
+		I.Notify.ShowNotification(player, _settings.LOBBY_FAILED_MESSAGE)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Complete Tutorial
+
+--[[
+	Marks the tutorial match played for players and saves it, so the lobby never sends them back to it. Runs when the
+	tutorial match ends and again when they leave it (it marks a player once).
+]]
+--- @param players { Player }
+function Module.CompleteTutorial(players)
+	--[[ Saving ]]
+
+	for _index: number, player: Player in ipairs(players) do
+		local success: boolean
+		local result: any | string?
+		success, result = pcall(function()
+			if I.Tutorial.CompleteMatch(player) then
+				I.Player.GetProfile(player):Save()
+			end
+		end)
+		if not success then
+			warn(`[{_localName}::{script.Name}]: Failed to complete the tutorial for ({player.Name})! - ({result})`)
+		end
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Bring

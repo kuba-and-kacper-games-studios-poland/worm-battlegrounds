@@ -16,7 +16,14 @@ local _settings = {
 	SHOOTER_GRACE = 0.25,
 
 	-- The most a projectile may fly before it bursts where it is, in seconds
-	MAX_PROJECTILE_TIME = 12,
+	MAX_PROJECTILE_TIME = 20,
+
+	--[[
+		Shots fly in slow motion, so players can follow them with their eyes: the same paths at this share of real speed
+		(0.5 is half speed). Gravity, wind, speeds and drag all scale with it, and a thrown bomb's Fuse counts its own
+		flight time, so it bursts at the same point of its path; a placed one's (Dynamite) stays in real seconds
+	]]
+	PROJECTILE_TIME_SCALE = 0.5,
 
 	--%%%%%%%%%%%%%%%%%%%% Projectile Physics
 
@@ -109,6 +116,25 @@ local _settings = {
 
 	DEBRIS_LIFETIME = 2.5,
 
+	--%%%%%%%%%%%%%%%%%%%% Sounds
+
+	--[[
+		Match sounds play where they happen, at full volume within SOUND_ROLLOFF_MIN studs of the camera (it sits 45 to
+		200 studs from the plane) and fading out to SOUND_ROLLOFF_MAX; Snails' sounds use the same range
+	]]
+	SOUND_ROLLOFF_MIN = 150,
+	SOUND_ROLLOFF_MAX = 600,
+
+	-- A blast at least this big (its radius, in studs) plays Explosion_Big, a smaller one Explosion_Small
+	BIG_BLAST_SOUND_RADIUS = 6,
+
+	--[[
+		A bouncing shot plays Shot_Bounce when a bounce changes its speed by at least BOUNCE_SOUND_SPEED studs a second
+		(rolling and gravity never do), at most once every BOUNCE_SOUND_GAP seconds
+	]]
+	BOUNCE_SOUND_SPEED = 15,
+	BOUNCE_SOUND_GAP = 0.12,
+
 	--%%%%%%%%%%%%%%%%%%%% Behaviors
 
 	-- Bomblets fly out of a cluster bomb at a random speed between these, in studs per second
@@ -118,13 +144,21 @@ local _settings = {
 	-- For this long a bomblet flies through everything, so it leaves its cluster bomb's crater, in seconds
 	BOMBLET_GHOST = 0.1,
 
-	-- Snails crawl at SNAIL_SPEED, take a bite of terrain every SNAIL_BITE seconds, and stop after SNAIL_LIFETIME
+	-- A variety grenade's worms dig at SNAIL_SPEED, take a bite of terrain every SNAIL_BITE seconds, and stop after SNAIL_LIFETIME
 	SNAIL_SPEED = 6,
 	SNAIL_BITE = 0.3,
 	SNAIL_LIFETIME = 6,
 
 	-- A crawling spider bomb or a homing missile bursts once this close to a snail, in studs
 	CONTACT_DISTANCE = 2.5,
+
+	--[[
+		A crawling spider bomb walks up a ledge up to CRAWL_STEP_UP studs high (taller is a wall it climbs), steps down
+		one up to CRAWL_STEP_DOWN (deeper and it falls), and waits when its target is within CRAWL_STOP studs across
+	]]
+	CRAWL_STEP_UP = 1.25,
+	CRAWL_STEP_DOWN = 3,
+	CRAWL_STOP = 0.25,
 
 	-- A rolling black hole grenade hops over bumps with this upward speed
 	ROLL_HOP_SPEED = 22,
@@ -165,6 +199,19 @@ local _settings = {
 		Bomblet = Color3.fromRGB(200, 120, 40),
 	},
 	PROJECTILE_SIZE = 1,
+
+	--[[
+		Flying shots are drawn this many times their size, models and plain balls (placed ones like the Dynamite
+		aside); hits still use PROJECTILE_SIZE
+	]]
+	PROJECTILE_DRAW_SCALE = 2,
+
+	-- A worm's model sways from side to side as it digs: how far, in radians, and how fast, in swings a second
+	WORM_SWAY = 0.35,
+	WORM_SWAY_SPEED = 2,
+
+	-- How quickly a model the server moves (a crawling spider bomb, a worm) glides after its part; higher follows closer
+	CRAWL_GLIDE = 18,
 
 	-- shortcut: blasts draw with the particle pictures every Roblox client ships until the studio makes its own
 	--- @type { [string]: string }

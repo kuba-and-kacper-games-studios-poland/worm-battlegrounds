@@ -6,6 +6,9 @@
 local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "MatchHud"
 
+--- @type MatchHud_Settings
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local elems = {} --- @type { [string]: Instance }
@@ -60,8 +63,10 @@ function Module.Start(gui: ScreenGui)
 	matchFolder = I.Match.GetFolder()
 	matchFolder:GetAttributeChangedSignal("Wind"):Connect(Module._refreshWind)
 	matchFolder:GetAttributeChangedSignal("TurnOrder"):Connect(Module._refresh)
+	matchFolder:GetAttributeChangedSignal("SuddenDeath"):Connect(Module._onSuddenDeath)
 	I.Topic.Subscribe("Match_PhaseChanged", Module._refresh)
 	I.Topic.Subscribe("Match_TurnStarted", Module._refresh)
+	I.Topic.Subscribe("Match_TurnStarted", Module._onTurnStarted)
 	I.Topic.Subscribe("Match_MyTurn", Module._refresh)
 	Module._refresh()
 end
@@ -128,9 +133,38 @@ end
 
 --%%%%%%%%%%%%%%%%%%%% Tick
 
+--%%%%%%%%%%%%%%%%%%%% On Turn Started
+
 --[[
-	Counts the turn's seconds down on the turn panel, blank while a shot flies and settles, and fills the stamina bar
-	from the player's snail.
+	Chimes when a turn starts: brighter on the player's own (Turn_Yours) than on anyone else's (Turn_Start).
+]]
+function Module._onTurnStarted()
+	I.Sound.Play({ Name = if I.Match.IsMyTurn() then "Turn_Yours" else "Turn_Start", SoundGroup = "SFX" })
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Sudden Death
+
+--[[
+	Sounds the siren when sudden death starts.
+]]
+function Module._onSuddenDeath()
+	--[[ Checks ]]
+
+	-- Check if sudden death just started
+	if not matchFolder:GetAttribute("SuddenDeath") then
+		return
+	end
+
+	--[[ Playing ]]
+
+	I.Sound.Play({ Name = "Match_SuddenDeath", SoundGroup = "SFX" })
+end
+
+--%%%%%%%%%%%%%%%%%%%% Tick
+
+--[[
+	Counts the turn's seconds down on the turn panel, blank while a shot flies and settles (ticking aloud through the
+	player's own last TICK_SOUND_FROM seconds), and fills the stamina bar from the player's snail.
 ]]
 function Module._tick()
 	--[[ Local Variables ]]
@@ -146,6 +180,9 @@ function Module._tick()
 	if timerText ~= shownTimer then
 		shownTimer = timerText
 		elems["Timer"].Text = timerText
+		if timerText ~= "" and seconds > 0 and seconds <= _settings.TICK_SOUND_FROM and I.Match.IsMyTurn() then
+			I.Sound.Play({ Name = "Turn_Tick", SoundGroup = "SFX" })
+		end
 	end
 
 	--[[ Stamina ]]

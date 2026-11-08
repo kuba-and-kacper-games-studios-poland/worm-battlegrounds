@@ -16,7 +16,7 @@ local _data = {
 
 	DamageMax = 55,
 	DamageEdge = 20,
-	BlastRadius = 6,
+	BlastRadius = 6.9,
 	Knockback = "Medium",
 
 	--[[ Limits ]]
@@ -27,7 +27,7 @@ local _data = {
 	--[[ Launch ]]
 
 	MinSpeed = 15,
-	MaxSpeed = 90,
+	MaxSpeed = 112,
 
 	--[[ Extras ]]
 

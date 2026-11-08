@@ -30,7 +30,7 @@ part, so clients need no code. It creates no remotes or saved data.
 | `Settings.lua` | `Arena_Settings`: carving, debris and liquid numbers |
 | `Scripts/Server/Loader.lua` | Registers the collision groups; creates `Workspace.Ume.Arena`; caches the templates at start (checks each, hides its markers, puts its terrain in the `Terrain` group); clones a template's `Terrain`, `Decor` and `Markers`, notes its floor (the bottom of its lowest bedrock), makes the `Plane`; holds the references the other handlers read |
 | `Scripts/Server/Carver.lua` | `BuildCutter`, the blast's stepped shape (one box per row of the `CARVE_CELL` squares whose centers are within the radius), and the cut with `GeometryService:SubtractAsync` (`SplitApart`) through every anchored terrain part a box reaches, bedrock included, copying name, attributes and collision group onto each piece |
-| `Scripts/Server/Debris.lua` | Contacts between parts, the support search from each carved piece (held up by bedrock whose bottom still reaches the floor; a cut ledge keeps only its biggest piece), numbering the ledges at load, welding and dropping the rest, anchoring them when they land |
+| `Scripts/Server/Debris.lua` | Contacts between parts, the support search from each carved piece (held up by bedrock whose bottom still reaches the floor; a cut ledge keeps only its biggest piece), numbering the ledges at load, welding and dropping the rest, anchoring them when they land; the liquid looks again where a piece landed and where it fell from |
 | `Scripts/Server/Props.lua` | The map's props (`Arena_Prop`: trees, bushes, rocks): after each blast, cuts the blast's stepped shape (Carver's `BuildCutter`) through every part of the ones it reaches (CSG), throws each group of pieces no longer joined to the prop's base, drops the ones whose ground is gone, and fades what falls |
 | `Scripts/Server/Liquid.lua` | The liquid grid: filling it from the markers over several frames, probing which cells terrain fills, the 8 fps step (falling, spreading, then pressure across each connected body), drawing the liquid as merged rectangles |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `arena` command |
@@ -50,7 +50,8 @@ part, so clients need no code. It creates no remotes or saved data.
 | `GetLiquid(position: Vector3)` | `string?` | `"Water"`, `"Lava"` or `nil` at a position |
 | `GetLandSpots(count: number, radius: number)` | `{ Vector3 }` | `count` random spots where a ball of `radius` stands on top of the terrain on any storey (under a floating ledge too; flat enough, out of liquid, below the bounds' top `START_TOP_GAP`), `LAND_SPOT_GAP` apart while there's room; fewer, or none, when the map has too little ground. Where bots and players who don't place start |
 | `IsFree(position: Vector3, radius: number)` | `boolean` | Whether a ball of `radius` fits there for a snail to start from: inside the bounds below their top `START_TOP_GAP`, out of liquid, touching no terrain (the drop's spots) |
-| `GetHazard(position: Vector3)` | `string?` | What knocks a snail out there: `"Water"` or `"Lava"` in liquid, `"Bounds"` beside or below the play area (above it is fine), `nil` when safe |
+| `GetSeaLevel()` | `number` | The sea's surface height, raised by sudden death (`-math.huge` on a map without a sea) |
+| `GetHazard(position: Vector3)` | `string?` | What knocks a snail out there: `"Water"` or `"Lava"` in the sea (no higher than its level plus `SEA_SLACK`; ponds above it are safe), `"Bounds"` beside or below the play area (above it is fine), `nil` when safe |
 | `IsSettled()` | `boolean` | Whether no carved-off debris is still falling |
 
 ## Usage
@@ -95,6 +96,7 @@ No remotes: clients see the arena through Roblox's replication of its parts.
 | `LIQUID_FALL` | `6` | How many cells a falling cell drops in one step |
 | `LIQUID_PROBE_SCALE` | `0.5` | A cell is solid when terrain reaches into a box this share of its size around its center |
 | `LIQUID_BUILD_ROWS_PER_FRAME` | `8` | How many grid rows a map's load probes before it gives the server a frame |
+| `SEA_SLACK` | `1` | Liquid knocks snails out only in the sea (the liquid whose marker starts at the bounds' bottom, raised by sudden death), up to this many studs above its level as it ripples; a pond higher up (Desert's oasis) is safe |
 | `LAND_SPOT_STEP`, `LAND_SPOT_GAP` | `2`, `16` | `GetLandSpots` looks for ground every 2 studs along the arena, on every storey, and keeps spots 16 studs apart while there's room |
 | `LAND_SPOT_MIN_NORMAL` | `0.7` | The steepest ground a land spot may be on (the lowest Y of its normal; 1 is flat) |
 | `START_TOP_GAP` | `20` | Nothing starts in the bounds' top 20 studs (land spots, drop picks): land that high has no room to parachute onto (Match's `DROP_HEIGHT`), and is a map's roof, like Rockslide Ridge's rock ceiling |
@@ -136,7 +138,7 @@ kept in the place's `Workspace._Labs.MapLab._Iterations` (`PicnicPlains_arena_1`
 (`Terrain/Island_1`, x 290 to 512, its `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`) with an oasis
 pool, and two long floating islands above it (`Ledge_1`, x 272 to 364, `Ledge_2`, x 394 to 522, every part with
 `Arena_Floats`); 461 parts named `Sand`, `DarkSand`, `Sandstone`, `DarkSandstone`, `Clay`, `DarkStone`. Markers:
-`Lava` (Y −8 to 4, across the map, first, so it's the liquid sudden death raises) and `Oasis` (`Water`, x 370 to 400,
+`Lava` (Y −8 to 4, across the map: the sea, which knocks snails out and sudden death raises) and `Oasis` (`Water`, x 370 to 400,
 Y 16 to 23). Its 24 props are part-built `Arena_Prop` Models in `Decor/Cacti`, `Trees` (palms), `Bushes`, `Rocks`
 (parts named `Cactus`, `Flower`, `Trunk`, `Ring`, `Leaves`, `Coconut`, `Twig`, `Bush`, `Rock`).
 `RockslideRidge` (built by the owner in Studio, not in MapLab; x 655 to 945) is rock pillars over a yellow sea: eight islands standing on the floor (`Terrain/Island_1`–`8`, their 46

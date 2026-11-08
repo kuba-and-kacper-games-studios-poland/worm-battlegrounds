@@ -41,3 +41,23 @@ local _snails_Participant = {}
 ---
 --- @field Offset Vector3
 local _snails_Gear = {}
+
+--%%%%%%%%%%%%%%%%%%%% Sounds
+
+--- @class Snails_SoundState
+---
+--- # Hurt #
+---
+--- @field Health number
+---
+--- # Moving #
+---
+--- @field LastRise number
+--- @field Walked number
+---
+--- # Jetpack #
+---
+--- @field Climbing number
+--- @field Resting number
+--- @field Jetpack Sound?
+local _snails_SoundState = {}

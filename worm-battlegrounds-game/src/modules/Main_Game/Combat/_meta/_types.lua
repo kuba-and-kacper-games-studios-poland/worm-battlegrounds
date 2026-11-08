@@ -132,6 +132,10 @@ local _combat_Behavior = {}
 ---
 --- @field Part Part
 --- @field Offset Vector3
+---
+--- # Sound #
+---
+--- @field LastBounce number
 local _combat_ClientShot = {}
 
 --- @class Combat_FlyingShot
@@ -145,4 +149,6 @@ local _combat_ClientShot = {}
 ---
 --- @field Last Vector3
 --- @field Facing number
+--- @field Heading Vector3
+--- @field Drawn Vector3
 local _combat_FlyingShot = {}

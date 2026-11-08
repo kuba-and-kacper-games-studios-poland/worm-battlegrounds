@@ -64,8 +64,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Explosion
 
 --[[
-	Draws a blast and throws bits of the ground it hit, then shakes the camera and vibrates a phone or pad by how big
-	and how close to the view it is.
+	Draws a blast, throws bits of the ground it hit and plays its sound, then shakes the camera and vibrates a phone or
+	pad by how big and how close to the view it is.
 ]]
 function Module._onExplosion(position: Vector3, radius: number, _itemId: string, shiny: boolean)
 	--[[ Local Variables ]]
@@ -80,6 +80,15 @@ function Module._onExplosion(position: Vector3, radius: number, _itemId: string,
 
 	--[[ Feel ]]
 
+	I.Sound.Play({
+		Name = if radius >= _settings.BIG_BLAST_SOUND_RADIUS then "Explosion_Big" else "Explosion_Small",
+		Location = position,
+		SoundGroup = "SFX",
+		RollOffMin = _settings.SOUND_ROLLOFF_MIN,
+		RollOffMax = _settings.SOUND_ROLLOFF_MAX,
+		PitchMin = 0.9,
+		PitchMax = 1.1,
+	})
 	Module._shake(strength)
 	if strength >= _settings.HAPTIC_BIG then
 		I.Haptic.PlayOnce("Combat_BlastBig")

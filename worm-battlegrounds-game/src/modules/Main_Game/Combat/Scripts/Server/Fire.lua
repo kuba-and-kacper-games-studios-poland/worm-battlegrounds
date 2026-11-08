@@ -153,8 +153,8 @@ end
 --[[
 	**SERVER** |
 	Fires a participant's weapon (players through their remote, bots directly): checks it's their turn and they may
-	use it, takes a use, takes their snail back, ends their turn, runs the weapon, and publishes Combat_ShotResolved with
-	the damage it dealt once everything it spawned is done. `angle` is in radians (0 is right, counterclockwise);
+	use it, takes a use, takes their snail back (or, for a weapon with a Retreat, lets it run first), ends their turn,
+	runs the weapon, and publishes Combat_ShotResolved with the damage it dealt once everything it spawned is done. `angle` is in radians (0 is right, counterclockwise);
 	`target` is for the homing missile. Returns whether it fired.
 ]]
 --- @return boolean
@@ -191,8 +191,13 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 
 	--[[ Taking ]]
 
+	-- A weapon with a Retreat leaves the snail its turn a while longer, to run from it; any other ends it now
 	Uses.Take(participantId, itemId)
-	I.SnailControl.EndTurn(participantId)
+	if row.Retreat then
+		I.SnailControl.Retreat(participantId, row.Retreat)
+	else
+		I.SnailControl.EndTurn(participantId)
+	end
 	root:FindFirstChild("Upright").CFrame = CFrame.lookAlong(Vector3.zero, Vector3.xAxis * facing)
 	model:SetAttribute("Facing", facing)
 
@@ -205,7 +210,8 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 		ItemId = itemId,
 		Row = row,
 		Shiny = Module._isShiny(participant, itemId),
-		Origin = root.Position + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + _settings.MUZZLE_GAP),
+		-- A weapon placed at the feet starts inside the snail's ball, so a wall in front can't swallow it
+		Origin = if row.Aim == "Feet" then root.Position else root.Position + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + _settings.MUZZLE_GAP),
 		Direction = direction,
 		Angle = angle,
 		Power = math.clamp(power, 0, 1),
@@ -218,6 +224,7 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 	--[[ Publishing ]]
 
 	I.Topic.Publish("Combat_ShotFired", participantId, itemId)
+	Module._playSound(`Fire_{itemId}`, shot.Origin)
 
 	--[[ Running ]]
 
@@ -277,6 +284,7 @@ function Module.UseUtility(participantId: string, itemId: string)
 		return false
 	end
 	Uses.Take(participantId, itemId)
+	Module._playSound(`Use_{itemId}`, I.Snails.Get(participantId).PrimaryPart.Position)
 
 	--[[ Returning ]]
 
@@ -310,6 +318,24 @@ function Module.ShowAim(participantId: string, itemId: string?, angle: number, p
 	model:SetAttribute("AimAngle", angle)
 	model:SetAttribute("AimPower", math.clamp(power, 0, 1))
 	model:SetAttribute("AimTime", I.S.Workspace:GetServerTimeNow())
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play Sound
+
+--[[
+	Has every player hear a weapon's or utility's sound where it was used (SoundsList's Fire_<itemId> and
+	Use_<itemId>), within Combat's sound range.
+]]
+function Module._playSound(name: string, position: Vector3)
+	I.Sound.PlayForAll({
+		Name = name,
+		Location = position,
+		SoundGroup = "SFX",
+		RollOffMin = _settings.SOUND_ROLLOFF_MIN,
+		RollOffMax = _settings.SOUND_ROLLOFF_MAX,
+		PitchMin = 0.95,
+		PitchMax = 1.05,
+	})
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

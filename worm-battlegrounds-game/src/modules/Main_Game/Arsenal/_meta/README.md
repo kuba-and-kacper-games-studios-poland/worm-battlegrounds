@@ -31,7 +31,7 @@ speeds and each kind's own fields), and the weapons' and utilities' models, cach
 | `GetKnockback(class: string)` | `number` | Knockback speed for a class name |
 | `GetModel(itemId: string)` | `Model?` | The weapon's or utility's model (clone it), from `Assets/Arsenal/Models`; warns and returns nil when it has none |
 | `HasModel(itemId: string)` | `boolean` | Whether the weapon or utility has a model, without a warning (the loadout bar shows the model when there's no icon) |
-| `GetProjectileModel(shotId: string)` | `Model?` | What a shot flies as: its model in `Assets/Arsenal/Projectiles` (a weapon's, or a burst's shot like `Snail`), else `GetModel` |
+| `GetProjectileModel(shotId: string)` | `Model?` | What a shot flies as: its model in `Assets/Arsenal/Projectiles` (a weapon's, or a burst's shot like `Worm`), else `GetModel` |
 | `HasProjectileModel(shotId: string)` | `boolean` | Whether a weapon or a burst's shot has a model of its own in `Projectiles` |
 | `IsWeapon(itemId)` / `IsUtility(itemId)` | `boolean` | Which kind of row it is |
 
@@ -40,7 +40,9 @@ speeds and each kind's own fields), and the weapons' and utilities' models, cach
 A weapon row: `Name`, `Icon`, `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee), `Aim` (Arc,
 Straight, Melee, Target, Feet), `Wind`, `DamageMax`, `DamageEdge`, `BlastRadius`, `Knockback`, `Uses` (−1 unlimited),
 `Cooldown` (turns), then the kind's fields (`MinSpeed`, `MaxSpeed`, `Fuse`, `Elasticity`, `Bomblets`, `Snails`,
-`Pellets`, `Spread`, `Range`, `CrawlTime`, `LockDelay`, `RollSpeed`, `Reach`, `Lift`, …). A utility row: `Name`,
+`Pellets`, `Spread`, `Range`, `CrawlTime`, `LockDelay`, `RollSpeed`, `Reach`, `Lift`, …). `Retreat` (Dynamite) keeps
+the turn going that many seconds after the weapon is placed, with the stamina bar full again, so the snail can run
+before its `Fuse` runs out. A `Feet` weapon with no launch speed (Dynamite) is placed where the snail stands. A utility row: `Name`,
 `Icon`, `Effect` (Heal, Jetpack, Speed, Parachute, LowGravity), `Amount`, `ShinyAmount`, `Uses`. The numbers are the
 wiki's Arsenal page.
 
@@ -50,7 +52,7 @@ wiki's Arsenal page.
 | --- | --- | --- |
 | `SHINY_DAMAGE_MULTIPLIER` | `1.05` | Extra damage from a shiny weapon |
 | `KNOCKBACK` | Small 20, Medium 45, High 70, VeryHigh 95, Extreme 130 | Knockback speed by class |
-| `BURST_SHOTS` | `{ "Snail" }` | Shots a weapon's burst sends out (by projectile part name) that may have a model in `Projectiles` |
+| `BURST_SHOTS` | `{ "Worm" }` | Shots a weapon's burst sends out (by projectile part name) that may have a model in `Projectiles` |
 
 ## In the place
 
@@ -71,6 +73,6 @@ Jetpack on a snail while they work (Snails' README → Gear).
 | --- | --- |
 | `Assets/Arsenal/Models/<WeaponId>` | Bazooka, Shotgun, Uzi, HomingMissile (the launcher), Minigun: held, RootPart at the grip. Grenade, Dynamite, ClusterBomb, SpiderBomb, BlackHoleGrenade, VarietyGrenade, SpartanSpear: thrown, RootPart at the centre |
 | `Assets/Arsenal/Models/<UtilityId>` | Jetpack, SpeedPotion, Parachute, Bandage, Medkit: RootPart at the centre, no `Muzzle`. The Jetpack's straps face the RootPart's front (it's worn on the back); the Parachute's harness hangs at its bottom |
-| `Assets/Arsenal/Projectiles/<ShotId>` | HomingMissile (the missile, nose along +X); Snail (a Variety grenade's snail, its face on the RootPart's right side, which Combat turns to the camera) |
+| `Assets/Arsenal/Projectiles/<ShotId>` | HomingMissile (the missile, nose along +X); Snail (a Variety grenade's snail, its face on the RootPart's right side, which Combat turns to the camera); Dynamite (the placed stick, 4× the held one, RootPart half a stud above its bottom so it stands on the ground) |
 
 Still without a model: Baseball Bat, One Punch, Low Gravity Potion, and the Cluster bomb's bomblets.

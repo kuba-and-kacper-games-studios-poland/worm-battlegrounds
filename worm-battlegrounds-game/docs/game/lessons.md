@@ -630,3 +630,117 @@ with the mouse, and a drag toward the screen's side edge-panned the camera, so t
 lies on that line), held or not; while the button or a finger is held, the power is the pointer's distance from the
 snail on the screen (`MIN_PULL` to `MAX_PULL`); MatchCamera doesn't edge-pan while the left button is held. Rule:
 Snails → "Aiming points from the snail at the mouse".
+
+### The tester's round: guns, slow shots, placed Dynamite, the sea, bots that move (2026-11-08)
+
+**Before.** The Shotgun, Uzi and Minigun did nothing: their behaviour called `Projectiles.GetSnail`, which lives in
+`Ballistics`, so every gun shot errored before its first bullet (`Combat::Fire … attempt to call a nil value`, only in
+the Output). Shots flew at full speed, a full charge reached only about 73 studs with the Bazooka, shots sank and
+fizzled in water and lava, every liquid knocked snails out (a dip in Desert's oasis too), the Dynamite was a thrown
+1.6-stud stick, and bots stood where they landed all match.
+
+**Why it changed.** A tester's notes, passed on by the owner: guns broken, max power too short, the grenade's blast
+15% bigger, explosives that blow up in liquid, a 4× Dynamite placed on the snail with 3 seconds and fresh stamina to
+run, shots 40% slower to follow by eye, only the rising sea deadly, and bots that move like players and use jetpacks.
+
+**Now.** Guns call `Ballistics.GetSnail`. The simulation runs at `PROJECTILE_TIME_SCALE` 0.8 (same arcs, slower; 0.6 felt too floaty to the owner), and
+arc weapons' `MaxSpeed` went up 25% (about 56% more reach at full power; the Bazooka 120 → 150). The Grenade's blast is
+6.9. Explosive shots burst on touching any liquid. Dynamite is `Aim = "Feet"` with a `Retreat` of 3 s
+(`I.SnailControl.Retreat`) and a 3.5 s fuse; its placed model is `Projectiles/Dynamite`, 4× the held one. Only the sea
+kills (Arena's `GetHazard`, the liquid marker at the bounds' bottom). Bots walk, climb, jump and fly (`Bots/Scripts/
+Server/Move.lua`), look for a spot their shot lands from, close in to swing or place Dynamite and run, and heal. The drop
+phase is 10 s (was 15). Leaving a match sends a player once (a second send while the teleport runs is skipped), and a
+teleport that can't start says so; the tutorial match counts as played when it ends, not only when it's left. Checked
+in Studio: Minigun bullets, bot movement and climbs, Dynamite placed and blown, the oasis safe and the lava sea deadly,
+the Studio map's Lobby button and replay. Live teleports (back to the lobby, party matches) couldn't be tested here.
+Rules: Arena → "Only the sea knocks snails out"; Snails → "Shots fly in slow motion", "Dynamite is placed, not
+thrown", "Bots play like players".
+
+## Match sounds from the Creator Store (2026-11-08)
+
+**Before.** The match was silent but for the music and gui clicks: no weapon, blast, snail or turn sounds.
+
+**Why it changed.** The owner asked for sounds on everything that should have one, using Roblox ids that match,
+without uploading anything.
+
+**Now.** About 40 named sounds in `SoundsList.lua`, all free Creator Store ids checked to load in Studio (Roblox's
+Pro Sound Effects and APM uploads where the search found them): `Fire_<itemId>` and `Use_<itemId>` from the server
+when a weapon or utility is used, blasts and bounces from Combat's client, snail steps, jumps, landings, jetpack hum,
+hurts, shell cracks and knockouts (splash, burn) from Snails' client, and turn chimes, the last-seconds tick, the
+sudden-death siren and the win or lose sting from MatchHud. Roblox fades a positional sound out by 100 studs by
+default, farther than the match camera sits, so world sounds carry Combat's `SOUND_ROLLOFF_MIN`/`MAX` (150/600). The
+search can't filter by uploader and many results are rips from other games, so ids were picked by plain names and
+checked one by one; the studio may want to swap some by ear. Rule: Maps and placeholders → "Match sounds are free
+Creator Store ids, played by name".
+
+## Bots with a brain, trained by self-play (2026-11-08)
+
+**Before.** Bots ran fixed rules: a target by difficulty (Easy any, Medium the nearest, Hard the weakest), a grid
+search for an arc that lands near it, then a deliberate miss often enough to match a `HIT_RATE` per difficulty
+(Easy 0.3, Medium 0.6, Hard 0.85). They walked to a spot their shot landed from and closed in for a swing or
+Dynamite on a chance (`CLOSE_IN_CHANCE`), but knew nothing of where they stood, friends, the sea or the terrain.
+
+**Why it changed.** The owner asked for bots that get better by playing themselves, feel like real players the harder
+they get, place themselves well on the map, use jetpacks, weapons and utilities properly, mind other players, play
+well in teams, keep off ground that a blast would drop them through, blast the ground out from under enemies, and a
+secret Nightmare difficulty that uses the map to the full.
+
+**Now.** A planner (`Bots/Scripts/Server/Brain.lua`) lists the spots a bot's walk and jetpack reach, each with what
+it knows of it (a deadly edge, its footing, low ground as sudden death nears, height, who sees it, friends and enemies
+near), solves every weapon's shot at its targets and at the ground under them exactly for the wind it reads
+(`Aim.lua`), simulates the best in full with Combat's own shot bodies, blasts, throws and the craters' drops
+(`Predict.lua`, which needed `I.G_Combat.NewBody`/`StepBody` and `I.Arena.GetSeaLevel`), and scores what each does
+with its difficulty's genome. Difficulty became skill (`SKILLS`): a hand that shakes and steadies as it walks its
+shots in, how much of the wind it reads, how many spots, targets and aim points it weighs, how much it minds the map.
+The genomes are trained by self-play (`Gym.lua`, `Sim.lua`): headless matches between a population of genomes on the
+real maps, with crossover, mutation and an exam against the shipped genome; the `train-bots` skill is the procedure.
+Bots pick their drop spot with their genome, and snails keep a `LastAttacker` attribute bots hold a grudge with.
+Rule: Snails → "Bots think with a trained brain".
+
+## Slow loads when players join together (2026-11-08)
+
+**Before.** VoiceChat's client `Start` went through the players already in the server one by one and waited up to
+30 s for each one's `VoiceChat` input (`player:WaitForChild(_localName, 30)`).
+
+**Why it changed.** Live joins took about 90 s, while Studio loaded in under a second. The server gives a player their
+voice input only after their data loads, and loads their data only once their client has finished starting every
+module (the Player module's `_added`). Players who arrive together, a party teleported into a match most of all, each
+waited for the others' inputs, which waited on their own loads: 30 s for each other player, so 90 s with three.
+
+**Now.** Each wait runs on its own thread (`task.spawn(Module._watchPlayer, player)`). Rule: Loading → "A client's
+Init and Start never wait on other players".
+
+## Shots at half speed (2026-11-08)
+
+**Before.** Shots flew at `PROJECTILE_TIME_SCALE` 0.8, and every `Fuse` ran in real seconds, so a thrown Grenade burst
+after 2.4 s of its path instead of 3. Bots simulated 8 real seconds of each finalist shot.
+
+**Why it changed.** The owner asked for shots 50% slower, with the same properties: only the simulation slower.
+
+**Now.** `PROJECTILE_TIME_SCALE` is 0.5. A thrown bomb's fuse is divided by the scale (`Bouncer`, and bots'
+`Predict._fly` the same way), so a 3 s Grenade fuse lasts 6 real seconds and bursts at the same point of its path as
+at full speed; the placed Dynamite's fuse stays in real seconds, since it doesn't fly. Bots' `PREDICT_SECONDS` counts
+the shot's own time (6.4, what 8 real seconds covered at 0.8), so their predictions see as far as before. Rule: Snails
+→ "Shots fly in slow motion".
+
+## Cooldowns from the start, worms, spider bomb, liquid and homing hint (2026-11-08)
+
+**Before.** Cooldowns started only after an item was used, so strong weapons were free on the first turn. The variety
+grenade let out four snails that crawled down-left, down-right, left and right as yellow balls. Flying shots were drawn
+at their weapon models' held size. The spider bomb flew by Roblox physics (`Projectiles.Spawn` with a counter-force),
+then crawled by snapping to the ground a whole stud at a time, and turned back and forth under its target. A homing
+missile gave no hint that its first click picks a target. And when a carve cut terrain loose, the liquid grid kept the
+falling piece's old cells as ground: Arena's `Debris._watch` refreshed only where it landed.
+
+**Why it changed.** The owner's list: cooldowns from the match's start, worms that look like worms and dig down,
+bigger projectiles, water that bugged out when terrain was destroyed, a buggy spider bomb with too short a throw that
+couldn't walk 1-stud steps, and "click on target, then shoot" for the homing missile.
+
+**Now.** `Uses.Reset` (and the bots' `Sim`) puts every item with a `Cooldown` on it at `Cooldown + 1`, as `Take` does.
+The burst shot is `Worm` (`Projectiles/Worm`, a pink segmented worm built in the place, head first along its pivot's
+look, eyes toward the camera); worms dig in a downward fan and drown in liquid. Clients draw flying models
+`PROJECTILE_DRAW_SCALE` (2) times their size, placed items aside, and glide models of server-moved parts after them. The
+spider bomb is thrown with `Projectiles.Launch` and `Fly` (no bounce, it lands on what it touches), `MaxSpeed` 100 → 125,
+then crawls with `CRAWL_STEP_UP`, `CRAWL_STEP_DOWN` and `CRAWL_STOP`. `Debris._watch` refreshes the liquid where a
+piece fell from too. MatchHud's power bar reads `TARGET_HINTS`. Rule: Snails → "Strong items start on their cooldown"
+and "Server-moved shots glide on clients".

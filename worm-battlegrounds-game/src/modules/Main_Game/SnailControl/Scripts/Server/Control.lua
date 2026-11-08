@@ -147,6 +147,59 @@ function Module.EndTurn(participantId: string)
 	I.Snails.SetOwner(participantId, nil)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Retreat
+
+--[[
+	**SERVER** |
+	Lets a snail run from a weapon it just placed (Dynamite): its Stamina fills again and its player keeps moving it for
+	a number of seconds, then the server takes it back. A bot's snail runs on its own (Bots).
+]]
+function Module.Retreat(participantId: string, seconds: number)
+	--[[ Checks ]]
+
+	-- Check if the snail is in play
+	if not Module.Refill(participantId) then
+		return
+	end
+
+	--[[ Ending ]]
+
+	task.delay(seconds, Module.EndTurn, participantId)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Refill
+
+--[[
+	**SERVER** |
+	Fills a snail's Stamina bar again, forgiving what it overspent. Returns false when the snail isn't in play.
+]]
+--- @return boolean
+function Module.Refill(participantId: string)
+	--[[ Data ]]
+
+	local model: Model? = I.Snails.Get(participantId)
+	local control = controls[participantId] --- @type SnailControl_Control?
+
+	--[[ Checks ]]
+
+	-- Check if the snail is in play
+	if not model or not model:GetAttribute("Alive") then
+		return false
+	end
+
+	--[[ Saving ]]
+
+	model:SetAttribute("Stamina", _settings.STAMINA_STUDS)
+	if control then
+		control.Overdraft = 0
+		control.Last = model.PrimaryPart.Position
+	end
+
+	--[[ Returning ]]
+
+	return true
+end
+
 --%%%%%%%%%%%%%%%%%%%% Check
 
 --[[

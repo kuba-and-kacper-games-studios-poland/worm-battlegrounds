@@ -38,8 +38,10 @@ function Module.Start()
 		Parent = I.S.SoundService,
 	})
 	I.S.Players.PlayerAdded:Connect(Module._watchPlayer)
+
+	-- Each wait runs apart: a player who joined with us gets their input only after our own load finishes
 	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
-		Module._watchPlayer(player)
+		task.spawn(Module._watchPlayer, player)
 	end
 end
 

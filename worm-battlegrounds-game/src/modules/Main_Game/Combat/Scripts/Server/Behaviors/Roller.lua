@@ -41,7 +41,7 @@ local Module = {}
 
 --[[
 	The black hole grenade: released at the snail's feet, it rolls the way the snail faces at RollSpeed, hopping over
-	bumps, and never explodes on its own: its owner blows it up (Detonate), or it bursts after MaxRollTime.
+	bumps: its owner blows it up (Detonate), or it bursts as it rolls into water or lava, or after MaxRollTime.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -64,7 +64,7 @@ function Module.Run(shot)
 		if Projectiles.IsGone(body, elapsed) then
 			Projectiles.Land(body)
 			return
-		elseif detonations[shot.ParticipantId] or elapsed >= (row.MaxRollTime or 8) then
+		elseif detonations[shot.ParticipantId] or body.Sunk or elapsed >= (row.MaxRollTime or 8) then
 			break
 		end
 	end

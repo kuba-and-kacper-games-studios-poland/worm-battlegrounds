@@ -99,6 +99,13 @@ function Module._refresh(model)
 	Module._showShell(model, not nowBroken)
 	if nowBroken then
 		Module._throwChips(model)
+		I.Sound.Play({
+			Name = "Snail_ShellBreak",
+			Location = model.PrimaryPart,
+			SoundGroup = "SFX",
+			RollOffMin = I.Settings["Combat"].SOUND_ROLLOFF_MIN,
+			RollOffMax = I.Settings["Combat"].SOUND_ROLLOFF_MAX,
+		})
 	end
 end
 

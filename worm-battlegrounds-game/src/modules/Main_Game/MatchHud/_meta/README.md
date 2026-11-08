@@ -19,20 +19,20 @@ adds **Leave game** and **Mute music** to the top bar. The HUD and those buttons
 | --- | --- |
 | Folder | `src/modules/Main_Game/MatchHud` |
 | Runs on | Client · Match map, Studio map |
-| Uses | `I.Match`, `I.Snails`, `I.SnailControl`, `I.G_Arsenal`, `I.G_Combat`, `I.Replicator`, `I.TopBar`, `I.PlayerSettings`, `I.WidgetManager`, `I.Haptic`, `ContextActionService` |
+| Uses | `I.Match`, `I.Snails`, `I.SnailControl`, `I.G_Arsenal`, `I.G_Combat`, `I.Replicator`, `I.TopBar`, `I.PlayerSettings`, `I.WidgetManager`, `I.Haptic`, `I.Sound`, `ContextActionService` |
 
 ## Files
 
 | File | What it controls |
 | --- | --- |
 | `Client.lua` | Turns the gui on while the player is in a match (and the `HIDDEN_IN_MATCH` guis off), and starts the handlers |
-| `Scripts/Client/Turn.lua` | Banner ("Your turn!" in the gui's colour, or on other snails' turns "Bax's turn" in that snail's `Color`, from its `DisplayName`), the wait under it on other snails' turns ("You're next!" / "Your turn in N turns", from Match's `TurnOrder`; hidden once the player's snail is out), timer (blank while a shot flies and settles), wind (its strength, the arrow turned its way), stamina ("Stamina 70%", the gui's own label before the share; `U_Stamina` sits inside `U_LoadoutBar`, found recursively) |
+| `Scripts/Client/Turn.lua` | Banner ("Your turn!" in the gui's colour, or on other snails' turns "Bax's turn" in that snail's `Color`, from its `DisplayName`), the wait under it on other snails' turns ("You're next!" / "Your turn in N turns", from Match's `TurnOrder`; hidden once the player's snail is out), timer (blank while a shot flies and settles), wind (its strength, the arrow turned its way), stamina ("Stamina 70%", the gui's own label before the share; `U_Stamina` sits inside `U_LoadoutBar`, found recursively); sounds: `Turn_Yours` when the player's turn starts and `Turn_Start` on others', `Turn_Tick` each second of the player's last `TICK_SOUND_FROM`, `Match_SuddenDeath` when sudden death starts |
 | `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
 | `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys; utilities are used as soon as they're picked on the player's turn. A weapon with no icon picture shows its 3D model in its box instead (`I.G_Arsenal.GetModel`, in a ViewportFrame `S_Model` over `S_Icon`) |
-| `Scripts/Client/Aim.lua` | The crosshair and charging (mouse, touch, pad), the power cone, firing (with the `Combat_Fire` haptic tick), homing targets, detonating; another snail's crosshair and power (a player's or a bot's) while it aims; on the player's turn the power reads "Power 60%" (the gui's own label before the share) and the angle "45°" beside it (`U_Power` sits inside `U_LoadoutBar`, found recursively). shortcut: the crosshair is drawn in code from frames until the kit has a picture for it |
+| `Scripts/Client/Aim.lua` | The crosshair and charging (mouse, touch, pad), the power cone, firing (with the `Combat_Fire` haptic tick), homing targets, detonating; another snail's crosshair and power (a player's or a bot's) while it aims; on the player's turn the power reads "Power 60%" (the gui's own label before the share) and the angle "45°" beside it; with a homing missile it reads `TARGET_HINTS` ("Click on a target", then "Shoot!" until the aim starts) (`U_Power` sits inside `U_LoadoutBar`, found recursively). shortcut: the crosshair is drawn in code from frames until the kit has a picture for it |
 | `Scripts/Client/KillFeed.lua` | Knockout lines; a line too long for the feed at its design size (`TextService:GetTextBoundsAsync`) gets two lines' height instead of shrinking |
 | `Scripts/Client/TouchControls.lua` | Walk and jump buttons on touch screens |
-| `Scripts/Client/Results.lua` | The Results screen, rematch votes |
+| `Scripts/Client/Results.lua` | The Results screen, rematch votes; `Match_Win` for first place, `Match_Lose` otherwise |
 | `Scripts/Client/TopBar.lua` | The Leave and Music top bar buttons |
 | `Settings.lua` | `MatchHud_Settings` |
 
@@ -47,6 +47,7 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | Key | Default | What |
 | --- | --- | --- |
 | `GUI_NAME`, `RESULTS_GUI_NAME` | `"MatchHud"`, `"Results"` | The guis |
+| `TICK_SOUND_FROM` | `5` | The timer ticks aloud each second from this many seconds left of the player's own turn |
 | `HIDDEN_IN_MATCH` | `{ "Currency" }` | Guis the framework keeps on (`UserInterface_PreventHiding`) that are hidden while the player is in a match; the currency bar sits where the turn banner and timer go |
 | `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENCY` | `(40, 140, 255)`, `0.2`, `(0, 0, 0)`, `0.7` | The selected loadout slot's fill (its `Body`), and the others' |
 | `LEAVE_TEXT`, `MUSIC_TEXT`, `LEAVE_QUESTION` | | The top bar buttons and the leave confirmation |
@@ -59,6 +60,7 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | `CROSSHAIR_DISTANCE`, `CROSSHAIR_SIZE`, `CROSSHAIR_COLOR` | `9`, `3`, light green | The angle marker, a crosshair: studs from the snail's middle, its size in studs, its colour |
 | `POWER_DOTS`, `POWER_COLORS`, `POWER_DOT_SIZE` | `32`, yellow to red, `{ 0.5, 2.1 }` (the last fills the crosshair's ring) | The power circles, overlapping into a smooth trail (round on-top billboards in `Workspace.Ume.Combat.AimPower`, drawn over the arena like the crosshair) from the muzzle out: how many, their colours and sizes in studs, first to last |
 | `TARGET_COLOR` | red | The homing target marker |
+| `TARGET_HINTS` | `Pick`, `Shoot` | The power bar's text with a homing missile: before its target is picked, then until the aim starts |
 | `STICK_DEADZONE` | `0.3` | How far the right stick leans to aim |
 
 ## In the place

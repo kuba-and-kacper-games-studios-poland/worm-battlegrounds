@@ -51,6 +51,7 @@
 --- @field Reach number?
 --- @field Lift number?
 --- @field Pierce boolean?
+--- @field Retreat number?
 local _arsenal_WeaponData = {}
 
 --- @class Arsenal_Bomblets

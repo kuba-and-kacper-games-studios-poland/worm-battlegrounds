@@ -81,6 +81,8 @@ function Module.Init()
 		Detonate = Roller.Detonate,
 		Explode = Blast.Explode,
 		Hit = Blast.Hit,
+		Give = Uses.Give,
+		Refill = Uses.Refill,
 
 		--[[ Methods ]]
 
