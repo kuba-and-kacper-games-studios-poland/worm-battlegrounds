@@ -60,6 +60,20 @@ local _gui = {
 							{ Control = "Button", Id = "S_Players8", Text = "8", AutoWidth = true, Style = "Tab" },
 						},
 					},
+					{
+						Control = "Stack",
+						Direction = "Horizontal",
+						Style = "Buttons",
+						Children = {
+							{ Control = "Label", Text = "Bots", Style = "Heading" },
+							-- The bots that fill the empty places; Nightmare is only here
+							{ Control = "Button", Id = "S_BotsNone", Text = "Off", AutoWidth = true, Selected = true, Style = "Tab" },
+							{ Control = "Button", Id = "S_BotsEasy", Text = "Easy", AutoWidth = true, Style = "Tab" },
+							{ Control = "Button", Id = "S_BotsMedium", Text = "Medium", AutoWidth = true, Style = "Tab" },
+							{ Control = "Button", Id = "S_BotsHard", Text = "Hard", AutoWidth = true, Style = "Tab" },
+							{ Control = "Button", Id = "S_BotsNightmare", Text = "Nightmare", AutoWidth = true, Style = "Tab" },
+						},
+					},
 					{ Control = "Button", Id = "S_Create", Text = "Create lobby", Style = "Primary" },
 				},
 			},
@@ -72,7 +86,7 @@ local _gui = {
 					{
 						Control = "Label",
 						Id = "S_Info",
-						Text = "Teams • Fluffy Fallout • 4 players",
+						Text = "Teams • Fluffy Fallout • 4 players • Hard bots",
 						Align = "Center",
 						Style = "Heading",
 					},

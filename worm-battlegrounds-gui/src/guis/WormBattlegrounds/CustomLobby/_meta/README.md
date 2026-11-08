@@ -1,8 +1,8 @@
 # CustomLobby
 
-A private lobby to play friends (pays no coins). First the player creates it (map, mode, players), then the room shows who's in, who can be invited, **Invite friends**, **Start** (owner) and **Leave**.
+A private lobby to play friends (pays no coins). First the player creates it (map, mode, players, bots), then the room shows who's in, who can be invited, **Invite friends**, **Start** (owner) and **Leave**.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Mode and player count are tabs (slate, the picked one blue). The two pages have no slot of their own, so the maps sit on the window's slots. Invite is blue; Create lobby and Start are the yellows.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Mode, player count and bots are tabs (slate, the picked one blue). The two pages have no slot of their own, so the maps sit on the window's slots. Invite is blue; Create lobby and Start are the yellows.
 
 |  |  |
 | --- | --- |
@@ -20,9 +20,10 @@ A private lobby to play friends (pays no coins). First the player creates it (ma
 | `U_Maps` | Cells (`Grid`) | Holds one `MapChoice` per map; MatchBoard selects the picked one |
 | `U_Create` › `S_Deathmatch`, `S_Teams` | Button | The mode; the picked one is selected |
 | `U_Create` › `S_Players2`, `S_Players4`, `S_Players6`, `S_Players8` | Button | The player count; the picked one is selected |
+| `U_Create` › `S_BotsNone`, `S_BotsEasy`, `S_BotsMedium`, `S_BotsHard`, `S_BotsNightmare` | Button | The bots that fill the empty places (Off is none); the picked one is selected. Nightmare is offered only here |
 | `U_Create` › `S_Create` | Button (`Primary`) | Creates the lobby and shows `U_Room` |
 | `U_Room` | Box (`Fixed`) | The room, hidden until created |
-| `U_Room` › `S_Info` | Label | "Teams • Map • 4 players" |
+| `U_Room` › `S_Info` | Label | "Teams • Map • 1 / 4 players • Hard bots" |
 | `U_Members` | Cells | Holds one `Member` per player in the lobby |
 | `U_Invitable` | Cells | Holds one `Invitable` per player in this server |
 | `U_Room` › `S_InviteFriends`, `S_Start`, `S_Leave` | Button | Friend invite prompt; start (owner only); leave |
@@ -68,5 +69,5 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Custo
 | --- | --- | --- |
 | Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
 | Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |
-| Picked mode and player count | `S_Deathmatch` … `S_Players8` › `Face` | `Kit_SelectedImage` (blue) when picked, else `Kit_Image`; MatchBoard's `Custom` |
+| Picked mode, player count and bots | `S_Deathmatch` … `S_BotsNightmare` › `Face` | `Kit_SelectedImage` (blue) when picked, else `Kit_Image`; MatchBoard's `Custom` |
 | Picked map | `MapChoice` › `Body` | Fill rgb(40, 140, 255) at 0.2 transparency when picked, else black at 0.7 (MatchBoard's `SELECTED_*` and `TILE_*` settings) |
