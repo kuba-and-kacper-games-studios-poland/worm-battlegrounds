@@ -215,10 +215,11 @@ end
 
 --[[
 	**SERVER** |
-	Returns a random map from MAP_POOL made for a match size, or any map in the pool when none is.
+	Returns a random map from MAP_POOL made for a match size, or any map in the pool when none is; never `avoid` (the
+	map a row just had) while there's another.
 ]]
 --- @return string
-function Module.GetMap(size: number)
+function Module.GetMap(size: number, avoid: string?)
 	--[[ Local Variables ]]
 
 	local fitting = {} --- @type { string }
@@ -227,7 +228,10 @@ function Module.GetMap(size: number)
 			table.insert(fitting, mapId)
 		end
 	end
-	local pool = if #fitting > 0 then fitting else _settings.MAP_POOL --- @type { string }
+	local pool = table.clone(if #fitting > 0 then fitting else _settings.MAP_POOL) --- @type { string }
+	if #pool > 1 and table.find(pool, avoid) then
+		table.remove(pool, table.find(pool, avoid))
+	end
 
 	--[[ Returning ]]
 

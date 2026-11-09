@@ -23,6 +23,10 @@ local focus: Vector3? = nil
 local pan: Vector3 = Vector3.zero
 local followed: PVInstance? = nil
 
+-- The last blast the camera stays on, and until when (os.clock)
+local blastPoint: Vector3 = Vector3.zero
+local blastUntil: number = 0
+
 --[[ Zoom ]]
 
 -- How far from the plane the player wants the camera, and how far it is now (easing toward it)
@@ -64,6 +68,7 @@ function Module.Start()
 	snailsFolder = I.Dirs.UmeWorkspace:WaitForChild("Snails")
 	combatFolder = I.Dirs.UmeWorkspace:WaitForChild("Combat")
 	Module._createConnections()
+	I.Network.Fired("Combat_Explosion", Module._onExplosion)
 
 	-- Before CameraShake's step (Camera + 1), so Combat's blast shakes land on top of the view
 	I.S.RunService:BindToRenderStep(_localName, Enum.RenderPriority.Camera.Value, Module._update)
@@ -152,8 +157,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Update
 
 --[[
-	Points the camera along -Z at what it follows (the active snail, else the local player's snail, else the arena's
-	middle), plus the player's pan, kept inside the arena's bounds. Nothing changes until a map is loaded, or while
+	Points the camera along -Z at what it follows (a blast it stays on, else the target, else the arena's middle),
+	plus the player's pan, kept inside the arena's bounds. Nothing changes until a map is loaded, or while
 	the player is in the Studio map's lobby, which gets Roblox's camera back.
 ]]
 function Module._update(deltaTime: number)
@@ -181,8 +186,11 @@ function Module._update(deltaTime: number)
 	local camera: Camera = I.S.Workspace.CurrentCamera
 	local target: PVInstance? = Module._getTarget()
 
+	-- After a blast, stay on it until its hold ends or another shot flies
+	local holding: boolean = os.clock() < blastUntil and not (target and target:GetAttribute("Projectile"))
+
 	-- A new snail to follow drops the pan
-	if target ~= followed then
+	if not holding and target ~= followed then
 		followed = target
 		pan = Vector3.zero
 	end
@@ -196,7 +204,7 @@ function Module._update(deltaTime: number)
 	-- Ease the zoom first, so the bounds clamp the view at its new size
 	zoom += (zoomGoal - zoom) * (1 - math.exp(-_settings.ZOOM_SPEED * deltaTime))
 
-	local center: Vector3 = if target then target:GetPivot().Position else bounds.Position
+	local center: Vector3 = if holding then blastPoint elseif target then target:GetPivot().Position else bounds.Position
 	local goal: Vector3 = Module._getClamped(center + pan, bounds, camera)
 	pan = goal - Vector3.new(center.X, center.Y, goal.Z)
 
@@ -210,6 +218,27 @@ function Module._update(deltaTime: number)
 
 	camera.CameraType = Enum.CameraType.Scriptable
 	camera.CFrame = CFrame.lookAt(focus + Vector3.zAxis * zoom, focus)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Explosion
+
+--[[
+	Keeps the camera on a blast for BLAST_HOLD seconds (BIG_BLAST_HOLD for a big one), when it follows shots, so the
+	player sees what the shot did before it moves to the next snail.
+]]
+function Module._onExplosion(position: Vector3, radius: number, _itemId: string, _shiny: boolean)
+	--[[ Checks ]]
+
+	-- Skip when the camera doesn't follow shots, so it never jumps to a blast
+	if not I.PlayerSettings.Get("CameraFollowsShot") then
+		return
+	end
+
+	--[[ Saving ]]
+
+	local hold: number = if radius >= _settings.BIG_BLAST_RADIUS then _settings.BIG_BLAST_HOLD else _settings.BLAST_HOLD
+	blastPoint = position
+	blastUntil = math.max(blastUntil, os.clock() + hold)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Zoom To

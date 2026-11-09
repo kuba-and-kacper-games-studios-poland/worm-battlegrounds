@@ -25,6 +25,9 @@ local Props = require(_scripts:FindFirstChild("Server"):FindFirstChild("Props"))
 
 local carving: boolean = false
 
+-- How many carves were asked for: each one's number, which its pieces keep (`Arena_Carve`)
+local carveCount: number = 0
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -56,6 +59,11 @@ function Module.Init()
 	--- @Topic
 
 	I.Topic.Register("Arena_Loaded", { "string" })
+
+	--- @Network
+
+	I.Network.GetEvent("Arena_Carve")
+	I.Network.GetEvent("Arena_Fall")
 
 	----------------------------
 	---- ASSIGN TO INSTANCE ----
@@ -117,7 +125,8 @@ end
 --[[
 	**SERVER** |
 	Cuts a round hole, stepped on the stud grid, through the terrain, lets the liquid flow into it and drops what no
-	longer touches the ground. Carves run one at a time, in the order they were asked for.
+	longer touches the ground. Carves run one at a time, in the order they were asked for. Every client is told at once
+	(Arena_Carve), so it cuts the hole on its own screen without waiting for the server's pieces.
 ]]
 function Module.Carve(center: Vector3, radius: number)
 	--[[ Checks ]]
@@ -126,6 +135,12 @@ function Module.Carve(center: Vector3, radius: number)
 	if radius <= 0 then
 		return
 	end
+
+	--[[ Publishing ]]
+
+	carveCount += 1
+	local carveId: number = carveCount
+	I.Network.FireAll("Arena_Carve", carveId, center, radius)
 
 	--[[ Waiting ]]
 
@@ -139,7 +154,7 @@ function Module.Carve(center: Vector3, radius: number)
 
 	-- A stepped crater reaches up to half a square past the radius
 	local reach: number = radius + _settings.CARVE_CELL / 2
-	local seeds = Carver.Carve(center, radius) --- @type { BasePart }
+	local seeds = Carver.Carve(center, radius, carveId) --- @type { BasePart }
 	Liquid.Refresh(center - Vector3.new(reach, reach, 0), center + Vector3.new(reach, reach, 0))
 	Debris.Drop(seeds)
 	Props.Update(center, radius)

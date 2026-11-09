@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Black hole grenade",
-	IconId = "rbxassetid://89182342013631",
+	IconId = "rbxassetid://126733567159283",
 
 	--[[ Classification ]]
 

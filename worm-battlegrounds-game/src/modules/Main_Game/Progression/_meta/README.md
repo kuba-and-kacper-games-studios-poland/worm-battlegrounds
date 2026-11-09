@@ -16,7 +16,7 @@ up shows a toast, updates the Level leaderstat and gives the skin `LEVEL_REWARDS
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Adding XP, the level, rewards, publishing |
-| `Settings.lua` | `Progression_Settings` |
+| `ServerSettings.lua` | `Progression_Settings`, under a server name so clients never get the level curve |
 
 ## API
 

@@ -5,8 +5,8 @@ Moving the active snail. When a turn starts, the server gives the snail's physic
 directly, so movement feels instant: it walks along the plane at `WALK_SPEED`, jumps when standing, climbs ledges up
 to `STEP_HEIGHT`, and loses its ball's grip while walking so it slides along walls and up slopes. Each frame the server
 charges the distance the snail moves sideways to `Stamina`. At 0 its client stops walking, but the turn goes on and the
-snail can still jump. The server takes the snail back when the turn ends, and snaps it back with a warning when it went
-through the terrain, moved faster than its player could have made it, climbed higher than its jump and jetpack fuel
+snail can still jump. The server takes the snail back when the turn ends, and snaps it back with a warning when it left
+the arena's plane, went through the terrain, moved faster than its player could have made it, climbed higher than its jump and jetpack fuel
 reach, or kept going well past an empty bar. No remotes: the client follows the
 snail's attributes. The movement utilities (parachute, jetpack, speed, low gravity) are effects on the snail that Combat
 applies, and the match HUD's touch buttons press the controls through `Hold`.
@@ -24,7 +24,8 @@ applies, and the match HUD's touch buttons press the controls through `Hold`.
 | --- | --- |
 | `Server.lua` | The entry: `I.SnailControl` |
 | `Client.lua` | The local player's controls: binding, walking, facing, jumping, climbing, grip; turns off the default avatar controls |
-| `Settings.lua` | `SnailControl_Settings`: movement, the checks, the movement effects |
+| `Settings.lua` | `SnailControl_Settings`: movement and the movement effects |
+| `ServerSettings.lua` | `SnailControl_ServerSettings`: the server's checks, under a server name so clients never learn their margins |
 | `Scripts/Server/Control.lua` | Starting and ending turns, the per-frame path, speed, height and stamina checks |
 | `Scripts/Server/Effects.lua` | The movement effects, and closing parachutes on landing |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `snailcontrol` command |
@@ -79,14 +80,20 @@ Bound at `Enum.ContextActionPriority.High` while `CanMove` is on, and sunk.
 | `STEP_HEIGHT`, `STEP_SPEED` | `2`, `16` | Ledges up to this height are climbed by walking into them, with this upward push |
 | `STAMINA_STUDS` | `20` | How far a snail may walk in a turn |
 | `STICK_DEADZONE` | `0.3` | How far the left stick must lean |
-| `CHECK_INTERVAL`, `SPEED_TOLERANCE`, `MOVE_SLACK` | `0.25`, `1.5`, `2` | The server compares the snail with where it was up to an interval ago; more than tolerance × walk speed sideways (or jump speed up) over at least one interval, plus the slack, snaps it back |
-| `STAMINA_GRACE` | `8` | How far a snail may still move sideways after its stamina runs out (its client learning of it, momentum through the air, slides) before the server snaps it back |
-| `LIFT_GRACE` | `3` | How far a snail may climb past its reach before the server snaps it back. Its reach is a jump (`JUMP_SPEED`² / 2g, higher under low gravity) above the ground it last stood on plus `MOVE_SLACK`, and above that `JETPACK_SPEED` studs per second of the `JetpackFuel` it was given |
 | `PARACHUTE_FALL_SPEED` | `6` | An open parachute's fall speed |
 | `JETPACK_FUEL`, `JETPACK_SPEED` | `3`, `16` | Seconds of flight, and the upward speed |
 | `SPEED_MULTIPLIER` | `1.5` | Walk speed and stamina with the speed potion |
 | `LOW_GRAVITY_SCALE` | `0.4` | Gravity's share with the low gravity potion |
 | `SHINY_BOOST` | Jetpack 1.2, Speed 1.1, LowGravity 0.9, Parachute 0.8 | What a shiny copy multiplies its effect's number by |
+
+### Server settings (`ServerSettings.lua`)
+
+| Key | Default | What |
+| --- | --- | --- |
+| `CHECK_INTERVAL`, `SPEED_TOLERANCE`, `MOVE_SLACK` | `0.25`, `1.5`, `2` | The server compares the snail with where it was up to an interval ago; more than tolerance × walk speed sideways (or jump speed up) over at least one interval, plus the slack, snaps it back |
+| `STAMINA_GRACE` | `8` | How far a snail may still move sideways after its stamina runs out (its client learning of it, momentum through the air, slides) before the server snaps it back |
+| `LIFT_GRACE` | `3` | How far a snail may climb past its reach before the server snaps it back. Its reach is a jump (`JUMP_SPEED`² / 2g, higher under low gravity) above the ground it last stood on plus `MOVE_SLACK`, and above that `JETPACK_SPEED` studs per second of the `JetpackFuel` it was given |
+| `PLANE_SLACK` | `0.5` | How far a snail may stray off the arena's plane (in Z) before the server snaps it back |
 
 ## In the place
 

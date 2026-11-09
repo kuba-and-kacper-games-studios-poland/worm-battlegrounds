@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Medkit",
-	Icon = "",
+	Icon = "rbxassetid://85030401627405",
 
 	--[[ Effect ]]
 

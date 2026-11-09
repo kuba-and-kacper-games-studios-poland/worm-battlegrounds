@@ -23,17 +23,19 @@ local policyRep: Folder?
 
 --[[ State ]]
 
--- One card per crate, by crate id
-local cards = {} --- @type { [string]: Frame }
+-- One tab per crate, and one buy button per pack size
+local tabs = {} --- @type { [string]: ImageButton }
+local buyButtons = {} --- @type { [number]: ImageButton }
 
--- The currency each crate pays with, by crate id
+-- The crate whose tab is selected, and the currency each crate pays with, by crate id
+local selected: string = ""
 local paying = {} --- @type { [string]: string }
 
 -- Whether a crate is opening, so a second press waits
 local busy: boolean = false
 
--- Opens the odds widget for a crate and currency, and shows what a crate gave
-local showOdds: (crateId: string, currency: string) -> ()
+-- Draws a crate's odds in the left list, and shows what a crate gave
+local drawOdds: (crateId: string, currency: string) -> ()
 local showResults --- @type (crateId: string, count: number, payWith: string, results: { Crates_Result }) -> ()
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -54,97 +56,90 @@ local Module = {}
 
 --%%%%%%%%%%%%%%%%%%%% Start
 
---- @param oddsOpener (crateId: string, currency: string) -> ()
+--- @param oddsDrawer (crateId: string, currency: string) -> ()
 --- @param resultsOpener (crateId: string, count: number, payWith: string, results: { Crates_Result }) -> ()
-function Module.Start(oddsOpener, resultsOpener)
+function Module.Start(oddsDrawer, resultsOpener)
 	--[[ Elements ]]
 
 	moduleGui = I.UserInterface.UI[_settings.GUI_NAME]
-	elems["List"] = moduleGui:FindFirstChild("U_CrateList", true) --- @type ScrollingFrame
-	elems["TutorialCrate"] = moduleGui:FindFirstChild("U_TutorialCrate", true) --- @type Frame
-	prefabs["CrateCard"] = elems["List"]:FindFirstChild("PREFAB | CrateCard") --- @type Frame
-	elems["Badge"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_OpenCrates", true):FindFirstChild("S_Badge", true) --- @type Frame
+	elems["Tabs"] = moduleGui:FindFirstChild("U_Tabs", true) --- @type Frame
+	elems["Crate"] = moduleGui:FindFirstChild("U_Crate", true) --- @type ImageLabel
+	prefabs["CrateTab"] = elems["Tabs"]:FindFirstChild("PREFAB | CrateTab") --- @type ImageButton
+	elems["Menu"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_Menu", true) --- @type Frame
+	elems["Badge"] = elems["Menu"]:FindFirstChild("S_Badge", true) --- @type Frame
 	elems["BadgeCount"] = elems["Badge"]:FindFirstChild("S_Count", true) --- @type TextLabel
-	showOdds = oddsOpener
+	for _index: number, currency: string in ipairs(_settings.PAY_CURRENCIES) do
+		elems[`Pay{currency}`] = moduleGui:FindFirstChild(`U_Pay{currency}`, true) --- @type ImageButton
+	end
+	for _index: number, count: number in ipairs(_settings.COUNTS) do
+		buyButtons[count] = moduleGui:FindFirstChild(`U_BuyX{count}`, true)
+	end
+	drawOdds = oddsDrawer
 	showResults = resultsOpener
 
 	--[[ Building ]]
 
 	--- @param row Crates_CrateData
 	for crateId: string, row in pairs(I.G_Crates.GetAll()) do
-		if not row.Hidden then
-			Module._buildCard(crateId, row)
-		end
+		Module._buildTab(crateId, row)
 	end
 
 	--[[ Connections ]]
 
-	I.Interact.OnPress(elems["TutorialCrate"]:FindFirstChild("S_Open", true):FindFirstChild("Button"), function()
-		Module.Open(_settings.TUTORIAL_CRATE, 1, "Coins")
-	end)
+	for _index: number, currency: string in ipairs(_settings.PAY_CURRENCIES) do
+		I.Interact.OnPress(elems[`Pay{currency}`], function()
+			Module._pick(currency)
+		end)
+	end
+	for count: number, button: ImageButton in pairs(buyButtons) do
+		I.Interact.OnPress(button, function()
+			Module.Open(selected, count, if count == 1 and Module._isFree(selected) then "VipDaily" else paying[selected])
+		end)
+	end
+
+	-- The lobby menu's Weapons and Skins buttons open the widget on their crate's tab
+	for _index: number, button: ImageButton in ipairs({ elems["Menu"]:FindFirstChild("S_Weapons", true), elems["Menu"]:FindFirstChild("S_Skins", true) }) do
+		I.Interact.OnPress(button, function()
+			selected = button:GetAttribute("Crates_CrateId")
+			I.WidgetManager.Open(_settings.GUI_NAME)
+		end)
+	end
+	I.Topic.Subscribe("WidgetManager_Opened", Module._onOpened)
 	I.Topic.Subscribe("Currency_Changed", Module._refreshBadge)
 	I.OnLoaded(I.Priority.Replicator, Module._connectReplicator)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization
 
---%%%%%%%%%%%%%%%%%%%% Build Card
+--%%%%%%%%%%%%%%%%%%%% Build Tab
 
 --[[
-	Makes a crate's card: its picture, name and prices, and connects its buttons.
+	Makes a crate's tab and connects it.
 ]]
 --- @param row Crates_CrateData
-function Module._buildCard(crateId: string, row)
-	--[[ Local Variables ]]
-
-	paying[crateId] = if row.Prices["Coins"] then "Coins" else "Diamonds"
-
+function Module._buildTab(crateId: string, row)
 	--[[ Cloning ]]
 
-	local card: Frame = prefabs["CrateCard"]:Clone()
-	card.Name = crateId
-	card.LayoutOrder = row.LayoutOrder
-	card.Visible = true
-
-	--[[ Elements ]]
-
-	local payCoins: Frame = card:FindFirstChild("S_PayCoins", true)
-	local payDiamonds: Frame = card:FindFirstChild("S_PayDiamonds", true)
+	local tab: ImageButton = prefabs["CrateTab"]:Clone()
+	tab.Name = crateId
+	tab.LayoutOrder = row.LayoutOrder
+	tab.Visible = false
 
 	--[[ Texts ]]
 
-	card:FindFirstChild("S_Picture", true).Image = row.Picture
-	card:FindFirstChild("S_Name", true).Text = row.Name
-	payCoins:FindFirstChild("ButtonText", true).Text = if row.Prices["Coins"] then `{row.Prices["Coins"].One} COINS` else ""
-	payDiamonds:FindFirstChild("ButtonText", true).Text = if row.Prices["Diamonds"] then `{row.Prices["Diamonds"].One} DIAMONDS` else ""
-
-	--[[ Visibility ]]
-
-	card:FindFirstChild("S_Free", true).Visible = false
+	tab:FindFirstChild("S_Name", true).Text = row.TabName
 
 	--[[ Saving ]]
 
-	card.Parent = elems["List"]
-	cards[crateId] = card
+	tab.Parent = elems["Tabs"]
+	tabs[crateId] = tab
 
 	--[[ Connections ]]
 
-	I.Interact.OnPress(payCoins:FindFirstChild("Button"), function()
-		Module._pick(crateId, "Coins")
+	I.Interact.OnPress(tab, function()
+		selected = crateId
+		Module._draw()
 	end)
-	I.Interact.OnPress(payDiamonds:FindFirstChild("Button"), function()
-		Module._pick(crateId, "Diamonds")
-	end)
-	I.Interact.OnPress(card:FindFirstChild("S_Open", true):FindFirstChild("Button"), function()
-		Module.Open(crateId, 1, if Module._isFree(crateId) then "VipDaily" else paying[crateId])
-	end)
-	I.Interact.OnPress(card:FindFirstChild("S_Open10", true):FindFirstChild("Button"), function()
-		Module.Open(crateId, 10, paying[crateId])
-	end)
-	I.Interact.OnPress(card:FindFirstChild("S_Details", true):FindFirstChild("Button"), function()
-		showOdds(crateId, paying[crateId])
-	end)
-	Module._refreshCard(crateId)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Connect Replicator
@@ -201,100 +196,147 @@ function Module.Open(crateId: string, count: number, payWith: string)
 	showResults(crateId, count, payWith, results)
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Opened
+
+--[[
+	Draws the crates widget when it opens.
+]]
+function Module._onOpened(widgetName: string)
+	--[[ Checks ]]
+
+	-- Check if it's the crates widget
+	if widgetName ~= _settings.GUI_NAME then
+		return
+	end
+
+	--[[ Drawing ]]
+
+	Module._draw()
+end
+
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the tutorial crate in place of the list while it waits, the free badge on VIP's daily crate, and the lobby's
-	Crates button badge.
+	Redraws the widget while it's open, and the lobby menu's badge, when the free crates or the policy change.
 ]]
 function Module._refresh()
-	--[[ Visibility ]]
+	--[[ Drawing ]]
 
-	local tutorialReady: boolean = tutorialRep ~= nil and tutorialRep:GetAttribute("CrateReady") == true
-	elems["TutorialCrate"].Visible = tutorialReady
-	elems["List"].Visible = not tutorialReady
-
-	--[[ Cards ]]
-
-	for crateId: string, _card: Frame in pairs(cards) do
-		Module._refreshCard(crateId)
-	end
-
-	--[[ Badge ]]
-
+	Module._draw()
 	Module._refreshBadge()
 end
 
 --%%%%%%%%%%%%%%%%%%%% Pick
 
 --[[
-	Picks the currency a crate pays with.
+	Picks the currency the selected crate pays with.
 ]]
-function Module._pick(crateId: string, currency: string)
+function Module._pick(currency: string)
 	--[[ Saving ]]
 
-	paying[crateId] = currency
+	paying[selected] = currency
 
-	--[[ Applying ]]
+	--[[ Drawing ]]
 
-	Module._refreshCard(crateId)
+	Module._draw()
 end
 
---%%%%%%%%%%%%%%%%%%%% Refresh Card
+--%%%%%%%%%%%%%%%%%%%% Draw
 
 --[[
-	Shows a card's currencies (none bought with Robux where the policy restricts paid random items, and no card left
-	without one), tints the picked one and shows the free badge.
+	Draws the selected crate: the tabs shown (only the tutorial crate while it waits), the crate's picture, the balance
+	chips of the currencies it takes (the paying one picked), the buy buttons' prices and the odds.
 ]]
-function Module._refreshCard(crateId: string)
+function Module._draw()
+	--[[ Checks ]]
+
+	-- Check if the widget is open
+	if not moduleGui.Enabled then
+		return
+	end
+
+	--[[ Selection ]]
+
+	-- A hidden tab (the tutorial crate opened, diamonds restricted) gives way to the first one shown
+	if not Module._isShown(selected) then
+		local first: number = math.huge
+		for crateId: string, tab: ImageButton in pairs(tabs) do
+			if Module._isShown(crateId) and tab.LayoutOrder < first then
+				first = tab.LayoutOrder
+				selected = crateId
+			end
+		end
+	end
+
 	--[[ Data ]]
 
-	local row = I.G_Crates.Get(crateId) --- @type Crates_CrateData?
+	local row = I.G_Crates.Get(selected) --- @type Crates_CrateData?
 	if not row then
 		return
 	end
 
-	--[[ Elements ]]
-
-	local card: Frame = cards[crateId]
-	local payCoins: Frame = card:FindFirstChild("S_PayCoins", true)
-	local payDiamonds: Frame = card:FindFirstChild("S_PayDiamonds", true)
-	local coinsFace: ImageLabel = payCoins:FindFirstChild("Face", true)
-	local diamondsFace: ImageLabel = payDiamonds:FindFirstChild("Face", true)
-
 	--[[ Local Variables ]]
 
-	local restricted: boolean = policyRep == nil or policyRep:GetAttribute("ArePaidRandomItemsRestricted") ~= false
-	local coinsShown: boolean = row.Prices["Coins"] ~= nil and not (restricted and table.find(_settings.PAID_CURRENCIES, "Coins") ~= nil)
-	local diamondsShown: boolean = row.Prices["Diamonds"] ~= nil and not (restricted and table.find(_settings.PAID_CURRENCIES, "Diamonds") ~= nil)
-	if (paying[crateId] == "Coins" and not coinsShown) or (paying[crateId] == "Diamonds" and not diamondsShown) then
-		paying[crateId] = if coinsShown then "Coins" else "Diamonds"
+	-- A crate pays in its first currency until another is picked, or when the picked one is gone
+	local currencies = Module._getCurrencies(selected) --- @type { string }
+	if not table.find(currencies, paying[selected]) then
+		paying[selected] = currencies[1]
+	end
+	local free: boolean = Module._isFree(selected)
+
+	--[[ Tabs ]]
+
+	for crateId: string, tab: ImageButton in pairs(tabs) do
+		local picked: boolean = crateId == selected
+		tab.Visible = Module._isShown(crateId)
+		tab:FindFirstChild("S_Stroke2", true).Image = tab:GetAttribute(if picked then "Look_SelectedStroke2" else "Look_Stroke2")
+		tab:FindFirstChild("S_Stroke", true).Image = tab:GetAttribute(if picked then "Look_SelectedStroke" else "Look_Stroke")
+		tab:FindFirstChild("S_Stroke", true).ImageColor3 = tab:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+		tab:FindFirstChild("S_Name", true).TextColor3 = tab:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
 	end
 
-	--[[ Visibility ]]
+	--[[ Picture ]]
 
-	payCoins.Visible = coinsShown
-	payDiamonds.Visible = diamondsShown
-	card.Visible = coinsShown or diamondsShown
+	elems["Crate"].Image = row.Picture
 
-	--[[ Applying ]]
+	--[[ Balance ]]
 
-	-- The paying currency's tab wears its selected skin (the gui kit's button records both skins)
-	coinsFace.Image = coinsFace:GetAttribute(if paying[crateId] == "Coins" then "Kit_SelectedImage" else "Kit_Image")
-	diamondsFace.Image = diamondsFace:GetAttribute(if paying[crateId] == "Diamonds" then "Kit_SelectedImage" else "Kit_Image")
-	card:FindFirstChild("S_Free", true).Visible = Module._isFree(crateId)
+	for _index: number, currency: string in ipairs(_settings.PAY_CURRENCIES) do
+		local chip: ImageButton = elems[`Pay{currency}`]
+		local picked: boolean = currency == paying[selected]
+		chip.Visible = table.find(currencies, currency) ~= nil
+		chip:FindFirstChild("S_Stroke", true).ImageColor3 = chip:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+		chip:FindFirstChild("S_Amount", true).TextColor3 = chip:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
+	end
+
+	--[[ Buy Buttons ]]
+
+	-- A hidden crate (the tutorial's) opens only one at a time; VIP's free crate is the x1
+	for count: number, button: ImageButton in pairs(buyButtons) do
+		local icon: ImageLabel = button:FindFirstChild("S_Icon", true)
+		local freeOne: boolean = free and count == 1
+		button.Visible = not row.Hidden or count == 1
+		button:FindFirstChild("S_Price", true).Text = if freeOne then _settings.PRICE_FREE else I.Format.Text(I.G_Crates.GetPrice(selected, paying[selected], count))
+		icon.Visible = not freeOne
+		icon.Image = button:GetAttribute(`Look_{paying[selected]}Icon`)
+	end
+
+	--[[ Odds ]]
+
+	drawOdds(selected, paying[selected])
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Badge
 
 --[[
-	Shows the lobby's Crates button badge: BADGE_FREE while a free crate waits (the tutorial's, or VIP's daily one), else
-	how many of the cheapest coin crate the player's coins open (BADGE_MAX+ past BADGE_MAX), hidden at none.
+	Shows the badge on the lobby menu's Weapons button: BADGE_FREE while a free crate waits (the tutorial's, or VIP's
+	daily one), else how many of the cheapest coin crate the player's coins open (BADGE_MAX+ past BADGE_MAX), hidden at
+	none.
 ]]
 function Module._refreshBadge()
 	--[[ Local Variables ]]
 
-	local free: boolean = (tutorialRep ~= nil and tutorialRep:GetAttribute("CrateReady") == true) or Module._isFree(_settings.VIP_CRATE)
+	local free: boolean = Module._isTutorialReady() or Module._isFree(_settings.VIP_CRATE)
 	local price: string? = Module._getCheapestCoinPrice()
 	local count = if price then I.BN.DivideWithPrecision(I.Currency.Get("Coins") or "0", price) else I.BN.new(0) --- @type BigNum_Instance
 	local max = I.BN.new(_settings.BADGE_MAX) --- @type BigNum_Instance
@@ -307,20 +349,43 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
---%%%%%%%%%%%%%%%%%%%% Is Free
+--%%%%%%%%%%%%%%%%%%%% Get Currencies
 
 --[[
-	Returns whether the player's free daily VIP crate is this one, and ready.
+	Returns the currencies a crate can be paid in now, in PAY_CURRENCIES order: those it has a price in, less those
+	bought with Robux where the policy restricts paid random items (a crate with fixed items isn't random).
 ]]
---- @return boolean
-function Module._isFree(crateId: string)
-	return crateId == _settings.VIP_CRATE and shopRep ~= nil and shopRep:GetAttribute("VipCrateReady") == true
+--- @return { string }
+function Module._getCurrencies(crateId: string)
+	--[[ Data ]]
+
+	local row = I.G_Crates.GetAll()[crateId] --- @type Crates_CrateData?
+	if not row then
+		return {}
+	end
+
+	--[[ Local Variables ]]
+
+	local restricted: boolean = #row.Fixed == 0 and (policyRep == nil or policyRep:GetAttribute("ArePaidRandomItemsRestricted") ~= false)
+	local currencies = {} --- @type { string }
+
+	--[[ Filtering ]]
+
+	for _index: number, currency: string in ipairs(_settings.PAY_CURRENCIES) do
+		if row.Prices[currency] and not (restricted and table.find(_settings.PAID_CURRENCIES, currency)) then
+			table.insert(currencies, currency)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return currencies
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Cheapest Coin Price
 
 --[[
-	Returns the lowest price of one crate in coins, among the crates the panel shows.
+	Returns the lowest price of one crate in coins, among the crates the tabs show (not the hidden tutorial crate).
 ]]
 --- @return string?
 function Module._getCheapestCoinPrice()
@@ -341,6 +406,46 @@ function Module._getCheapestCoinPrice()
 	--[[ Returning ]]
 
 	return cheapest
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Shown
+
+--[[
+	Returns whether a crate's tab shows: only the tutorial crate while it waits, else every crate on the panel that
+	can be paid in some currency now.
+]]
+--- @return boolean
+function Module._isShown(crateId: string)
+	--[[ Data ]]
+
+	local row = I.G_Crates.GetAll()[crateId] --- @type Crates_CrateData?
+	if not row then
+		return false
+	end
+
+	--[[ Returning ]]
+
+	return if Module._isTutorialReady() then crateId == _settings.TUTORIAL_CRATE else not row.Hidden and #Module._getCurrencies(crateId) > 0
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Free
+
+--[[
+	Returns whether the player's free daily VIP crate is this one, and ready.
+]]
+--- @return boolean
+function Module._isFree(crateId: string)
+	return crateId == _settings.VIP_CRATE and shopRep ~= nil and shopRep:GetAttribute("VipCrateReady") == true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Tutorial Ready
+
+--[[
+	Returns whether the tutorial crate waits for the player.
+]]
+--- @return boolean
+function Module._isTutorialReady()
+	return tutorialRep ~= nil and tutorialRep:GetAttribute("CrateReady") == true
 end
 
 return Module

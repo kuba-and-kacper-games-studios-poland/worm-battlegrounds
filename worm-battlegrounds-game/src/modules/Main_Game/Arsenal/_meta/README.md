@@ -38,7 +38,9 @@ speeds and each kind's own fields), and the weapons' and utilities' models, cach
 ## Data
 
 A weapon row: `Name`, `Icon`, `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee), `Aim` (Arc,
-Straight, Melee, Target, Feet), `Wind`, `DamageMax`, `DamageEdge`, `BlastRadius`, `Knockback`, `Uses` (−1 unlimited),
+Straight, Melee, Target, Feet), `Wind`, `HoldPose` (the snail rig's pose for a gun: `Gun` for the Uzi, `MiniGun`,
+`Bazooka` for the Bazooka and the Homing missile, `ShotGun`; a row without one is held in the `Gun` pose and plays no
+shot, as `SnailRig`'s README says), `DamageMax`, `DamageEdge`, `BlastRadius`, `Knockback`, `Uses` (−1 unlimited),
 `Cooldown` (turns), then the kind's fields (`MinSpeed`, `MaxSpeed`, `Fuse`, `Elasticity`, `Bomblets`, `Snails`,
 `Pellets`, `Spread`, `Range`, `CrawlTime`, `LockDelay`, `RollSpeed`, `Reach`, `Lift`, …). `Retreat` (Dynamite) keeps
 the turn going that many seconds after the weapon is placed, with the stamina bar full again, so the snail can run
@@ -64,15 +66,18 @@ a `RootPart` (its PrimaryPart: anchored, hidden at start) the mesh parts are wel
 or touch and are massless. The model faces +X from its RootPart, as snails do, and sits at the grip of a held weapon
 or the centre of a thrown one. Each held model's RootPart has a `Muzzle` Attachment where its shot leaves it: the
 barrel's tip for a gun (Bazooka, Shotgun, Uzi, HomingMissile), the front of a thrown weapon; the aim's power circles
-start there (Combat's `GetMuzzle`). A new held or thrown model gets one too. The loadout bar shows an item's model in its box when it has no icon
+start there (Combat's `GetMuzzle`). A new held or thrown model gets one too. A held gun's RootPart also has a `Grip`
+Attachment, where the snail rig's `Handle` holds it (the Handle's −Z is the barrel's way): Uzi, Minigun, Bazooka and
+Shotgun from the studio's weapon snails (their weapon in hand, scaled to these meshes), the Homing missile's from the
+Bazooka's, and the Baseball bat's turned so it points ahead. A model without one is held at its RootPart. The loadout bar shows an item's model in its box when it has no icon
 picture; Combat's clients put a weapon's model in the active snail's hands and fly each shot as `GetProjectileModel`
 (the Bazooka's rocket as the homing missile's missile until it has its own); Snails' clients put the Parachute and
 Jetpack on a snail while they work (Snails' README → Gear).
 
 | Instance | What |
 | --- | --- |
-| `Assets/Arsenal/Models/<WeaponId>` | Bazooka, Shotgun, Uzi, HomingMissile (the launcher), Minigun: held, RootPart at the grip. Grenade, Dynamite, ClusterBomb, SpiderBomb, BlackHoleGrenade, VarietyGrenade, SpartanSpear: thrown, RootPart at the centre |
+| `Assets/Arsenal/Models/<WeaponId>` | Bazooka, Shotgun, Uzi, HomingMissile (the launcher), Minigun, BaseballBat: held, RootPart at the grip. Grenade, Dynamite, ClusterBomb, SpiderBomb, BlackHoleGrenade, VarietyGrenade, SpartanSpear: thrown, RootPart at the centre. The spear and the bat carry a Trail (from the studio's effects) between `TrailBottom` and `TrailTip` attachments on their `Body` |
 | `Assets/Arsenal/Models/<UtilityId>` | Jetpack, SpeedPotion, Parachute, Bandage, Medkit: RootPart at the centre, no `Muzzle`. The Jetpack's straps face the RootPart's front (it's worn on the back); the Parachute's harness hangs at its bottom |
 | `Assets/Arsenal/Projectiles/<ShotId>` | HomingMissile (the missile, nose along +X); Snail (a Variety grenade's snail, its face on the RootPart's right side, which Combat turns to the camera); Dynamite (the placed stick, 4× the held one, RootPart half a stud above its bottom so it stands on the ground) |
 
-Still without a model: Baseball Bat, One Punch, Low Gravity Potion, and the Cluster bomb's bomblets.
+Still without a model: One Punch, Low Gravity Potion, and the Cluster bomb's bomblets.

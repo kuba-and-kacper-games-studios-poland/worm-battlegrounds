@@ -1,9 +1,13 @@
 # Loadout
 
 The weapons and utilities a player takes into a match: 3 slots, plus slot 4 and slot 5, opened with coins or a game
-pass. The Bazooka is always there and takes no slot. The lobby's `Loadout` panel shows the slots; pressing an open
-slot opens the `LoadoutPicker` widget with the owned weapons and utilities, and pressing the next locked slot asks
-whether to open it with coins. Match reads `GetMatchLoadout` when it seats the player.
+pass. The Bazooka (`BASIC_WEAPON`) is always there and takes no slot. The lobby's `Loadout` panel (LOADOUT, at the
+right) shows two rows of cards numbered like the match's bar: the Bazooka, then each slot with its item's picture,
+name in its rarity's colour, copies (x5) and shiny mark, a + on an empty slot, and the lock with its price on the
+next slot to open (later ones hide). Pressing an open slot shows it selected and opens the `LoadoutPicker` widget
+(INVENTORY): every weapon and utility, owned ones first by rarity with their copies (the one in this slot selected,
+those in other slots in the equipped look, uses and cooldown in the hover info), then the ones not owned yet,
+locked; **Empty** empties the slot. Pressing the next locked slot asks whether to open it with coins. Match reads `GetMatchLoadout` when it seats the player.
 
 | | |
 | --- | --- |
@@ -19,7 +23,7 @@ whether to open it with coins. Match reads `GetMatchLoadout` when it seats the p
 | --- | --- |
 | `Server.lua` | Setting slots, opening slots, the match loadout |
 | `Client.lua` | Starts the panel and the picker |
-| `Scripts/Client/Panel.lua` | The `Loadout` panel's slots |
+| `Scripts/Client/Panel.lua` | The `Loadout` panel's cards: the basic weapon and the slots, the selected look while the picker is open |
 | `Scripts/Client/Picker.lua` | The `LoadoutPicker` widget |
 | `Settings.lua` | `Loadout_Settings` |
 
@@ -64,5 +68,5 @@ whether to open it with coins. Match reads `GetMatchLoadout` when it seats the p
 | `SLOT_CATEGORIES` | `{ "Weapon", "Utility" }` | Inventory categories a slot takes |
 | `SHINY_COPIES` | `10` | Copies that make an item shiny |
 | `PANEL_GUI_NAME`, `PICKER_GUI_NAME` | `"Loadout"`, `"LoadoutPicker"` | The guis |
-| `EMPTY_NAME_COLOR` | `(255, 255, 255)` | An empty slot's name colour; a filled slot's name takes its item's rarity colour |
-| `EMPTY_ICON` | the kit's plus (`rbxassetid://134817447648270`) | An empty slot's picture; a locked slot shows only its cover |
+| `BASIC_WEAPON` | `"Bazooka"` | The weapon every loadout has: first on the panel, never in the picker |
+| `SLOTS_PER_ROW`, `ITEMS_PER_ROW` | `3`, `3` | Cards in each of the panel's two rows, and in each of the picker's rows |

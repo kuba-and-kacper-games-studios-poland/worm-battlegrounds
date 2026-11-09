@@ -2,27 +2,27 @@
 
 Lobby parties of up to `MAX_PARTY` players, who join match rows and solo matches together. A player invites someone
 in the same server who isn't in a party (only the leader invites once there is one); the invite stays open
-`INVITE_SECONDS`. **Invite players** opens the `PartyInvite` box: everyone here who isn't in a party, each with
+`INVITE_SECONDS`. A **+** card in the party column opens the `PartyInvite` box: everyone here who isn't in a party, each with
 **Invite** (it turns to **Sent**). An invited player gets the `PartyInvited` box: who asked, **Join party** or **No
 thanks** (closing it lets the invite run out). The leader can kick; when the leader leaves, the next member leads.
-**Invite friends** opens Roblox's game invite. Party state lives in two Player attributes, so every client draws the `Party` panel
-(members with their level, a crown on the leader, kick buttons) without its own remote. The panel hangs under a
-tab with the party's count; it starts open on PC and console and folded on phones and tablets (it follows
-`I.Platform.Current`), and a press on the tab opens or folds it.
+**Invite friends** in that box opens Roblox's game invite. Party state lives in two Player attributes, so every client draws the `Party` column
+(the PARTY column at the left: a card per member with their avatar, name and level, a crown on the leader, Kick for
+the leader, then a **+** card per free place for a player who may invite, and the red Leave button by the PARTY title
+while in a party) without its own remote.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Party` |
 | Runs on | Server, Client · Lobby map |
 | Exposes | `I.Party` (server) |
-| Uses | `I.WidgetManager`, `I.Interact`, `I.Friends`, `I.Platform` and the `Platform_Changed` Topic (client) |
+| Uses | `I.WidgetManager`, `I.Interact`, `I.Friends` (client) |
 
 ## Files
 
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Invites, answers, leaving, kicking, the attributes |
-| `Client.lua` | The `Party` panel |
+| `Client.lua` | The `Party` column |
 | `Scripts/Client/Invites.lua` | The `PartyInvite` and `PartyInvited` boxes |
 | `Settings.lua` | `Party_Settings` |
 
@@ -65,12 +65,12 @@ tab with the party's count; it starts open on PC and console and folded on phone
 | --- | --- | --- |
 | `MAX_PARTY` | `4` | The most players in a party |
 | `INVITE_SECONDS` | `30` | How long an invite stays open |
-| `GUI_NAME` | `"Party"` | The panel |
+| `GUI_NAME` | `"Party"` | The party column |
 | `INVITE_GUI_NAME`, `INVITED_GUI_NAME` | `"PartyInvite"`, `"PartyInvited"` | The invite list, and the box an invited player answers (WidgetManager widgets) |
 
 ## In the place
 
-Drives the `Party` panel: `S_Tab` (the count, its skin and chevron), `S_Panel` (open or folded), `U_Members` ›
-`PREFAB | Member` (named by user id), `U_Invite`, `U_InviteFriends`, `U_Leave`.
+Drives the `Party` column: `U_Members` › `PREFAB | Member` (named by user id: `S_Avatar`, `S_Name`, `S_Level`,
+`S_Crown`, `S_Kick`) and `PREFAB | Invite` (the + cards), and `U_Party` › `S_Leave`.
 Fills `PartyInvite` (`U_Players` › `PREFAB | Invitable`: `S_Avatar`, `S_Name`, `S_Invite`; `S_Empty`;
 `S_InviteFriends`) and `PartyInvited` (`S_Avatar`, `S_Text`, `S_Accept`, `S_Decline`).

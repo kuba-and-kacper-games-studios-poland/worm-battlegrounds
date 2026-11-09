@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Spider bomb",
-	Icon = "",
+	Icon = "rbxassetid://126313994651146",
 
 	--[[ Behavior ]]
 

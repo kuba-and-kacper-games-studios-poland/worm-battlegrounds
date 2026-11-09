@@ -9,6 +9,9 @@ local _localName = "SnailControl"
 --- @type SnailControl_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--- @type SnailControl_ServerSettings
+local _serverSettings = require(script:FindFirstAncestor(_localName):FindFirstChild("ServerSettings"))
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Effects = require(script.Parent:FindFirstChild("Effects")) --- @type SnailControl_Server_Effects
@@ -217,8 +220,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Check Snail
 
 --[[
-	Snaps a snail back where it last was and takes it from its player when it passed through the terrain, moved faster
-	than walking or jumping allows, climbed higher than its jump and jetpack fuel reach, or walked more than
+	Snaps a snail back where it last was and takes it from its player when it left the arena's plane, passed through
+	the terrain, moved faster than walking or jumping allows, climbed higher than its jump and jetpack fuel reach, or walked more than
 	STAMINA_GRACE past an empty Stamina bar.
 ]]
 --- @param control SnailControl_Control
@@ -245,6 +248,14 @@ function Module._checkSnail(participantId: string, control)
 	local upwards: number = position.Y - control.Good.Y
 	local speedMultiplier: number = model:GetAttribute("SpeedMultiplier") or 1
 
+	--[[ Plane ]]
+
+	-- Snap it back when it left the arena's plane, which only its client's copy of the Plane constraint holds it to
+	if math.abs(position.Z - I.Arena.GetPlane().WorldPosition.Z) > _serverSettings.PLANE_SLACK then
+		Module._snapBack(participantId, control, "left the arena's plane")
+		return
+	end
+
 	--[[ Path ]]
 
 	-- Snap it back when it went through the ground or a wall since the last frame (its ball keeps its middle off them)
@@ -257,13 +268,13 @@ function Module._checkSnail(participantId: string, control)
 
 	-- Snap it back when it moved faster than its player could have made it
 	-- Positions reach the server in bursts, so it always allows at least one interval's worth of movement
-	local tolerance: number = _settings.SPEED_TOLERANCE * math.max(elapsed, _settings.CHECK_INTERVAL)
-	if sideways > _settings.WALK_SPEED * speedMultiplier * tolerance + _settings.MOVE_SLACK or upwards > _settings.JUMP_SPEED * tolerance + _settings.MOVE_SLACK then
+	local tolerance: number = _serverSettings.SPEED_TOLERANCE * math.max(elapsed, _serverSettings.CHECK_INTERVAL)
+	if sideways > _settings.WALK_SPEED * speedMultiplier * tolerance + _serverSettings.MOVE_SLACK or upwards > _settings.JUMP_SPEED * tolerance + _serverSettings.MOVE_SLACK then
 		Module._snapBack(participantId, control, "moved too fast")
 		return
 	end
 
-	if elapsed >= _settings.CHECK_INTERVAL then
+	if elapsed >= _serverSettings.CHECK_INTERVAL then
 		control.Good = position
 		control.GoodTime = now
 	end
@@ -274,12 +285,12 @@ function Module._checkSnail(participantId: string, control)
 	if Module._isGrounded(position) then
 		control.Ground = position.Y
 	end
-	local reach: number = control.Ground + Module._getJumpHeight(model) + _settings.MOVE_SLACK
+	local reach: number = control.Ground + Module._getJumpHeight(model) + _serverSettings.MOVE_SLACK
 	local from: number = math.max(control.Last.Y, reach)
 	control.Lift += math.max(position.Y - from, 0)
 
 	-- Snap it back when it climbed higher than its jetpack's fuel lifts it
-	if control.Lift > _settings.JETPACK_SPEED * (model:GetAttribute("JetpackFuel") or 0) + _settings.LIFT_GRACE then
+	if control.Lift > _settings.JETPACK_SPEED * (model:GetAttribute("JetpackFuel") or 0) + _serverSettings.LIFT_GRACE then
 		Module._snapBack(participantId, control, "flew higher than its jump and jetpack reach")
 		return
 	end
@@ -294,7 +305,7 @@ function Module._checkSnail(participantId: string, control)
 	model:SetAttribute("Stamina", math.max(stamina - moved, 0))
 
 	-- Snap it back when it kept going well past an empty bar
-	if control.Overdraft > _settings.STAMINA_GRACE then
+	if control.Overdraft > _serverSettings.STAMINA_GRACE then
 		Module._snapBack(participantId, control, "walked past its stamina")
 	end
 end

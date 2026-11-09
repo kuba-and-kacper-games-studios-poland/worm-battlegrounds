@@ -41,9 +41,9 @@ function Module.Start()
 	--[[ Elements ]]
 
 	moduleGui = I.UserInterface.UI[_settings.SKINS_GUI_NAME]
-	elems["Skins"] = moduleGui:FindFirstChild("U_Skins", true) --- @type ScrollingFrame
-	elems["SkinButton"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_Skins", true) --- @type Frame
-	prefabs["SkinTile"] = elems["Skins"]:FindFirstChild("PREFAB | SkinTile") --- @type Frame
+	elems["Skins"] = moduleGui:FindFirstChild("U_Skins", true) --- @type Frame
+	elems["SkinsCategory"] = moduleGui:FindFirstChild("U_Categories", true):FindFirstChild("S_Skins") --- @type ImageButton
+	prefabs["SkinTile"] = elems["Skins"]:FindFirstChild("PREFAB | SkinTile") --- @type ImageButton
 
 	--[[ Connections ]]
 
@@ -78,17 +78,16 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the worn skin on the lobby's skin button, and redraws the skins widget while it's open.
+	Shows the worn skin under the Skins category, and redraws the skins widget while it's open.
 ]]
 function Module._refresh()
 	--[[ Data ]]
 
 	local item = I.G_Inventory.Items[Module._getEquipped()] --- @type Inventory_ItemData?
 
-	--[[ Skin Button ]]
+	--[[ Category ]]
 
-	elems["SkinButton"]:FindFirstChild("S_Info", true).Text = if item then item.Name else ""
-	elems["SkinButton"]:FindFirstChild("S_Icon", true).Image = if item then item.IconId else ""
+	elems["SkinsCategory"]:FindFirstChild("Equipped").Text = if item then item.Name else ""
 
 	--[[ Widget ]]
 
@@ -118,14 +117,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Draw
 
 --[[
-	Draws one tile per owned skin: its snail in a 3D preview, its name and copies toward shiny, and Equip (or Equipped
-	on the worn one).
+	Draws one tile per skin: its snail in a 3D preview, its name and its rarity's corner. The worn one takes the tile's
+	selected look and comes first; owned ones equip on a press; the rest show the lock.
 ]]
 function Module._draw()
 	--[[ Clearing ]]
 
 	for _index: number, child: Instance in ipairs(elems["Skins"]:GetChildren()) do
-		if child:IsA("Frame") and child ~= prefabs["SkinTile"] then
+		if child:IsA("GuiButton") and child ~= prefabs["SkinTile"] then
 			child:Destroy()
 		end
 	end
@@ -139,25 +138,49 @@ function Module._draw()
 
 	--- @param skin Cosmetics_SkinData
 	for skinId: string, skin in pairs(I.G_Cosmetics.GetSkins()) do
+		--[[ Local Variables ]]
+
 		local item = I.G_Inventory.Items[skinId] --- @type Inventory_ItemData?
-		if not item or not standard[skinId] then
+		if not item then
 			continue
 		end
-		local tile: Frame = prefabs["SkinTile"]:Clone()
+		local owned: boolean = standard[skinId] ~= nil
+		local worn: boolean = skinId == equipped
+		local rarityIndex: number = I.Rarity.GetRarityIndex(item.Rarity) or 0
+		local look = I.Rarity.GetLook(item.Rarity) --- @type Rarity_Look?
+
+		--[[ Cloning ]]
+
+		local tile: ImageButton = prefabs["SkinTile"]:Clone()
 		tile.Name = skinId
-		tile.LayoutOrder = if skinId == equipped then 0 else (I.Rarity.GetRarityIndex(item.Rarity) or 0) + 1
+		tile.LayoutOrder = if worn then 0 elseif owned then rarityIndex + 1 else rarityIndex + 100
 		tile.Visible = true
-		local caption: Frame = tile:FindFirstChild("Caption", true)
-		local equip: Frame = tile:FindFirstChild("S_Equip", true)
-		caption:FindFirstChild("Title").Text = item.Name
-		caption:FindFirstChild("Subtext").Text = `{math.min(tonumber(standard[skinId]) or 0, _settings.SHINY_COPIES)}/{_settings.SHINY_COPIES} to shiny`
-		tile:FindFirstChild("Status", true).Text = ""
-		equip:FindFirstChild("ButtonText", true).Text = if skinId == equipped then "EQUIPPED" else "EQUIP"
+
+		--[[ Elements ]]
+
+		local background: Frame = tile:FindFirstChild("Background")
+
+		--[[ Texts ]]
+
+		tile:FindFirstChild("S_Name").Text = item.Name
+		tile:FindFirstChild("S_Rarity").ImageColor3 = if look then look.Base else Color3.new(1, 1, 1)
+		tile:FindFirstChild("S_Locked").Visible = not owned
+
+		--[[ Selected Look ]]
+
+		background:FindFirstChild("Stroke2").Image = tile:GetAttribute(if worn then "Look_SelectedStroke2" else "Look_Stroke2")
+		background:FindFirstChild("Stroke").Image = tile:GetAttribute(if worn then "Look_SelectedStroke" else "Look_Stroke")
+		background:FindFirstChild("Stroke").ImageColor3 = tile:GetAttribute(if worn then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+
+		--[[ Saving ]]
+
 		tile.Parent = elems["Skins"]
-		Module._preview(tile:FindFirstChild("Viewport", true), skin.Model)
-		I.Interact.OnPress(equip:FindFirstChild("Button"), function()
-			I.Network.Fire("Cosmetics_Equip", skinId)
-		end)
+		Module._preview(tile:FindFirstChild("S_Preview"), skin.Model)
+		if owned and not worn then
+			I.Interact.OnPress(tile, function()
+				I.Network.Fire("Cosmetics_Equip", skinId)
+			end)
+		end
 	end
 end
 

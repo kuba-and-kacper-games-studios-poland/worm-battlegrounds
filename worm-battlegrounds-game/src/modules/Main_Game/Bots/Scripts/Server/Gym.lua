@@ -7,11 +7,11 @@ local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointe
 local _localName = "Bots"
 
 --- @type Bots_Settings
-local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("ServerSettings"))
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
 
-local _data = script:FindFirstAncestor(_localName):FindFirstChild("Data")
+local _data = script:FindFirstAncestor(_localName):FindFirstChild("ServerData")
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Data
 
@@ -33,7 +33,7 @@ local snailsFolder: Folder? = nil
 local running: boolean = false
 local stopping: boolean = false
 
--- A genome's keys in the order they're written (Data/Brains)
+-- A genome's keys in the order they're written (ServerData/Brains)
 --- @type { string }
 local GENOME_KEYS = {
 	"EnemyDamage",
@@ -166,10 +166,10 @@ end
 
 --[[
 	A training run, in Studio with no match playing: self-play evolution of a difficulty's genome. A population starts
-	from the shipped genome (Data/Brains), or the options' Start, and mutants of it; each generation plays headless matches (Sim) between them,
+	from the shipped genome (ServerData/Brains), or the options' Start, and mutants of it; each generation plays headless matches (Sim) between them,
 	free-for-alls and 2 v 2s on the maps, scores every seat by its place and the damage it dealt, keeps the best
 	(Elites), and breeds the rest from the better ones with crossover and mutation. The champion then sits an exam
-	against the shipped genome, or the options' Baseline (with 0 Generations, Start sits it: a head-to-head). The report (JSON, with the champion as Lua to paste into Data/Brains) goes to
+	against the shipped genome, or the options' Baseline (with 0 Generations, Start sits it: a head-to-head). The report (JSON, with the champion as Lua to paste into ServerData/Brains) goes to
 	ServerStorage's TRAIN_RESULT and the Output; the progress shows in TRAIN_STATUS_ATTRIBUTE.
 ]]
 --- @param options Bots_TrainOptions
@@ -600,7 +600,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Lua
 
 --[[
-	Returns a genome written as its difficulty's row of Data/Brains, to paste over it.
+	Returns a genome written as its difficulty's row of ServerData/Brains, to paste over it.
 ]]
 --- @param genome Bots_Genome
 --- @return string

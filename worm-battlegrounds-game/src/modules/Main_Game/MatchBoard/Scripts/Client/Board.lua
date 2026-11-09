@@ -49,8 +49,7 @@ function Module.Start()
 
 	moduleGui = I.UserInterface.UI[_settings.BOARD_GUI_NAME]
 	elems["Play"] = moduleGui:FindFirstChild("U_Play") --- @type Frame
-	elems["Welcome"] = elems["Play"]:FindFirstChild("S_Welcome", true) --- @type TextLabel
-	elems["Solo"] = elems["Play"]:FindFirstChild("S_Solo", true) --- @type Frame
+	elems["Solo"] = elems["Play"]:FindFirstChild("S_Solo", true) --- @type ImageButton
 	elems["Rows"] = elems["Play"]:FindFirstChild("U_Rows", true) --- @type ScrollingFrame
 	elems["WaitingRoom"] = moduleGui:FindFirstChild("U_WaitingRoom") --- @type Frame
 	elems["Match"] = elems["WaitingRoom"]:FindFirstChild("S_Match", true) --- @type TextLabel
@@ -65,7 +64,6 @@ function Module.Start()
 	--[[ Setup ]]
 
 	Setup.Start(moduleGui, Module._refresh)
-	elems["Welcome"].Text = `Welcome, {I.S.Players.LocalPlayer.DisplayName}`
 
 	--[[ Connections ]]
 
@@ -75,7 +73,7 @@ function Module.Start()
 	for _index: number, config: Instance in ipairs(boardFolder:GetChildren()) do
 		Module._watchRow(config)
 	end
-	I.Interact.OnPress(elems["Solo"]:FindFirstChild("Button"), Module._onPlay)
+	I.Interact.OnPress(elems["Solo"], Module._onPlay)
 	I.Interact.OnPress(elems["Vote"], function()
 		I.Network.Fire("MatchBoard_Vote")
 	end)
@@ -92,7 +90,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Row
 
 --[[
-	Adds a card for a public row, in PUBLIC_ROWS order, and redraws the board whenever any row changes.
+	Adds a lobby card for a public row, in PUBLIC_ROWS order, and redraws the board whenever any row changes.
 ]]
 function Module._watchRow(config: Instance)
 	--[[ Data ]]
@@ -111,7 +109,7 @@ function Module._watchRow(config: Instance)
 		line.Visible = true
 		line.Parent = elems["Rows"]
 		lines[config.Name] = line
-		I.Interact.OnPress(line:FindFirstChild("S_Join", true):FindFirstChild("Button"), function()
+		I.Interact.OnPress(line:FindFirstChild("S_Join"), function()
 			I.Network.Fire("MatchBoard_Join", config.Name)
 		end)
 	end
@@ -140,7 +138,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Play
 
 --[[
-	Play solo opens the setup for a solo match; in a party it sets up the party's match, which only the leader starts.
+	Solo vs bots opens the setup for a solo match; in a party it sets up the party's match, which only the leader starts.
 ]]
 function Module._onPlay()
 	--[[ Local Variables ]]
@@ -163,8 +161,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the board: Play solo (Play with party in a party), each public row's mode, map, players and Join (Join teams
-	for team modes), or the waiting room of the row the player is in, with everyone in it and the votes. The setup
+	Draws the board: Solo vs bots (Play with party in a party), each public row's mode, map, players and Join (Join
+	teams for team modes), or the waiting room of the row the player is in, with everyone in it and the votes. The setup
 	panel shows in the board's place.
 ]]
 function Module._refresh()
@@ -179,13 +177,18 @@ function Module._refresh()
 		local mapRow = _settings.MAPS[config:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
 		line:FindFirstChild("S_Map", true).Text = if mapRow then mapRow.Name else ""
-		line:FindFirstChild("S_Players", true).Text = `{#players} / {config:GetAttribute("Size")}`
-		line:FindFirstChild("S_Join", true):FindFirstChild("ButtonText", true).Text = if config:GetAttribute("Mode") == "Deathmatch" then "Join" else "Join teams"
+		line:FindFirstChild("S_Players", true).Text = `{#players}/{config:GetAttribute("Size")} players`
+		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if config:GetAttribute("Mode") == "Deathmatch" then "Join" else "Join teams"
+
+		-- shortcut: a map with no Thumbnail yet keeps the design's picture; give each map its picture when drawn
+		if mapRow and mapRow.Thumbnail ~= "" then
+			line:FindFirstChild("S_MapIcon").Image = mapRow.Thumbnail
+		end
 	end
 
 	--[[ Play ]]
 
-	elems["Solo"]:FindFirstChild("ButtonText", true).Text = if I.S.Players.LocalPlayer:GetAttribute("PartyId") then "Play with party" else "Play solo"
+	elems["Solo"]:FindFirstChild("Name1").Text = if I.S.Players.LocalPlayer:GetAttribute("PartyId") then "Play with party" else "Solo vs bots"
 
 	--[[ Panels ]]
 

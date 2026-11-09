@@ -228,7 +228,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Publish
 
 --[[
-	Writes the skin a player wears into their Cosmetics folder (EquippedSkin).
+	Writes the skin a player wears into their Cosmetics folder and onto the Player (EquippedSkin), where the lobby's
+	party stage reads every member's.
 ]]
 function Module._publish(player: Player)
 	--[[ Data ]]
@@ -240,6 +241,7 @@ function Module._publish(player: Player)
 	--[[ Saving ]]
 
 	I.Replicator.Set(player, _localName, "EquippedSkin", moduleData["EquippedSkin"])
+	player:SetAttribute("EquippedSkin", moduleData["EquippedSkin"])
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

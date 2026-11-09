@@ -4,13 +4,14 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Minigun",
-	Icon = "",
+	Icon = "rbxassetid://93480916921558",
 
 	--[[ Behavior ]]
 
 	Kind = "Hitscan",
 	Aim = "Straight",
 	Wind = false,
+	HoldPose = "MiniGun",
 
 	--[[ Damage ]]
 

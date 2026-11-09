@@ -10,6 +10,16 @@ local _settings = {
 	-- How quickly the camera catches up with what it follows: higher is snappier
 	FOLLOW_SPEED = 6,
 
+	--%%%%%%%%%%%%%%%%%%%% Blasts
+
+	--[[
+		Seconds the camera stays on a blast it followed the shot into before it moves on: BIG_BLAST_HOLD for blasts of
+		BIG_BLAST_RADIUS studs or more, BLAST_HOLD for smaller ones
+	]]
+	BLAST_HOLD = 1.5,
+	BIG_BLAST_HOLD = 2.5,
+	BIG_BLAST_RADIUS = 6,
+
 	--%%%%%%%%%%%%%%%%%%%% Zoom
 
 	--[[

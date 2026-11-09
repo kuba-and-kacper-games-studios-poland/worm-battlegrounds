@@ -16,6 +16,8 @@ local Tags = require(_scripts:FindFirstChild("Client"):FindFirstChild("Tags")) -
 local Gear = require(_scripts:FindFirstChild("Client"):FindFirstChild("Gear")) --- @type Snails_Client_Gear
 local Shell = require(_scripts:FindFirstChild("Client"):FindFirstChild("Shell")) --- @type Snails_Client_Shell
 local Sounds = require(_scripts:FindFirstChild("Client"):FindFirstChild("Sounds")) --- @type Snails_Client_Sounds
+local Effects = require(_scripts:FindFirstChild("Client"):FindFirstChild("Effects")) --- @type Snails_Client_Effects
+local Motion = require(_scripts:FindFirstChild("Client"):FindFirstChild("Motion")) --- @type Snails_Client_Motion
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -69,6 +71,8 @@ function Module.Start()
 	Gear.Start(snailsFolder)
 	Shell.Start(snailsFolder)
 	Sounds.Start(snailsFolder)
+	Effects.Start(snailsFolder)
+	Motion.Start(snailsFolder)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

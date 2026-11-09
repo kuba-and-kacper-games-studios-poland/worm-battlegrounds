@@ -13,15 +13,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 local Loader = require(script.Parent:FindFirstChild("Loader")) --- @type Arena_Server_Loader
 local Debris = require(script.Parent:FindFirstChild("Debris")) --- @type Arena_Server_Debris
-
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
-
---- @type { [string]: any }
-local SUBTRACT_OPTIONS = {
-	SplitApart = true,
-	CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition,
-	RenderFidelity = Enum.RenderFidelity.Automatic,
-}
+local Cutter = require(script.Parent.Parent:FindFirstChild("Helpers"):FindFirstChild("Cutter")) --- @type Arena_Cutter
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -39,16 +31,17 @@ local SUBTRACT_OPTIONS = {
 --- @class Arena_Server_Carver
 local Module = {}
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
 --%%%%%%%%%%%%%%%%%%%% Carve
 
 --[[
-	Subtracts the blast's stepped cutter (Build Cutter) from every terrain part it touches, bedrock included. Returns
-	the new pieces and the parts that touched a removed one: the places where the ground may have lost its support.
+	Subtracts the blast's stepped cutter from every terrain part it touches, bedrock included, all at once, then swaps
+	every part for its pieces in one frame (each piece marked with the carve's number, `Arena_Carve`). Returns the new
+	pieces and the parts that touched a removed one: the places where the ground may have lost its support.
 ]]
 --- @return { BasePart }
-function Module.Carve(center: Vector3, radius: number)
+function Module.Carve(center: Vector3, radius: number, carveId: number)
 	--[[ Data ]]
 
 	local terrain: Folder? = Loader.GetTerrain()
@@ -62,7 +55,8 @@ function Module.Carve(center: Vector3, radius: number)
 	local seeds = {} --- @type { BasePart }
 	local hits = {} --- @type { BasePart }
 	local found = {} --- @type { [BasePart]: boolean }
-	local cutter = Module.BuildCutter(center, radius, bounds.Position.Z, bounds.Size.Z + _settings.CARVE_DEPTH_MARGIN) --- @type { BasePart }
+	local pieces = {} --- @type { [BasePart]: { BasePart } }
+	local cutter = Cutter.Build(center, radius, bounds.Position.Z, bounds.Size.Z + _settings.CARVE_DEPTH_MARGIN, Loader.GetArenaFolder()) --- @type { BasePart }
 
 	--[[ Querying ]]
 
@@ -78,37 +72,37 @@ function Module.Carve(center: Vector3, radius: number)
 
 	--[[ Carving ]]
 
+	-- Every part is cut at the same time, so the hole is ready in one go rather than a part a frame
+	local running: number = #hits
 	for _index: number, part: BasePart in ipairs(hits) do
-		-- Skip debris still falling
-		if not part.Anchored then
-			continue
-		end
+		task.spawn(function()
+			pieces[part] = Cutter.Subtract(part, cutter)
+			running -= 1
+		end)
+	end
+	while running > 0 do
+		task.wait()
+	end
 
-		local success: boolean
-		local result: any | string?
-		success, result = pcall(I.S.GeometryService.SubtractAsync, I.S.GeometryService, part, cutter, SUBTRACT_OPTIONS)
-		if not success then
-			warn(`[{_localName}::{script.Name}]: Could not carve ({part:GetFullName()})! - ({result})`)
-			continue
-		end
+	--[[ Swapping ]]
 
-		-- The parts that leaned on this one may now hang in the air
-		for _neighbourIndex: number, neighbour: BasePart in ipairs(Debris.GetContacts(part)) do
-			table.insert(seeds, neighbour)
-		end
-
+	-- Every piece is in before any part goes, so clients never see a gap
+	--- @param partPieces { BasePart }
+	for _part: BasePart, partPieces in pairs(pieces) do
 		--- @param piece BasePart
-		for _pieceIndex: number, piece in ipairs(result) do
-			piece.Name = part.Name
-			piece.CollisionGroup = part.CollisionGroup
-
-			-- The cut faces take the piece's colour, not the cutter's
-			piece.UsePartColor = true
-			for attribute: string, value: any in pairs(part:GetAttributes()) do
-				piece:SetAttribute(attribute, value)
-			end
+		for _pieceIndex: number, piece in ipairs(partPieces) do
+			piece:SetAttribute("Arena_Carve", carveId)
 			piece.Parent = terrain
 			table.insert(seeds, piece)
+		end
+	end
+	--- @param _partPieces { BasePart }
+	for part: BasePart, _partPieces in pairs(pieces) do
+		-- The parts that leaned on this one may now hang in the air
+		for _neighbourIndex: number, neighbour: BasePart in ipairs(Debris.GetContacts(part)) do
+			if not pieces[neighbour] then
+				table.insert(seeds, neighbour)
+			end
 		end
 		part:Destroy()
 	end
@@ -122,55 +116,6 @@ function Module.Carve(center: Vector3, radius: number)
 	--[[ Returning ]]
 
 	return seeds
-end
-
---%%%%%%%%%%%%%%%%%%%% Build Cutter
-
---[[
-	Builds what a blast cuts away: every CARVE_CELL square of the plane whose center is within the radius, one box per
-	row, each running `depth` studs along Z around `z`. The caller destroys the boxes.
-]]
---- @return { BasePart }
-function Module.BuildCutter(center: Vector3, radius: number, z: number, depth: number)
-	--[[ Local Variables ]]
-
-	local cell: number = _settings.CARVE_CELL
-	local boxes = {} --- @type { BasePart }
-
-	--[[ Building ]]
-
-	for row: number = math.floor((center.Y - radius) / cell), math.floor((center.Y + radius) / cell) do
-		-- The row's run of squares whose centers are in the circle
-		local offset: number = (row + 0.5) * cell - center.Y
-		if math.abs(offset) > radius then
-			continue
-		end
-		local half: number = math.sqrt(radius ^ 2 - offset ^ 2)
-		local first: number = math.ceil((center.X - half) / cell - 0.5)
-		local last: number = math.floor((center.X + half) / cell - 0.5)
-		if first > last then
-			continue
-		end
-
-		table.insert(
-			boxes,
-			I.Create("Part")({
-				Name = "Cutter",
-				Size = Vector3.new((last - first + 1) * cell, cell, depth),
-				CFrame = CFrame.new((first + last + 1) / 2 * cell, (row + 0.5) * cell, z),
-				Anchored = true,
-				CanCollide = false,
-				CanTouch = false,
-				CanQuery = false,
-				Transparency = 1,
-				Parent = Loader.GetArenaFolder(),
-			})
-		)
-	end
-
-	--[[ Returning ]]
-
-	return boxes
 end
 
 return Module

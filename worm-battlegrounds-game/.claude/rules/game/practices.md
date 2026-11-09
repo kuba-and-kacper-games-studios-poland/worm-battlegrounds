@@ -11,8 +11,17 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Blasts carve voxel craters with CSG:** `GeometryService:SubtractAsync` with a stepped circle running along Z
   (through the plane): one box per row of the 1-stud squares whose centers are in the blast (`CARVE_CELL`), lined up
   with the maps' grid, so craters step like voxels, never smooth curves. The terrain stays long parts; only the cut
-  is stepped. `SplitApart` keeps every loose piece its own part; a group of pieces that no longer touches the ground
-  falls and anchors again where it lands.
+  is stepped. `SplitApart` keeps every loose piece its own part. The server cuts every part a blast reaches at once
+  and swaps them for their pieces in one frame.
+- **Each client cuts the holes itself** (the owner's pick, 2026-11-09, as the server's holes looked replicated): the
+  server announces a carve before cutting it (Arena's `Arena_Carve`), and every client cuts the same stepped hole on
+  local pieces at once, hiding the real parts until the server's pieces replace them (each piece carries its carve's
+  number, so a later hole is cut into an earlier carve's pieces as they arrive). The server's terrain stays the only
+  one that collides and that queries see.
+- **Cut-loose ground falls by the game's own gravity, locked to the plane** (the owner's pick, 2026-11-09, so players
+  can build bridges): never Roblox physics. A loose group drops straight down without turning to where it first
+  touches the terrain (lowest group first), or out of the arena, and stays there anchored; the server moves it and
+  each client draws the same fall on its own frames (`Arena_Fall`).
 - **Ground is bedrock on the floor:** each island's waterline blocks carry `Arena_Indestructible` (a name from before
   blasts could cut it). Blasts cut bedrock like any terrain, so an island can be blasted down to the water; a bedrock
   piece holds up what touches it while its bottom still reaches the map's floor (the bottom of its lowest bedrock),
@@ -52,19 +61,27 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Every snail parachutes in** (the studio's wiki): a player's placed spot, or for bots and players who don't place,
   up to the Match module's `DROP_HEIGHT` over a spot from `I.Arena.GetLandSpots` (on top of the ground on any storey,
   never over liquid), clear of the terrain above it.
-- **The active snail holds its weapon on the camera's side** (+Z, in front of its body), turned to its aim, so every
-  player sees it; it's drawn by each client from the snail's `HeldItem` (Combat's `Held` handler), never welded on
-  the server.
+- **The snail is the studio's rig, animated on each client** (2026-11-09): the `Classic` skin has bones, hands and a
+  `Handle`, and the `SnailRig` library plays its animations (idle, walk, hiding in its shell while it's thrown) from
+  how its ball moves (Snails' `Motion`), never from the server. Only the skin's RootPart is welded to the ball. Its
+  animations stay unpublished until the owner publishes them: Studio plays their keyframes, live servers nothing.
+- **The active snail holds its weapon in its hands, in the weapon's pose** (the row's `HoldPose`: the studio's Gun,
+  MiniGun, Bazooka and ShotGun snails; other items in the Gun pose), welded to the rig's `Handle` at the model's
+  `Grip`, and always on the camera's side: a snail facing left swaps its hands over. The hands and weapon pitch to the
+  aim (up to 90° either way), and a snail standing still turns to face its aim (its player's screen; the server for
+  bots), so the weapon never points back through it. A gun plays its pose's shot when it fires. It's drawn by each
+  client from the snail's `HeldItem` (Combat's `Held` handler), never welded on the server.
 - **Aiming points from the snail at the mouse** (the owner's pick, 2026-11-07, after the drag measured from the
   press felt off): on PC the weapon follows the mouse from the snail even before a press; holding the button (or a
   finger on touch) sets the power by how far the pointer is from the snail on the screen, in shares of the screen's
-  height so it feels the same on every screen, and letting go fires. The camera doesn't edge-pan while the button is
+  height so it feels the same on every screen, and letting go fires (on touch, letting go keeps the aim and its power,
+  and the HUD's FIRE button fires it, since 2026-11-09). The camera doesn't edge-pan while the button is
   held. On a pad the right stick aims and a held RT runs the power bar
-  up and down (Combat's `CHARGE_SECONDS` each way). The aim shows as an angle marker (a crosshair a fixed distance
-  from the snail, the direction only, never the shot's path) and a power bar (a row of circles from the held weapon's
+  up and down (Combat's `CHARGE_SECONDS` each way). The aim shows as an angle marker (the studio's crosshair picture, MatchHud's
+  `CROSSHAIR_IMAGE`, a fixed distance from the snail, the direction only, never the shot's path) and a power bar (a row of circles from the held weapon's
   `Muzzle` attachment to it, lit as the power fills). Both keep their size on the screen whatever the zoom, and the
   screen that draws an aim turns the held weapon with it at once (no wait for the server's copy). Only letting go
-  fires, never the turn running out.
+  (or FIRE on touch) fires, never the turn running out.
 - **Everyone sees the active snail aim:** its angle marker and power show on every screen through its turn, players'
   and bots' alike, from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots turn their
   marker, then fill their power, before they fire.
@@ -78,6 +95,12 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   `LocalTransparencyModifier`, so the server's ghost see-through can't bring it back) while `Health` is under the
   Snails module's `SHELL_BREAK_HEALTH`, and throws chips in its colours as it breaks; healing back up shows it again.
   It's driven by the `Health` attribute alone, with no remote. A skin without a `Shell` part never breaks.
+- **Effects are the studio's particle prefabs, played by the Vfx library** (2026-11-09): each effect is a part named
+  `PREFAB | <Name>` in `Workspace.Ume.ReplicatedStorage_Assets/Vfx` (from the studio's `Particles_1` and
+  `Particles_2`), its emitters disabled, with `EmitCount`, `EmitDelay` and `EmitDuration` attributes saying how each
+  fires. Code plays one by name (`I.Vfx.Play(name, cframe, parent, scale?)`), clones a trail (`I.Vfx.AddTrail`), and
+  never builds particles of its own. Blasts pick theirs by size (Combat's `BLAST_VFX`); guns, the punch and the
+  snails' spawn, landing, healing, splash and trail have theirs (Combat's and Snails' client `Effects`).
 - **Shots fly by the game's own simulation, not Roblox physics:** Combat's `Ballistics` (Scripts/Helpers) steps every
   flying shot the same on the server and every client, on the server's clock, with Worms' arcade rules (bounces that
   lose speed along the ground, resting and rolling off ledges, explosive shots that blow up as they touch liquid). The server is
@@ -103,7 +126,7 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   close in to swing or place Dynamite and run, and heal when hurt. Their snails stay server-owned.
 - **Bots think with a trained brain** (2026-11-08): each turn the Bots module's brain plans with the game's own
   simulation (Combat's shot bodies, blasts, throws, craters and the sea) and scores every plan with its difficulty's
-  genome (`Data/Brains.lua`), which self-play in Studio trains (the gym, the `train-bots` skill). Difficulty is skill
+  genome (`ServerData/Brains.lua`), which self-play in Studio trains (the gym, the `train-bots` skill). Difficulty is skill
   (`SKILLS`: the hand's error, the wind read, how far it looks, how much it minds the map), never deliberate misses.
   Nightmare is a secret difficulty, offered only in a custom lobby's Bots row (the owner's pick, 2026-11-08). Retraining, and teaching the bots something the game adds (a
   weapon, a map object, a hazard), happens only when the owner asks.
@@ -140,6 +163,17 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   clones rows into, `Picture` for images, and the shared `Label`, `Button`, `Stack`, `Progress`. Restyling the game
   is a theme change (the gui folder's `src/themes/WormBattlegroundsBrawl/_meta/README.md`). Overrides
   `gui/format.md` → Buttons and Surfaces ("other guis, built from `Primitive` nodes").
+- **The studio's screens are 1:1 `Primitive` ports** (the owner's pick, 2026-11-09): the match HUD (`MatchHud`,
+  `SnailTag`, `DamagePop`), the lobby (`Lobby`, `Party`, `Loadout`, `LoadoutPicker`, `MatchBoard`), `Crates` and
+  `Skins` are the studio's `HUD`, `LobbyInventory`, `Gacha` and `Customise` designs converted node for node into
+  `Primitive` nodes (their pictures, fonts and screen-fraction layout), with U_/S_ Ids, prefabs for lists, button tags
+  and WidgetManager's widget shape added. They override the rule above and the GUI kit's look rules (yellow leads
+  the eye, kit picked states) for these guis: a picked or locked look is copied from the design into `Look_*`
+  attributes on the prefab or button, which code swaps. Blocks the designs lack (the drop, knocked-out and waiting
+  dialogs, the kill feed, the emote wheel, the match setup and waiting room) stay theme controls in the same table
+  (`Theme = "WormBattlegroundsBrawl"`). They lay themselves out by screen fractions with aspect-ratio constraints, so
+  they need no `S_ScreenScale` and aren't in ScreenScale's `GUIS` (MatchHud and MatchBoard stay, for their kept
+  blocks).
 - **No value controls in a game gui** (`Dropdown`, `Segmented`, `Slider`, `Toggle`, `Input`): exports are static, so
   they do nothing in game. Use buttons the module selects. Preview modules may use them in their `Settings`.
 - **Lists code fills use `Cells`,** not the shared `Grid`: `Grid` lays its cells out in code, which exports don't run.
@@ -182,7 +216,7 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
-  the game starts: nothing in play stands on it (avatars are parked anchored, the lobby's backdrop has its own ground).
+  the game starts: nothing in play stands on it (avatars are parked anchored, the lobby's stage has its own ground).
 - **Placeholders until the owner provides the real thing:** developer products and game passes keep `Id = 0`; weapon
   projectiles, effects and skins other than Classic are made in code or fall back to the Classic snail. Each such spot
   has a `shortcut:` comment or a README line saying it's a placeholder. Never create products, passes or models on
@@ -214,30 +248,50 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   `Utils_PlatformSize`), and ScreenScale multiplies the screen's scale by the device scale the tag keeps on the
   UIScale (`Utils_BaseScale`). No module or attribute of the game's own does per-device sizing. The GUI kit tags its
   panels 0.75 on Desktop, since it's drawn for phones.
-- **Panels hang from a screen edge or corner** (top-left Party, bottom-left Loadout, the MatchBoard panel at the
-  bottom just right of the centre (55 %), top-right currency and the Crates and Skins buttons), so a per-device size
+- **Panels hang from a screen edge or corner** (the lobby's Party on the left, Loadout on the right, the public
+  matches along the bottom with SOLO VS BOTS and CUSTOM at the bottom right, the STYLE, WEAPONS and SKINS menu and the
+  currency at the top right), so a per-device size
   (`Utils_PlatformSize`) never needs a per-device position. On phones and tablets a panel too big for the screen gets a Mobile size, its list scrolling, and a Mobile scale under 1 only when
-  its content needs the room; a heading that costs a phone too much hides there (`Utils_HideOnPlatform`). A panel
-  that would cover another one on phones folds behind a tab there instead (Party: a "Party 2/4" tab over a panel as
-  tall as its members, open on PC and console, folded on phones and tablets, opened by a press), and draws above what
-  it covers when opened (Loadout and MatchBoard at `DisplayOrder` -1, under Party's 0 and the windows' 1).
+  its content needs the room; a heading that costs a phone too much hides there (`Utils_HideOnPlatform`).
 - **Counts stay on one line:** a currency count gets the width of its longest text, and amounts from 10,000 up are
   written short by the slot (`Currency_ShortFrom`: "18.62k"), so a count never wraps.
-- **The lobby plays a bot match behind its guis** (the owner's pick, 2026-11-07, as RoWorld's lobby does): the lobby
-  server copies Picnic Plains (Lobby's `BACKDROP_MAP`) to Lobby's `BACKDROP_ORIGIN`, and each client plays its own
-  bots on it (Lobby's `Backdrop` handlers): a small, slow match with the Bazooka, the Grenade and short jetpack hops,
-  blurred through ume's Lighting layers over an open window's lighter blur, the first snail in the player's equipped
-  skin. It's built only from what the lobby has (the arena templates, skins and Arsenal rows and models), since the match modules don't run there; nothing it does reaches the server. Keep the
-  screen to a few things: the logo at the top, Party, the Loadout bar, the corner buttons, and one
-  panel at the bottom laid out like RoWorld's (the owner's reference, 2026-11-06): a welcome line, the yellow **Play
-  solo** (**Play with party** in a party) and the public matches, one card per mode. The solo or party setup and the
-  waiting room take that panel's place; custom lobbies, crates and skins open in a window.
-- **Matchmaking fills with bots:** every public mode has a row on the board at all times, its timer starts when the
-  first player joins, and at 0 the match starts with whoever joined, bots in every empty seat (one player can play
-  Trios). A party can also play alone (friends only): with bots it pays like a public match, without bots half
-  (MatchRewards' `PARTY_NO_BOTS_SHARE`).
+- **The lobby is a party stage, as Fortnite's** (the owner's pick, 2026-11-09, replacing the bot match behind the
+  guis): each client clones the stage prefab (`ReplicatedStorage_Assets/Lobby/PREFAB | Stage`, built by hand where it
+  stands, beyond the baseplate) and holds the camera on its `Camera` marker, low and close; the player's snail
+  stands on the front pod (`Pod_1`) in their equipped skin, and their party in this server on the pods around it in
+  theirs (Lobby's `Stage` handler, from the `PartyId` and `EquippedSkin` Player attributes). Each client stands its
+  own snails, so everyone is in front on their own screen; the pods are parts in the prefab, so the layout is moved
+  in Studio. The
+  screen is the studio's `LobbyInventory` (2026-11-09): Party, the Loadout slots, the STYLE / WEAPONS / SKINS menu,
+  ACTIVE LOBBIES (a scrolling row of cards, one per public mode) and SOLO VS BOTS (**Play with party** in a party) with
+  CUSTOM; no logo and no welcome line. The solo or party setup and the waiting room take the board's place, hanging
+  from the bottom left beside Party so the stage's front pod stays in sight; custom
+  lobbies open in a window. Crates and Skins are full-screen widgets: while either is open the lobby's guis hide
+  (Lobby's `FULL_SCREEN_WIDGETS` and `LOBBY_GUIS`).
+- **Matchmaking fills with bots:** every public mode has a row on the board at all times, and its timer always runs
+  (the owner's pick, 2026-11-09, so the lobby looks active): at 0 the match starts with whoever joined, bots in every
+  empty seat (one player can play Trios), and a fresh row on another map takes its place, joined or not. A party can
+  also play alone (friends only): with bots it pays like a public match, without bots half (MatchRewards'
+  `PARTY_NO_BOTS_SHARE`).
 - **Check guis shown together for overlaps** before calling a layout done: PC sizes from 1024 × 768 to 3840 × 2160,
   tablets, and phones down to 667 × 375.
+
+## Server and client
+
+- **Clients get only the code and values they run** (the owner, 2026-11-09: "people cannot look into our sensitive
+  code"). Everything outside ume's hidden names replicates to every player, and ume loads every module's
+  `Settings.lua` on clients too, even a server-only module's. So server-only values live in files whose names ume's
+  hiding catches (`ume/structure.md` → Hidden server code): a server-only module's settings are its
+  `ServerSettings.lua` and its data `ServerData/` (Bots, MatchRewards, Progression); a module both sides run splits
+  its server-only keys into `ServerSettings.lua` beside `Settings.lua` (Combat's aim guide solver, SnailControl's
+  checks). Code requires them by name (`FindFirstChild("ServerSettings")`), and `I.Settings` doesn't hold them.
+  Overrides `ume/settings.md` (a module's settings are `Settings.lua`) for these files.
+- **Anything that would help a cheater runs on the server:** the bots' brain and genomes, the aim solver
+  (`I.Combat.GetArcs`, `PredictArc`), whose admin aim guide the server solves and sends to that player alone
+  (`Combat_AimbotGuide`), and the movement checks' margins. What clients need to draw (shot flight, launch speeds,
+  Arsenal rows) stays shared. A client check of a Player attribute is never a gate: the server decides what it sends.
+- **A match place server plays only a match a lobby sent it:** one with no metadata outside Studio (a public server
+  joined directly) plays nothing and sends everyone to the lobby (Match's `Connection.IsStray`).
 
 ## Loading
 

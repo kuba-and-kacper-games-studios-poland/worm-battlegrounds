@@ -107,9 +107,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Tag
 
 --[[
-	Shows a snail's health on its tag, number and bar in its team's colour, the turn marker and timer while it's the
-	active snail (the timer for everyone but its own player, who reads it on the turn panel), and hides the tag and
-	outline once it's a ghost.
+	Shows a snail's health on its tag (the number, and the bar's outline and fill in its team's colour), the turn marker
+	and timer while it's the active snail (the timer for everyone but its own player, who reads it on the turn panel),
+	and hides the tag and outline once it's a ghost.
 ]]
 function Module._refreshTag(model: Instance, tag: BillboardGui)
 	--[[ Elements ]]
@@ -117,13 +117,16 @@ function Module._refreshTag(model: Instance, tag: BillboardGui)
 	local active: Frame = tag:FindFirstChild("S_Active", true)
 	local timer: TextLabel = active:FindFirstChild("S_Timer")
 	local healthBar: Frame = tag:FindFirstChild("S_Health", true)
-	local status: TextLabel = healthBar:FindFirstChild("Status")
-	local fill: Frame = healthBar:FindFirstChild("Track"):FindFirstChild("Fill")
+	local healthText: TextLabel = healthBar:FindFirstChild("S_HealthText")
+	local fill: ImageLabel = healthBar:FindFirstChild("S_Fill")
 
 	--[[ Local Variables ]]
 
 	local share: number = math.clamp(model:GetAttribute("Health") / model:GetAttribute("MaxHealth"), 0, 1)
 	local isActive: boolean = model:GetAttribute("Active") == true
+
+	-- The fill's gradient cuts the picture at the health left, so it never squashes
+	local edge: number = math.clamp(share, 0.001, 0.998)
 
 	--[[ Applying ]]
 
@@ -131,10 +134,15 @@ function Module._refreshTag(model: Instance, tag: BillboardGui)
 	model:FindFirstChild("TeamOutline").Enabled = not model:GetAttribute("Ghost")
 	active.Visible = isActive
 	timer.Visible = isActive and model ~= I.Snails.GetMine()
-	status.Text = tostring(model:GetAttribute("Health"))
-	status.TextColor3 = model:GetAttribute("Color")
-	fill.Size = UDim2.fromScale(share, 1)
-	fill.BackgroundColor3 = model:GetAttribute("Color")
+	healthText.Text = tostring(model:GetAttribute("Health"))
+	healthBar:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = model:GetAttribute("Color")
+	fill.ImageColor3 = model:GetAttribute("Color")
+	fill.UIGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(edge, 0),
+		NumberSequenceKeypoint.new(edge + 0.001, 1),
+		NumberSequenceKeypoint.new(1, 1),
+	})
 
 	--[[ Timer ]]
 
@@ -176,7 +184,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Pop Damage
 
 --[[
-	Shows a damage number over a snail that rises and fades, then goes away.
+	Shows a damage number over a snail (the number and its shadow) that rises and fades, then goes away.
 ]]
 function Module._popDamage(root: BasePart, amount: number)
 	--[[ Local Variables ]]
@@ -186,6 +194,7 @@ function Module._popDamage(root: BasePart, amount: number)
 	--[[ Elements ]]
 
 	local amountLabel: TextLabel = pop:FindFirstChild("S_Amount", true)
+	local shadowLabel: TextLabel = pop:FindFirstChild("S_Shadow", true)
 
 	--[[ Building ]]
 
@@ -195,6 +204,7 @@ function Module._popDamage(root: BasePart, amount: number)
 	pop.AlwaysOnTop = true
 	pop.StudsOffset = Vector3.yAxis * _settings.TAG_OFFSET
 	amountLabel.Text = `-{amount}`
+	shadowLabel.Text = amountLabel.Text
 	I.ScreenScale.AddBillboard(pop)
 	pop.Parent = root
 
@@ -204,13 +214,15 @@ function Module._popDamage(root: BasePart, amount: number)
 	local Rise_Tween: Tween = I.S.TweenService:Create(pop, _settings.POP_TWEENINFO, Rise_TweenGoal)
 	Rise_Tween:Play()
 
-	local Fade_TweenGoal = { TextTransparency = 1 }
-	local Fade_Tween: Tween = I.S.TweenService:Create(amountLabel, _settings.POP_TWEENINFO, Fade_TweenGoal)
-	Fade_Tween:Play()
+	for _index: number, label: TextLabel in ipairs({ amountLabel, shadowLabel }) do
+		local Fade_TweenGoal = { TextTransparency = 1 }
+		local Fade_Tween: Tween = I.S.TweenService:Create(label, _settings.POP_TWEENINFO, Fade_TweenGoal)
+		Fade_Tween:Play()
 
-	local FadeStroke_TweenGoal = { Transparency = 1 }
-	local FadeStroke_Tween: Tween = I.S.TweenService:Create(amountLabel.UIStroke, _settings.POP_TWEENINFO, FadeStroke_TweenGoal)
-	FadeStroke_Tween:Play()
+		local FadeStroke_TweenGoal = { Transparency = 1 }
+		local FadeStroke_Tween: Tween = I.S.TweenService:Create(label.UIStroke, _settings.POP_TWEENINFO, FadeStroke_TweenGoal)
+		FadeStroke_Tween:Play()
+	end
 
 	--[[ Cleaning ]]
 

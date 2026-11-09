@@ -15,7 +15,10 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Public Rows
 
-	-- A row starts this many seconds after its first player joins, or once VOTE_FRACTION of its players voted
+	--[[
+		Every public row counts down this many seconds, always: at 0 it starts with whoever joined (or nobody) and a
+		fresh row on another map takes its place; it also starts once VOTE_FRACTION of its players voted, or when full
+	]]
 	ROW_SECONDS = 30,
 	VOTE_FRACTION = 2 / 3,
 
@@ -56,16 +59,19 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Maps
 
-	-- Every arena: its name, the match sizes it's made for, and its picture (placeholder until it's drawn)
+	--[[
+		Every arena: its name, the match sizes it's made for, and its picture (a landscape photo of the map, the game
+		home's assets/ui/map_thumbnails; empty until the map is built)
+	]]
 	--- @type { [string]: MatchBoard_MapRow }
 	MAPS = {
-		RockslideRidge = { Name = "Rockslide Ridge", Sizes = { 2, 4, 6 }, Thumbnail = "" },
-		PicnicPlains = { Name = "Picnic Plains", Sizes = { 2, 4, 6 }, Thumbnail = "" },
+		RockslideRidge = { Name = "Rockslide Ridge", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://123838177297909" },
+		PicnicPlains = { Name = "Picnic Plains", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://114380640476396" },
 		FluffyFallout = { Name = "Fluffy Fallout", Sizes = { 2, 4, 6 }, Thumbnail = "" },
 		LakesideShowdown = { Name = "Lakeside Showdown", Sizes = { 2, 4, 6 }, Thumbnail = "" },
 		MoltenSpires = { Name = "Molten Spires", Sizes = { 2, 4, 6 }, Thumbnail = "" },
 		TheBigMashup = { Name = "The Big Mashup", Sizes = { 8 }, Thumbnail = "" },
-		Desert = { Name = "Desert", Sizes = { 2, 4, 6 }, Thumbnail = "" },
+		Desert = { Name = "Desert", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://140014161821553" },
 	},
 
 	--[[

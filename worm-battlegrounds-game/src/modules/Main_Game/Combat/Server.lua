@@ -17,6 +17,8 @@ local Projectiles = require(_scripts:FindFirstChild("Server"):FindFirstChild("Pr
 local Blast = require(_scripts:FindFirstChild("Server"):FindFirstChild("Blast")) --- @type Combat_Server_Blast
 local Fire = require(_scripts:FindFirstChild("Server"):FindFirstChild("Fire")) --- @type Combat_Server_Fire
 local Roller = require(_scripts:FindFirstChild("Server"):FindFirstChild("Behaviors"):FindFirstChild("Roller")) --- @type Combat_Roller
+local Arcs = require(_scripts:FindFirstChild("Server"):FindFirstChild("Arcs")) --- @type Combat_Server_Arcs
+local Aimbot = require(_scripts:FindFirstChild("Server"):FindFirstChild("Aimbot")) --- @type Combat_Server_Aimbot
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -66,6 +68,7 @@ function Module.Init()
 	I.Network.GetEvent("Combat_Explosion")
 	I.Network.GetEvent("Combat_Hit")
 	I.Network.GetEvent("Combat_Tracer")
+	I.Network.GetEvent("Combat_AimbotGuide")
 
 	----------------------------
 	---- ASSIGN TO INSTANCE ----
@@ -89,6 +92,8 @@ function Module.Init()
 		CanUse = Uses.CanUse,
 		GetUses = Uses.GetUses,
 		IsIdle = Fire.IsIdle,
+		GetArcs = Arcs.GetArcs,
+		PredictArc = Arcs.PredictArc,
 	}
 end
 
@@ -100,6 +105,7 @@ function Module.Start()
 	----------------------------
 
 	Uses.Start()
+	Aimbot.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

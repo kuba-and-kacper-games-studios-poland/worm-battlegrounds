@@ -7,7 +7,7 @@ local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointe
 local _localName = "Bots"
 
 --- @type Bots_Settings
-local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("ServerSettings"))
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
@@ -609,7 +609,7 @@ function Module._getRough(view, skill, spot, target, itemId: string, aimAt: Vect
 
 	local wind: number = I.G_Combat.GetWindAcceleration(itemId, view.Wind) * skill.WindRead
 	local bestMiss: number = math.huge
-	for _index: number, arc: Vector2 in ipairs(Aim.GetArcs(origin, aimAt, itemId, wind)) do
+	for _index: number, arc: Vector2 in ipairs(I.Combat.GetArcs(origin, aimAt, itemId, wind, _settings.POWER_STEPS)) do
 		local miss: number = (Aim.GetContact(origin, arc.X, arc.Y, itemId, wind, view.Self.Model) - aimAt).Magnitude
 		if miss < bestMiss then
 			bestMiss = miss

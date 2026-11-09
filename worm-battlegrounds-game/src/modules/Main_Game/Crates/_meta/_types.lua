@@ -5,6 +5,7 @@
 --- # General #
 ---
 --- @field Name string
+--- @field TabName string
 --- @field Picture string
 --- @field LayoutOrder number
 --- @field Hidden boolean
@@ -21,6 +22,7 @@ local _crates_CrateData = {}
 --- # General #
 ---
 --- @field One string
+--- @field Three string
 --- @field Ten string
 local _crates_Price = {}
 

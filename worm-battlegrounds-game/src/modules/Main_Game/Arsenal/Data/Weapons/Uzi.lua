@@ -4,13 +4,14 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Uzi",
-	Icon = "",
+	Icon = "rbxassetid://79744307043186",
 
 	--[[ Behavior ]]
 
 	Kind = "Hitscan",
 	Aim = "Straight",
 	Wind = false,
+	HoldPose = "Gun",
 
 	--[[ Damage ]]
 

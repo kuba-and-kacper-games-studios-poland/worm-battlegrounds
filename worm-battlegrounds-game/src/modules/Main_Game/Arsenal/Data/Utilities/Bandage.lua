@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Bandage",
-	Icon = "",
+	Icon = "rbxassetid://101586916045478",
 
 	--[[ Effect ]]
 

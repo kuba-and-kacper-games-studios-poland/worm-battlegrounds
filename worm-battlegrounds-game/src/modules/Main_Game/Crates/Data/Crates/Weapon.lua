@@ -4,15 +4,16 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Weapon crate",
+	TabName = "Weapons",
 	Picture = "rbxassetid://121731184312632",
 	LayoutOrder = 1,
 	Hidden = false,
 
 	--[[ Prices ]]
 
-	-- Coins or diamonds for one crate, and for a 10-pack
+	-- Coins or diamonds for one crate, a 3-pack and a 10-pack
 	Prices = {
-		Coins = { One = "100", Ten = "900" },
+		Coins = { One = "100", Three = "300", Ten = "900" },
 	},
 
 	--[[ Odds ]]

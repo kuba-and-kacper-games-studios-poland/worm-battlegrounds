@@ -36,8 +36,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Register Commands
 
 --[[
-	Registers the commands that give weapons and utilities mid-match and fill their uses, for testing. Each one acts on
-	the invoker's own snail unless it names a participant id.
+	Registers the commands that give weapons and utilities mid-match and fill their uses, for testing (each acts on the
+	invoker's own snail unless it names a participant id), and `aimbot`, which turns a player's aim guide on or off.
 ]]
 function Module._registerCommands()
 	--%%%%%%%%%%%%%%%%%%%% Helper Functions
@@ -80,6 +80,30 @@ function Module._registerCommands()
 		--[[ Returning ]]
 
 		return true, `Filled every use of $|cr$|{id}#| and cleared its cooldowns`
+	end
+
+	local function aimbot(player: Player)
+		--[[ Checks ]]
+
+		-- Check if the player is in a match
+		if not player:GetAttribute("InMatch") then
+			return false, `$|cr$|{player.Name}#| isn't in a match`
+		end
+
+		--[[ Saving ]]
+
+		-- Only for this match: it goes off when the player leaves it
+		local on: boolean = not player:GetAttribute("Aimbot")
+		player:SetAttribute("Aimbot", on or nil)
+		if on then
+			player:GetAttributeChangedSignal("InMatch"):Once(function()
+				player:SetAttribute("Aimbot", nil)
+			end)
+		end
+
+		--[[ Returning ]]
+
+		return true, `Aimbot $|cr$|{if on then "on" else "off"}#| for $|cr$|{player.Name}#|`
 	end
 
 	--%%%%%%%%%%%%%%%%%%%% Commands
@@ -126,6 +150,15 @@ function Module._registerCommands()
 		PermissionLevel = 255,
 
 		Variants = variants,
+	})
+	I.AdminPanel_CommandBar.Register("Combat_Aimbot", {
+		Aliases = { "aimbot" },
+		PermissionLevel = 255,
+
+		Args = {
+			{ name = "player", types = { "Player" }, dict = "players", requireDict = true },
+		},
+		Callback = aimbot,
 	})
 end
 

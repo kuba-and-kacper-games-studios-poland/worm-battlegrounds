@@ -6,7 +6,7 @@ heals and throws them, knocks them out in the sea (Arena's `GetHazard`: a pond a
 knocked-out snails into floating ghosts. Clients put a SnailTag over every snail (name, health number and bar in team
 colour, the turn marker on the active snail with the turn's seconds for everyone but its own player) and an outline in
 its team's colour around it, pop a damage number when its health drops, draw the gear a snail wears while it works (an open parachute, a
-jetpack for the turn), and break a snail's shell into chips once its health drops below `SHELL_BREAK_HEALTH`. Snail state travels as
+jetpack for the turn), break a snail's shell into chips once its health drops below `SHELL_BREAK_HEALTH`, and animate its rigged skin (idle, walking, hiding in its shell while it's thrown). Snail state travels as
 attributes on the snail model, so the module creates no remotes.
 
 | | |
@@ -14,21 +14,23 @@ attributes on the snail model, so the module creates no remotes.
 | Folder | `src/modules/Main_Game/Snails` |
 | Runs on | Server, Client |
 | Exposes | `I.Snails` (server: bodies and health; client: lookups) |
-| Uses | `I.Arena` (plane, hazards), `I.Create`, `I.Dirs.Assets` (skins), `I.G_Arsenal` (gear models), `I.Sound`, `I.AdminPanel_CommandBar` |
+| Uses | `I.Arena` (plane, hazards), `I.Create`, `I.Dirs.Assets` (skins), `I.G_Arsenal` (gear models), `I.Sound`, `I.Vfx`, `I.SnailRig` (skin animations), `I.AdminPanel_CommandBar` |
 
 ## Files
 
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | The entry: `I.Snails`, starting the hazard checks |
-| `Client.lua` | The entry: `I.Snails` lookups, starting the tags and the gear |
-| `Settings.lua` | `Snails_Settings`: health, falls, the body, ghosts, tags, gear |
-| `Scripts/Server/Bodies.lua` | `Workspace.Ume.Snails`, building a snail (ball, constraints, skin, attributes), ownership, lookups |
+| `Client.lua` | The entry: `I.Snails` lookups, starting the tags, the gear, the shell, the sounds, the effects and the motion |
+| `Settings.lua` | `Snails_Settings`: health, falls, the body, animations, ghosts, tags, gear |
+| `Scripts/Server/Bodies.lua` | `Workspace.Ume.Snails`, building a snail (ball, constraints, the skin welded on by its RootPart, attributes), ownership, lookups |
 | `Scripts/Server/Health.lua` | Damage, heal, knockback, kill credit, knockouts and ghosts, the `Snails_Died` Topic |
 | `Scripts/Server/Hazards.lua` | Each frame: liquid and bounds along each snail's path since the last frame, fall tracking and fall damage |
-| `Scripts/Client/Tags.lua` | SnailTag billboards (team colour, gold for VIP, the level, the health number and bar in team colour, the active snail's marker and turn timer), the `TeamOutline` Highlight, and DamagePop numbers (when the player's `DamageNumbers` setting is on), each sized with the screen by `I.ScreenScale.AddBillboard` |
+| `Scripts/Client/Tags.lua` | SnailTag billboards (the name in team colour, gold for VIP; the level; the health number on the design's bar, whose outline and fill take the team colour and whose fill is cut at the health left by its `UIGradient`; the active snail's marker and turn timer), the `TeamOutline` Highlight, and DamagePop numbers (the number and its shadow rise and fade; when the player's `DamageNumbers` setting is on), each sized with the screen by `I.ScreenScale.AddBillboard` |
 | `Scripts/Client/Shell.lua` | The shell break: hides the skin's `SHELL_PART` on this screen while the snail's health is under `SHELL_BREAK_HEALTH` and throws chips in its colours when it breaks, with `Snail_ShellBreak`; healing back up shows it again |
+| `Scripts/Client/Effects.lua` | Every snail's particle effects on this client, in `Workspace.Ume.Combat` (`I.Vfx`): `Spawn` when it appears, `Fall` dust when it lands (the landing sound's thresholds), `Healing` when its health rises, `Splash_Water` or `Splash_Lava` when it's knocked out there (`Match_KnockedOut`), and the `Trail_Snail` trail on its ball while it's alive and faster than `TRAIL_SPEED` |
 | `Scripts/Client/Sounds.lua` | Every snail's sounds on this client, from its ball's speed and its attributes: `Snail_Land` after a fall, and for the active snail `Snail_Step` while it walks, `Snail_Jump`, and `Snail_Jetpack` (looped) while its jetpack climbs; `Snail_Hurt` when it loses health; `Snail_Splash`, `Snail_Burn` or `Snail_KnockedOut` when it's knocked out in water, lava or otherwise (`Match_KnockedOut`) |
+| `Scripts/Client/Motion.lua` | Each frame, every snail's skin animation (`I.SnailRig.SetMotion`) from its ball's speed: `Walk` while it moves along faster than `WALK_ANIMATION_SPEED`, `Hidden` (into its shell) while it's thrown faster than `HIDE_SPEED` and not under its player's control, out again once slower than `SHOW_SPEED` and `HIDE_SECONDS` after its last fast moment, `Idle` otherwise. Combat's `Held` puts the weapon in its hands |
 | `Scripts/Client/Gear.lua` | The gear a snail wears: a copy of each `GEAR` utility's Arsenal model while its attribute is set and the snail is in play, moved onto its ball every frame |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `snails` command |
 | `_meta/_types.lua` | `Snails_Participant`, who a snail belongs to; `Snails_Gear`, a `GEAR` row; `Snails_SoundState`, what a snail's sounds remember between frames |
@@ -87,6 +89,8 @@ No remotes: clients read the snail models' attributes. The server also writes `L
 | `MAX_FALL_DAMAGE` | `40` | The most one fall costs |
 | `ROOT_SIZE` | `2.6` | The ball's size, in studs across |
 | `ROOT_FRICTION` | `1` | The ball's grip: snails hold still on slopes up to about 45° |
+| `WALK_ANIMATION_SPEED` | `1.5` | A snail plays its walk while it moves along faster than this (studs a second), rising or falling slower than `STEP_SOUND_MAX_RISE` |
+| `HIDE_SPEED`, `SHOW_SPEED`, `HIDE_SECONDS` | `25`, `2`, `1` | A thrown snail hides in its shell while faster than the first and not under its player's control, and comes out once slower than the second, at least the third (seconds) after it last flew that fast |
 | `DEFAULT_SKIN` | `"Classic"` | The model in `Assets.Skins` every snail wears until Cosmetics picks one |
 | `GROUND_GAP` | `0.4` | How far below the ball the ground may be for a snail to stand on it |
 | `GHOST_RISE`, `GHOST_RISE_TIME`, `GHOST_TRANSPARENCY` | `4`, `1.5`, `0.6` | A ghost floats this many studs up over this many seconds, this see-through |
@@ -101,8 +105,10 @@ No remotes: clients read the snail models' attributes. The server also writes `L
 | `GEAR` | Parachute (`Parachute`, 4.9 up), Jetpack (`JetpackFuel`, 2.4 behind, 0.4 up, on the back of the shell) | The utilities a snail wears: the snail attribute that shows each, and its RootPart's offset in the ball's space (−Z ahead) |
 | `STEP_SOUND_DISTANCE`, `STEP_SOUND_MAX_RISE` | `1.6`, `4` | The active snail squishes a step every this many studs walked, while its upward speed stays under the second |
 | `JUMP_SOUND_SPEED`, `JUMP_SOUND_FROM` | `25`, `5` | It boings when it shoots up past the first from below the second (studs a second) |
-| `LAND_SOUND_SPEED`, `LAND_SOUND_STOP` | `30`, `5` | Any snail thuds when a fall faster than the first stops below the second |
+| `LAND_SOUND_SPEED`, `LAND_SOUND_STOP` | `30`, `5` | Any snail thuds, and raises the `Fall` dust, when a fall faster than the first stops below the second |
 | `JETPACK_SOUND_RISE`, `JETPACK_SOUND_HOLD` | `8`, `0.12` | The jetpack hums while the active snail wears one and climbs between this and `JUMP_SOUND_SPEED` for the hold, and stops a hold after |
+| `TRAIL_SPEED` | `45` | A snail faster than this (studs a second) draws its trail |
+| `HEAL_VFX_SCALE` | `2` | The `Healing` effect's size, so it shows at the match camera's distance |
 
 ## In the place
 
@@ -111,11 +117,12 @@ No remotes: clients read the snail models' attributes. The server also writes `L
 | `Workspace.Ume.Snails` | Created at start. One Model per participant, named by its id (`P_<UserId>`, `B_<n>`), streamed to every client |
 | `<snail>.Root` | The invisible ball (`Snail` collision group): `Center` attachment, `Plane` (PlaneConstraint), `Upright` (AlignOrientation, facing ±X), `Walk` (LinearVelocity along X, off; SnailControl's owner client turns it on), the client's SnailTag |
 | `<snail>.TeamOutline` | A Highlight each client adds: the snail's outline in its team's colour (`Color`), off while it's a ghost |
-| `<snail>.Skin` | The skin's parts, welded to the ball, massless and non-colliding |
+| `<snail>.Skin` | The skin: its RootPart welded to the ball, the rest hanging from it by its Motor6Ds and bones, massless and non-colliding. Each client animates it (`Motion`, and Combat's `Held` for the weapon) |
 | `<snail>.Parachute`, `<snail>.Jetpack` | Client only: the worn gear, copies of the Arsenal models, anchored and moved onto the ball every frame |
 | `<snail>.ShellChip` | Client only: the chips of a shell that just broke, in Arena's `Chip` collision group, gone once they fade. The shell itself stays in the skin, hidden by its `LocalTransparencyModifier` |
 | `<snail>` attributes | `ParticipantId`, `UserId`, `DisplayName`, `Team`, `Color`, `IsBot`, `Health`, `MaxHealth`, `Alive`, `Ghost`, `Facing` (−1 or 1), `Shiny`, `Vip`, `Level` (0 for bots, hidden on the tag), `DamageTaken` (damage multiplier, 1 but for the tutorial bot); SnailControl adds `CanMove` and `Stamina`; Match sets `Active` (the tag's turn marker) |
-| `Assets.Skins.<SkinId>` | A skin: a Model whose pivot sits at the ball's center, facing its pivot's front (−Z). `Classic` is the snail (the owner's model, 2026-11-06): `Body` and `Shell` MeshParts scaled to 0.45, 4.1 studs tall with its foot on the ball's bottom, staged under `ReplicatedStorage.Ume.Assets.PlaceLoader.Default.Skins` |
+| `Assets.Skins.<SkinId>` | A skin: a Model whose pivot sits at the ball's center, facing its pivot's front (−Z). `Classic` is the studio's rigged snail (2026-11-09, from `Workspace.New.Snails.Snail`; the static one from 2026-11-06 is in `ServerStorage.!dump.Classic_Static`), scaled to 0.45, 4.1 studs tall with its foot on the ball's bottom, staged under `ReplicatedStorage.Ume.Assets.PlaceLoader.Default.Skins`: an invisible `RootPart` (its PrimaryPart and pivot, holding the 18 bones), the skinned `Body`, `Shell`, `LeftHand` and `RightHand` on Motor6Ds from it, an invisible `Handle` on the `Handle` Motor6D (where a held weapon's `Grip` goes), and an `AnimationController` with its `Animator`. A skin made for the rig keeps these names (the `SnailRig` library's README) |
+| `Assets.Snails.Animations` | The rig's animations, authored in `Workspace.Ume.ReplicatedStorage_Assets/Snails/Animations/`: an `Animation` each (`Idle`, `Walk`, `Hide`, `Show`, `Gun`, `MiniGun`, `Bazooka`, `ShotGun`) holding its `KeyframeSequence`, from the studio's snails (`Hide` and `Show` were their `1` and `2`; each weapon pose was its snail's `Shoot`). Their `AnimationId`s are empty until the owner publishes them: Studio plays the keyframes, live servers play nothing (`SnailRig`'s README) |
 | `Assets.Snails` | The SnailTag and DamagePop billboards' holders, authored in `Workspace.Ume.ReplicatedStorage_Assets/Snails/`: a Model `PREFAB \| SnailTag` (and `PREFAB \| DamagePop`) with an invisible 1 × 1 × 1 `RootPart`, an `Attachment` under it, and the exported BillboardGui under that, named `U_SnailTag` (`U_DamagePop`). Clients clone only the billboard (`FindFirstChild("U_SnailTag", true)`) and name the copy `SnailTag` |
 
 ## Commands

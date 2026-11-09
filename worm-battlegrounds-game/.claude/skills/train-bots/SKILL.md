@@ -7,7 +7,7 @@ argument-hint: <difficulty, e.g. Hard> [generations]
 # Training the bots
 
 The bots' brain, the gym and every setting are described in `src/modules/Main_Game/Bots/_meta/README.md`: read it
-first. A run evolves one difficulty's **genome** (`Data/Brains.lua`) by self-play on the real maps, then examines the
+first. A run evolves one difficulty's **genome** (`ServerData/Brains.lua`) by self-play on the real maps, then examines the
 champion against the shipped genome. Training happens only when the owner asks for it.
 
 ## 1. Teach it what's new (when the game changed)
@@ -23,7 +23,7 @@ tunes the weights of what the brain already knows.
 | A hazard or a rule (new liquids, sudden death changes, turn length) | `Predict.GetThrow`/`GetDrop`, the spot features, `Sim.Play` |
 | A new map | Nothing: the gym plays every map in `ServerStorage_Assets.Arenas` |
 
-A new genome key goes in `Bots_Genome` (`_meta/_types.lua`), every row of `Data/Brains.lua`, `GENOME_KEYS` in
+A new genome key goes in `Bots_Genome` (`_meta/_types.lua`), every row of `ServerData/Brains.lua`, `GENOME_KEYS` in
 `Scripts/Server/Gym.lua`, and the README's genome table. Run a short logged match (step 3, `"Log": true`) to see it
 used before a full run.
 
@@ -67,7 +67,7 @@ When the status says `Done`, read `ServerStorage.Bots_TrainResult` (JSON) and th
 
 ## 5. Ship it
 
-1. Paste the report's `Lua` over that difficulty's row in `Data/Brains.lua`.
+1. Paste the report's `Lua` over that difficulty's row in `ServerData/Brains.lua`.
 2. StyLua and selene (`AGENTS.md` → Commands), then a playtest with bots of that difficulty to watch them play.
 3. Write a wiki journal entry (`../wiki/JOURNAL.md`): the difficulty, the run's options and seed, the exam result,
    and how the play stats changed.

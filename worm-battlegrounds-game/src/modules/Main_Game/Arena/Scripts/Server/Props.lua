@@ -12,7 +12,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Loader = require(script.Parent:FindFirstChild("Loader")) --- @type Arena_Server_Loader
-local Carver = require(script.Parent:FindFirstChild("Carver")) --- @type Arena_Server_Carver
+local Cutter = require(script.Parent.Parent:FindFirstChild("Helpers"):FindFirstChild("Cutter")) --- @type Arena_Cutter
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -133,7 +133,7 @@ function Module._cut(prop: Model, center: Vector3, radius: number)
 	--[[ Building ]]
 
 	--- @type { BasePart }
-	local cutter = Carver.BuildCutter(center, radius, boxCFrame.Position.Z, boxSize.Magnitude + _settings.CARVE_DEPTH_MARGIN)
+	local cutter = Cutter.Build(center, radius, boxCFrame.Position.Z, boxSize.Magnitude + _settings.CARVE_DEPTH_MARGIN, Loader.GetArenaFolder())
 
 	--[[ Cutting ]]
 

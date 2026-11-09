@@ -7,12 +7,12 @@ local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointe
 local _localName = "Bots"
 
 --- @type Bots_Settings
-local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("ServerSettings"))
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
 
 local _scripts = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
-local _data = script:FindFirstAncestor(_localName):FindFirstChild("Data")
+local _data = script:FindFirstAncestor(_localName):FindFirstChild("ServerData")
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Data
 
@@ -132,7 +132,7 @@ end
 --[[
 	**SERVER** |
 	Plays a bot's turn as a player would. While it thinks (THINK_TIME) its brain plans the turn with its difficulty's
-	trained genome (Data/Brains) and skill (SKILLS): it heals when hurt, walks or flies its jetpack to the spot it
+	trained genome (ServerData/Brains) and skill (SKILLS): it heals when hurt, walks or flies its jetpack to the spot it
 	picked, plans again from where it ended up if the walk fell short, and fires with its hand's error, which narrows
 	as it keeps shooting at the same target. Gives up quietly when the turn ends meanwhile.
 ]]
@@ -297,7 +297,7 @@ function Module._playTutorial(participantId: string, model: Model)
 
 	local aimAt: Vector3 = target.PrimaryPart.Position + Vector3.new(random:NextNumber(4, 8) * (if random:NextNumber() < 0.5 then -1 else 1), -2, 0)
 	local wind: number = I.G_Combat.GetWindAcceleration("Bazooka", I.Match.GetWind())
-	local arc: Vector2 = Aim.GetArcs(origin, aimAt, "Bazooka", wind)[1] or Vector2.new(math.rad(45), 0.6)
+	local arc: Vector2 = I.Combat.GetArcs(origin, aimAt, "Bazooka", wind, _settings.POWER_STEPS)[1] or Vector2.new(math.rad(45), 0.6)
 	if Module._showAim(participantId, "Bazooka", arc.X, arc.Y) then
 		I.Combat.Fire(participantId, "Bazooka", arc.X, arc.Y)
 	end

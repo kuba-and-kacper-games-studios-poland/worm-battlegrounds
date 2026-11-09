@@ -35,11 +35,10 @@ local _settings = {
 	EMOTE_SHOP_GUI_NAME = "EmoteShop",
 
 	--[[
-		The guis that show emotes and the equipped skin: the lobby's emote row and skin button, the match's emote
-		wheel, and the party list emotes show over in the lobby
+		The guis that show emotes: the lobby's emote row, the match's emote wheel, and the party list emotes show over
+		in the lobby
 	]]
 	LOADOUT_GUI_NAME = "Loadout",
-	LOBBY_GUI_NAME = "Lobby",
 	MATCH_HUD_GUI_NAME = "MatchHud",
 	PARTY_GUI_NAME = "Party",
 }

@@ -36,7 +36,7 @@ function Module.Start(gui: ScreenGui)
 	--[[ Connections ]]
 
 	for _index: number, control: string in ipairs({ "Left", "Right", "Jump" }) do
-		local button: ImageButton = elems["Touch"]:FindFirstChild(`S_{control}`):FindFirstChild("Button")
+		local button: ImageButton = elems["Touch"]:FindFirstChild(`S_{control}`, true)
 		button.InputBegan:Connect(function(input: InputObject)
 			Module._hold(control, input, true)
 		end)
@@ -77,7 +77,7 @@ function Module._refresh(myTurn: boolean)
 	--[[ Applying ]]
 
 	for _index: number, control: string in ipairs({ "Left", "Right", "Jump" }) do
-		elems["Touch"]:FindFirstChild(`S_{control}`).Visible = myTurn
+		elems["Touch"]:FindFirstChild(`S_{control}`, true).Visible = myTurn
 	end
 end
 

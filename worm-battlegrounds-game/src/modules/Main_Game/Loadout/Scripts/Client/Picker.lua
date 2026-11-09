@@ -39,10 +39,10 @@ function Module.Start()
 	--[[ Elements ]]
 
 	local moduleGui: ScreenGui = I.UserInterface.UI[_settings.PICKER_GUI_NAME]
-	elems["Slot"] = moduleGui:FindFirstChild("S_Slot", true) --- @type TextLabel
 	elems["Items"] = moduleGui:FindFirstChild("U_Items", true) --- @type ScrollingFrame
-	elems["Empty"] = moduleGui:FindFirstChild("S_Empty", true):FindFirstChild("Button") --- @type ImageButton
-	prefabs["ItemTile"] = elems["Items"]:FindFirstChild("PREFAB | ItemTile") --- @type Frame
+	elems["Empty"] = moduleGui:FindFirstChild("S_Empty", true) --- @type ImageButton
+	prefabs["ItemRow"] = elems["Items"]:FindFirstChild("PREFAB | ItemRow") --- @type Frame
+	prefabs["ItemCard"] = prefabs["ItemRow"]:FindFirstChild("PREFAB | ItemCard", true) --- @type ImageButton
 
 	--[[ Connections ]]
 
@@ -70,8 +70,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Opened
 
 --[[
-	Draws the picker when it opens: one tile per owned weapon and utility, with its rarity, uses and cooldown, and its
-	copies toward shiny.
+	Draws the picker when it opens: a card per weapon and utility, owned ones first by rarity with their copies, the
+	one in this slot selected and those in other slots in the equipped look, then the ones not owned yet, locked.
 ]]
 function Module._onOpened(widgetName: string)
 	--[[ Checks ]]
@@ -81,41 +81,82 @@ function Module._onOpened(widgetName: string)
 		return
 	end
 
+	--[[ Data ]]
+
+	local standard = I.Inventory.Items and I.Inventory.Items.Standard or {} --- @type { [string]: string }
+	local loadoutRep: Folder? = I.Replicator.GetFolder(_localName)
+
 	--[[ Clearing ]]
 
 	for _index: number, child: Instance in ipairs(elems["Items"]:GetChildren()) do
-		if child:IsA("Frame") and child ~= prefabs["ItemTile"] then
+		if child:IsA("Frame") and child.Name:sub(1, 3) == "Row" then
 			child:Destroy()
 		end
 	end
 
-	--[[ Texts ]]
+	--[[ Sorting ]]
 
-	elems["Slot"].Text = `Slot {pickingSlot}: tap an item to put it in`
-
-	--[[ Tiles ]]
-
-	local standard = I.Inventory.Items and I.Inventory.Items.Standard or {} --- @type { [string]: string }
-	for itemId: string, quantity: string in pairs(standard) do
-		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData?
-		if not item or not table.find(_settings.SLOT_CATEGORIES, item.Category) then
-			continue
+	local itemIds = {} --- @type { string }
+	for itemId: string in pairs(I.G_Inventory.Items) do
+		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData
+		if itemId ~= _settings.BASIC_WEAPON and table.find(_settings.SLOT_CATEGORIES, item.Category) then
+			table.insert(itemIds, itemId)
 		end
-		local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
-		local tile: Frame = prefabs["ItemTile"]:Clone()
-		tile.Name = itemId
-		tile.LayoutOrder = I.Rarity.GetRarityIndex(item.Rarity) or 0
-		tile.Visible = true
-		tile:FindFirstChild("S_Icon", true).Image = item.IconId
-		tile:FindFirstChild("S_Name", true).Text = item.Name
-		tile:FindFirstChild("S_Info", true).Text = Module._getInfo(row)
-		tile:FindFirstChild("S_Copies", true).Text = `{math.min(tonumber(quantity) or 0, _settings.SHINY_COPIES)} / {_settings.SHINY_COPIES}`
-		tile:FindFirstChild("S_Rarity", true).Text = item.Rarity
-		tile:FindFirstChild("S_Rarity", true).TextColor3 = I.Rarity.GetLook(item.Rarity).Base
-		tile.Parent = elems["Items"]
-		I.Interact.OnPress(tile:FindFirstChild("Button"), function()
-			Module._pick(itemId)
-		end)
+	end
+	table.sort(itemIds, function(a: string, b: string): boolean
+		local ownedA: boolean = standard[a] ~= nil
+		local ownedB: boolean = standard[b] ~= nil
+		if ownedA ~= ownedB then
+			return ownedA
+		end
+		local rarityA: number = I.Rarity.GetRarityIndex(I.G_Inventory.Items[a].Rarity) or 0
+		local rarityB: number = I.Rarity.GetRarityIndex(I.G_Inventory.Items[b].Rarity) or 0
+		if rarityA ~= rarityB then
+			return rarityA > rarityB
+		end
+		return I.G_Inventory.Items[a].Name < I.G_Inventory.Items[b].Name
+	end)
+
+	--[[ Cards ]]
+
+	local row: Frame
+	for index: number, itemId: string in ipairs(itemIds) do
+		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData
+		local owned: boolean = standard[itemId] ~= nil
+		local inSlot: number? = Module._getSlotOf(loadoutRep, itemId)
+		local look: string = if inSlot == pickingSlot then "Selected" elseif inSlot then "Equipped" else ""
+
+		-- A new row every ITEMS_PER_ROW cards
+		if (index - 1) % _settings.ITEMS_PER_ROW == 0 then
+			row = prefabs["ItemRow"]:Clone()
+			row.Name = `Row{index}`
+			row.LayoutOrder = index
+			row.Visible = true
+			row:FindFirstChild("PREFAB | ItemCard", true):Destroy()
+			row.Parent = elems["Items"]
+		end
+
+		local card: ImageButton = prefabs["ItemCard"]:Clone()
+		local background: Frame = card:FindFirstChild("Background")
+		card.Name = itemId
+		card.LayoutOrder = index
+		card.Visible = true
+		card:FindFirstChild("S_Icon").Image = item.IconId
+		card:FindFirstChild("S_Name").Text = item.Name
+		card:FindFirstChild("S_Amount").Text = if owned then `x{standard[itemId]}` else ""
+		card:FindFirstChild("S_Rarity").ImageColor3 = I.Rarity.GetLook(item.Rarity).Base
+		card:FindFirstChild("S_Locked").Visible = not owned
+		background:FindFirstChild("Stroke2").Image = card:GetAttribute(`Look_{look}Stroke2`)
+		background:FindFirstChild("Stroke").Image = card:GetAttribute(`Look_{look}Stroke`)
+		background:FindFirstChild("Stroke").ImageColor3 = card:GetAttribute(`Look_{look}StrokeColor`)
+		card:SetAttribute("HoverInfo_Title", `{item.Name}: {Module._getInfo(I.G_Arsenal.Get(itemId))}`)
+		card:SetAttribute("HoverInfo_Rarity", item.Rarity)
+		card.Parent = row:FindFirstChild("Content")
+		if owned then
+			I.Interact.OnPress(card, function()
+				Module._pick(itemId)
+			end)
+		end
 	end
 end
 
@@ -150,6 +191,26 @@ function Module._empty()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Slot Of
+
+--[[
+	Returns the slot that holds an item, or nil.
+]]
+--- @return number?
+function Module._getSlotOf(loadoutRep: Folder?, itemId: string)
+	--[[ Searching ]]
+
+	for slot: number = 1, _settings.MAX_SLOTS do
+		if loadoutRep and loadoutRep:GetAttribute(`Slot{slot}`) == itemId then
+			return slot
+		end
+	end
+
+	--[[ Returning ]]
+
+	return nil
+end
 
 --%%%%%%%%%%%%%%%%%%%% Get Info
 

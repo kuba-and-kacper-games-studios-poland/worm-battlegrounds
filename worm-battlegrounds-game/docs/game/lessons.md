@@ -744,3 +744,117 @@ spider bomb is thrown with `Projectiles.Launch` and `Fly` (no bounce, it lands o
 then crawls with `CRAWL_STEP_UP`, `CRAWL_STEP_DOWN` and `CRAWL_STOP`. `Debris._watch` refreshes the liquid where a
 piece fell from too. MatchHud's power bar reads `TARGET_HINTS`. Rule: Snails → "Strong items start on their cooldown"
 and "Server-moved shots glide on clients".
+
+## The studio's screens and effects, ported 1:1 (2026-11-09)
+
+**Before.** Every gui was built from the GUI kit's theme controls, and blasts, tracers and snail moments were
+placeholder particles made in code (`BLAST_TEXTURES`).
+
+**Why it changed.** The studio sent its own designs (`HUD`, `LobbyInventory`, `Gacha`, `Customise` in Studio's
+`Workspace.New.Guis`), particle effects (`Particles_1`, `Particles_2`) and weapon icons, and the owner asked for them
+"almost 1:1" and connected to the game's systems, replacing the old screens.
+
+**Now.** A converter turns each design, node for node, into a UmeGui table of `Primitive` nodes after an annotation
+pass on a clone (Ids, prefabs, `Look_*` attributes, button tags, the widget shape). Blocks the designs lack stay theme
+controls in the same table. Effects are `PREFAB | <Name>` parts in `ReplicatedStorage_Assets/Vfx` played by the new
+Vfx library. Things learned on the way:
+
+- **UIStroke's `StrokeSizingMode` must be copied:** the designs' outlines are `ScaledSize` with thicknesses under 1;
+  copied without the mode they become sub-pixel and vanish.
+- **UmeGui numbers a node by its place in `Children`** when it has no `LayoutOrder`, which reshuffled list layouts; the
+  converter always writes it.
+- **Some of the designer's pictures draw blank in the game** (the crate, the player and coin icons, item icons) though
+  they load: the game uses its own pictures there (the crate rows' `Picture`, the theme's `wb-coin`, MatchHud's
+  `BOT_AVATAR`). Check new design pictures by drawing them in a play test.
+- **A ScrollingFrame's scale `CanvasSize` follows its parent's size**, not its own window: the emote row's cards grew
+  past the row until the canvas was set to 0 (it then falls back to the window).
+- **A `Currency_Slot` needs its `Currency_UIScale` pointed at a UIScale after every export,** or its count stays at
+  the design's text.
+
+Rules: Guis → "The studio's screens are 1:1 `Primitive` ports"; Snails → "Effects are the studio's particle
+prefabs".
+
+## The rigged snail (2026-11-09)
+
+**Before.** The snail was a static mesh (`Body` and `Shell`) welded part by part to its ball, and the held weapon
+floated beside it at a fixed offset (Combat's `HELD_FORWARD`, `HELD_HEIGHT`, `HELD_DEPTH`), turned to the aim.
+
+**Why it changed.** The studio sent its snail rigged, with hands and animations (`Workspace.New.Snails`): `Snail`
+with Idle, Walk and two clips into and out of its shell (`1`, `2`), and four copies holding a weapon with its `Shoot`
+clip (Gun for the Uzi, MiniGun, Bazooka, ShotGun), which the owner said are only there to carry the holding
+animations. The owner asked for the rigged snail as the default, animated.
+
+**Now.** `Classic` is the rig, scaled to the old snail's 0.45, with the weapon snails' `Handle` added, and the
+`SnailRig` library animates it on each client. Things learned on the way:
+
+- **Weld only the rig's root:** welding every skin part to the ball (as the static skin was) freezes the Motor6Ds and
+  bones the animations move.
+- **A pose holds a weapon forward, but aims go all round:** the weapon and its hands are pitched about the `Handle`
+  each frame after the animations (`PreSimulation`, writing the Motor6D's and the hand bones' `Transform`), so one
+  pose serves every angle. The Animator writes each animated joint every frame, so the offsets never pile up.
+- **The studio holds weapons in the snail's right hand,** which faces away from the camera when the snail faces left:
+  there the weapon and both hands are mirrored across the snail's middle, and a standing snail turns to face its aim.
+- **A skinned mesh's part box isn't where it draws:** the rig's `Shell` part sits well above the drawn shell, so the
+  skin was placed by its body and its foot, not by part positions.
+- **Unpublished animations play in Studio only** (`RegisterKeyframeSequence`), so each sits as an `Animation` with its
+  keyframes and an empty `AnimationId` until the owner publishes it.
+
+Rules: Snails → "The snail is the studio's rig", "The active snail holds its weapon in its hands".
+
+## Smooth holes and plane-locked falls (2026-11-09)
+
+**Before.** The server cut a blast's terrain parts one after another, each `SubtractAsync` yielding, and swapped each
+part for its pieces as it finished, so clients saw a hole open in steps, a replication late. Cut-loose ground was
+welded and dropped on Roblox physics, so it tumbled in front of or behind the map and anchored where it settled.
+
+**Why it changed.** The owner found the holes "not as smooth as it can be" and asked for falling chunks on the game's
+own physics, locked to the map's axis, so players can make bridges.
+
+**Now.** Arena's `Cutter` helper builds and cuts on both sides; the server cuts every part at once and swaps in one
+frame; each client cuts the hole the moment `Arena_Carve` arrives; loose groups drop straight down on the plane.
+Things learned on the way:
+
+- **One CSG cut takes a few milliseconds; the wait was the yields in a row.** Cutting every part at once made the
+  server's hole land in one frame.
+- **Parent the pieces before removing the parts:** clients get both in the same frame, so the ground never shows a gap.
+- **A later hole must be cut into an earlier carve's pieces:** with two blasts close together, the server's pieces
+  for the first arrive after the client cut the second, so the client cuts them again at once and keeps its old pieces
+  up until that's done.
+- **`Workspace:Shapecast` works on unions and on parts with `CanQuery` off,** which is how a falling group finds where
+  it lands, each group standing in its landing spot for a moment so the ones above land on it.
+
+Rules: Arena → "Each client cuts the holes itself", "Cut-loose ground falls by the game's own gravity".
+
+## A party stage in the lobby, and server-only code off the clients (2026-11-09)
+
+**Before.** Behind the lobby's panels each client played its own blurred bot match, about 900 lines of client code. The
+bots' trained genomes (`Data/Brains.lua`) and their skills sat in files every client received, as did the exact arc
+solver behind the admin aim guide, which a client started from its own copy of the `Aimbot` attribute. The movement
+checks' margins, the match payouts and the level curve were in client-visible settings, the server never checked a
+snail stayed on the arena's plane, and a public server of the match place played a paid match for whoever joined it.
+
+**Why it changed.** The owner wanted a Fortnite-style lobby where friends who join your party stand around you, and
+asked that players can't read the game's sensitive code.
+
+**Now.** The lobby is a stage with four pods (the old `LobbyStage`, now Lobby's `PREFAB | Stage`): you in front, your party around you in their skins (Lobby's
+`Stage`, the new `EquippedSkin` Player attribute). Server-only settings and data use names ume hides
+(`ServerSettings.lua`, `ServerData/`), the arc solver moved to the server (`I.Combat.GetArcs`, `PredictArc`), and the
+server solves the aim guide and sends it to the admin's player alone. The server snaps back a snail off the plane,
+and a stray match server sends everyone to the lobby.
+
+Things learned on the way:
+
+- **ume loads every module's `Settings.lua` on clients,** even a module with only a `Server.lua`, so hiding a module's
+  scripts isn't enough: its settings and `Data/` replicate too.
+- **A client reading its own Player attribute is no gate:** an exploiter sets it locally. Whatever it unlocks has to
+  come from the server.
+- **A back pod straight behind the front snail hides behind its shell:** the back pod stands on a tall pedestal, so
+  all four snails show between the Party and Loadout panels. A camera high above, looking down, showed them too, but
+  the owner found the view from above odd: it sits low and close now, and the pedestal is taller instead.
+- **A stage loaded from the place loader's folders can't be seen while building:** it lives in ServerStorage. As a
+  prefab in `ReplicatedStorage_Assets/Lobby`, it stands in the Workspace in Studio, edited by hand, and each client
+  clones it.
+- **The power and stamina bars' picture has its empty end drawn in:** its fill covers only the left 0.744 of it, so a
+  gradient cut at the share stopped at 70% to the eye. The cut is now the share times `BAR_FILL`.
+
+Rules: Maps and placeholders → "The lobby is a party stage"; Server and client.

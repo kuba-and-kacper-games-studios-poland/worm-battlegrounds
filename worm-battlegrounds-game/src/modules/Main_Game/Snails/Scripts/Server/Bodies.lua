@@ -79,7 +79,7 @@ function Module.Spawn(participant, position: Vector3)
 	end
 
 	-- Check if the skin exists
-	if not skin or not skin:IsA("Model") then
+	if not skin or not skin:IsA("Model") or not skin.PrimaryPart then
 		warn(`[{_localName}::{script.Name}]: Skin ({skinName}) and the default skin are missing from Assets.Skins!`)
 		return nil
 	end
@@ -169,13 +169,15 @@ function Module.Spawn(participant, position: Vector3)
 			part.CanCollide = false
 			part.CanQuery = false
 			part.CanTouch = false
-			I.Create("WeldConstraint")({
-				Part0 = root,
-				Part1 = part,
-				Parent = part,
-			})
 		end
 	end
+
+	-- The skin's parts hang from its RootPart by Motor6Ds, which its animations move, so only the RootPart is welded on
+	I.Create("WeldConstraint")({
+		Part0 = root,
+		Part1 = skinModel.PrimaryPart,
+		Parent = skinModel.PrimaryPart,
+	})
 	skinModel.Parent = model
 
 	--[[ Attributes ]]

@@ -68,9 +68,19 @@ end
 --[[
 	Runs the match: waits for its players, plays it to the end, then plays it again with whoever voted for a rematch
 	while the rest go back to the lobby. A match that can't play sends everyone to the lobby. A match server empties
-	when nobody votes; the Studio map clears the arena and waits for its lobby's next match.
+	when nobody votes; the Studio map clears the arena and waits for its lobby's next match. A stray server plays
+	nothing.
 ]]
 function Module._mainLoop()
+	--[[ Checks ]]
+
+	-- Check if a lobby sent this server a match (Connection sends a stray server's players to the lobby)
+	if Connection.IsStray() then
+		return
+	end
+
+	--[[ Matches ]]
+
 	repeat
 		--[[ Waiting ]]
 

@@ -77,7 +77,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Replicator
 
 --[[
-	Makes the player's Loadout folder and writes their slots into it.
+	Makes the player's Loadout folder, then writes their slots into it on a thread of its own, since the slot passes'
+	check is a web call that would hold up the player's load.
 ]]
 function Module._createReplicator(player: Player)
 	--[[ Creating ]]
@@ -86,7 +87,7 @@ function Module._createReplicator(player: Player)
 
 	--[[ Publishing ]]
 
-	Module._publish(player)
+	task.spawn(Module._publish, player)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -192,6 +193,11 @@ end
 	folder.
 ]]
 function Module._publish(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
 	--[[ Data ]]
 
 	--- @type Player_ProfileData

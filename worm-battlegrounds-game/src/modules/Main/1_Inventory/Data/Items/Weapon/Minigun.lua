@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Minigun",
-	IconId = "rbxassetid://121731184312632",
+	IconId = "rbxassetid://93480916921558",
 
 	--[[ Classification ]]
 

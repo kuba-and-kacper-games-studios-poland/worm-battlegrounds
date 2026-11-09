@@ -315,6 +315,13 @@ function Module.ShowAim(participantId: string, itemId: string?, angle: number, p
 	if itemId then
 		model:SetAttribute("HeldItem", itemId)
 	end
+
+	-- A bot's snail turns to face its aim (a player's own screen turns theirs), so its weapon never points back through it
+	local side: number = math.sign(math.cos(angle))
+	if model:GetAttribute("IsBot") and side ~= 0 then
+		model.PrimaryPart:FindFirstChild("Upright").CFrame = CFrame.lookAlong(Vector3.zero, Vector3.xAxis * side)
+		model:SetAttribute("Facing", side)
+	end
 	model:SetAttribute("AimAngle", angle)
 	model:SetAttribute("AimPower", math.clamp(power, 0, 1))
 	model:SetAttribute("AimTime", I.S.Workspace:GetServerTimeNow())

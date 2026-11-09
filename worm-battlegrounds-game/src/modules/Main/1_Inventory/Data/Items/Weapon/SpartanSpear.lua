@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Spartan spear",
-	IconId = "rbxassetid://121731184312632",
+	IconId = "rbxassetid://120095788569892",
 
 	--[[ Classification ]]
 

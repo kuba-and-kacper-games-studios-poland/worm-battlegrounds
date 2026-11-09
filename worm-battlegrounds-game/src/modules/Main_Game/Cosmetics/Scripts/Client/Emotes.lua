@@ -21,6 +21,18 @@ local worldFolder: Folder
 -- Whether the lobby's emote row shows its emotes, or only the smiley and +
 local rowOpen: boolean = true
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
+
+--%%%%%%%%%%%%%%%%%%%% Get Button
+
+--[[
+	Returns the button of a card: the card itself when it is one (the lobby's ported cards), else the ImageButton a
+	theme control keeps inside it (the match hud's).
+]]
+local function getButton(card: Instance): GuiButton
+	return if card:IsA("GuiButton") then card else card:FindFirstChild("Button", true)
+end
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -44,12 +56,12 @@ function Module.Start()
 
 	local hud: ScreenGui = I.UserInterface.UI[_settings.MATCH_HUD_GUI_NAME]
 	elems["Row"] = I.UserInterface.UI[_settings.LOADOUT_GUI_NAME]:FindFirstChild("U_Emotes", true) --- @type ScrollingFrame
-	elems["Smiley"] = elems["Row"]:FindFirstChild("S_Smiley") --- @type Frame
-	elems["EmoteButton"] = hud:FindFirstChild("U_EmoteButton", true) --- @type Frame
+	elems["Smiley"] = elems["Row"]:FindFirstChild("S_Smiley") --- @type ImageButton
+	elems["EmoteButton"] = hud:FindFirstChild("U_EmoteButton", true) --- @type GuiObject
 	elems["Wheel"] = hud:FindFirstChild("U_EmoteWheel", true) --- @type Frame
-	elems["Party"] = I.UserInterface.UI[_settings.PARTY_GUI_NAME]:FindFirstChild("U_Members", true) --- @type ScrollingFrame
-	prefabs["Emote"] = elems["Row"]:FindFirstChild("PREFAB | Emote") --- @type Frame
-	prefabs["WheelEmote"] = elems["Wheel"]:FindFirstChild("PREFAB | WheelEmote") --- @type Frame
+	elems["Party"] = I.UserInterface.UI[_settings.PARTY_GUI_NAME]:FindFirstChild("U_Members", true) --- @type Frame
+	prefabs["Emote"] = elems["Row"]:FindFirstChild("PREFAB | Emote") --- @type ImageButton
+	prefabs["WheelEmote"] = elems["Wheel"]:FindFirstChild("PREFAB | WheelEmote") --- @type GuiObject
 	worldFolder = I.Dirs.UmeWorkspace:WaitForChild(_localName)
 
 	--[[ Applying ]]
@@ -58,11 +70,11 @@ function Module.Start()
 
 	--[[ Connections ]]
 
-	I.Interact.OnPress(elems["Smiley"]:FindFirstChild("Button"), function()
+	I.Interact.OnPress(elems["Smiley"], function()
 		rowOpen = not rowOpen
 		Module._refresh()
 	end)
-	I.Interact.OnPress(elems["EmoteButton"]:FindFirstChild("Button"), function()
+	I.Interact.OnPress(getButton(elems["EmoteButton"]), function()
 		elems["Wheel"].Visible = not elems["Wheel"].Visible
 	end)
 	I.S.UserInputService.InputBegan:Connect(Module._onInput)
@@ -88,7 +100,7 @@ function Module._refresh()
 
 	for _index: number, holder: Instance in ipairs({ elems["Row"], elems["Wheel"] }) do
 		for _childIndex: number, child: Instance in ipairs(holder:GetChildren()) do
-			if child:IsA("Frame") and child.Name:sub(1, 6) == "Emote_" then
+			if child:IsA("GuiObject") and child.Name:sub(1, 6) == "Emote_" then
 				child:Destroy()
 			end
 		end
@@ -109,11 +121,11 @@ function Module._refresh()
 
 	for index: number, emoteId: string in ipairs(owned) do
 		local angle: number = math.rad(index / #owned * 360 - 90)
-		local rowEmote: Frame = Module._makeEmote(prefabs["Emote"], emoteId)
+		local rowEmote: GuiObject = Module._makeEmote(prefabs["Emote"], emoteId)
 		rowEmote.LayoutOrder = index
 		rowEmote.Visible = rowOpen
 		rowEmote.Parent = elems["Row"]
-		local wheelEmote: Frame = Module._makeEmote(prefabs["WheelEmote"], emoteId)
+		local wheelEmote: GuiObject = Module._makeEmote(prefabs["WheelEmote"], emoteId)
 		wheelEmote.Position = UDim2.fromScale(0.5 + math.cos(angle) * _settings.WHEEL_RADIUS, 0.5 + math.sin(angle) * _settings.WHEEL_RADIUS)
 		wheelEmote.Visible = true
 		wheelEmote.Parent = elems["Wheel"]
@@ -125,7 +137,7 @@ end
 --[[
 	Clones an emote card from a prefab, named after its emote, that plays it when pressed.
 ]]
---- @return Frame
+--- @return GuiObject
 function Module._makeEmote(prefab: Instance, emoteId: string)
 	--[[ Data ]]
 
@@ -133,18 +145,25 @@ function Module._makeEmote(prefab: Instance, emoteId: string)
 
 	--[[ Cloning ]]
 
-	local card: Frame = prefab:Clone()
+	local card: GuiObject = prefab:Clone()
 	card.Name = emoteId
+
+	--[[ Elements ]]
+
+	-- Only a theme Item card has an info line (the match hud's wheel), which an emote leaves empty
+	local info: TextLabel? = card:FindFirstChild("S_Info", true)
 
 	--[[ Texts ]]
 
 	card:FindFirstChild("S_Icon", true).Image = if item then item.IconId else ""
 	card:FindFirstChild("S_Name", true).Text = if item then item.Name else emoteId
-	card:FindFirstChild("S_Info", true).Text = ""
+	if info then
+		info.Text = ""
+	end
 
 	--[[ Connections ]]
 
-	I.Interact.OnPress(card:FindFirstChild("Button"), function()
+	I.Interact.OnPress(getButton(card), function()
 		elems["Wheel"].Visible = false
 		I.Network.Fire("Cosmetics_PlayEmote", emoteId)
 	end)
@@ -218,8 +237,10 @@ function Module._onEmotePlayed(userId: number, emoteId: string)
 		label.Parent = billboard
 		I.S.Debris:AddItem(billboard, _settings.EMOTE_SECONDS)
 	elseif member then
-		label.Size = UDim2.fromScale(0.4, 0.6)
-		label.Position = UDim2.fromScale(0.58, 0.2)
+		-- Right of the member's card in the party column
+		label.Size = UDim2.fromScale(1.2, 0.4)
+		label.Position = UDim2.fromScale(1.08, 0.3)
+		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.Parent = member
 		I.S.Debris:AddItem(label, _settings.EMOTE_SECONDS)
 	else

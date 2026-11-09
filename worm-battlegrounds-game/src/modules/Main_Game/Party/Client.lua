@@ -22,11 +22,6 @@ local Invites = require(_scripts:FindFirstChild("Client"):FindFirstChild("Invite
 local elems = {} --- @type { [string]: Instance }
 local prefabs = {} --- @type { [string]: Instance }
 
---[[ General ]]
-
--- Whether the panel is open under its tab: open on PC, folded on phones and tablets until tapped
-local open: boolean
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -52,7 +47,6 @@ function Module.Start()
 	Module._getElements()
 	Module._createConnections()
 	Invites.Start()
-	Module._onPlatformChanged()
 	Module._refresh()
 end
 
@@ -61,42 +55,27 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Elements
 
 --[[
-	Finds the party panel's elements.
+	Finds the party column's elements.
 ]]
 function Module._getElements()
 	--[[ General ]]
 
 	local moduleGui: ScreenGui = I.UserInterface.UI[_settings.GUI_NAME]
-	local party: Frame = moduleGui:FindFirstChild("U_Party", true)
-	elems["Tab"] = party:FindFirstChild("S_Tab", true) --- @type Frame
-	elems["TabText"] = elems["Tab"]:FindFirstChild("ButtonText", true) --- @type TextLabel
-	elems["TabFace"] = elems["Tab"]:FindFirstChild("Face", true) --- @type ImageLabel
-	elems["TabIcon"] = elems["Tab"]:FindFirstChild("Icon", true) --- @type ImageLabel
-	elems["Panel"] = party:FindFirstChild("S_Panel", true) --- @type Frame
+	elems["Leave"] = moduleGui:FindFirstChild("U_Party", true):FindFirstChild("S_Leave", true) --- @type ImageButton
 	elems["Members"] = moduleGui:FindFirstChild("U_Members", true) --- @type Frame
-	elems["Invite"] = moduleGui:FindFirstChild("U_Invite", true):FindFirstChild("Button") --- @type ImageButton
-	elems["InviteFriends"] = moduleGui:FindFirstChild("U_InviteFriends", true):FindFirstChild("Button") --- @type ImageButton
-	elems["Leave"] = moduleGui:FindFirstChild("U_Leave", true) --- @type Frame
 
 	--[[ Prefab ]]
 
 	prefabs["Member"] = elems["Members"]:FindFirstChild("PREFAB | Member") --- @type Frame
+	prefabs["Invite"] = elems["Members"]:FindFirstChild("PREFAB | Invite") --- @type ImageButton
 end
 
 --%%%%%%%%%%%%%%%%%%%% Create Connections
 
 --[[
-	Redraws the panel whenever anyone's party or level changes, and wires the tab, the buttons and invites.
+	Redraws the column whenever anyone's party or level changes, and wires Leave.
 ]]
 function Module._createConnections()
-	--[[ Tab ]]
-
-	I.Interact.OnPress(elems["Tab"]:FindFirstChild("Button"), function()
-		open = not open
-		Module._refreshTab()
-	end)
-	I.Topic.Subscribe("Platform_Changed", Module._onPlatformChanged)
-
 	--[[ Players ]]
 
 	I.S.Players.PlayerAdded:Connect(Module._watchPlayer)
@@ -107,13 +86,7 @@ function Module._createConnections()
 
 	--[[ Buttons ]]
 
-	I.Interact.OnPress(elems["Invite"], function()
-		I.WidgetManager.Open(_settings.INVITE_GUI_NAME)
-	end)
-	I.Interact.OnPress(elems["InviteFriends"], function()
-		I.Friends.PromptGameInvite()
-	end)
-	I.Interact.OnPress(elems["Leave"]:FindFirstChild("Button"), function()
+	I.Interact.OnPress(elems["Leave"], function()
 		I.Network.Fire("Party_Leave")
 	end)
 end
@@ -123,7 +96,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Player
 
 --[[
-	Redraws the panel when a player's party or level changes.
+	Redraws the column when a player's party or level changes.
 ]]
 function Module._watchPlayer(player: Player)
 	--[[ Connections ]]
@@ -135,8 +108,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Lists the party's members (just the local player when they have none) with their level, the crown on the leader,
-	and Kick buttons for the leader.
+	Lists the party's members (just the local player when they have none) with their avatar, name and level, the
+	crown on the leader and Kick for the leader, then a + card per free place for a player who may invite.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -154,59 +127,49 @@ function Module._refresh()
 	--[[ Clearing ]]
 
 	for _index: number, child: Instance in ipairs(elems["Members"]:GetChildren()) do
-		if child:IsA("Frame") and child ~= prefabs["Member"] then
+		if child:IsA("GuiObject") and child ~= prefabs["Member"] and child ~= prefabs["Invite"] then
 			child:Destroy()
 		end
 	end
 
 	--[[ Members ]]
 
-	for _index: number, player: Player in ipairs(members) do
-		local entry: Frame = prefabs["Member"]:Clone()
-		local kick: Frame = entry:FindFirstChild("S_Kick", true)
-		entry.Name = tostring(player.UserId)
-		entry.LayoutOrder = if player:GetAttribute("PartyLeader") then 0 else 1
-		entry.Visible = true
-		entry:FindFirstChild("S_Name", true).Text = player.DisplayName
-		entry:FindFirstChild("S_Level", true).Text = `Level {player:GetAttribute("Level") or 1}`
-		entry:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={player.UserId}&w=150&h=150`
-		entry:FindFirstChild("S_Crown", true).Visible = player:GetAttribute("PartyLeader") == true
+	for index: number, player: Player in ipairs(members) do
+		local card: Frame = prefabs["Member"]:Clone()
+		local kick: ImageButton = card:FindFirstChild("S_Kick", true)
+		card.Name = tostring(player.UserId)
+		card.LayoutOrder = if player:GetAttribute("PartyLeader") then 0 else index
+		card.Visible = true
+		card:FindFirstChild("S_Name", true).Text = player.DisplayName
+		card:FindFirstChild("S_Level", true).Text = `Lv {player:GetAttribute("Level") or 1}`
+		card:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={player.UserId}&w=150&h=150`
+		card:FindFirstChild("S_Crown", true).Visible = player:GetAttribute("PartyLeader") == true
 		kick.Visible = leader and player ~= localPlayer
-		entry.Parent = elems["Members"]
-		I.Interact.OnPress(kick:FindFirstChild("Button"), function()
+		card.Parent = elems["Members"]
+		I.Interact.OnPress(kick, function()
 			I.Network.Fire("Party_Kick", player)
 		end)
+	end
+
+	--[[ Invites ]]
+
+	-- Only the leader invites once there is a party
+	if not partyId or leader then
+		for place: number = #members + 1, _settings.MAX_PARTY do
+			local invite: ImageButton = prefabs["Invite"]:Clone()
+			invite.Name = `Invite{place}`
+			invite.LayoutOrder = _settings.MAX_PARTY + place
+			invite.Visible = true
+			invite.Parent = elems["Members"]
+			I.Interact.OnPress(invite, function()
+				I.WidgetManager.Open(_settings.INVITE_GUI_NAME)
+			end)
+		end
 	end
 
 	--[[ Buttons ]]
 
 	elems["Leave"].Visible = partyId ~= nil
-	elems["TabText"].Text = `Party {#members}/{_settings.MAX_PARTY}`
-end
-
---%%%%%%%%%%%%%%%%%%%% On Platform Changed
-
---[[
-	Opens the panel on PC and console and folds it on phones and tablets, where it would cover the Loadout card.
-]]
-function Module._onPlatformChanged()
-	--[[ Applying ]]
-
-	open = I.Platform.Current ~= "Mobile"
-	Module._refreshTab()
-end
-
---%%%%%%%%%%%%%%%%%%%% Refresh Tab
-
---[[
-	Shows the panel while open, with the tab in the kit's selected skin and its arrow turned up; folded, only the tab.
-]]
-function Module._refreshTab()
-	--[[ Applying ]]
-
-	elems["Panel"].Visible = open
-	elems["TabFace"].Image = elems["TabFace"]:GetAttribute(if open then "Kit_SelectedImage" else "Kit_Image")
-	elems["TabIcon"].Rotation = if open then 180 else 0
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

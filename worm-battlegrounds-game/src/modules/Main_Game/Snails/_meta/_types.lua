@@ -61,3 +61,17 @@ local _snails_Gear = {}
 --- @field Resting number
 --- @field Jetpack Sound?
 local _snails_SoundState = {}
+
+--%%%%%%%%%%%%%%%%%%%% Effects
+
+--- @class Snails_EffectState
+---
+--- # Healing #
+---
+--- @field Health number
+---
+--- # Moving #
+---
+--- @field LastRise number
+--- @field Trail Trail?
+local _snails_EffectState = {}

@@ -47,7 +47,7 @@ No remotes of its own: purchases use Marketplace's `Marketplace_PromptProductPur
 | --- | --- | --- |
 | Profile | `Shop.VipCrateDay` | The UTC day (`os.time() // 86400`) of the last free crate |
 | Replicator `Shop` | `VipCrateReady` | Whether today's free crate waits |
-| Player attribute | `Vip` | Whether the player owns VIP (Match copies it to the snail) |
+| Player attribute | `Vip` | Whether the player owns VIP (Match copies it to the snail). Set, with `VipCrateReady`, on a thread of its own a moment after the player joins, since the pass check is a web call |
 
 ## Settings
 

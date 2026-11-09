@@ -2,7 +2,7 @@
 
 Skins and emotes. Owned skins and emotes are Inventory items; this module saves which skin is worn, gives every player
 the starter skin and emote, sells emotes for coins once the player's level is high enough, and plays emotes for
-everyone. The client draws the `Skins` widget (a 3D preview per owned skin, **Equip**), the `EmoteShop` widget, the
+everyone. The client draws the `Skins` widget (every skin with a 3D preview; pressing an owned one equips it), the `EmoteShop` widget, the
 emote row in the lobby's `Loadout` panel, the emote wheel in `MatchHud`, and a played emote's name over the player's
 snail in a match or beside their name in the lobby's party list.
 
@@ -21,7 +21,7 @@ snail in a match or beside their name in the lobby's party list.
 | `Server.lua` | Starter items, equipping, buying and playing emotes, the skin a match uses |
 | `Global.lua` | The skin and emote rows |
 | `Client.lua` | Starts the three client handlers |
-| `Scripts/Client/Skins.lua` | The `Skins` widget and the lobby's skin button (`Lobby` › `U_Skins`) |
+| `Scripts/Client/Skins.lua` | The full-screen `Skins` widget (the lobby's STYLE): every skin as a tile with a 3D preview, the worn one first in the selected look, owned ones by rarity, unowned ones locked; pressing an owned skin equips it, and the SKINS category shows the worn skin's name |
 | `Scripts/Client/EmoteShop.lua` | The `EmoteShop` widget |
 | `Scripts/Client/Emotes.lua` | The emote row, the emote wheel (it closes on a pick, a click or tap anywhere but a button, and when the hud hides the emote button), and showing played emotes |
 | `Settings.lua` | `Cosmetics_Settings` |
@@ -69,6 +69,7 @@ snail in a match or beside their name in the lobby's party list.
 | --- | --- | --- |
 | Profile | `Cosmetics.EquippedSkin` | The worn skin's item id, `"Skin_Classic"` at first |
 | Replicator `Cosmetics` | `EquippedSkin` | The same, for the client |
+| Player attribute | `EquippedSkin` | The same, for every client (the lobby's party stage) |
 
 ## Settings
 
@@ -82,7 +83,7 @@ snail in a match or beside their name in the lobby's party list.
 | `WHEEL_RADIUS` | `0.38` | How far the wheel's emotes sit from its centre, as a share of its size |
 | `PREVIEW_DISTANCE` | `1.6` | The skin preview camera's distance, in the model's sizes |
 | `SKINS_GUI_NAME`, `EMOTE_SHOP_GUI_NAME` | `"Skins"`, `"EmoteShop"` | The widgets |
-| `LOADOUT_GUI_NAME`, `LOBBY_GUI_NAME`, `MATCH_HUD_GUI_NAME`, `PARTY_GUI_NAME` | | The guis that hold the emote row, the skin button, the emote wheel and the party list |
+| `LOADOUT_GUI_NAME`, `MATCH_HUD_GUI_NAME`, `PARTY_GUI_NAME` | | The guis that hold the emote row, the emote wheel and the party list |
 
 ## In the place
 

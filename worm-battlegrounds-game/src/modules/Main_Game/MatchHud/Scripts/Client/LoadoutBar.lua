@@ -22,7 +22,7 @@ local combatRep: Folder?
 
 -- The items in the bar, in order (the Bazooka first), and each one's box
 local items = {} --- @type { string }
-local boxes = {} --- @type { [string]: Frame }
+local boxes = {} --- @type { [string]: ImageButton }
 local selected: string = "Bazooka"
 local bound: boolean = false
 
@@ -49,7 +49,7 @@ function Module.Start(gui: ScreenGui)
 
 	elems["Bar"] = gui:FindFirstChild("U_LoadoutBar") --- @type Frame
 	elems["Slots"] = elems["Bar"]:FindFirstChild("U_Slots", true) --- @type Frame
-	prefabs["BarSlot"] = elems["Slots"]:FindFirstChild("PREFAB | BarSlot") --- @type Frame
+	prefabs["BarSlot"] = elems["Slots"]:FindFirstChild("PREFAB | BarSlot") --- @type ImageButton
 
 	--[[ Connections ]]
 
@@ -119,7 +119,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Rebuild
 
 --[[
-	Makes one box per item in the player's loadout (the Bazooka's first) when it changed, then refreshes them all.
+	Makes one box per item in the player's loadout (the Bazooka's first) when it changed, and empty boxes (the
+	design's "+") up to one per slot key, then refreshes them all.
 ]]
 function Module._rebuild()
 	--[[ Data ]]
@@ -142,30 +143,60 @@ function Module._rebuild()
 
 	--[[ Clearing ]]
 
-	for _itemId: string, box: Frame in pairs(boxes) do
-		box:Destroy()
+	for _index: number, child: Instance in ipairs(elems["Slots"]:GetChildren()) do
+		if child.Name ~= prefabs["BarSlot"].Name and child:IsA("ImageButton") then
+			child:Destroy()
+		end
 	end
 	items = newItems
 	boxes = {}
 
 	--[[ Building ]]
 
-	for index: number, itemId: string in ipairs(items) do
-		local box: Frame = prefabs["BarSlot"]:Clone()
-		local button: ImageButton = box:FindFirstChild("Button")
-		local icon: ImageLabel = box:FindFirstChild("S_Icon", true)
-		local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
-		box.Name = itemId
+	for index: number = 1, math.max(#items, #_settings.SLOT_KEYS) do
+		--[[ Local Variables ]]
+
+		local itemId: string? = items[index]
+		local row = if itemId then I.G_Arsenal.Get(itemId) else nil --- @type Arsenal_WeaponData?
+
+		--[[ Cloning ]]
+
+		local box: ImageButton = prefabs["BarSlot"]:Clone()
+
+		--[[ Elements ]]
+
+		local icon: ImageLabel = box:FindFirstChild("S_Icon")
+
+		--[[ Applying ]]
+
+		box.Name = itemId or "Empty"
 		box.LayoutOrder = index
 		box.Visible = true
+		box:FindFirstChild("S_Name").Text = if row then row.Name else ""
+		box:FindFirstChild("S_Key").Text = tostring(index)
 		icon.Image = if row then row.Icon else ""
-		if icon.Image == "" and I.G_Arsenal.HasModel(itemId) then
+		if itemId and icon.Image == "" and I.G_Arsenal.HasModel(itemId) then
 			Module._showModel(icon, I.G_Arsenal.GetModel(itemId))
 		end
-		box:FindFirstChild("S_Key", true).Text = tostring(index)
 		box.Parent = elems["Slots"]
+
+		--[[ Empty ]]
+
+		-- An empty slot shows only the design's "+", in its dim outline
+		if not itemId then
+			box.Interactable = false
+			box:FindFirstChild("S_Plus").Visible = true
+			box:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = box:GetAttribute("Look_EmptyStrokeColor")
+			for _childIndex: number, name: string in ipairs({ "S_Icon", "S_Key", "S_Uses", "S_Name", "S_Turns" }) do
+				box:FindFirstChild(name).Visible = false
+			end
+			continue
+		end
+
+		--[[ Connections ]]
+
 		boxes[itemId] = box
-		I.Interact.OnPress(button, function()
+		I.Interact.OnPress(box, function()
 			Module.Select(itemId)
 		end)
 	end
@@ -215,7 +246,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Boxes
 
 --[[
-	Shows each box's uses left, its cooldown and whether it's the selected one; the key hints only on Desktop.
+	Shows each box's uses left, its cooldown (the icon darkened under the turns left) and whether it's the selected one
+	(the design's white outline, from the box's Look_ attributes); the key numbers only on Desktop.
 ]]
 function Module._refreshBoxes()
 	--[[ Checks ]]
@@ -227,17 +259,22 @@ function Module._refreshBoxes()
 
 	--[[ Applying ]]
 
-	for itemId: string, box: Frame in pairs(boxes) do
+	for itemId: string, box: ImageButton in pairs(boxes) do
 		local uses: number = combatRep:GetAttribute(`Uses_{itemId}`) or 0
 		local cooldown: number = combatRep:GetAttribute(`Cooldown_{itemId}`) or 0
-		local cover: Frame = box:FindFirstChild("S_Cooldown", true)
-		local body: Frame = box:FindFirstChild("Background", true):FindFirstChild("Body", true)
-		box:FindFirstChild("S_Uses", true).Text = if uses < 0 then "" else `x{uses}`
-		box:FindFirstChild("S_Key", true).Visible = I.Platform.Current == "Desktop"
-		cover.Visible = cooldown > 0
-		cover:FindFirstChild("S_Turns", true).Text = tostring(cooldown)
-		body.BackgroundColor3 = if itemId == selected then _settings.SELECTED_COLOR else _settings.TILE_COLOR
-		body.BackgroundTransparency = if itemId == selected then _settings.SELECTED_TRANSPARENCY else _settings.TILE_TRANSPARENCY
+		local icon: ImageLabel = box:FindFirstChild("S_Icon")
+		local model: ViewportFrame? = icon:FindFirstChild("S_Model")
+		local turns: TextLabel = box:FindFirstChild("S_Turns")
+		local iconColor: Color3 = if cooldown > 0 then box:GetAttribute("Look_CooldownIconColor") else Color3.new(1, 1, 1)
+		box:FindFirstChild("S_Uses").Text = if uses < 0 then "" else `x{uses}`
+		box:FindFirstChild("S_Key").Visible = I.Platform.Current == "Desktop"
+		turns.Visible = cooldown > 0
+		turns.Text = tostring(cooldown)
+		icon.ImageColor3 = iconColor
+		if model then
+			model.ImageColor3 = iconColor
+		end
+		box:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = box:GetAttribute(if itemId == selected then "Look_SelectedStrokeColor" else "Look_StrokeColor")
 	end
 end
 

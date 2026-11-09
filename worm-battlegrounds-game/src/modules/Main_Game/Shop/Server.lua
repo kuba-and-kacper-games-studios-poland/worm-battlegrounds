@@ -97,13 +97,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Replicator
 
 --[[
-	Makes a joining player's Shop folder and marks them VIP.
+	Makes a joining player's Shop folder, then marks them VIP on a thread of its own, since the pass check is a web
+	call that would hold up the player's load.
 ]]
 function Module._createReplicator(player: Player)
 	--[[ Publishing ]]
 
 	I.Replicator.CreateFolder(player, _localName)
-	Module._publish(player)
+	task.spawn(Module._publish, player)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -159,10 +160,14 @@ function Module._publish(player: Player)
 		return
 	end
 
+	--[[ Data ]]
+
+	local vip: boolean = Module.IsVip(player)
+
 	--[[ Publishing ]]
 
-	player:SetAttribute("Vip", Module.IsVip(player))
-	I.Replicator.Set(player, _localName, "VipCrateReady", Module.CanClaimVipCrate(player))
+	player:SetAttribute("Vip", vip)
+	I.Replicator.Set(player, _localName, "VipCrateReady", vip and Module.CanClaimVipCrate(player))
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

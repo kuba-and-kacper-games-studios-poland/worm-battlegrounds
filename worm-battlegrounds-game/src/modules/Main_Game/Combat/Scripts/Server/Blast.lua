@@ -31,9 +31,9 @@ local Module = {}
 
 --[[
 	**SERVER** |
-	A blast: carves a round hole, hurts every snail in play within its radius (from damageMax at the center to
-	damageEdge at the edge), throws each away from the center (tilted up) with the knockback class, credits the shooter
-	and tells every client. Returns the damage dealt to snails other than the shooter's.
+	A blast: tells every client, carves a round hole, hurts every snail in play within its radius (from damageMax at the
+	center to damageEdge at the edge), throws each away from the center (tilted up) with the knockback class and
+	credits the shooter. Returns the damage dealt to snails other than the shooter's.
 ]]
 --- @return number
 function Module.Explode(center: Vector3, radius: number, itemId: string, sourceId: string?, shiny: boolean?, damageMax: number, damageEdge: number, knockback: string)
@@ -44,6 +44,11 @@ function Module.Explode(center: Vector3, radius: number, itemId: string, sourceI
 	local knockSpeed: number = I.G_Arsenal.GetKnockback(knockback)
 	local multiplier: number = if shiny then I.Settings["Arsenal"].SHINY_DAMAGE_MULTIPLIER else 1
 	local dealt: number = 0
+
+	--[[ Publishing ]]
+
+	-- Before the carve, which takes a few frames, so the blast shows the moment it happens
+	I.Network.FireAll("Combat_Explosion", position, radius, itemId, shiny == true)
 
 	--[[ Carving ]]
 
@@ -66,10 +71,6 @@ function Module.Explode(center: Vector3, radius: number, itemId: string, sourceI
 		local speed: number = knockSpeed * (1 - (1 - _settings.KNOCKBACK_EDGE) * share)
 		dealt += Module.Hit(model.Name, damage, direction * speed, itemId, sourceId, root.Position)
 	end
-
-	--[[ Publishing ]]
-
-	I.Network.FireAll("Combat_Explosion", position, radius, itemId, shiny == true)
 
 	--[[ Returning ]]
 

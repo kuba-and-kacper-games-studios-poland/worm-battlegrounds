@@ -4,13 +4,14 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Bazooka",
-	Icon = "rbxassetid://134208977158560",
+	Icon = "rbxassetid://89888640314244",
 
 	--[[ Behavior ]]
 
 	Kind = "Rocket",
 	Aim = "Arc",
 	Wind = true,
+	HoldPose = "Bazooka",
 
 	--[[ Damage ]]
 

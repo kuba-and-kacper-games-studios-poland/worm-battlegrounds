@@ -82,8 +82,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Puts the active snail's weapon in its hands during its turn (a copy of the weapon's model), swaps it when the snail
-	picks another, and takes it away once the shot is away or the turn ends.
+	Puts the active snail's weapon in its hands during its turn (a copy of the weapon's model, in the weapon's pose),
+	swaps it when the snail picks another, and takes it away once the turn ends. When the shot is away, a gun with its
+	own pose plays its shot first (for its whole burst) and goes after.
 ]]
 function Module._refresh()
 	--[[ Data ]]
@@ -100,8 +101,8 @@ function Module._refresh()
 
 	--[[ Clearing ]]
 
-	if heldModel then
-		heldModel:Destroy()
+	if heldModel and holder then
+		Module._putAway(holder, heldId, heldModel)
 		heldModel = nil
 	end
 	holder = snail
@@ -120,7 +121,8 @@ function Module._refresh()
 
 	heldModel = I.G_Arsenal.GetModel(itemId):Clone()
 	heldAngle = drawnAngle or Module._getAimAngle(snail)
-	Module._place(snail, heldAngle)
+	I.SnailRig.Hold(snail:FindFirstChild("Skin"), itemId, heldModel)
+	I.SnailRig.SetAim(snail:FindFirstChild("Skin"), heldAngle)
 	heldModel.Parent = effectsFolder
 
 	--[[ Connections ]]
@@ -133,7 +135,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Keeps the held weapon in the snail's hands each frame, turning it toward the snail's aim.
+	Turns the held weapon toward the snail's aim each frame. On its player's own screen, a snail standing still also
+	turns to face its aim, so the weapon never points back through its body.
 ]]
 function Module._step(deltaTime: number)
 	--[[ Checks ]]
@@ -154,9 +157,18 @@ function Module._step(deltaTime: number)
 		heldAngle += turn * (1 - math.exp(-_settings.HELD_TURN_SPEED * deltaTime))
 	end
 
-	--[[ Placing ]]
+	--[[ Facing ]]
 
-	Module._place(snail, heldAngle)
+	-- Walking turns the snail its own way (SnailControl), so only a snail standing still follows its aim
+	local root: BasePart = snail.PrimaryPart
+	local side: number = math.sign(math.cos(heldAngle))
+	if snail == I.Snails.GetMine() and not root:FindFirstChild("Walk").Enabled and side ~= 0 then
+		root:FindFirstChild("Upright").CFrame = CFrame.lookAlong(Vector3.zero, Vector3.xAxis * side)
+	end
+
+	--[[ Aiming ]]
+
+	I.SnailRig.SetAim(snail:FindFirstChild("Skin"), heldAngle)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Set Aim
@@ -175,27 +187,43 @@ function Module.SetAim(angle: number?)
 
 	if angle and holder and holder.PrimaryPart and heldModel then
 		heldAngle = angle
-		Module._place(holder, angle)
+		I.SnailRig.SetAim(holder:FindFirstChild("Skin"), angle)
 	end
 end
 
---%%%%%%%%%%%%%%%%%%%% Place
+--%%%%%%%%%%%%%%%%%%%% Put Away
 
 --[[
-	Moves the held weapon to the snail's hands on the camera's side, its front along the angle and its top up.
+	Takes a weapon out of a snail's hands. When its shot is away (the match is in its Flight) and it's a gun with its
+	own pose, it plays the shot first, for at least the gun's burst, then goes.
 ]]
-function Module._place(snail: Model, angle: number)
-	--[[ Local Variables ]]
+function Module._putAway(snail: Model, itemId: string?, weapon: Model)
+	--[[ Data ]]
 
-	local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
+	local skin: Instance? = snail:FindFirstChild("Skin")
+	local row = itemId and I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData?
 
-	-- Of the two sides square to the aim, the one facing up, so the weapon is never upside down
-	local up: Vector3 = if direction.X >= 0 then Vector3.new(-direction.Y, direction.X, 0) else Vector3.new(direction.Y, -direction.X, 0)
-	local position: Vector3 = snail.PrimaryPart.Position + direction * _settings.HELD_FORWARD + Vector3.new(0, _settings.HELD_HEIGHT, _settings.HELD_DEPTH)
+	--[[ Checks ]]
 
-	--[[ Applying ]]
+	-- Put a weapon that wasn't fired, or has no shot of its own, away at once
+	if not skin or I.Match.GetPhase() ~= "Flight" or not row or not row.HoldPose then
+		if skin then
+			I.SnailRig.Hold(skin, nil)
+		end
+		weapon:Destroy()
+		return
+	end
 
-	heldModel:PivotTo(CFrame.lookAlong(position, direction, up))
+	--[[ Shooting ]]
+
+	local seconds: number = I.SnailRig.Shoot(skin, (row.Pellets or 1) * (row.BurstInterval or 0))
+	task.delay(seconds, function()
+		-- The snail may hold a new weapon by now, which replaced this one's hold
+		if holder ~= snail and skin.Parent then
+			I.SnailRig.Hold(skin, nil)
+		end
+		weapon:Destroy()
+	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

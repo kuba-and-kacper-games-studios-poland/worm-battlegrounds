@@ -4,13 +4,14 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Homing missile",
-	Icon = "",
+	Icon = "rbxassetid://107350591430267",
 
 	--[[ Behavior ]]
 
 	Kind = "Homing",
 	Aim = "Target",
 	Wind = true,
+	HoldPose = "Bazooka",
 
 	--[[ Damage ]]
 

@@ -116,6 +116,24 @@ local _settings = {
 
 	DEBRIS_LIFETIME = 2.5,
 
+	--%%%%%%%%%%%%%%%%%%%% Effects
+
+	--[[
+		The studio's blast effects (I.Vfx prefabs) by size: a blast plays the last one whose radius it reaches, scaled
+		by its radius over BLAST_VFX_RADIUS (the radius they were made for)
+	]]
+	--- @type { { any } }
+	BLAST_VFX = { { 0, "Explosion" }, { 6, "Explosion_Fire" }, { 9, "Explosion_Big" } },
+
+	BLAST_VFX_RADIUS = 6.5,
+
+	-- The flash at a gun's muzzle as it fires, by weapon (I.Vfx prefabs)
+	--- @type { [string]: string }
+	MUZZLE_VFX = { Uzi = "Flash_SMG", Minigun = "Flash_SMG", Shotgun = "Flash_Sniper" },
+
+	-- One Punch's blast plays along the swing at this scale (the prefab is made for a 20-stud part)
+	PUNCH_VFX_SCALE = 0.5,
+
 	--%%%%%%%%%%%%%%%%%%%% Sounds
 
 	--[[
@@ -168,15 +186,14 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Held Weapon
 
-	--[[
-		Where the active snail holds its weapon, from its ball's center: HELD_FORWARD studs along its aim, HELD_HEIGHT up
-		and HELD_DEPTH toward the camera (+Z), so the weapon is always on the side players see; it turns to a new aim at
-		HELD_TURN_SPEED (higher is snappier)
-	]]
-	HELD_FORWARD = 0.8,
-	HELD_HEIGHT = -0.3,
-	HELD_DEPTH = 1.5,
+	-- How fast the active snail's weapon turns to another player's new aim (higher is snappier)
 	HELD_TURN_SPEED = 14,
+
+	--%%%%%%%%%%%%%%%%%%%% Aimbot
+
+	-- The aim guide (the admin `aimbot` command) draws a path that lands on its target in the hit colour, the best miss in the other
+	AIMBOT_HIT_COLOR = Color3.fromRGB(80, 255, 120),
+	AIMBOT_MISS_COLOR = Color3.fromRGB(255, 170, 40),
 
 	--%%%%%%%%%%%%%%%%%%%% Placeholders
 
@@ -212,14 +229,6 @@ local _settings = {
 
 	-- How quickly a model the server moves (a crawling spider bomb, a worm) glides after its part; higher follows closer
 	CRAWL_GLIDE = 18,
-
-	-- shortcut: blasts draw with the particle pictures every Roblox client ships until the studio makes its own
-	--- @type { [string]: string }
-	BLAST_TEXTURES = {
-		Smoke = "rbxasset://textures/particles/smoke_main.dds",
-		Fire = "rbxasset://textures/particles/fire_main.dds",
-		Sparks = "rbxasset://textures/particles/sparkles_main.dds",
-	},
 }
 
 return _settings

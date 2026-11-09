@@ -32,7 +32,7 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Skill
 
 	--[[
-		How well each difficulty plays, the human side its trained brain (Data/Brains) plays through:
+		How well each difficulty plays, the human side its trained brain (ServerData/Brains) plays through:
 		- AimNoise, PowerNoise: the spread of its hand, in degrees of angle and share of power (one standard deviation)
 		- WindRead: how much of the wind it counts in its aim (1 reads it exactly)
 		- Ranging: what each earlier shot at the same target from about the same spot multiplies its spread by, as

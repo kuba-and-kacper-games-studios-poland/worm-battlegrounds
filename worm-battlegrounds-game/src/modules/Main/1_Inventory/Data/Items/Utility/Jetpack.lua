@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Jetpack",
-	IconId = "rbxassetid://138428323433864",
+	IconId = "rbxassetid://99911728604760",
 
 	--[[ Classification ]]
 

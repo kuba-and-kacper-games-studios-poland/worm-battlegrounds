@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Medkit",
-	IconId = "rbxassetid://121731184312632",
+	IconId = "rbxassetid://85030401627405",
 
 	--[[ Classification ]]
 

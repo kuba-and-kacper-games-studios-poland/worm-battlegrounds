@@ -40,7 +40,7 @@ function Module.Start()
 
 	Odds.Start()
 	Reveal.Start(Panel.Open)
-	Panel.Start(Odds.ShowFor, Reveal.Show)
+	Panel.Start(Odds.Draw, Reveal.Show)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

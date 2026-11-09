@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Cluster bomb",
-	IconId = "rbxassetid://75424706546346",
+	IconId = "rbxassetid://125982425140000",
 
 	--[[ Classification ]]
 

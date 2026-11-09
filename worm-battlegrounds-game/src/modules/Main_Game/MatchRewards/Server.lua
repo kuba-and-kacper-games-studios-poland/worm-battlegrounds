@@ -7,7 +7,7 @@ local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointe
 local _localName = "MatchRewards"
 
 --- @type MatchRewards_Settings
-local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("ServerSettings"))
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 

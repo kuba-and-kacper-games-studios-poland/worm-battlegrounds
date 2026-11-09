@@ -12,6 +12,7 @@
 --- @field Kind "Rocket" | "Bouncer" | "Crawler" | "Homing" | "Roller" | "Hitscan" | "Melee"
 --- @field Aim "Arc" | "Straight" | "Melee" | "Target" | "Feet"
 --- @field Wind boolean
+--- @field HoldPose ("Gun" | "MiniGun" | "Bazooka" | "ShotGun")?
 ---
 --- # Damage #
 ---

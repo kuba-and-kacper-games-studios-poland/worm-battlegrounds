@@ -35,11 +35,12 @@ local _settings = {
 	PANEL_GUI_NAME = "Loadout",
 	PICKER_GUI_NAME = "LoadoutPicker",
 
-	-- An empty slot's name colour; a filled one takes its item's rarity colour (the gui kit's Text)
-	EMPTY_NAME_COLOR = Color3.fromRGB(255, 255, 255),
+	-- The basic weapon every loadout has, first on the panel and never in the picker
+	BASIC_WEAPON = "Bazooka",
 
-	-- An empty slot's picture: the gui kit's plus
-	EMPTY_ICON = "rbxassetid://134817447648270",
+	-- Cells in each of the panel's two rows (the basic weapon, then the slots), and cards in each of the picker's rows
+	SLOTS_PER_ROW = 3,
+	ITEMS_PER_ROW = 3,
 }
 
 return _settings

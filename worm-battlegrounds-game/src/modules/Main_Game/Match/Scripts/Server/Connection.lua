@@ -244,8 +244,8 @@ function Module._onPlayerAdded(player: Player)
 
 	--[[ Strangers ]]
 
-	-- A match server only takes the players its lobby sent
-	if not participant and I.Config.Metadata and not Module._isInRoster(player.UserId) then
+	-- A match server only takes the players its lobby sent, and a stray one (no lobby sent it a match) takes nobody
+	if not participant and (Module.IsStray() or (I.Config.Metadata and not Module._isInRoster(player.UserId))) then
 		Module.SendToLobby({ player })
 		return
 	end
@@ -332,6 +332,17 @@ end
 --- @return boolean
 function Module.IsStudioMap()
 	return I.Config.PlaceLoader.MapId == _settings.STUDIO_MAP
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Stray
+
+--[[
+	Returns whether this is a match place server that no lobby sent a match to (a public server someone joined
+	directly), outside Studio: it plays nothing and sends everyone to the lobby.
+]]
+--- @return boolean
+function Module.IsStray()
+	return I.Config.Metadata == nil and not I.S.RunService:IsStudio()
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is In Roster

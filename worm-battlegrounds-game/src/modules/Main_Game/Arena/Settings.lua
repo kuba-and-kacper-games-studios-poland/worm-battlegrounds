@@ -18,6 +18,9 @@ local _settings = {
 	-- The most pieces one support search walks before it treats the group as held up, so a carve stays cheap
 	SUPPORT_SEARCH_LIMIT = 400,
 
+	-- How long a hole a client cut on its own waits for the server's pieces, in seconds, before it's undone
+	PREDICT_TIMEOUT = 3,
+
 	--%%%%%%%%%%%%%%%%%%%% Land Spots
 
 	--[[
@@ -54,14 +57,7 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Debris
 
-	--[[
-		A falling group has landed once it moves slower than SETTLE_SPEED (studs per second) for SETTLE_HOLD
-		seconds, or after DEBRIS_SETTLE_TIME seconds at most; it is removed once it falls DEBRIS_KILL_DEPTH
-		studs below the arena's bounds
-	]]
-	SETTLE_SPEED = 0.5,
-	SETTLE_HOLD = 0.5,
-	DEBRIS_SETTLE_TIME = 4,
+	-- A falling group with no terrain under it falls this many studs below the arena's bounds, then is removed
 	DEBRIS_KILL_DEPTH = 20,
 
 	--%%%%%%%%%%%%%%%%%%%% Props

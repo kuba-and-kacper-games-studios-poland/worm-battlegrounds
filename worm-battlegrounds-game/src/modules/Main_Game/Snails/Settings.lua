@@ -25,6 +25,19 @@ local _settings = {
 	-- A snail slower than this, in studs per second, is at rest
 	SETTLE_SPEED = 0.5,
 
+	--%%%%%%%%%%%%%%%%%%%% Animations
+
+	-- A snail plays its walk while it moves along faster than this, in studs per second (and climbs or falls slower than STEP_SOUND_MAX_RISE)
+	WALK_ANIMATION_SPEED = 1.5,
+
+	--[[
+		A thrown snail (faster than HIDE_SPEED, not under its player's control) hides in its shell, and comes out once
+		slower than SHOW_SPEED, HIDE_SECONDS after it last flew that fast
+	]]
+	HIDE_SPEED = 25,
+	SHOW_SPEED = 2,
+	HIDE_SECONDS = 1,
+
 	--%%%%%%%%%%%%%%%%%%%% Shell
 
 	-- A snail's shell breaks once its health drops below this, and shows again when healing brings it back up
@@ -91,7 +104,7 @@ local _settings = {
 	JUMP_SOUND_SPEED = 25,
 	JUMP_SOUND_FROM = 5,
 
-	-- Any snail lands (Snail_Land) when a fall faster than LAND_SOUND_SPEED stops (slower than LAND_SOUND_STOP)
+	-- Any snail lands (Snail_Land, and the Fall effect's dust) when a fall faster than LAND_SOUND_SPEED stops (slower than LAND_SOUND_STOP)
 	LAND_SOUND_SPEED = 30,
 	LAND_SOUND_STOP = 5,
 
@@ -102,6 +115,14 @@ local _settings = {
 	]]
 	JETPACK_SOUND_RISE = 8,
 	JETPACK_SOUND_HOLD = 0.12,
+
+	--%%%%%%%%%%%%%%%%%%%% Effects
+
+	-- A snail shows its trail (the Trail_Snail effect) while it flies faster than this, in studs a second: knocked back, not walking
+	TRAIL_SPEED = 45,
+
+	-- The healing crosses are drawn this many times their made size, so they read from the match camera's distance
+	HEAL_VFX_SCALE = 2,
 }
 
 return _settings

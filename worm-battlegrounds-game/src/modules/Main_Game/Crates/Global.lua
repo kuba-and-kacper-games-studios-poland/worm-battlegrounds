@@ -51,6 +51,7 @@ function Module.Init()
 
 		Get = Module.Get,
 		GetAll = Module.GetAll,
+		GetPrice = Module.GetPrice,
 	}
 end
 
@@ -109,6 +110,27 @@ end
 --- @return { [string]: Crates_CrateData }
 function Module.GetAll()
 	return crates
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Price
+
+--[[
+	Returns what a pack of 1, 3 or 10 crates costs in a currency (the row's One, Three or Ten), or nil when the crate
+	doesn't take that currency.
+]]
+--- @return string?
+function Module.GetPrice(crateId: string, currency: string, count: number)
+	--[[ Data ]]
+
+	local row = Module.Get(crateId) --- @type Crates_CrateData?
+	if not row or not row.Prices[currency] then
+		return nil
+	end
+	local price = row.Prices[currency] --- @type Crates_Price
+
+	--[[ Returning ]]
+
+	return if count == 1 then price.One elseif count == 3 then price.Three else price.Ten
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

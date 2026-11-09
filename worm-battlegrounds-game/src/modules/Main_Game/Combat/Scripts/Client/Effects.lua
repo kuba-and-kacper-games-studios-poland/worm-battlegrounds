@@ -67,7 +67,7 @@ end
 	Draws a blast, throws bits of the ground it hit and plays its sound, then shakes the camera and vibrates a phone or
 	pad by how big and how close to the view it is.
 ]]
-function Module._onExplosion(position: Vector3, radius: number, _itemId: string, shiny: boolean)
+function Module._onExplosion(position: Vector3, radius: number, _itemId: string, _shiny: boolean)
 	--[[ Local Variables ]]
 
 	local size: number = math.max(radius, 1)
@@ -75,7 +75,7 @@ function Module._onExplosion(position: Vector3, radius: number, _itemId: string,
 
 	--[[ Drawing ]]
 
-	Module._drawBlast(position, size, shiny)
+	I.Vfx.Play(Module._getBlastVfx(size), CFrame.new(position), effectsFolder, size / _settings.BLAST_VFX_RADIUS)
 	Module._throwDebris(position, size)
 
 	--[[ Feel ]]
@@ -100,11 +100,24 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Tracer
 
 --[[
-	Draws a shot's lines from the muzzle to where each bullet (or swing) landed, as neon beams that fade, with a small
-	flash where each one landed.
+	Draws a shot's lines from the muzzle to where each bullet (or swing) landed, as neon beams that fade: a gun flashes
+	at its muzzle and each bullet bursts where it landed; One Punch blasts along its swing.
 ]]
 --- @param hits { Vector3 }
-function Module._onTracer(_itemId: string, from: Vector3, hits)
+function Module._onTracer(itemId: string, from: Vector3, hits)
+	--[[ Local Variables ]]
+
+	local muzzleVfx: string? = _settings.MUZZLE_VFX[itemId]
+
+	--[[ Effects ]]
+
+	if muzzleVfx then
+		I.Vfx.Play(muzzleVfx, CFrame.new(from), effectsFolder)
+	end
+	if itemId == "OnePunch" and hits[1] then
+		I.Vfx.Play("Punch", CFrame.lookAt(hits[1], hits[1] * 2 - from), effectsFolder, _settings.PUNCH_VFX_SCALE)
+	end
+
 	--[[ Drawing ]]
 
 	for _index: number, to: Vector3 in ipairs(hits) do
@@ -133,7 +146,10 @@ function Module._onTracer(_itemId: string, from: Vector3, hits)
 			line:Destroy()
 		end)
 
-		Module._spawnBall(to, Color3.fromRGB(255, 240, 160), 1.5, 0.15)
+		if muzzleVfx then
+			I.Vfx.Play("Flash_Bullet", CFrame.new(to), effectsFolder)
+			I.Vfx.Play("Explosion_Gun", CFrame.new(to), effectsFolder)
+		end
 	end
 end
 
@@ -157,104 +173,6 @@ function Module._onHit(participantId: string, damage: number, _position: Vector3
 	--[[ Feel ]]
 
 	I.Haptic.PlayOnce("Combat_Hurt")
-end
-
---%%%%%%%%%%%%%%%%%%%% Draw Blast
-
---[[
-	Draws a blast: a white flash, a fireball that swells to the blast's size, a light, and bursts of fire, sparks and
-	smoke that drift away.
-]]
-function Module._drawBlast(position: Vector3, size: number, shiny: boolean)
-	--[[ Local Variables ]]
-
-	local fireColor: Color3 = if shiny then Color3.fromRGB(255, 220, 80) else Color3.fromRGB(255, 130, 40)
-
-	--[[ Balls ]]
-
-	Module._spawnBall(position, Color3.fromRGB(255, 250, 230), size * 1.3, 0.12)
-	Module._spawnBall(position, fireColor, size * 2, 0.35)
-
-	--[[ Building ]]
-
-	-- An invisible holder for the light and the particles
-	local holder: Part = I.Create("Part")({
-		Name = "BlastPuff",
-		Size = Vector3.one * size * 0.5,
-		Position = position,
-		Transparency = 1,
-		Anchored = true,
-		CanCollide = false,
-		CanQuery = false,
-		CanTouch = false,
-		Parent = effectsFolder,
-	})
-	local light: PointLight = I.Create("PointLight")({
-		Color = fireColor,
-		Brightness = 6,
-		Range = size * 3,
-		Parent = holder,
-	})
-	local fire: ParticleEmitter = I.Create("ParticleEmitter")({
-		Texture = _settings.BLAST_TEXTURES.Fire,
-		Color = ColorSequence.new(fireColor, Color3.fromRGB(200, 50, 20)),
-		LightEmission = 1,
-		Size = NumberSequence.new(size * 0.6, size * 0.2),
-		Transparency = NumberSequence.new(0.1, 1),
-		Lifetime = NumberRange.new(0.25, 0.45),
-		Speed = NumberRange.new(size * 2, size * 4),
-		Drag = 6,
-		SpreadAngle = Vector2.new(180, 180),
-		Rotation = NumberRange.new(0, 360),
-		Enabled = false,
-		Parent = holder,
-	})
-	local sparks: ParticleEmitter = I.Create("ParticleEmitter")({
-		Texture = _settings.BLAST_TEXTURES.Sparks,
-		Color = ColorSequence.new(Color3.fromRGB(255, 230, 140)),
-		LightEmission = 1,
-		Size = NumberSequence.new(0.5, 0),
-		Lifetime = NumberRange.new(0.4, 0.7),
-		Speed = NumberRange.new(size * 5, size * 9),
-		Drag = 2,
-		Acceleration = Vector3.new(0, -60, 0),
-		SpreadAngle = Vector2.new(180, 180),
-		Enabled = false,
-		Parent = holder,
-	})
-	local smoke: ParticleEmitter = I.Create("ParticleEmitter")({
-		Texture = _settings.BLAST_TEXTURES.Smoke,
-		Color = ColorSequence.new(Color3.fromRGB(90, 85, 80)),
-		Size = NumberSequence.new(size * 0.6, size * 1.4),
-		Transparency = NumberSequence.new(0.3, 1),
-		Lifetime = NumberRange.new(0.8, 1.4),
-		Speed = NumberRange.new(size * 0.8, size * 1.6),
-		Drag = 4,
-		Acceleration = Vector3.new(0, 4, 0),
-		SpreadAngle = Vector2.new(180, 180),
-		Rotation = NumberRange.new(0, 360),
-		RotSpeed = NumberRange.new(-60, 60),
-		Enabled = false,
-		Parent = holder,
-	})
-
-	--[[ Animating ]]
-
-	fire:Emit(math.clamp(math.floor(size * 1.5), 6, 16))
-	sparks:Emit(math.clamp(math.floor(size * 2), 8, 20))
-	smoke:Emit(math.clamp(math.floor(size), 4, 10))
-
-	local Light_TweenInfo: TweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	local Light_TweenGoal = { Brightness = 0 }
-	local Light_Tween: Tween = I.S.TweenService:Create(light, Light_TweenInfo, Light_TweenGoal)
-	Light_Tween:Play()
-
-	--[[ Cleaning ]]
-
-	-- Once the longest-lived smoke is gone
-	task.delay(1.5, function()
-		holder:Destroy()
-	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Throw Debris
@@ -345,39 +263,6 @@ function Module._shake(strength: number)
 	}, 0.05, 0.02, _settings.SHAKE_SETTLE)
 end
 
---%%%%%%%%%%%%%%%%%%%% Spawn Ball
-
---[[
-	Makes a neon ball that swells to a size and fades over some seconds, then goes.
-]]
-function Module._spawnBall(position: Vector3, color: Color3, size: number, seconds: number)
-	--[[ Building ]]
-
-	local ball: Part = I.Create("Part")({
-		Name = "Blast",
-		Shape = Enum.PartType.Ball,
-		Size = Vector3.one,
-		Position = position,
-		Color = color,
-		Material = Enum.Material.Neon,
-		Anchored = true,
-		CanCollide = false,
-		CanQuery = false,
-		CanTouch = false,
-		Parent = effectsFolder,
-	})
-
-	--[[ Animating ]]
-
-	local Grow_TweenInfo: TweenInfo = TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	local Grow_TweenGoal = { Size = Vector3.one * size, Transparency = 1 }
-	local Grow_Tween: Tween = I.S.TweenService:Create(ball, Grow_TweenInfo, Grow_TweenGoal)
-	Grow_Tween:Play()
-	Grow_Tween.Completed:Once(function()
-		ball:Destroy()
-	end)
-end
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
 --%%%%%%%%%%%%%%%%%%%% Get Strength
@@ -404,6 +289,30 @@ function Module._getStrength(position: Vector3, radius: number)
 	--[[ Returning ]]
 
 	return radius / _settings.FEEL_FULL_RADIUS * falloff
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Blast Vfx
+
+--[[
+	The blast effect for a blast this big: the last BLAST_VFX row whose radius it reaches.
+]]
+--- @return string
+function Module._getBlastVfx(radius: number)
+	--[[ Local Variables ]]
+
+	local name: string = _settings.BLAST_VFX[1][2]
+
+	--[[ Searching ]]
+
+	for _index: number, row: { any } in ipairs(_settings.BLAST_VFX) do
+		if radius >= row[1] then
+			name = row[2]
+		end
+	end
+
+	--[[ Returning ]]
+
+	return name
 end
 
 return Module

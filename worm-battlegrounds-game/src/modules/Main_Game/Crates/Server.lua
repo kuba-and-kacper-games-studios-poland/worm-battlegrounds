@@ -56,7 +56,7 @@ end
 
 --[[
 	**SERVER** |
-	Opens one crate or a 10-pack, paid in a currency the crate takes or with VIP's free daily crate ("VipDaily"):
+	Opens one crate, a 3-pack or a 10-pack, paid in a currency the crate takes or with VIP's free daily crate ("VipDaily"):
 	takes the price, rolls each item by the crate's odds and gives it. Returns what each crate gave, or nil when the
 	player can't open it.
 ]]
@@ -108,7 +108,7 @@ function Module.Open(player: Player, crateId: string, count: number, payWith: st
 	if payWith == "VipDaily" then
 		paid = I.Shop.ClaimVipCrate(player)
 	else
-		paid = I.Currency.Subtract(player, payWith, if count == 1 then row.Prices[payWith].One else row.Prices[payWith].Ten)
+		paid = I.Currency.Subtract(player, payWith, I.G_Crates.GetPrice(crateId, payWith, count))
 	end
 	if not paid then
 		return nil

@@ -1,7 +1,8 @@
 # Match
 
 The match's rules on a match server. It reads the match's metadata (sent by MatchBoard with the teleport; on the
-Studio map, handed over through `I.Match.Host`; on the Match map alone in Studio, `STUDIO_METADATA`), loads the map
+Studio map, handed over through `I.Match.Host`; on the Match map alone in Studio, `STUDIO_METADATA`; a live server
+that got none, such as a public server someone joined directly, plays nothing and sends everyone to the lobby), loads the map
 so it shows while everyone arrives, waits for the players (until each one's data has loaded, so their loadout and skin
 can be read), seats them and fills the rest with bots (unless the match has none: a party's or a custom lobby's without bots), then
 plays: the drop (each player

@@ -152,3 +152,19 @@ local _combat_ClientShot = {}
 --- @field Heading Vector3
 --- @field Drawn Vector3
 local _combat_FlyingShot = {}
+
+--%%%%%%%%%%%%%%%%%%%% Aimbot
+
+--- @class Combat_AimGuide
+---
+--- # Aim #
+---
+--- @field Angle number
+--- @field Power number?
+---
+--- # Path #
+---
+--- @field Points { Vector3 }
+--- @field Target Vector3
+--- @field Hit boolean
+local _combat_AimGuide = {}

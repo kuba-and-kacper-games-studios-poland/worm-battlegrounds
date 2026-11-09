@@ -17,7 +17,7 @@ by another player. The Double Coins pass doubles coins. Leavers get nothing.
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Tracking knockouts by other players, paying out, the results remote |
-| `Settings.lua` | `MatchRewards_Settings` |
+| `ServerSettings.lua` | `MatchRewards_Settings`, under a server name so clients never get the payouts |
 | `_meta/_types.lua` | `MatchRewards_Earned` |
 
 ## Network

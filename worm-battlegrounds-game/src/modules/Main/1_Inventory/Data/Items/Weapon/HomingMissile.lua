@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Homing missile",
-	IconId = "rbxassetid://121731184312632",
+	IconId = "rbxassetid://107350591430267",
 
 	--[[ Classification ]]
 

@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Jetpack",
-	Icon = "rbxassetid://138428323433864",
+	Icon = "rbxassetid://99911728604760",
 
 	--[[ Effect ]]
 

@@ -105,7 +105,7 @@ end
 
 --[[
 	Walks the terrain from each seed through the parts it touches. A group that reaches no bedrock standing on the
-	floor is welded together and falls, except a ledge's biggest piece, which keeps floating.
+	floor falls (Fall), except a ledge's biggest piece, which keeps floating.
 ]]
 --- @param seeds { BasePart }
 function Module.Drop(seeds)
@@ -117,6 +117,7 @@ function Module.Drop(seeds)
 	-- Each ledge's biggest cut-off group so far, which keeps floating, and its area on the plane
 	local kept = {} --- @type { [number]: { BasePart } }
 	local keptArea = {} --- @type { [number]: number }
+	local falling = {} --- @type { { BasePart } }
 
 	--[[ Searching ]]
 
@@ -138,63 +139,31 @@ function Module.Drop(seeds)
 		-- Ground cut loose falls, and so does every piece of a ledge but its biggest
 		if ledge and area > (keptArea[ledge] or 0) then
 			if kept[ledge] then
-				Module._fall(kept[ledge])
+				table.insert(falling, kept[ledge])
 			end
 			kept[ledge] = group
 			keptArea[ledge] = area
 		else
-			Module._fall(group)
+			table.insert(falling, group)
 		end
+	end
+
+	--[[ Dropping ]]
+
+	if #falling > 0 then
+		Module._fall(falling)
 	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Fall
 
 --[[
-	Welds a group to its first part, lets it fall with the server's physics and watches it land.
+	Drops groups cut loose straight down along the arena's plane, never turning: each falls by the game's gravity to
+	where it first touches the terrain under it (lowest group first, so one above lands where the one under it will
+	lie), or out of the arena. Every client draws the same fall from Arena_Fall.
 ]]
---- @param group { BasePart }
-function Module._fall(group)
-	--[[ Local Variables ]]
-
-	local root: BasePart = group[1]
-
-	--[[ Welding ]]
-
-	-- A falling piece is no longer part of its ledge: where it lands, it's ground like any other
-
-	for index: number, part: BasePart in ipairs(group) do
-		part:SetAttribute("Arena_Floats", nil)
-		part:SetAttribute("Arena_Ledge", nil)
-		if index > 1 then
-			I.Create("WeldConstraint")({
-				Name = "ArenaWeld",
-				Part0 = root,
-				Part1 = part,
-				Parent = part,
-			})
-		end
-	end
-
-	--[[ Releasing ]]
-
-	for _index: number, part: BasePart in ipairs(group) do
-		part.Anchored = false
-	end
-	root:SetNetworkOwner(nil)
-	fallingGroups += 1
-	task.spawn(Module._watch, group, root)
-end
-
---%%%%%%%%%%%%%%%%%%%% Watch
-
---[[
-	Waits until a falling group lands, then anchors it where it lies and lets the liquid around it move. A group that
-	falls far below the arena is removed. Either way the liquid looks again at where the group fell from, which is
-	empty now.
-]]
---- @param group { BasePart }
-function Module._watch(group, root: BasePart)
+--- @param groups { { BasePart } }
+function Module._fall(groups)
 	--[[ Data ]]
 
 	local bounds: BasePart = Loader.GetBounds()
@@ -202,49 +171,105 @@ function Module._watch(group, root: BasePart)
 	--[[ Local Variables ]]
 
 	local killHeight: number = bounds.Position.Y - bounds.Size.Y / 2 - _settings.DEBRIS_KILL_DEPTH
-	local started: number = os.clock()
-	local slowSince: number? = nil
+	local drops = {} --- @type { number }
+
+	--[[ Releasing ]]
+
+	-- A falling piece is no longer part of its ledge (where it lands, it's ground like any other), and no query sees it
+	-- while it falls: carves, contacts, the liquid and the other groups' landings pass it by
+	--- @param group { BasePart }
+	for _index: number, group in ipairs(groups) do
+		for _partIndex: number, part: BasePart in ipairs(group) do
+			part:SetAttribute("Arena_Floats", nil)
+			part:SetAttribute("Arena_Ledge", nil)
+			part.CanQuery = false
+		end
+	end
+
+	--[[ Landing ]]
+
+	table.sort(groups, function(a: { BasePart }, b: { BasePart }): boolean
+		local lowA: Vector3 = getBox(a)
+		local lowB: Vector3 = getBox(b)
+		return lowA.Y < lowB.Y
+	end)
+
+	-- Each group stands where it will land for a moment, so the ones above land on it
+	--- @param group { BasePart }
+	for index: number, group in ipairs(groups) do
+		drops[index] = Module._getDrop(group, killHeight)
+		for _partIndex: number, part: BasePart in ipairs(group) do
+			part.CFrame -= Vector3.yAxis * drops[index]
+			part.CanQuery = true
+		end
+	end
+	--- @param group { BasePart }
+	for index: number, group in ipairs(groups) do
+		for _partIndex: number, part: BasePart in ipairs(group) do
+			part.CFrame += Vector3.yAxis * drops[index]
+			part.CanQuery = false
+		end
+	end
+
+	--[[ Falling ]]
+
+	--- @param group { BasePart }
+	for index: number, group in ipairs(groups) do
+		fallingGroups += 1
+		task.spawn(Module._watch, group, drops[index], killHeight)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Watch
+
+--[[
+	Moves a falling group down by the game's gravity each frame until it has dropped its distance, then leaves it where
+	it landed and lets the liquid around it move; a group that fell out of the arena is removed. Either way the liquid
+	looks again at where the group fell from, which is empty now.
+]]
+--- @param group { BasePart }
+function Module._watch(group, drop: number, killHeight: number)
+	--[[ Local Variables ]]
+
 	local fromLow: Vector3
 	local fromHigh: Vector3
 	fromLow, fromHigh = getBox(group)
+	local starts = {} --- @type { CFrame }
+	for index: number, part: BasePart in ipairs(group) do
+		starts[index] = part.CFrame
+	end
+	local started: number = I.S.Workspace:GetServerTimeNow()
+	local fallen: number = 0
 
-	--[[ Watching ]]
+	--[[ Publishing ]]
 
-	while root.Parent do
-		task.wait()
+	I.Network.FireAll("Arena_Fall", group, drop, started)
 
-		-- Fell out of the arena
-		if root.Position.Y < killHeight then
-			for _index: number, part: BasePart in ipairs(group) do
-				part:Destroy()
-			end
-			break
+	--[[ Falling ]]
+
+	while fallen < drop do
+		I.S.RunService.Heartbeat:Wait()
+		local elapsed: number = I.S.Workspace:GetServerTimeNow() - started
+		fallen = math.min(0.5 * I.S.Workspace.Gravity * elapsed * elapsed, drop)
+		for index: number, part: BasePart in ipairs(group) do
+			part.CFrame = starts[index] - Vector3.yAxis * fallen
 		end
+	end
 
-		if root.AssemblyLinearVelocity.Magnitude < _settings.SETTLE_SPEED then
-			slowSince = slowSince or os.clock()
-		else
-			slowSince = nil
-		end
-		local landed: boolean = (slowSince ~= nil and os.clock() - slowSince >= _settings.SETTLE_HOLD) or os.clock() - started >= _settings.DEBRIS_SETTLE_TIME
-		if not landed then
-			continue
-		end
+	--[[ Landing ]]
 
-		--[[ Anchoring ]]
-
+	if group[1].Position.Y <= killHeight + 0.01 then
 		for _index: number, part: BasePart in ipairs(group) do
-			part.Anchored = true
-			local weld: Instance? = part:FindFirstChild("ArenaWeld")
-			if weld then
-				weld:Destroy()
-			end
+			part:Destroy()
+		end
+	else
+		for _index: number, part: BasePart in ipairs(group) do
+			part.CanQuery = true
 		end
 		local low: Vector3
 		local high: Vector3
 		low, high = getBox(group)
 		Liquid.Refresh(low, high)
-		break
 	end
 
 	--[[ Clearing ]]
@@ -305,6 +330,36 @@ end
 --- @return boolean
 function Module.IsSettled()
 	return fallingGroups == 0
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Drop
+
+--[[
+	Returns how far a group falls straight down before one of its parts touches the terrain (a sweep of each part's
+	shape), or far enough to leave the arena below `killHeight` when nothing is under it.
+]]
+--- @param group { BasePart }
+--- @return number
+function Module._getDrop(group, killHeight: number)
+	--[[ Local Variables ]]
+
+	local drop: number = group[1].Position.Y - killHeight
+	local params: RaycastParams = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { Loader.GetTerrain() }
+
+	--[[ Sweeping ]]
+
+	for _index: number, part: BasePart in ipairs(group) do
+		local hit: RaycastResult? = I.S.Workspace:Shapecast(part, Vector3.new(0, -drop, 0), params)
+		if hit then
+			drop = math.min(drop, hit.Distance)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return math.max(drop, 0)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Group

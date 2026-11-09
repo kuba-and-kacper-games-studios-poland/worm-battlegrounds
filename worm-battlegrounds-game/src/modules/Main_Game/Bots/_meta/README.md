@@ -3,7 +3,7 @@
 Computer players for solo, public, party and tutorial matches. Match asks for a bot participant when it fills the
 seats, where each bot parachutes in (`GetStart`), and for a bot's turn when one is active. A bot plays its turn like a
 player, through its **brain**: a planner that weighs every plan it can see with a **genome** (the weights in
-`Data/Brains.lua`, trained by self-play in the **gym**) and plays it through its difficulty's **skill** (its hand, its
+`ServerData/Brains.lua`, trained by self-play in the **gym**) and plays it through its difficulty's **skill** (its hand, its
 reading of the wind, how far it looks: `SKILLS`).
 
 **A turn.** While it thinks (`THINK_TIME`), the brain makes its plan:
@@ -20,7 +20,7 @@ reading of the wind, how far it looks: `SKILLS`).
    the snail's `LastAttacker` attribute).
 4. **Rough shots.** Every usable weapon from every spot at every target and each of its `AimPoints` on it: the snail,
    its feet, then the ground under it on the side nearer a deadly drop, then the other side (to blast the ground out
-   from under it). Arcs are solved exactly with the wind it reads (`Scripts/Server/Aim.lua`) and checked against the
+   from under it). Arcs are solved exactly with the wind it reads (Combat's `I.Combat.GetArcs` at `POWER_STEPS`) and checked against the
    terrain; guns need a clear line in range; the homing missile is marked on the point; a swing or Dynamite only from
    beside the target. With no shot at anyone at all, it aims at the terrain in the way to a target instead, from the
    spot nearest it (it digs).
@@ -51,7 +51,7 @@ predictions, turns as Match orders them, sudden death), free-for-alls and 2 v 2s
 enemies, less its own side's. The best (`Elites`) carry on, the rest are bred from the better ones and mutated, and
 after the last generation the champion sits an exam against the shipped genome. The report says what the bots did
 (hits, own-side hits, damage per shot, knockouts and how many were throws into the sea, moves, jetpack use, heals,
-weapons) and gives the champion as Lua for `Data/Brains.lua`. The code folder's `train-bots` skill is the procedure.
+weapons) and gives the champion as Lua for `ServerData/Brains.lua`. The code folder's `train-bots` skill is the procedure.
 
 | | |
 | --- | --- |
@@ -65,14 +65,14 @@ weapons) and gives the champion as Lua for `Data/Brains.lua`. The code folder's 
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Making bot participants, a bot's turn: its view, healing, walking to its plan's spot, aiming, firing, running from Dynamite; the tutorial bot; drop spots |
-| `Data/Brains.lua` | Each difficulty's trained genome (`Bots_Genome`) |
+| `ServerData/Brains.lua` | Each difficulty's trained genome (`Bots_Genome`) |
 | `Scripts/Server/Brain.lua` | The planner: spots and what it knows of them, targets, aim points, rough shots, the full simulations and scores, the choice; heals and drop spots |
-| `Scripts/Server/Aim.lua` | Exact arc solutions under wind, where an arc first touches, the hand's error, and the solver's self-check |
+| `Scripts/Server/Aim.lua` | Where an arc first touches, the hand's error, and the self-check of Combat's arc solver (`GetArcs`) |
 | `Scripts/Server/Predict.lua` | What a shot would do: its flight, blasts and strikes, where thrown snails land, the ground along a column and drops through craters |
 | `Scripts/Server/Move.lua` | Moving a bot's snail: walking to an X, ledges, jumps, the jetpack, stamina, safe ground and runways |
 | `Scripts/Server/Sim.lua` | One headless self-play match for the gym |
 | `Scripts/Server/Gym.lua` | Training runs: the trigger, generations, breeding, the exam, the report |
-| `Settings.lua` | `Bots_Settings` |
+| `ServerSettings.lua` | `Bots_Settings`, under a server name so clients never get it (practices → Bots stay on the server) |
 | `_meta/_types.lua` | `Bots_Genome`, `Bots_Skill`, `Bots_View`, `Bots_Snail`, `Bots_Spot`, `Bots_Plan`, `Bots_Shot`, `Bots_Blast`, `Bots_Strike`, `Bots_Effect`, `Bots_Outcome`, `Bots_Ranging`, `Bots_TrainOptions`, `Bots_Seat`, `Bots_Stats` |
 
 ## API
@@ -150,7 +150,7 @@ A run needs the Studio map with no match playing: it loads each map into the are
 
 ### The genome
 
-What each weight in `Data/Brains.lua` makes a bot value (positive) or avoid (subtracted):
+What each weight in `ServerData/Brains.lua` makes a bot value (positive) or avoid (subtracted):
 
 | Key | What |
 | --- | --- |

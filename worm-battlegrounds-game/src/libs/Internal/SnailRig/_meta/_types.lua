@@ -1,0 +1,21 @@
+--%%%%%%%%%%%%%%%%%%%% Rig
+
+--- @class SnailRig_Rig
+---
+--- # Parts #
+---
+--- @field Root BasePart
+--- @field Animator Animator
+--- @field Motor Motor6D
+--- @field Handle BasePart
+--- @field Hands { [string]: Bone }
+---
+--- # State #
+---
+--- @field Tracks { [string]: AnimationTrack }
+--- @field Motion string
+--- @field Pose string?
+--- @field Joint Weld?
+--- @field Aim number?
+--- @field ShootUntil number?
+local _snailRig_Rig = {}

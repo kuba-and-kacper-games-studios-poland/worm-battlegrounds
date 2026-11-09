@@ -16,6 +16,7 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Turn = require(_scripts:FindFirstChild("Client"):FindFirstChild("Turn")) --- @type MatchHud_Client_Turn
+local Teams = require(_scripts:FindFirstChild("Client"):FindFirstChild("Teams")) --- @type MatchHud_Client_Teams
 local Panels = require(_scripts:FindFirstChild("Client"):FindFirstChild("Panels")) --- @type MatchHud_Client_Panels
 local LoadoutBar = require(_scripts:FindFirstChild("Client"):FindFirstChild("LoadoutBar")) --- @type MatchHud_Client_LoadoutBar
 local Aim = require(_scripts:FindFirstChild("Client"):FindFirstChild("Aim")) --- @type MatchHud_Client_Aim
@@ -57,6 +58,7 @@ function Module.Start()
 	Module._refreshShown()
 
 	Turn.Start(moduleGui)
+	Teams.Start(moduleGui)
 	Panels.Start(moduleGui)
 	LoadoutBar.Start(moduleGui)
 	Aim.Start(moduleGui)

@@ -4,16 +4,17 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Skin crate",
+	TabName = "Skins",
 	Picture = "rbxassetid://121731184312632",
 	LayoutOrder = 4,
 	Hidden = false,
 
 	--[[ Prices ]]
 
-	-- Coins or diamonds for one crate, and for a 10-pack
+	-- Coins or diamonds for one crate, a 3-pack and a 10-pack
 	Prices = {
-		Coins = { One = "100", Ten = "900" },
-		Diamonds = { One = "50", Ten = "450" },
+		Coins = { One = "100", Three = "300", Ten = "900" },
+		Diamonds = { One = "50", Three = "150", Ten = "450" },
 	},
 
 	--[[ Odds ]]

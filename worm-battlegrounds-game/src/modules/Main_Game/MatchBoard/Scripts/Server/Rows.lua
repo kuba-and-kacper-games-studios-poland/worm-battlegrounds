@@ -103,7 +103,7 @@ function Module.AddRow(kind: "Public" | "Custom", mode: string, size: number, ma
 		Difficulty = _settings.PUBLIC_DIFFICULTY,
 		Players = {},
 		Votes = {},
-		EndsAt = 0,
+		EndsAt = if kind == "Public" then I.S.Workspace:GetServerTimeNow() + _settings.ROW_SECONDS else 0,
 		Owner = owner,
 	}
 	rows[id] = row
@@ -161,9 +161,6 @@ function Module.Join(player: Player, rowId: string)
 		Module._removeUser(member.UserId)
 		table.insert(row.Players, member.UserId)
 	end
-	if row.EndsAt == 0 then
-		row.EndsAt = I.S.Workspace:GetServerTimeNow() + _settings.ROW_SECONDS
-	end
 	Module.Publish(row)
 
 	--[[ Starting ]]
@@ -197,8 +194,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Remove User
 
 --[[
-	Takes a user out of whichever row or lobby they're in. A public row that empties stops its timer; a custom lobby
-	whose owner leaves closes.
+	Takes a user out of whichever row or lobby they're in; a custom lobby whose owner leaves closes.
 ]]
 function Module._removeUser(userId: number)
 	--[[ Leaving ]]
@@ -215,9 +211,6 @@ function Module._removeUser(userId: number)
 		if row.Kind == "Custom" and row.Owner == userId then
 			Module.RemoveRow(id)
 		else
-			if #row.Players == 0 then
-				row.EndsAt = 0
-			end
 			Module.Publish(row)
 		end
 	end
@@ -228,7 +221,8 @@ end
 --[[
 	**SERVER** |
 	Launches a row's match with its players still here (bots fill the empty seats); a public row is replaced by a fresh
-	one of its mode, a custom lobby closes. Players who couldn't go stay on the board.
+	one of its mode on another map, its timer starting over, and a custom lobby closes. Players who couldn't go stay
+	on the board.
 ]]
 --- @param row MatchBoard_Row
 function Module.StartRow(row)
@@ -246,7 +240,7 @@ function Module.StartRow(row)
 
 	Module.RemoveRow(row.Id)
 	if row.Kind == "Public" then
-		Module.AddRow("Public", row.Mode, row.Size, Launch.GetMap(row.Size))
+		Module.AddRow("Public", row.Mode, row.Size, Launch.GetMap(row.Size, row.MapId))
 	end
 
 	--[[ Launching ]]
@@ -310,7 +304,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Check Timers
 
 --[[
-	Starts every public row whose timer ran out.
+	Starts every public row whose timer ran out: with whoever joined, or with nobody, so the board keeps moving and its
+	maps change.
 ]]
 function Module._checkTimers()
 	--[[ Checking ]]
@@ -318,7 +313,7 @@ function Module._checkTimers()
 	local now: number = I.S.Workspace:GetServerTimeNow()
 	--- @param row MatchBoard_Row
 	for _id: string, row in pairs(rows) do
-		if row.Kind == "Public" and row.EndsAt > 0 and now >= row.EndsAt then
+		if row.Kind == "Public" and now >= row.EndsAt then
 			Module.StartRow(row)
 		end
 	end
