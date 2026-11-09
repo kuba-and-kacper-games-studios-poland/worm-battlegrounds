@@ -4,43 +4,24 @@
 
 local _localName: string = "LoadoutPickerPreview"
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Services
-
-local Workspace: Workspace = game:GetService("Workspace")
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 --[[ Examples ]]
 
--- Owned items: name, rarity, uses and cooldown, copies
---- @type { { string } }
+-- Cards: name, rarity colour, copies (0: not owned, locked), look ("" normal, "Equipped", "Selected")
+--- @type { { any } }
 local ITEMS = {
-	{ "Grenade", "Common", "3 uses", "4 / 10" },
-	{ "Shotgun", "Common", "2 uses", "10 / 10" },
-	{ "Cluster bomb", "Uncommon", "2 uses · 1 turn cooldown", "1 / 10" },
-	{ "Jetpack", "Rare", "1 use", "2 / 10" },
-	{ "Airstrike", "Epic", "1 use · 3 turns cooldown", "1 / 10" },
-	{ "Black hole grenade", "Legendary", "1 use", "1 / 10" },
+	{ "Grenade", Color3.fromRGB(68, 141, 224), 7, "Selected" },
+	{ "Shotgun", Color3.fromRGB(167, 79, 224), 3, "Equipped" },
+	{ "Uzi", Color3.fromRGB(79, 194, 97), 2, "Equipped" },
+	{ "Dynamite", Color3.fromRGB(224, 176, 35), 1, "" },
+	{ "Baseball bat", Color3.fromRGB(176, 176, 185), 5, "" },
+	{ "Minigun", Color3.fromRGB(224, 176, 35), 0, "" },
+	{ "Spider bomb", Color3.fromRGB(167, 79, 224), 0, "" },
 }
 
--- Each rarity's colour, as the Rarity module's looks have them (Base); game code writes it on the item's name
---- @type { [string]: Color3 }
-local RARITY_COLORS = {
-	Common = Color3.fromHex("CDD5DF"),
-	Uncommon = Color3.fromHex("8CEB2E"),
-	Rare = Color3.fromHex("26C6FF"),
-	Epic = Color3.fromHex("A64DFF"),
-	Legendary = Color3.fromHex("FFB51F"),
-}
-
---[[ Screen ]]
-
--- The screen size the guis are laid out for, the Mobile boost and the PC floor, as ScreenScale's Settings
-local DESIGN_HEIGHT: number = 1080
-local DESIGN_WIDTH: number = 1920
-local SMALL_SCREEN: number = 500
-local MOBILE_BOOST: number = 1.3
-local MIN_SCALE: number = 0.6
+-- Cards in each row, as Loadout's ITEMS_PER_ROW
+local ITEMS_PER_ROW: number = 3
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -62,7 +43,7 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Slider", Id = "S_Items", Label = "Owned items", Value = 6, Min = 0, Max = 6, Step = 1 },
+		{ Control = "Slider", Id = "S_Items", Label = "Cards", Value = 7, Min = 0, Max = 7, Step = 1 },
 	},
 }
 
@@ -71,79 +52,47 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the grid with owned items on plain slots, each rarity in its colour, with its copies toward shiny.
+	Fills the grid as Loadout's Picker does: a row per three cards, each card cloned from the row's nested
+	ItemCard, the one in the slot selected, those in other slots equipped, the ones not owned locked.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
 	--[[ Local Variables ]]
 
-	local tiles = {} --- @type { { [string]: any } }
+	local count: number = preview.Values.S_Items
 
-	--[[ Items ]]
+	--[[ Rows ]]
 
-	for index: number = 1, preview.Values.S_Items do
-		local item = ITEMS[index] --- @type { string }
-		table.insert(tiles, { Text = item[1], Subtext = item[3], Image = Module._getIcon(item[1]) })
-	end
+	local rows = preview.Fill("PREFAB | ItemRow", math.ceil(count / ITEMS_PER_ROW)) --- @type { UmeGui_Subview }
 
-	local built = preview.Fill("PREFAB | ItemTile", tiles) --- @type { UmeGui_Subview }
+	--[[ Cards ]]
 
-	--- @param tile UmeGui_Subview
-	for index: number, tile in ipairs(built) do
-		local rarity: TextLabel = tile:Get("S_Rarity").Instance
-		rarity.Text = ITEMS[index][2]
-		rarity.TextColor3 = RARITY_COLORS[ITEMS[index][2]]
-		tile:Get("S_Copies").SetText(ITEMS[index][4])
-	end
-
-	--[[ Screen ]]
-
-	Module._applyScreenScale(preview)
-end
-
---%%%%%%%%%%%%%%%%%%%% Apply Screen Scale
-
---[[
-	Scales every panel to the previewed screen as the game's modules do: its height over the design height (or its
-	width over the design width on a narrower screen), bigger on short Mobile screens and never under the floor on
-	others, times each panel's device scale.
-]]
---- @param preview UmeGui_Preview
-function Module._applyScreenScale(preview)
-	--[[ Local Variables ]]
-
-	local height: number = Workspace.CurrentCamera.ViewportSize.Y
-	local width: number = Workspace.CurrentCamera.ViewportSize.X
-
-	-- A screen narrower than the layout scales by its width, so side-by-side panels still fit
-	local scale: number = math.min(height / DESIGN_HEIGHT, width / DESIGN_WIDTH)
-
-	-- Boost short touch screens so the buttons stay big enough to tap; anything else never shrinks below the floor
-	if preview.Device == "Mobile" and height < SMALL_SCREEN then
-		scale *= MOBILE_BOOST
-	elseif preview.Device ~= "Mobile" then
-		scale = math.max(scale, MIN_SCALE)
-	end
-
-	--[[ Applying ]]
-
-	for _index: number, descendant: Instance in ipairs(preview.View.Root:GetDescendants()) do
-		if descendant:IsA("UIScale") and descendant.Name == "S_ScreenScale" then
-			-- Times the panel's scale for the previewed device (its Utils_PlatformScale tag), as ScreenScale does
-			local deviceScale: number = descendant.Parent:GetAttribute(`Utils_{preview.Device}Scale`) or 0
-			descendant.Scale = scale * (if deviceScale == 0 then 1 else deviceScale)
+	--- @param row UmeGui_Subview
+	for rowIndex: number, row in ipairs(rows) do
+		local template: ImageButton = row.Root.Instance:FindFirstChild("PREFAB | ItemCard", true)
+		row.Root.Instance.LayoutOrder = rowIndex
+		for column: number = 1, ITEMS_PER_ROW do
+			local index: number = (rowIndex - 1) * ITEMS_PER_ROW + column
+			local item = ITEMS[index] --- @type { any }?
+			if not item then
+				break
+			end
+			local card: ImageButton = template:Clone()
+			local background: Frame = card:FindFirstChild("Background")
+			card.Name = item[1]
+			card.LayoutOrder = column
+			card.Visible = true
+			card:FindFirstChild("S_Name").Text = item[1]
+			card:FindFirstChild("S_Rarity").ImageColor3 = item[2]
+			card:FindFirstChild("S_Amount").Text = if item[3] > 0 then `x{item[3]}` else ""
+			card:FindFirstChild("S_Locked").Visible = item[3] == 0
+			background:FindFirstChild("Stroke2").Image = card:GetAttribute(`Look_{item[4]}Stroke2`)
+			background:FindFirstChild("Stroke").Image = card:GetAttribute(`Look_{item[4]}Stroke`)
+			background:FindFirstChild("Stroke").ImageColor3 = card:GetAttribute(`Look_{item[4]}StrokeColor`)
+			card.Parent = template.Parent
 		end
+		template:Destroy()
 	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Icon
-
---[[
-	Returns the gui kit's icon name for a weapon: "Black hole grenade" is "wb-black-hole-grenade".
-]]
---- @return string
-function Module._getIcon(weapon: string)
-	return "wb-" .. string.lower((string.gsub(weapon, " ", "-")))
 end
 
 return Module

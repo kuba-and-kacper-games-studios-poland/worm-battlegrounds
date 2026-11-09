@@ -4,31 +4,27 @@
 
 local _localName: string = "CratesPreview"
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Services
-
-local Workspace: Workspace = game:GetService("Workspace")
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 --[[ Examples ]]
 
--- The 4 crates: name, coin price, diamond price (nil when it doesn't take that currency)
---- @type { { [string]: any } }
-local CRATES = {
-	{ Name = "Weapon crate", Coins = 100 },
-	{ Name = "Premium crate", Diamonds = 250 },
-	{ Name = "Utility crate", Coins = 100, Diamonds = 200 },
-	{ Name = "Skin crate", Coins = 100, Diamonds = 50 },
+-- The crate tabs, the first selected
+--- @type { string }
+local TABS = { "Weapons", "Premium", "Utility", "Skins" }
+
+-- The weapon crate's odds by rarity, rarest first: item name and chance
+--- @type { { any } }
+local ODDS = {
+	{ "Legendary", { { "Variety Grenade", "0.5%" }, { "Black Hole Grenade", "0.5%" } } },
+	{ "Epic", { { "Homing Missile", "5%" }, { "One Punch", "5%" } } },
+	{ "Rare", { { "Cluster Bomb", "10%" }, { "Spider Bomb", "10%" }, { "Minigun", "10%" } } },
+	{ "Uncommon", { { "Dynamite", "14.75%" }, { "Spartan Spear", "14.75%" } } },
+	{ "Common", { { "Uzi", "14.75%" }, { "Baseball Bat", "14.75%" } } },
 }
 
---[[ Screen ]]
-
--- The screen size the guis are laid out for, the Mobile boost and the PC floor, as ScreenScale's Settings
-local DESIGN_HEIGHT: number = 1080
-local DESIGN_WIDTH: number = 1920
-local SMALL_SCREEN: number = 500
-local MOBILE_BOOST: number = 1.3
-local MIN_SCALE: number = 0.6
+-- The weapon crate's prices in coins, by pack size
+--- @type { [number]: string }
+local PRICES = { [1] = "100", [3] = "300", [10] = "900" }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -50,77 +46,95 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Toggle", Id = "S_Tutorial", Label = "Tutorial crate", Value = false },
-		{ Control = "Toggle", Id = "S_Vip", Label = "VIP (free skin crate)", Value = false },
+		{ Control = "Toggle", Id = "S_Diamonds", Label = "Pay with diamonds", Value = false },
+		{ Control = "Toggle", Id = "S_Free", Label = "Free x1 (VIP)", Value = false },
 	},
 }
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the 4 crate cards with their prices, shows the tutorial crate in place of the list, and the VIP badge.
+	Fills the widget as the Crates module does: the tabs (the first selected), the paying currency's chip picked, the
+	buy buttons' prices and the weapon crate's odds by rarity.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
-	--[[ Tutorial ]]
-
-	preview.View:Get("U_TutorialCrate").Instance.Visible = preview.Values.S_Tutorial
-	preview.View:Get("U_CrateList").Instance.Visible = not preview.Values.S_Tutorial
-
-	--[[ Cards ]]
-
-	local cards = preview.Fill("PREFAB | CrateCard", #CRATES) --- @type { UmeGui_Subview }
-
-	--- @param card UmeGui_Subview
-	for index: number, card in ipairs(cards) do
-		local crate = CRATES[index] --- @type { [string]: any }
-		card:Get("S_Name").SetText(crate.Name)
-		card:Get("S_PayCoins").Instance.Visible = crate.Coins ~= nil
-		card:Get("S_PayCoins").SetText(`{crate.Coins} coins`)
-		card:Get("S_PayDiamonds").Instance.Visible = crate.Diamonds ~= nil
-		card:Get("S_PayDiamonds").SetText(`{crate.Diamonds} diamonds`)
-		card:Get("S_Free").Instance.Visible = preview.Values.S_Vip and crate.Name == "Skin crate"
-	end
-
-	--[[ Screen ]]
-
-	Module._applyScreenScale(preview)
-end
-
---%%%%%%%%%%%%%%%%%%%% Apply Screen Scale
-
---[[
-	Scales every panel to the previewed screen as the game's modules do: its height over the design height (or its
-	width over the design width on a narrower screen), bigger on short Mobile screens and never under the floor on
-	others, times each panel's device scale.
-]]
---- @param preview UmeGui_Preview
-function Module._applyScreenScale(preview)
 	--[[ Local Variables ]]
 
-	local height: number = Workspace.CurrentCamera.ViewportSize.Y
-	local width: number = Workspace.CurrentCamera.ViewportSize.X
+	local currency: string = if preview.Values.S_Diamonds then "Diamonds" else "Coins"
 
-	-- A screen narrower than the layout scales by its width, so side-by-side panels still fit
-	local scale: number = math.min(height / DESIGN_HEIGHT, width / DESIGN_WIDTH)
+	--[[ Tabs ]]
 
-	-- Boost short touch screens so the buttons stay big enough to tap; anything else never shrinks below the floor
-	if preview.Device == "Mobile" and height < SMALL_SCREEN then
-		scale *= MOBILE_BOOST
-	elseif preview.Device ~= "Mobile" then
-		scale = math.max(scale, MIN_SCALE)
+	local tabs = preview.Fill("PREFAB | CrateTab", #TABS) --- @type { UmeGui_Subview }
+
+	--- @param tab UmeGui_Subview
+	for index: number, tab in ipairs(tabs) do
+		local root: GuiObject = tab.Root.Instance
+		local picked: boolean = index == 1
+		root.LayoutOrder = index
+		tab:Get("S_Name").Instance.Text = TABS[index]
+		tab:Get("S_Name").Instance.TextColor3 = root:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
+		tab:Get("S_Stroke2").Instance.Image = root:GetAttribute(if picked then "Look_SelectedStroke2" else "Look_Stroke2")
+		tab:Get("S_Stroke").Instance.Image = root:GetAttribute(if picked then "Look_SelectedStroke" else "Look_Stroke")
+		tab:Get("S_Stroke").Instance.ImageColor3 = root:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
 	end
 
-	--[[ Applying ]]
+	--[[ Balance ]]
 
-	for _index: number, descendant: Instance in ipairs(preview.View.Root:GetDescendants()) do
-		if descendant:IsA("UIScale") and descendant.Name == "S_ScreenScale" then
-			-- Times the panel's scale for the previewed device (its Utils_PlatformScale tag), as ScreenScale does
-			local deviceScale: number = descendant.Parent:GetAttribute(`Utils_{preview.Device}Scale`) or 0
-			descendant.Scale = scale * (if deviceScale == 0 then 1 else deviceScale)
+	for _index: number, chipCurrency: string in ipairs({ "Coins", "Diamonds" }) do
+		local chip: ImageButton = preview.View:Get(`U_Pay{chipCurrency}`).Instance
+		local picked: boolean = chipCurrency == currency
+		chip:FindFirstChild("S_Stroke", true).ImageColor3 = chip:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+		chip:FindFirstChild("S_Amount", true).TextColor3 = chip:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
+	end
+
+	--[[ Buy Buttons ]]
+
+	for count: number, price: string in pairs(PRICES) do
+		local button: ImageButton = preview.View:Get(`U_BuyX{count}`).Instance
+		local freeOne: boolean = preview.Values.S_Free and count == 1
+		button:FindFirstChild("S_Price", true).Text = if freeOne then "FREE" else price
+		button:FindFirstChild("S_Icon", true).Visible = not freeOne
+		button:FindFirstChild("S_Icon", true).Image = button:GetAttribute(`Look_{currency}Icon`)
+	end
+
+	--[[ Odds ]]
+
+	local sections = preview.Fill("PREFAB | RaritySection", #ODDS) --- @type { UmeGui_Subview }
+
+	--- @param section UmeGui_Subview
+	for index: number, section in ipairs(sections) do
+		--[[ Local Variables ]]
+
+		local root: GuiObject = section.Root.Instance
+		local rarity: string = ODDS[index][1]
+		local color: Color3 = root:GetAttribute(`Look_{rarity}_Color`)
+		local card: GuiObject = root:FindFirstChild("PREFAB | OddsItem", true)
+
+		--[[ Section ]]
+
+		root.LayoutOrder = index
+		section:Get("S_Rarity").Instance.Text = rarity
+		section:Get("S_Rarity").Instance.UIGradient.Color = root:GetAttribute(`Look_{rarity}_Gradient`)
+		section:Get("S_TitleStroke").Instance.ImageColor3 = color
+		section:Get("S_TitleMask").Instance.Image = root:GetAttribute(`Look_{rarity}_Mask`)
+
+		--[[ Cards ]]
+
+		-- The cards are clones of the section's own card prefab, which hides, as the module clones it
+		--- @param entry { string }
+		for order: number, entry in ipairs(ODDS[index][2]) do
+			local clone: GuiObject = card:Clone()
+			clone.Name = entry[1]
+			clone.LayoutOrder = order
+			clone:FindFirstChild("S_Name", true).Text = entry[1]
+			clone:FindFirstChild("S_Chance", true).Text = entry[2]
+			clone:FindFirstChild("S_Stroke", true).ImageColor3 = color
+			clone.Parent = card.Parent
 		end
+		card.Visible = false
 	end
 end
 

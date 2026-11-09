@@ -64,8 +64,8 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Shows the picked panel: Play with one row per public mode, the setup (with No bots and the party's title for a
-	party leader), or the waiting room with its players.
+	Shows the picked panel: the board with one lobby card per public mode, the setup (with No bots and the party's
+	title for a party leader), or the waiting room with its players.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -81,12 +81,15 @@ function Module.Apply(preview)
 
 	--[[ Play ]]
 
-	preview.View:Get("U_Play", "S_Solo").SetText(if party then "Play with party" else "Play solo")
+	preview.View:Get("U_Play", "S_Solo").Instance:FindFirstChild("Name1").Text = if party then "Play with party" else "Solo vs bots"
 	local rows = preview.Fill("PREFAB | Row", #MODES) --- @type { UmeGui_Subview }
 
 	--- @param row UmeGui_Subview
 	for index: number, row in ipairs(rows) do
-		row:Get("S_Mode").SetText(MODES[index])
+		row.Root.Instance.LayoutOrder = index
+		row:Get("S_Mode").Instance.Text = MODES[index]
+		row:Get("S_Players").Instance.Text = `{index}/{index * 2 + 2} players`
+		row:Get("S_Join").Instance:FindFirstChild("Name1").Text = if index == 1 then "Join" else "Join teams"
 	end
 
 	--[[ Setup ]]

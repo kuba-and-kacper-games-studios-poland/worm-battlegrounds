@@ -4,42 +4,19 @@
 
 local _localName: string = "LoadoutPreview"
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Services
-
-local Workspace: Workspace = game:GetService("Workspace")
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 --[[ Examples ]]
 
--- Items in the 5 slots, with their rarity
---- @type { { string } }
-local ITEMS = {
-	{ "Grenade", "Common" },
-	{ "Shotgun", "Uncommon" },
-	{ "Jetpack", "Rare" },
-	{ "Airstrike", "Epic" },
-	{ "Black hole grenade", "Legendary" },
-}
+-- The basic weapon, then the items in slots 1 to 5 ("" is empty), as Loadout's Panel draws them
+--- @type { string }
+local ITEMS = { "Bazooka", "Grenade", "Shotgun", "", "Uzi", "Dynamite" }
 
--- Each rarity's colour, as the Rarity module's looks have them (Base); game code writes it on the item's name
---- @type { [string]: Color3 }
-local RARITY_COLORS = {
-	Common = Color3.fromHex("CDD5DF"),
-	Uncommon = Color3.fromHex("8CEB2E"),
-	Rare = Color3.fromHex("26C6FF"),
-	Epic = Color3.fromHex("A64DFF"),
-	Legendary = Color3.fromHex("FFB51F"),
-}
+-- Cells in each row and the slots' prices, as Loadout's SLOTS_PER_ROW and SLOT_PRICES
+local SLOTS_PER_ROW: number = 3
 
---[[ Screen ]]
-
--- The screen size the guis are laid out for, the Mobile boost and the PC floor, as ScreenScale's Settings
-local DESIGN_HEIGHT: number = 1080
-local DESIGN_WIDTH: number = 1920
-local SMALL_SCREEN: number = 500
-local MOBILE_BOOST: number = 1.3
-local MIN_SCALE: number = 0.6
+--- @type { [number]: string }
+local SLOT_PRICES = { [4] = "2500", [5] = "6000" }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -61,9 +38,10 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Slider", Id = "S_Unlocked", Label = "Unlocked slots", Value = 3, Min = 3, Max = 5, Step = 1 },
-		{ Control = "Slider", Id = "S_Emotes", Label = "Owned emotes", Value = 3, Min = 1, Max = 9, Step = 1 },
-		{ Control = "Toggle", Id = "S_Shiny", Label = "First item shiny", Value = true },
+		{ Control = "Slider", Id = "S_Unlocked", Label = "Open slots", Value = 3, Min = 3, Max = 5, Step = 1 },
+		{ Control = "Slider", Id = "S_Selected", Label = "Picking slot (0: none)", Value = 1, Min = 0, Max = 5, Step = 1 },
+		{ Control = "Slider", Id = "S_Emotes", Label = "Emotes", Value = 4, Min = 1, Max = 9, Step = 1 },
+		{ Control = "Toggle", Id = "S_Shiny", Label = "First item shiny", Value = false },
 	},
 }
 
@@ -72,94 +50,58 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the open slots, each name in its rarity's colour, and the next locked one (its cover and price only), as
-	Loadout's Panel does, and the row of owned emotes.
+	Fills the panel as Loadout's Panel does: the basic weapon, filled, empty, picked and locked slots over two rows,
+	then the emote row.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
 	--[[ Local Variables ]]
 
-	local slotItems = {} --- @type { { [string]: any } }
+	local unlocked: number = preview.Values.S_Unlocked
+	local bottomRow: Instance = preview.View:Get("U_BottomRow").Instance
 
 	--[[ Slots ]]
 
-	--- @param item { string }
-	for _index: number, item in ipairs(ITEMS) do
-		table.insert(slotItems, { Text = item[1], Image = Module._getIcon(item[1]), Style = "Square" })
-	end
+	local cards = preview.Fill("PREFAB | Slot", #ITEMS) --- @type { UmeGui_Subview }
 
-	local slots = preview.Fill("PREFAB | Slot", slotItems) --- @type { UmeGui_Subview }
+	--- @param card UmeGui_Subview
+	for cell: number, card in ipairs(cards) do
+		local root: ImageButton = card.Root.Instance
+		local slot: number = cell - 1
+		local item: string = ITEMS[cell]
+		local locked: boolean = slot > unlocked
+		local empty: boolean = item == "" and not locked
+		local selected: boolean = slot > 0 and slot == preview.Values.S_Selected
+		local stroke: ImageLabel = root:FindFirstChild("Background"):FindFirstChild("Stroke")
 
-	--- @param slot UmeGui_Subview
-	for index: number, slot in ipairs(slots) do
-		local name: TextLabel = slot.Root.Instance:FindFirstChild("S_Name", true)
-		local locked: boolean = index > preview.Values.S_Unlocked
-
-		name.TextColor3 = RARITY_COLORS[ITEMS[index][2]]
-		slot:Get("S_Lock").Instance.Visible = locked
-		slot:Get("S_Price").SetText(if index == 4 then "2500 coins" else "6000 coins")
-		slot:Get("S_Shiny").Instance.Visible = index == 1 and preview.Values.S_Shiny
-
-		-- Only the next locked slot shows, with just its cover and price, as Loadout's Panel draws it
-		slot.Root.Instance.Visible = index <= preview.Values.S_Unlocked + 1
-		if locked then
-			name.Text = ""
-			slot.Root.Instance:FindFirstChild("S_Icon", true).Image = ""
+		root.LayoutOrder = cell
+		root.Visible = slot <= unlocked + 1
+		if cell > SLOTS_PER_ROW then
+			root.Parent = bottomRow
 		end
+		card:Get("S_Number").Instance.Text = tostring(cell)
+		card:Get("S_Number").Instance.Visible = item ~= "" and not locked
+		card:Get("S_Name").Instance.Text = if locked then "" else item
+		card:Get("S_Icon").Instance.Visible = item ~= "" and not locked
+		card:Get("S_Amount").Instance.Text = if item ~= "" and not locked and cell > 1 then "x3" else ""
+		card:Get("S_Plus").Instance.Visible = empty
+		card:Get("S_Shiny").Instance.Visible = cell == 2 and preview.Values.S_Shiny
+		card:Get("S_Lock").Instance.Visible = locked
+		card:Get("S_Price").Instance.Text = `{SLOT_PRICES[slot] or ""} coins`
+		root:FindFirstChild("Background"):FindFirstChild("Stroke2").Image = root:GetAttribute(if selected then "Look_SelectedStroke2" else "Look_Stroke2")
+		stroke.Image = root:GetAttribute(if selected then "Look_SelectedStroke" else "Look_Stroke")
+		stroke.ImageColor3 = root:GetAttribute(if selected then "Look_SelectedStrokeColor" elseif empty then "Look_EmptyStrokeColor" else "Look_StrokeColor")
 	end
 
 	--[[ Emotes ]]
 
-	preview.Fill("PREFAB | Emote", preview.Values.S_Emotes)
+	local emotes = preview.Fill("PREFAB | Emote", preview.Values.S_Emotes) --- @type { UmeGui_Subview }
 
-	--[[ Screen ]]
-
-	Module._applyScreenScale(preview)
-end
-
---%%%%%%%%%%%%%%%%%%%% Apply Screen Scale
-
---[[
-	Scales every panel to the previewed screen as the game's modules do: its height over the design height (or its
-	width over the design width on a narrower screen), bigger on short Mobile screens and never under the floor on
-	others, times each panel's device scale.
-]]
---- @param preview UmeGui_Preview
-function Module._applyScreenScale(preview)
-	--[[ Local Variables ]]
-
-	local height: number = Workspace.CurrentCamera.ViewportSize.Y
-	local width: number = Workspace.CurrentCamera.ViewportSize.X
-
-	-- A screen narrower than the layout scales by its width, so side-by-side panels still fit
-	local scale: number = math.min(height / DESIGN_HEIGHT, width / DESIGN_WIDTH)
-
-	-- Boost short touch screens so the buttons stay big enough to tap; anything else never shrinks below the floor
-	if preview.Device == "Mobile" and height < SMALL_SCREEN then
-		scale *= MOBILE_BOOST
-	elseif preview.Device ~= "Mobile" then
-		scale = math.max(scale, MIN_SCALE)
+	--- @param emote UmeGui_Subview
+	for index: number, emote in ipairs(emotes) do
+		emote.Root.Instance.LayoutOrder = index
+		emote:Get("S_Name").Instance.Text = `Emote {index}`
 	end
-
-	--[[ Applying ]]
-
-	for _index: number, descendant: Instance in ipairs(preview.View.Root:GetDescendants()) do
-		if descendant:IsA("UIScale") and descendant.Name == "S_ScreenScale" then
-			-- Times the panel's scale for the previewed device (its Utils_PlatformScale tag), as ScreenScale does
-			local deviceScale: number = descendant.Parent:GetAttribute(`Utils_{preview.Device}Scale`) or 0
-			descendant.Scale = scale * (if deviceScale == 0 then 1 else deviceScale)
-		end
-	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Icon
-
---[[
-	Returns the gui kit's icon name for a weapon: "Black hole grenade" is "wb-black-hole-grenade".
-]]
---- @return string
-function Module._getIcon(weapon: string)
-	return "wb-" .. string.lower((string.gsub(weapon, " ", "-")))
 end
 
 return Module

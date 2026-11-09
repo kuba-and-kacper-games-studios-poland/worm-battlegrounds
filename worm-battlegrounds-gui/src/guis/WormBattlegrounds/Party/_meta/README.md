@@ -1,65 +1,65 @@
 # Party
 
-The lobby's top-left panel: up to 4 players who join matches together, with invites and **Leave party**.
+The lobby's **PARTY** column at the left: a card per party member (avatar, name, level, the leader's crown, Kick),
+then a **+** card per free place that opens the invite box, and the red Leave button by the title.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). At the top left, 500 wide: a slate `Tab` button ("Party 2/4", a chevron) over a `Panel` box as tall as its members and buttons, so it grows with the party. The tab shows selected (the kit's blue, the chevron turned up) while the panel is open. Party's code opens it on PC and console and folds it on phones and tablets, where the open panel covers the Loadout card; a press opens or folds it. Invite players and Invite friends share a row in blue (the lobby's yellows are Play and a free crate); Leave party is red.
+**Look.** Ported 1:1 from the studio's `LobbyInventory` gui (its `Left` frame, 2026-11-09) as `Primitive` nodes: its
+dark slanted cards (a member's outlined orange, a + card grey), pictures and fonts, laid out in screen fractions with
+aspect-ratio constraints, so it scales with the screen by itself (no `S_ScreenScale`). Changed from the design: the
+cards are shorter (`0.2275` of the list, no aspect constraint on the + card), so a full party of 4 fits above
+ACTIVE LOBBIES; added: the name, level, crown and Kick on a member card, and Leave (a copy of the design's red close),
+with button tags (`Utils_ButtonScale`, `Utils_ButtonSound`).
 
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/Party"` |
-| Theme | `WormBattlegroundsBrawl` |
+| Theme | none (Primitive nodes only) |
 | Modes | Night only |
-| Devices | Desktop at 0.75 of the kit's size, Mobile at 0.85 (a full party fits under the tab on a 667 × 375 phone), Console and VR at full size (`Utils_PlatformScale`) |
 | Export | A ScreenGui named `Party`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` |
 
 ## Elements
 
-| Element | Control | What game code does with it |
+| Element | Kind | What game code does with it |
 | --- | --- | --- |
-| `U_Party` | Frame | Holds the tab and the panel, auto height. Has `S_ScreenScale` |
-| `U_Party` › `S_Tab` | Button (`Tab`) | Party writes the count ("Party 2/4"), swaps its skin from its `Face`'s `Kit_Image` / `Kit_SelectedImage`, turns its `Icon` 180° while open, and opens or folds the panel on a press |
-| `U_Party` › `S_Panel` | Box (`Panel`) | Shown while open |
-| `U_Members` | Cells | Holds one `Member` per party member |
-| `U_Invite` | Button | Invites players in this server |
-| `U_InviteFriends` | Button (`Primary`) | Opens Roblox's friend invite prompt |
-| `U_Leave` | Button (`Danger`, `Small`) | Leaves the party |
+| `U_Party` | Frame | The column (the design's `Left`) |
+| `U_Party` › `S_Leave` | ImageButton (red X) | Leaves the party; shown only in a party |
+| `U_Members` | Frame (vertical list) | Holds the `Member` cards, then the `Invite` cards |
 
 ## Prefabs
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | Member` | `U_Members` | `S_Avatar`, `S_Name`, `S_Level` ("Level 12"), `S_Crown` (leader only), `S_Kick` (leader sees it on others) |
+| `PREFAB \| Member` | `U_Members` | A Frame: `S_Avatar`, `S_Name`, `S_Level` ("Lv 12"), `S_Crown` (leader), `S_Kick` (ImageButton, the leader sees it on others). Party names it by user id; Cosmetics puts a played emote's label beside it |
+| `PREFAB \| Invite` | `U_Members` | An ImageButton with a +: opens `PartyInvite` |
 
 ## Driven by
 
-The game's `Party` module; `Cosmetics` shows played emotes beside a member's name.
+The game's `Party` module (`Client.lua`); `Cosmetics` (`Scripts/Client/Emotes.lua`) shows played emotes beside a member.
 
 ## Preview
 
-`Preview.lua` fills the party; the first member leads.
+`Preview.lua` fills the column for a leader.
 
 | Setting | What it does |
 | --- | --- |
-| `S_Members` (Slider, 1 to 4) | How many members, and the count on the tab |
-| `S_Open` (Toggle) | The panel open (the tab selected) or folded |
+| `S_Members` (Slider, 1 to 4) | Members (the first leads), then + cards up to 4, and Leave in a party |
 
 ## Integration
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Party`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Party`, `Enabled` off. The Lobby module
+turns it on outside matches (and off while a full-screen widget is open). It keeps its `Name`, Ids and prefab names.
 
 ### Input
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Open or fold the panel | Click the tab | Tap the tab | Select and A | Party connects `S_Tab` |
-| Invite, Leave, Kick | Click | Tap | Select and A | Party connects the buttons |
+| Invite (open `PartyInvite`), Kick, Leave | Click | Tap | Select and A | Party (`I.Interact.OnPress`) |
 
 ### Looks
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
-| Open, folded | `S_Tab` | Open: the `Tab` style's selected skin (blue), `Icon` rotation 180; folded: the slate skin, rotation 0 |
-| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | + cards, Kick, Leave | `Utils_ButtonScale` (`Bouncy`, hover ×1.04, press ×0.92) with `Button_Hover` and `Button_Click` |
+| Member | `Member` › `Background` › `Stroke` | Orange (the design's); + cards grey |

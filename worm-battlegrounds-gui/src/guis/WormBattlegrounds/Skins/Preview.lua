@@ -4,33 +4,20 @@
 
 local _localName: string = "SkinsPreview"
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Services
-
-local Workspace: Workspace = game:GetService("Workspace")
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 --[[ Examples ]]
 
--- Owned skins: name and copies toward shiny
---- @type { { string } }
+-- Skins in the grid: name, rarity colour, owned
+--- @type { { any } }
 local SKINS = {
-	{ "Classic", "1 / 10" },
-	{ "Pirate", "3 / 10" },
-	{ "Ninja", "1 / 10" },
-	{ "Robot", "Shiny!" },
-	{ "Astronaut", "2 / 10" },
-	{ "Skeleton", "1 / 10" },
+	{ "Classic", Color3.fromRGB(176, 176, 185), true },
+	{ "Pirate", Color3.fromRGB(68, 141, 224), true },
+	{ "Ninja", Color3.fromRGB(167, 79, 224), true },
+	{ "Robot", Color3.fromRGB(255, 196, 0), false },
+	{ "Skeleton", Color3.fromRGB(68, 141, 224), false },
+	{ "Wizard", Color3.fromRGB(167, 79, 224), false },
 }
-
---[[ Screen ]]
-
--- The screen size the guis are laid out for, the Mobile boost and the PC floor, as ScreenScale's Settings
-local DESIGN_HEIGHT: number = 1080
-local DESIGN_WIDTH: number = 1920
-local SMALL_SCREEN: number = 500
-local MOBILE_BOOST: number = 1.3
-local MIN_SCALE: number = 0.6
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -52,7 +39,7 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Slider", Id = "S_Skins", Label = "Owned skins", Value = 6, Min = 1, Max = 6, Step = 1 },
+		{ Control = "Slider", Id = "S_Skins", Label = "Skins", Value = 6, Min = 1, Max = 6, Step = 1 },
 	},
 }
 
@@ -61,58 +48,26 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the grid with owned skins; the first is equipped.
+	Fills the grid as the Cosmetics module does: the first skin worn (the tile's selected look), the unowned ones
+	locked.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
-	--[[ Skins ]]
+	--[[ Tiles ]]
 
 	local tiles = preview.Fill("PREFAB | SkinTile", preview.Values.S_Skins) --- @type { UmeGui_Subview }
 
 	--- @param tile UmeGui_Subview
 	for index: number, tile in ipairs(tiles) do
-		tile:Get("S_Preview").SetText(SKINS[index][1])
-		tile:Get("S_Preview").SetSubtext(SKINS[index][2])
-		tile:Get("S_Equip").SetText(if index == 1 then "Equipped" else "Equip")
-	end
-
-	--[[ Screen ]]
-
-	Module._applyScreenScale(preview)
-end
-
---%%%%%%%%%%%%%%%%%%%% Apply Screen Scale
-
---[[
-	Scales every panel to the previewed screen as the game's modules do: its height over the design height (or its
-	width over the design width on a narrower screen), bigger on short Mobile screens and never under the floor on
-	others, times each panel's device scale.
-]]
---- @param preview UmeGui_Preview
-function Module._applyScreenScale(preview)
-	--[[ Local Variables ]]
-
-	local height: number = Workspace.CurrentCamera.ViewportSize.Y
-	local width: number = Workspace.CurrentCamera.ViewportSize.X
-
-	-- A screen narrower than the layout scales by its width, so side-by-side panels still fit
-	local scale: number = math.min(height / DESIGN_HEIGHT, width / DESIGN_WIDTH)
-
-	-- Boost short touch screens so the buttons stay big enough to tap; anything else never shrinks below the floor
-	if preview.Device == "Mobile" and height < SMALL_SCREEN then
-		scale *= MOBILE_BOOST
-	elseif preview.Device ~= "Mobile" then
-		scale = math.max(scale, MIN_SCALE)
-	end
-
-	--[[ Applying ]]
-
-	for _index: number, descendant: Instance in ipairs(preview.View.Root:GetDescendants()) do
-		if descendant:IsA("UIScale") and descendant.Name == "S_ScreenScale" then
-			-- Times the panel's scale for the previewed device (its Utils_PlatformScale tag), as ScreenScale does
-			local deviceScale: number = descendant.Parent:GetAttribute(`Utils_{preview.Device}Scale`) or 0
-			descendant.Scale = scale * (if deviceScale == 0 then 1 else deviceScale)
-		end
+		local root: GuiObject = tile.Root.Instance
+		local background: Frame = root:FindFirstChild("Background")
+		local worn: boolean = index == 1
+		tile:Get("S_Name").Instance.Text = SKINS[index][1]
+		tile:Get("S_Rarity").Instance.ImageColor3 = SKINS[index][2]
+		tile:Get("S_Locked").Instance.Visible = not SKINS[index][3]
+		background:FindFirstChild("Stroke2").Image = root:GetAttribute(if worn then "Look_SelectedStroke2" else "Look_Stroke2")
+		background:FindFirstChild("Stroke").Image = root:GetAttribute(if worn then "Look_SelectedStroke" else "Look_Stroke")
+		background:FindFirstChild("Stroke").ImageColor3 = root:GetAttribute(if worn then "Look_SelectedStrokeColor" else "Look_StrokeColor")
 	end
 end
 

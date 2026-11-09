@@ -1,5 +1,8 @@
 # CrateOdds
 
+**Unused since 2026-11-09:** the `Crates` widget shows the odds in its left list, and nothing opens this widget or
+drives it any more. Its folder stays until the owner removes it (its export in StarterGui too).
+
 A crate's **Details**: every item it can drop, its rarity and chance (adding up to 100%), and the price. Roblox requires these odds before a paid random item is bought.
 
 **Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The rarity and chance columns have fixed widths (200 and 140), so the rows line up whatever text code writes.

@@ -1,66 +1,77 @@
 # MatchHud
 
-The match screen: whose turn, the timer and the wind at the top; the kill feed at the top right; one row at the bottom: walk buttons (touch screens), the loadout bar with stamina and the shot's power on top of it, the emote smiley and Jump (touch screens); and the blocks for the other phases (waiting, drop, knocked out) and the emote wheel.
+The match screen: the team panels in the top corners, the timer, whose turn and the wind at the top, the turn order on the left, the emote button on the right, the move and jump buttons (touch screens) bottom left, the loadout bar with the stamina bar over it at the bottom, the power slider and FIRE (touch screens) bottom right; plus the kill feed, the emote wheel and the blocks for the other phases (waiting, drop, knocked out).
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The turn, loadout bar, drop and waiting blocks are `Hud` boxes (a darker see-through slot, no frame), so the arena stays in view; the knocked-out dialog stays a window with Spectate in yellow. The loadout bar is 720 wide for 112 slots, with a row on top for stamina (the player's turn) and power with the angle (while aiming): inside one block they stay on the bar on every screen, and the block is only as tall as what shows. Jump is blue; cooldowns read on a darker cover. Every block is placed by screen fractions, so positions scale with the screen as sizes do. The bottom row shares one line: walk buttons in the bottom-left corner, the bar in the middle, the emote smiley at 81 % across, Jump in the bottom-right corner (on a 667 × 375 phone the row is about 28 % of the height while aiming). The kill feed and the emote button scale too (the emote button through the `Item` control's `Screen`), tagged `Utils_PlatformScale` like the theme's panels; the kill feed sits under the top bar. On phones and tablets the turn and drop panels are at 0.7 (their smallest text 15 px on a phone) and the kill feed is 440 wide, beside the turn panel; no text is under 14 px on a 667 × 375 phone. The walk and jump buttons scale with the screen through the `Button` control's `Screen`. The turn panel says whose turn it is (the player's, or another snail's name in its team colour with the player's wait under it), then the kit's clock beside the timer and its wind picture (`wb-wind`) beside the wind's arrow and strength; on a PC at 1024 × 768 (ScreenScale's 0.6 floor) its text is 14 px and up.
+**Look.** Ported 1:1 from the studio's `HUD` gui (2026-11-09) as `Primitive` nodes: its slanted dark cards, pictures and fonts, laid out by screen fractions with aspect-ratio constraints, so the design's frames scale with the screen by themselves (no `S_ScreenScale`). Added to it from pieces of the design: the wait line under the banner (a copy of the banner), Jump (a copy of `>` above the move buttons), the angle and hint line over the power slider and the cooldown count on a slot (copies of the design's texts), the stamina bar (a copy of the power slider without its handle, its bar green) and the LB / RB hints (copies of a slot's key number). Kept from the old hud as the theme's controls (`WormBattlegroundsBrawl`): the kill feed (moved under the right team panel), the emote wheel and the waiting, drop and knocked-out blocks, each with its `S_ScreenScale`. The design's `World` frame (the world labels' look) went to `SnailTag` and `DamagePop`, and its crosshair picture to the MatchHud module's angle marker.
 
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/MatchHud"` |
-| Theme | `WormBattlegroundsBrawl` |
+| Theme | `WormBattlegroundsBrawl` (for the kept blocks; the design's frames are `Primitive` nodes) |
 | Modes | Night only |
-| Devices | Desktop, Mobile (shows `U_Touch`, hides key hints), Console (shows the LB / RB hints); Desktop at 0.75 of the kit's size (`Utils_PlatformScale`) |
+| Devices | Desktop, Mobile (shows `U_Touch` and `U_Fire`), Console (shows the LB / RB hints) |
 | Export | A ScreenGui named `MatchHud`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` |
 
 ## Elements
 
-| Element | Control | What game code does with it |
+| Element | Kind | What game code does with it |
 | --- | --- | --- |
-| `U_Turn` | Box (`Panel`) | Top middle. Has `S_ScreenScale` |
-| `U_Turn` › `S_Banner` | Label (`Title`, capitals) | "Your turn!" on the player's own turn, in the gui's colour; on other snails' turns "Bax's turn" in that snail's team colour |
-| `U_Turn` › `S_Wait` | Label (`Heading`, capitals) | Hidden on the player's own turn and once their snail is out; otherwise "You're next!" or "Your turn in 3 turns" |
-| `U_Turn` › `S_Timer` | Label (`Display`) | The turn timer, beside the kit's clock (`wb-clock`); blank while a shot flies and settles |
-| `U_Turn` › `S_WindArrow` | Picture (`Glyph`) | Beside the wind picture (`wb-wind`); rotated to the wind's direction, hidden in still air |
-| `U_Turn` › `S_Wind` | Label (`Heading`) | The wind's strength, "4" (0 to 10) |
-| `U_KillFeed` | Cells (no scroll, `Fixed`) | Top right: holds one `FeedLine` per knockout |
-| `U_LoadoutBar` | Box (`Hud`) | Bottom middle. Has `S_ScreenScale`. Its top row holds `U_Stamina` and `U_Power`, sharing the width |
-| `U_LoadoutBar` › `S_PrevHint`, `S_NextHint` | Label, tagged `Console_Hint` | LB / RB beside the bar on Console |
-| `U_Slots` | Cells (horizontal, no scroll) | Holds one `BarSlot` per loadout slot |
-| `U_Stamina` | Stack, in `U_LoadoutBar` (find it recursively) | On the player's turn |
-| `U_Stamina` › `S_Bar` | Progress (`Stamina`) | How far the snail can still walk: its status reads "Stamina 70%" |
-| `U_EmoteButton` | Item (`Small`) | The smiley, right of the bar: opens `U_EmoteWheel` |
-| `U_Power` | Stack (horizontal), in `U_LoadoutBar` (find it recursively) | While aiming |
-| `U_Power` › `S_Bar` | Progress (`Power`) | The shot's power: its status reads "Power 60%" |
-| `U_Power` › `S_Angle` | Label (`Heading`) | "45°", beside the bar; sized for "-90°" |
-| `U_Touch` | Frame, `Utils_HideOnPlatform` (Mobile only) | Touch controls |
-| `U_Touch` › `S_Left`, `S_Right`, `S_Jump` | Button | Walk left, walk right (bottom-left corner), jump (bottom-right corner) |
-| `U_EmoteWheel` | Frame | Hidden; holds one `WheelEmote` per owned emote, placed on a circle. Has its own `S_ScreenScale` |
-| `U_Drop` | Box (`Panel`) | Hidden; the drop phase: "Pick where to land" and `S_Timer` |
-| `U_KnockedOut` | Box (`Panel`) | Hidden; `S_Spectate`, `S_Leave` |
-| `U_Waiting` | Box (`Panel`) | Hidden; "Waiting for players" and `S_Count` |
+| `U_Turn` | Frame (top middle) | Shown while turns run |
+| `U_Turn` › `S_Timer` | TextLabel | The turn's time, "0:30"; blank while a shot flies and settles |
+| `U_Turn` › `S_Banner` | TextLabel (`TextCase_Upper`) | "Your turn!" in its own colour, or "Bax's turn" in that snail's team colour |
+| `U_Turn` › `S_Wait` | TextLabel (`TextCase_Upper`), hidden | Under the banner on other snails' turns: "You're next!" or "Your turn in 3 turns" |
+| `U_Turn` › `S_WindArrow` | TextLabel | `&gt;` or `&lt;`, the way the wind blows; hidden in still air |
+| `U_Turn` › `S_Wind` | TextLabel | The wind with its side, "+3" or "-3" ("0" in still air) |
+| `U_TeamsLeft`, `U_TeamsRight` | Frame (horizontal list), top corners | Hold one `Team` per team: the player's first on the left, then right, left… |
+| `U_TurnList` | Frame (vertical list), left | Holds one `TurnEntry` per snail: the one playing, then the next ones |
+| `U_EmoteButton` › `Button` | ImageButton (EMOTES), right | Opens `U_EmoteWheel` (the Cosmetics module) |
+| `U_Touch` | Frame, bottom left, `Utils_HideOnPlatform` (Mobile only) | Touch controls |
+| `U_Touch` › `S_Left`, `S_Right`, `S_Jump` | ImageButton | Walk left, walk right, jump (above them); shown on the player's turn |
+| `U_LoadoutBar` | Frame, bottom middle | Shown while the player's snail plays |
+| `U_LoadoutBar` › `S_PrevHint`, `S_NextHint` | TextLabel, `Console_Hint` | LB / RB beside the bar on Console |
+| `U_Slots` | Frame (horizontal list) | Holds one `BarSlot` per slot key (6) |
+| `U_Stamina` | Frame, over the loadout bar | On the player's turn |
+| `U_Stamina` › `S_Bar` | ImageLabel with a UIGradient | How far the snail can still walk: the gradient cuts the bar at the share times MatchHud's `BAR_FILL` (0.744, where the picture's fill ends; Stretch, sized 1.2526 × 0.4312) |
+| `U_Stamina` › `S_Text` | TextLabel | "Stamina 70%" |
+| `U_Power` | Frame, bottom right | The power slider, while the player aims |
+| `U_Power` › `S_Bar` | ImageLabel with a UIGradient | The power: the gradient cuts the bar at the share times `BAR_FILL`, like the stamina bar |
+| `U_Power` › `S_Handle` › `S_Amount` | ImageButton (not interactable) › TextLabel | The handle rides the bar's edge; "75%" |
+| `U_Power` › `S_Info` | TextLabel | Over the slider: the angle, "45°", or a homing missile's hint |
+| `U_Fire` | ImageButton (FIRE), bottom right | Touch screens, on the player's turn: fires the aim shown |
+| `U_Fire` › `S_Icon` | ImageLabel | The held weapon's icon |
+| `U_KillFeed` | Cells (no scroll, `Fixed`), kept | Top right, under the team panel: one `FeedLine` per knockout |
+| `U_EmoteWheel` | Frame, kept, hidden | One `WheelEmote` per owned emote, placed on a circle. Has its own `S_ScreenScale` |
+| `U_Drop` | Box (`Hud`), kept, hidden | The drop phase: "Pick where to land" and `S_Timer` |
+| `U_KnockedOut` | Box (`Panel`), kept, hidden | `S_Spectate`, `S_Leave` |
+| `U_Waiting` | Box (`Hud`), kept, hidden | "Waiting for players" and `S_Count` |
 
 ## Prefabs
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | BarSlot` | `U_Slots` | An Item (`S_Icon`; selected = highlighted), `S_Key` ("1"–"5", Desktop only) and `S_Uses` ("x3", a plain x: the kit's font has no ×), corner badges sized by the slot (half and 0.6 of its width, 0.4 of its height), `S_Cooldown` (cover) › `S_Turns` |
-| `PREFAB | FeedLine` | `U_KillFeed` | A Label: "Bax knocked out Ninja with the Black hole grenade", names in team colours (rich text); one line tall, two for a line too long for the feed |
-| `PREFAB | WheelEmote` | `U_EmoteWheel` | An Item (`S_Icon`), anchored at its centre |
+| `PREFAB \| BarSlot` | `U_Slots` | An ImageButton: `S_Icon`, `S_Key` ("1"–"6", Desktop only), `S_Uses` ("x5"), `S_Name`, `S_Turns` (the cooldown's turns left, hidden), `S_Plus` (an empty slot's "+", hidden), `Background` › `Stroke` (the outline the looks recolour) |
+| `PREFAB \| TurnEntry` | `U_TurnList` | `S_Avatar`, `S_Name`, `Background` › `Main`, `Stroke`, `S_Mask` (the current look's shine) |
+| `PREFAB \| Team` | `U_TeamsLeft` (clones go on either side) | `S_Players` (a horizontal list holding the nested `PREFAB \| TeamPlayer`), `S_Name` (`TextCase_Upper`) |
+| `PREFAB \| TeamPlayer` | nested in `Team` › `S_Players`, hidden | `S_Avatar`, `Background` › `Main`, `Stroke2`, `Stroke` |
+| `PREFAB \| FeedLine` | `U_KillFeed` | A Label: "Bax knocked out Ninja with the Black hole grenade", names in team colours (rich text) |
+| `PREFAB \| WheelEmote` | `U_EmoteWheel` | An Item (`S_Icon`, `S_Name`, `S_Info`, `Button`), anchored at its centre |
 
 ## Driven by
 
-The game's `MatchHud` module: it turns the ScreenGui on on the Match map and shows each block in its phase.
+The game's `MatchHud` module: it turns the ScreenGui on while the player is in a match and shows each block in its phase. The Cosmetics module fills the emote wheel and opens it from `U_EmoteButton`.
 
 ## Preview
 
-`Preview.lua` shows the phases.
+`Preview.lua` shows the phases and fills the screen as the module does.
 
 | Setting | What it does |
 | --- | --- |
 | `S_Phase` (Segmented: Waiting, Drop, Turn, Out) | Which blocks show |
-| `S_MyTurn` (Toggle) | On: "Your turn!", stamina and power; off: "Bax's turn" in red with the wait under it |
-| `S_Aiming` (Toggle) | Power shows (while aiming) |
-| `S_Slots` (Slider, 3 to 5) | Loadout slots (the second one cools down) |
+| `S_MyTurn` (Toggle) | On: "Your turn!", stamina and the slider; off: "Ninja's turn" in red with the wait under it |
+| `S_Aiming` (Toggle) | The power slider (and FIRE on Mobile) shows |
+| `S_Power` (Slider) | The slider's power |
+| `S_Slots` (Slider, 1 to 6) | Loadout items; the rest of the 6 slots show "+" (the second item cools down) |
+| `S_Teams` (Slider, 2 to 4) | Teams of two in the corners |
 | `S_Feed` (Slider, 0 to 3) | Kill feed lines |
 | `S_Wheel` (Toggle) | Opens the emote wheel |
 
@@ -68,22 +79,28 @@ The game's `MatchHud` module: it turns the ScreenGui on on the Match map and sho
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchHud`, `Enabled` off. Its module turns it on while its map runs. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size. Capitals-styled texts carry the `TextCase_Upper` tag, so what code writes there shows in capitals too (the theme's README). `U_KillFeed` has its own `S_ScreenScale` (a `Primitive` UIScale) and a Mobile size (`Utils_PlatformSize`, 440 × 320); each touch button has its own.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchHud`, `Enabled` off. Its module turns it on while the player is in a match. The kept blocks' `S_ScreenScale` UIScales are set by the game's ScreenScale module (`MatchHud` is in its `GUIS` list), laid out for a 1920 × 1080 screen, times the device scale their `Utils_PlatformScale` tag keeps; the design's frames need nothing. Capitals texts carry `TextCase_Upper`, so what code writes there shows in capitals.
 
 ### Input
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Pick a loadout slot | 1–5 or click | Tap | LB / RB | MatchHud |
-| Walk, jump | Game controls | `S_Left`, `S_Right`, `S_Jump` | Game controls | MatchHud and the movement code |
-| Emote wheel | Click the smiley | Tap the smiley | Game binding | MatchHud |
+| Pick a loadout slot | 1–6 or click | Tap | LB / RB | MatchHud (`MatchHud_Slots`, `I.Interact.OnPress`) |
+| Aim and set the power | Mouse from the snail, hold | Drag | Right stick, hold RT | MatchHud (Aim) |
+| Fire | Let go of the mouse | `U_Fire` (the aim stays after the drag) | Let go of RT | MatchHud (Aim) |
+| Walk, jump | Game controls | `S_Left`, `S_Right`, `S_Jump` | Game controls | MatchHud and SnailControl |
+| Emote wheel | Click EMOTES | Tap EMOTES | — | Cosmetics |
 | Spectate / Leave | Click | Tap | A / B | `S_Spectate`, `S_Leave` tags (`Utils_ButtonKey`) |
 
 ### Looks
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
-| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |
-| No icon picture | `BarSlot` › `S_Icon` | The game adds a ViewportFrame `S_Model` filling the icon, with the weapon's 3D model side-on (MatchHud's `MODEL_*` settings) |
-| Selected item | `BarSlot` › `Body` | Fill rgb(40, 140, 255) at 0.2 transparency when selected, else black at 0.7 (MatchHud's `SELECTED_*` and `TILE_*` settings) |
+| Hover, press | Slots, EMOTES, FIRE, move and jump buttons | `Utils_ButtonScale` (`Bouncy`, hover ×1.04, press ×0.92) with `Button_Hover` and `Button_Click` |
+| Selected item | `BarSlot` › `Background` › `Stroke` | `ImageColor3` = `Look_SelectedStrokeColor` (white); others `Look_StrokeColor` (grey) |
+| Empty slot | `BarSlot` | `S_Plus` shown, the rest hidden, `Stroke` = `Look_EmptyStrokeColor`, not interactable |
+| Cooling down | `BarSlot` › `S_Icon` (and a model's `S_Model`) | `ImageColor3` = `Look_CooldownIconColor`, `S_Turns` shown |
+| Current snail | `TurnEntry` › `Background` | `Main` takes `Look_CurrentMain` and `Look_CurrentMainColor` (orange), `Stroke` `Look_CurrentStrokeColor`, `S_Mask` shown; others `Look_Main`, `Look_MainColor` and their team colour on `Stroke` |
+| Side | `TeamPlayer` › `Background` | `Main`, `Stroke2`, `Stroke` take `Look_Left*` or `Look_Right*` (mirrored slants); `Stroke` tinted the team colour |
+| Bar fill | `U_Stamina` › `S_Bar`, `U_Power` › `S_Bar` | Their `UIGradient.Transparency` is opaque up to the share times `BAR_FILL`, clear after it |
+| Rarity, hover (kept blocks) | Item cards and buttons from the theme | The theme's `Item` and `Button` looks |

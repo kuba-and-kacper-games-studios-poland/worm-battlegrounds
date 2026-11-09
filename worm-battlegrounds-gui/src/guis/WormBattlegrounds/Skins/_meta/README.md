@@ -1,57 +1,65 @@
 # Skins
 
-The snail skins the player owns, each in a 3D preview with its copies toward shiny and **Equip**.
+The **STYLE** screen: a full-screen window over the lobby with the snail's categories on the left (Skins, then
+Hats, Shirts and Shells, which are "Coming soon"), the snail colour row (a placeholder: "SOON", not pressable), and a
+grid of every skin. The worn skin comes first in the grid's selected look (a green outline), owned skins after it by
+rarity, and the ones the player doesn't own under a lock.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Equip is blue: a grid of skins has no one next step.
+**Look.** Ported 1:1 from the studio's `Customise` gui (2026-11-09) as `Primitive` nodes: its slanted dark cards,
+pictures and fonts, its screen-fraction layout (sizes and positions as screen shares with aspect-ratio constraints,
+so it scales with the screen by itself, with no `S_ScreenScale`). Added to it: the SKINS category (a copy of HATS),
+the lock cover on each tile (from the design's locked card), a 3D preview in place of the tile's icon, and button
+tags (`Utils_ButtonScale`, `Utils_ButtonSound`).
 
 |  |  |
 | --- | --- |
 | Path | `"WormBattlegrounds/Skins"` |
-| Theme | `WormBattlegroundsBrawl` |
+| Theme | none (Primitive nodes only) |
 | Modes | Night only |
-| Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
-| Export | A ScreenGui named `Skins`: `Enabled` off, `DisplayOrder` 1, `ScreenInsets` `DeviceSafeInsets`. Root `U_Widget` (WidgetManager's shape: `S_ScreenScale`, `Bg_Bottom`, `Bg_Top`, `Content`) and `MouseLockFix` |
+| Export | A ScreenGui named `Skins`: `Enabled` off, `DisplayOrder` 1, `ScreenInsets` `DeviceSafeInsets` |
 
 ## Elements
 
-| Element | Control | What game code does with it |
+| Element | Kind | What game code does with it |
 | --- | --- | --- |
-| `U_Skins` | Cells (`Tiles`) | Holds one `SkinTile` per owned skin |
+| `U_Widget` | Frame, full screen | The widget WidgetManager opens; holds `Content` with the design's `Left`, `TopLeft` and `TopRight` |
+| `U_Widget` › `S_Close` | ImageButton (BACK) | Closes the widget (its tags), or B on a pad |
+| `U_Categories` › `S_Skins` | ImageButton | The selected category; Cosmetics writes the worn skin's name into its `Equipped` label |
+| `U_Skins` | Frame (grid) | Holds one `SkinTile` per skin |
 
 ## Prefabs
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | SkinTile` | `U_Skins` | `S_Preview` (Viewport: its `ViewportFrame` and `Camera` take the snail model; caption = name and copies), `S_Equip` ("Equip", or "Equipped" on the worn skin) |
+| `PREFAB \| SkinTile` | `U_Skins` | An ImageButton: `S_Name`, `S_Rarity` (the corner mark, tinted with the rarity's colour), `S_Preview` (ViewportFrame for the snail), `S_Locked` (the lock cover). Its `Background` › `Stroke2` / `Stroke` swap to the selected look from the root's attributes |
 
 ## Driven by
 
-The game's `Cosmetics` module draws it on `WidgetManager_Opened` with `Skins`.
+The game's `Cosmetics` module (`Scripts/Client/Skins.lua`).
 
 ## Preview
 
-`Preview.lua` fills example skins.
-
-| Setting | What it does |
-| --- | --- |
-| `S_Skins` (Slider, 1 to 6) | Owned skins |
+`Preview.lua` fills the grid with `S_Skins` tiles (1 to 6): the first worn, the last three locked.
 
 ## Integration
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Skins`, `Enabled` off. WidgetManager opens it (a button's `Interact_Button` with `Interact_Function = "Toggle"`, `Interact_Arg1 = "Skins"`, or `I.WidgetManager.Open("Skins")`), and the module that fills it draws it on `WidgetManager_Opened`. A restyled copy keeps its `Name`, Ids and prefab names. Every panel with an `S_ScreenScale` is laid out for a 1920 × 1080 screen and placed by screen fractions: the game's ScreenScale module sets the UIScale to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on Mobile screens shorter than 500 px and never under 0.6 on other devices, times the device scale its `Utils_PlatformScale` tag keeps (`Utils_BaseScale`), when it shows and when the screen changes size.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Skins`, `Enabled` off. WidgetManager opens
+it (the lobby's STYLE button). It keeps its `Name`, Ids and prefab name.
 
 ### Input
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Close | Click ✕ | Tap ✕ | B (Circle) | `Bg_Top` › `CloseButton` tags (`Interact_Button` → WidgetManager `CloseCurrent`, `Utils_ButtonKey`) |
-| Equip | Click | Tap | Select and A | Cosmetics connects `S_Equip` |
+| Equip a skin | Click an owned tile | Tap | Select | Cosmetics (`I.Interact.OnPress`) |
+| Close | BACK | BACK | B | `S_Close` tags (`Interact_Button`, `Utils_ButtonKey`) |
 
 ### Looks
 
 | State | Element | Value |
 | --- | --- | --- |
-| Hover, press | Buttons and item cards | `Utils_ButtonScale` from the theme's styles: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a held button's skin takes the theme's `Pressed` tint |
-| Rarity | Item cards with a rarity style | A reward tile: the rarity's frame, stage and light (`Item` style variants `Common` … `Legendary`) |
+| Hover, press | Tiles, SKINS, BACK | `Utils_ButtonScale` (`Bouncy`, hover ×1.04, press ×0.92) with `Button_Hover` and `Button_Click` |
+| Worn | `SkinTile` › `Background` | `Stroke2` and `Stroke` take `Look_SelectedStroke2`, `Look_SelectedStroke` and `Look_SelectedStrokeColor` (green); the rest `Look_Stroke2`, `Look_Stroke`, `Look_StrokeColor` |
+| Rarity | `SkinTile` › `S_Rarity` | `ImageColor3` = `I.Rarity.GetLook(rarity).Base` |
+| Not owned | `SkinTile` › `S_Locked` | Shown |
