@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -15,8 +16,6 @@ local elems = {} --- @type { [string]: Instance }
 local prefabs = {} --- @type { [string]: Instance }
 
 --[[ General ]]
-
-local worldFolder: Folder
 
 -- Whether the lobby's emote row shows its emotes, or only the smiley and +
 local rowOpen: boolean = true
@@ -62,7 +61,6 @@ function Module.Start()
 	elems["Party"] = I.UserInterface.UI[_settings.PARTY_GUI_NAME]:FindFirstChild("U_Members", true) --- @type Frame
 	prefabs["Emote"] = elems["Row"]:FindFirstChild("PREFAB | Emote") --- @type ImageButton
 	prefabs["WheelEmote"] = elems["Wheel"]:FindFirstChild("PREFAB | WheelEmote") --- @type GuiObject
-	worldFolder = I.Dirs.UmeWorkspace:WaitForChild(_localName)
 
 	--[[ Applying ]]
 
@@ -83,6 +81,7 @@ function Module.Start()
 			elems["Wheel"].Visible = false
 		end
 	end)
+	elems["Wheel"]:GetPropertyChangedSignal("Visible"):Connect(Module._onWheelShown)
 	I.Topic.Subscribe("Inventory_DataUpdated-Standard", Module._refresh)
 	I.Network.Fired("Cosmetics_EmotePlayed", Module._onEmotePlayed)
 	Module._refresh()
@@ -196,56 +195,126 @@ function Module._onInput(input: InputObject, gameProcessed: boolean)
 	elems["Wheel"].Visible = false
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Wheel Shown
+
+--[[
+	On a pad, the emote wheel takes the gamepad's selection while it's open, and B closes it (the Console module's focus).
+]]
+function Module._onWheelShown()
+	--[[ Focusing ]]
+
+	if elems["Wheel"].Visible then
+		I.Console.Focus(elems["Wheel"], function()
+			elems["Wheel"].Visible = false
+		end)
+	else
+		I.Console.Unfocus(elems["Wheel"])
+	end
+end
+
 --%%%%%%%%%%%%%%%%%%%% On Emote Played
 
 --[[
-	Shows a played emote's name over the player's snail in a match, or beside their name in the lobby's party list.
+	A played emote, on every screen: the player's snail plays it (in a match, or on the lobby's stage), its icon pops
+	up in a thought cloud over that snail's head, and in the lobby also in a speech bubble beside their party card's name.
 ]]
 function Module._onEmotePlayed(userId: number, emoteId: string)
 	--[[ Data ]]
 
 	local item = I.G_Inventory.Items[emoteId] --- @type Inventory_ItemData?
-	local snails: Instance? = I.Dirs.UmeWorkspace:FindFirstChild("Snails")
-	local snail: Instance? = snails and snails:FindFirstChild(`P_{userId}`)
-	local member: Instance? = elems["Party"]:FindFirstChild(tostring(userId))
+	local player: Player? = I.S.Players:GetPlayerByUserId(userId)
 	if not item then
 		return
 	end
 
+	--[[ Animating ]]
+
+	local skin: Model? = Module._getSkin(userId, player)
+	if skin then
+		I.SnailRig.Emote(skin, emoteId, _settings.EMOTE_SECONDS)
+	end
+
+	--[[ Bubbles ]]
+
+	I.ChatBubbles.ShowIcon(userId, item.IconId)
+	if I.S.Players.LocalPlayer:GetAttribute("InMatch") then
+		return
+	end
+	local member: GuiObject? = elems["Party"]:FindFirstChild(tostring(userId))
+	if member then
+		Module._showCardBubble(member, item.IconId)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Show Card Bubble
+
+--[[
+	Pops an emote's icon up in a speech bubble just after the player's name on their party card, its tail pointing at
+	the name, sized with the screen, and takes it away after EMOTE_SECONDS.
+]]
+function Module._showCardBubble(member: GuiObject, image: string)
+	--[[ Elements ]]
+
+	local name: TextLabel = member:FindFirstChild("S_Name", true)
+	local old: Instance? = member:FindFirstChild("EmoteBubble")
+
+	--[[ Local Variables ]]
+
+	local unit: number = elems["Party"]:FindFirstAncestorOfClass("ScreenGui").AbsoluteSize.Y / 1080
+	local nameEnd: number = name.AbsolutePosition.X + math.min(name.TextBounds.X, name.AbsoluteSize.X)
+	local x: number = nameEnd - member.AbsolutePosition.X + _settings.CARD_BUBBLE_GAP * unit
+	local y: number = name.AbsolutePosition.Y + name.AbsoluteSize.Y / 2 - member.AbsolutePosition.Y
+
 	--[[ Building ]]
 
-	-- shortcut: a plain label stands in for the emote's animation and voice line; play AnimationId once they exist
-	local label: TextLabel = I.Create("TextLabel")({
-		Name = "Emote",
-		Text = `{item.Name}!`,
-		Font = Enum.Font.GothamBlack,
-		TextScaled = true,
-		TextColor3 = Color3.new(1, 1, 1),
-		TextStrokeTransparency = 0,
-		BackgroundTransparency = 1,
-		Size = UDim2.fromScale(1, 1),
-	})
-	if snail and snail:FindFirstChild("Root") then
-		local billboard: BillboardGui = I.Create("BillboardGui")({
-			Name = `Emote_{userId}`,
-			Adornee = snail:FindFirstChild("Root"),
-			Size = UDim2.fromScale(6, 1.5),
-			StudsOffset = Vector3.new(0, 5, 0),
-			AlwaysOnTop = true,
-			Parent = worldFolder,
-		})
-		label.Parent = billboard
-		I.S.Debris:AddItem(billboard, _settings.EMOTE_SECONDS)
-	elseif member then
-		-- Right of the member's card in the party column
-		label.Size = UDim2.fromScale(1.2, 0.4)
-		label.Position = UDim2.fromScale(1.08, 0.3)
-		label.TextXAlignment = Enum.TextXAlignment.Left
-		label.Parent = member
-		I.S.Debris:AddItem(label, _settings.EMOTE_SECONDS)
-	else
-		label:Destroy()
+	if old then
+		old:Destroy()
 	end
+	local bubble: Frame = I.ChatBubbles.BuildIconBubble(image, true)
+	bubble.Name = "EmoteBubble"
+	bubble.AnchorPoint = Vector2.new(0, 0.5)
+	bubble.Position = UDim2.fromOffset(x, y)
+	bubble.ZIndex = 20
+	bubble.Parent = member
+
+	--[[ Tweening ]]
+
+	local pop: UIScale = bubble:FindFirstChild("S_Pop")
+	pop.Scale = unit * 0.6
+	local Pop_TweenInfo: TweenInfo = TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+	local Pop_TweenGoal = { Scale = unit }
+	local Pop_Tween: Tween = I.S.TweenService:Create(pop, Pop_TweenInfo, Pop_TweenGoal)
+	Pop_Tween:Play()
+	I.S.Debris:AddItem(bubble, _settings.EMOTE_SECONDS)
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Skin
+
+--[[
+	Returns the skin of a player's snail this screen shows: their snail in a match, their snail on the lobby's stage;
+	nil when it shows none.
+]]
+--- @return Model?
+function Module._getSkin(userId: number, player: Player?)
+	--[[ Match ]]
+
+	if I.S.Players.LocalPlayer:GetAttribute("InMatch") then
+		local model: Model? = I.Snails.Get(`P_{userId}`)
+		return if model then model:FindFirstChild("Skin") else nil
+	end
+
+	--[[ Checks ]]
+
+	-- Check if this map has the lobby's stage (the match map leaves Lobby out)
+	if not player or not I.Lobby then
+		return nil
+	end
+
+	--[[ Returning ]]
+
+	return I.Lobby.GetStageSnail(player)
 end
 
 return Module

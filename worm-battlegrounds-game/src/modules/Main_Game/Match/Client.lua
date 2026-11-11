@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -174,11 +175,11 @@ end
 
 --[[
 	**CLIENT** |
-	Returns whether it's the local player's snail's turn.
+	Returns whether it's the local player's snail's turn, played by them (not by a bot while they were away).
 ]]
 --- @return boolean
 function Module.IsMyTurn()
-	return Module.GetActive() == Module.GetMyParticipantId()
+	return Module.GetActive() == Module.GetMyParticipantId() and not matchFolder:GetAttribute("Autopilot")
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

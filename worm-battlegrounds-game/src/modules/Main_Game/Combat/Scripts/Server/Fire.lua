@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -59,6 +60,13 @@ function Module._onFire(player: Player, itemId: string, angle: number, power: nu
 		return
 	end
 
+	--[[ Checks ]]
+
+	-- Check if it's their turn, not a bot's in their place
+	if not I.Match.IsActivePlayer(player) then
+		return
+	end
+
 	--[[ Firing ]]
 
 	Module.Fire(`P_{player.UserId}`, itemId, angle, power, target)
@@ -75,6 +83,13 @@ function Module._onUseUtility(player: Player, itemId: string)
 		return
 	end
 
+	--[[ Checks ]]
+
+	-- Check if it's their turn, not a bot's in their place
+	if not I.Match.IsActivePlayer(player) then
+		return
+	end
+
 	--[[ Using ]]
 
 	Module.UseUtility(`P_{player.UserId}`, itemId)
@@ -88,6 +103,13 @@ end
 function Module._onDetonate(player: Player)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Checks ]]
+
+	-- Check if it's their turn, not a bot's in their place
+	if not I.Match.IsActivePlayer(player) then
 		return
 	end
 
@@ -115,6 +137,11 @@ function Module._onSelect(player: Player, itemId: string)
 
 	-- Check if the item is in their loadout
 	if not model or Uses.GetUses(model.Name, itemId) == nil then
+		return
+	end
+
+	-- Check if a bot isn't playing their snail's turn
+	if I.Match.GetActive() == model.Name and I.Match.IsAutopilot() then
 		return
 	end
 
@@ -211,7 +238,7 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 		Row = row,
 		Shiny = Module._isShiny(participant, itemId),
 		-- A weapon placed at the feet starts inside the snail's ball, so a wall in front can't swallow it
-		Origin = if row.Aim == "Feet" then root.Position else root.Position + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + _settings.MUZZLE_GAP),
+		Origin = if row.Aim == "Feet" then root.Position else Projectiles.GetStart(root.Position, direction, model),
 		Direction = direction,
 		Angle = angle,
 		Power = math.clamp(power, 0, 1),
@@ -318,7 +345,7 @@ function Module.ShowAim(participantId: string, itemId: string?, angle: number, p
 
 	-- A bot's snail turns to face its aim (a player's own screen turns theirs), so its weapon never points back through it
 	local side: number = math.sign(math.cos(angle))
-	if model:GetAttribute("IsBot") and side ~= 0 then
+	if (model:GetAttribute("IsBot") or I.Match.IsAutopilot()) and side ~= 0 then
 		model.PrimaryPart:FindFirstChild("Upright").CFrame = CFrame.lookAlong(Vector3.zero, Vector3.xAxis * side)
 		model:SetAttribute("Facing", side)
 	end

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -187,7 +188,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Preview
 
 --[[
-	Puts a skin's snail in a tile's viewport, seen from the front.
+	Puts a skin's snail in a tile's viewport, seen from the front, held in its idle pose (`I.SnailRig.Pose`).
 ]]
 function Module._preview(viewport: ViewportFrame, modelName: string)
 	--[[ Data ]]
@@ -203,12 +204,15 @@ function Module._preview(viewport: ViewportFrame, modelName: string)
 	-- shortcut: every skin without its own model shows the default snail; drop the fallback once each skin has one
 	local model: Model = source:Clone()
 	model:PivotTo(CFrame.identity)
+	I.SnailRig.Pose(model)
 	model.Parent = viewport
 	local camera: Camera = I.Create("Camera")({
 		Parent = viewport,
 	})
-	local size: Vector3 = model:GetExtentsSize()
-	camera.CFrame = CFrame.lookAt(Vector3.new(0, size.Y * 0.2, -size.Magnitude * _settings.PREVIEW_DISTANCE), Vector3.zero)
+	local box: CFrame
+	local size: Vector3
+	box, size = model:GetBoundingBox()
+	camera.CFrame = CFrame.lookAt(box.Position + Vector3.new(0, size.Y * 0.2, -size.Magnitude * _settings.PREVIEW_DISTANCE), box.Position)
 	viewport.CurrentCamera = camera
 end
 

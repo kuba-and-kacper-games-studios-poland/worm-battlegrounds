@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -50,6 +51,7 @@ function Module.Start()
 	moduleGui = I.UserInterface.UI[_settings.BOARD_GUI_NAME]
 	elems["Play"] = moduleGui:FindFirstChild("U_Play") --- @type Frame
 	elems["Solo"] = elems["Play"]:FindFirstChild("S_Solo", true) --- @type ImageButton
+	elems["Custom"] = elems["Play"]:FindFirstChild("S_Custom", true) --- @type ImageButton
 	elems["Rows"] = elems["Play"]:FindFirstChild("U_Rows", true) --- @type ScrollingFrame
 	elems["WaitingRoom"] = moduleGui:FindFirstChild("U_WaitingRoom") --- @type Frame
 	elems["Match"] = elems["WaitingRoom"]:FindFirstChild("S_Match", true) --- @type TextLabel
@@ -74,6 +76,11 @@ function Module.Start()
 		Module._watchRow(config)
 	end
 	I.Interact.OnPress(elems["Solo"], Module._onPlay)
+	I.Interact.OnPress(elems["Custom"], function()
+		if elems["Custom"]:GetAttribute("Interact_Function") == "" then
+			I.WidgetManager.ShowMessage("Your party's leader picks the match.")
+		end
+	end)
 	I.Interact.OnPress(elems["Vote"], function()
 		I.Network.Fire("MatchBoard_Vote")
 	end)
@@ -82,6 +89,11 @@ function Module.Start()
 	end)
 	I.S.Players.LocalPlayer.AttributeChanged:Connect(Module._refresh)
 	I.DoEvery.Every(0.25, Module._tick)
+
+	--[[ Selection ]]
+
+	-- On a pad the selection rests on SOLO VS BOTS while nothing else wants it (the Console module's home)
+	I.Console.SetHome(elems["Solo"])
 	Module._refresh()
 end
 
@@ -110,6 +122,10 @@ function Module._watchRow(config: Instance)
 		line.Parent = elems["Rows"]
 		lines[config.Name] = line
 		I.Interact.OnPress(line:FindFirstChild("S_Join"), function()
+			if Module._isPartyMember() then
+				I.WidgetManager.ShowMessage("Your party's leader picks the match.")
+				return
+			end
 			I.Network.Fire("MatchBoard_Join", config.Name)
 		end)
 	end
@@ -149,7 +165,7 @@ function Module._onPlay()
 
 	-- Check if the player may start their party's match
 	if localPlayer:GetAttribute("PartyId") and not localPlayer:GetAttribute("PartyLeader") then
-		I.WidgetManager.ShowMessage("Only your party's leader can start a match.")
+		I.WidgetManager.ShowMessage("Your party's leader picks the match.")
 		return
 	end
 
@@ -163,9 +179,15 @@ end
 --[[
 	Draws the board: Solo vs bots (Play with party in a party), each public row's mode, map, players and Join (Join
 	teams for team modes), or the waiting room of the row the player is in, with everyone in it and the votes. The setup
-	panel shows in the board's place.
+	panel shows in the board's place. A party member's Join, Play and Custom are greyed out (their leader picks), but
+	Custom opens their leader's lobby once they're in it.
 ]]
 function Module._refresh()
+	--[[ Local Variables ]]
+
+	local member: boolean = Module._isPartyMember()
+	local mine: Instance? = Module._getMyRow()
+
 	--[[ Lines ]]
 
 	for rowId: string, line: Frame in pairs(lines) do
@@ -178,7 +200,8 @@ function Module._refresh()
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
 		line:FindFirstChild("S_Map", true).Text = if mapRow then mapRow.Name else ""
 		line:FindFirstChild("S_Players", true).Text = `{#players}/{config:GetAttribute("Size")} players`
-		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if config:GetAttribute("Mode") == "Deathmatch" then "Join" else "Join teams"
+		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if member then "Host picks" elseif config:GetAttribute("Mode") == "Deathmatch" then "Join" else "Join teams"
+		Module._setLocked(line:FindFirstChild("S_Join"), member)
 
 		-- shortcut: a map with no Thumbnail yet keeps the design's picture; give each map its picture when drawn
 		if mapRow and mapRow.Thumbnail ~= "" then
@@ -188,12 +211,21 @@ function Module._refresh()
 
 	--[[ Play ]]
 
-	elems["Solo"]:FindFirstChild("Name1").Text = if I.S.Players.LocalPlayer:GetAttribute("PartyId") then "Play with party" else "Solo vs bots"
+	elems["Solo"]:FindFirstChild("Name1").Text = if member then "Waiting for host" elseif I.S.Players.LocalPlayer:GetAttribute("PartyId") then "Play with party" else "Solo vs bots"
+	Module._setLocked(elems["Solo"], member)
+
+	--[[ Custom ]]
+
+	-- A party member opens only their leader's lobby, which they're put in when it's made
+	local inCustom: boolean = mine ~= nil and mine:GetAttribute("Kind") == "Custom"
+	local customLocked: boolean = member and not inCustom
+	elems["Custom"]:FindFirstChild("Name1").Text = if inCustom and member then "Party lobby" elseif member then "Host picks" else "Custom"
+	elems["Custom"]:SetAttribute("Interact_Function", if customLocked then "" else "Toggle")
+	Module._setLocked(elems["Custom"], customLocked)
 
 	--[[ Panels ]]
 
 	-- Joining a public match closes the setup, which redraws the board again
-	local mine: Instance? = Module._getMyRow()
 	local waiting: boolean = mine ~= nil and mine:GetAttribute("Kind") == "Public"
 	if waiting and Setup.IsOpen() then
 		Setup.Close()
@@ -201,6 +233,13 @@ function Module._refresh()
 	end
 	elems["Play"].Visible = not waiting and not Setup.IsOpen()
 	elems["WaitingRoom"].Visible = waiting
+
+	-- On a pad the waiting room holds the selection while it shows
+	if waiting then
+		I.Console.Focus(elems["WaitingRoom"])
+	else
+		I.Console.Unfocus(elems["WaitingRoom"])
+	end
 
 	--[[ Waiting Room ]]
 
@@ -227,6 +266,40 @@ function Module._refresh()
 		entry:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={userId}&w=150&h=150`
 		entry.Parent = elems["Players"]
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Locked
+
+--[[
+	Greys a button out while the player's party leader picks the match, or gives it back the design's look, which it
+	keeps on itself (its Look_* attributes) the first time.
+]]
+function Module._setLocked(button: ImageButton, locked: boolean)
+	--[[ Elements ]]
+
+	local main: ImageLabel = button:FindFirstChild("Background"):FindFirstChild("Main")
+	local stroke: ImageLabel = button:FindFirstChild("Background"):FindFirstChild("Stroke")
+	local text: TextLabel = button:FindFirstChild("Name1")
+
+	--[[ Saving ]]
+
+	if button:GetAttribute("Look_MainColor") == nil then
+		button:SetAttribute("Look_MainColor", main.ImageColor3)
+		button:SetAttribute("Look_StrokeColor", stroke.ImageColor3)
+		button:SetAttribute("Look_TextColor", text.TextColor3)
+		button:SetAttribute("Look_HoverScale", button:GetAttribute("Utils_HoverScale"))
+		button:SetAttribute("Look_ClickScale", button:GetAttribute("Utils_ClickScale"))
+	end
+
+	--[[ Applying ]]
+
+	main.ImageColor3 = if locked then _settings.LOCKED_MAIN_COLOR else button:GetAttribute("Look_MainColor")
+	stroke.ImageColor3 = if locked then _settings.LOCKED_STROKE_COLOR else button:GetAttribute("Look_StrokeColor")
+	text.TextColor3 = if locked then _settings.LOCKED_TEXT_COLOR else button:GetAttribute("Look_TextColor")
+
+	-- A locked button doesn't bounce under the pointer
+	button:SetAttribute("Utils_HoverScale", if locked then 1 else button:GetAttribute("Look_HoverScale"))
+	button:SetAttribute("Utils_ClickScale", if locked then 1 else button:GetAttribute("Look_ClickScale"))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Tick
@@ -324,6 +397,16 @@ function Module._getTime(config: Instance, now: number)
 	--[[ Returning ]]
 
 	return string.format("%d:%02d", left // 60, left % 60)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Party Member
+
+--[[
+	Returns whether the local player is in a party they don't lead, so their leader picks the match.
+]]
+--- @return boolean
+function Module._isPartyMember()
+	return I.S.Players.LocalPlayer:GetAttribute("PartyId") ~= nil and not I.S.Players.LocalPlayer:GetAttribute("PartyLeader")
 end
 
 return Module

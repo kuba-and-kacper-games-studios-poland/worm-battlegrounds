@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -82,6 +83,11 @@ function Module.Open(asParty: boolean)
 	elems["Setup"].Visible = true
 	Module._refresh()
 	onChanged()
+
+	--[[ Selection ]]
+
+	-- On a pad the panel holds the selection (Start first), and B goes back to the board
+	I.Console.Focus(elems["Setup"], Module.Close)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Close
@@ -94,6 +100,10 @@ function Module.Close()
 
 	elems["Setup"].Visible = false
 	onChanged()
+
+	--[[ Selection ]]
+
+	I.Console.Unfocus(elems["Setup"])
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh

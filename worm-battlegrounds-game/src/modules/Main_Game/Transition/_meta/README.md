@@ -2,10 +2,11 @@
 
 The teleport card between the lobby and a match. Before a teleport the server says where it goes
 (`SetDestination`), ume's teleport clones the `TeleportGui` card into each player's PlayerGui, and this module writes
-the destination on it ("Heading to Desert…"), slides it down over the screen and hands Roblox a copy to show through
-the teleport. On the next server the arrival script (`src/replicated_first/Transition.client.lua`, in
+the destination on it ("Heading to Desert…"), slides it down over the screen with a whoosh (`Teleport_Out`) and hands
+Roblox a copy to show through the teleport. On the next server the arrival script (`src/replicated_first/Transition.client.lua`, in
 ReplicatedFirst) puts that copy up at once, removes the place's own loading screen for that join, waits until the
-player's avatar and ume's client have started, then slides the card off downwards. Joins from the website keep the
+player's avatar and ume's client have started, then slides the card off downwards; the module plays `Teleport_In` as
+its client starts on a join that came by teleport. Joins from the website keep the
 place's loading screen.
 
 A teleport Roblox accepted can still fail on the way (`TeleportInitFailed`). The server then tries it again
@@ -40,7 +41,7 @@ Callers: MatchBoard's `Launch` ("Heading to <map>…", the map's `Thumbnail`), M
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | `SetDestination` and its remote; retrying a failed teleport, or taking its card down |
-| `Client.lua` | Filling the card, its slide in, the copy handed to Roblox |
+| `Client.lua` | Filling the card, its slide in and its sounds (`Teleport_Out`, and `Teleport_In` on arrival), the copy handed to Roblox |
 | `Settings.lua` | The card's name and its slide, the teleport retries |
 | `src/replicated_first/Transition.client.lua` | Outside the module: the card on arrival, and its slide off |
 

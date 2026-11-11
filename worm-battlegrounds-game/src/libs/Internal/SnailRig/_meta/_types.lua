@@ -8,7 +8,9 @@
 --- @field Animator Animator
 --- @field Motor Motor6D
 --- @field Handle BasePart
+--- @field Body Bone
 --- @field Hands { [string]: Bone }
+--- @field Bones { [string]: Bone }
 ---
 --- # State #
 ---
@@ -18,4 +20,24 @@
 --- @field Joint Weld?
 --- @field Aim number?
 --- @field ShootUntil number?
+---
+--- # Emote #
+---
+--- @field Emote string?
+--- @field EmoteStart number?
+--- @field EmoteUntil number?
+--- @field EmoteBones { [Bone]: SnailRig_EmoteTransform }
+---
+--- # Walk #
+---
+--- @field WalkJoints { [Bone | Motor6D]: SnailRig_EmoteTransform }
+--- @field WalkWeight number
 local _snailRig_Rig = {}
+
+--- @class SnailRig_EmoteTransform
+---
+--- # Transforms #
+---
+--- @field Base CFrame
+--- @field Set CFrame
+local _snailRig_EmoteTransform = {}

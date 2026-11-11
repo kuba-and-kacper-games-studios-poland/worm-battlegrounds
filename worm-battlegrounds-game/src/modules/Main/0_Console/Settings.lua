@@ -10,6 +10,134 @@ local _settings = {
 	HINT_HIDDEN_ATTRIBUTE = "Console_HintHidden",
 
 	--[[
+		A hint with this attribute names its row in ACTIONS: every image in it shows that action's first button in
+		HINT_STYLE, and every text in it the action's Hint
+	]]
+	HINT_ACTION_ATTRIBUTE = "Console_Action",
+
+	--[[
+		The icon style of GAMEPAD_ICONS an action's hint shows. The game's own glyphs (art/console_glyphs) become a
+		style of both pads, "Glyph", once the owner approves and they are uploaded; then this is "Glyph"
+	]]
+	HINT_STYLE = "Color",
+
+	--%%%%%%%%%%%%%%%%%%%% Actions
+
+	-- The ContextActionService priority of an action that names none: before Roblox's own, as ume/input.md asks
+	DEFAULT_PRIORITY = Enum.ContextActionPriority.High.Value,
+
+	--[[
+		The game's gamepad scheme: every action, its buttons (Enum.KeyCodes; its hints show the first), its hint text
+		and its priority. A module binds its row with I.Console.Bind; a Gui row is pressed by the gui buttons whose
+		Utils_GamepadKey is its first button (Interact binds those), and is here for its hints. Start (Menu, Options)
+		is Roblox's menu and never bound. Why each button: the module README → Scheme
+	]]
+	--- @type { [string]: Console_Action }
+	ACTIONS = {
+
+		--[[ Match ]]
+
+		Move = { Keys = { Enum.KeyCode.Thumbstick1 }, Hint = "Move" },
+		WalkLeft = { Keys = { Enum.KeyCode.DPadLeft }, Hint = "Walk" },
+		WalkRight = { Keys = { Enum.KeyCode.DPadRight }, Hint = "Walk" },
+		Jump = { Keys = { Enum.KeyCode.ButtonA }, Hint = "Jump, hold to fly" },
+		Aim = { Keys = { Enum.KeyCode.Thumbstick2 }, Hint = "Aim" },
+		Fire = { Keys = { Enum.KeyCode.ButtonR2 }, Hint = "Charge, let go to fire" },
+		CancelAim = { Keys = { Enum.KeyCode.ButtonB }, Hint = "Cancel" },
+		WeaponPrevious = { Keys = { Enum.KeyCode.ButtonL1 }, Hint = "Weapon" },
+		WeaponNext = { Keys = { Enum.KeyCode.ButtonR1 }, Hint = "Weapon" },
+		UseUtility = { Keys = { Enum.KeyCode.ButtonY }, Hint = "Use" },
+		CameraPan = { Keys = { Enum.KeyCode.ButtonL2 }, Hint = "Hold: move camera" },
+		ZoomIn = { Keys = { Enum.KeyCode.DPadUp }, Hint = "Zoom in" },
+		ZoomOut = { Keys = { Enum.KeyCode.DPadDown }, Hint = "Zoom out" },
+		Emotes = { Keys = { Enum.KeyCode.ButtonX }, Hint = "Emotes", Gui = true },
+		PlaceDrop = { Keys = { Enum.KeyCode.ButtonA }, Hint = "Drop here" },
+
+		--[[ Menus ]]
+
+		Navigate = { Keys = { Enum.KeyCode.ButtonSelect }, Hint = "Menus" },
+		Confirm = { Keys = { Enum.KeyCode.ButtonA }, Hint = "Select", Gui = true },
+		Back = { Keys = { Enum.KeyCode.ButtonB }, Hint = "Back", Gui = true },
+		Decline = { Keys = { Enum.KeyCode.ButtonX }, Hint = "Decline", Gui = true },
+		TabPrevious = { Keys = { Enum.KeyCode.ButtonL1 }, Hint = "Tab" },
+		TabNext = { Keys = { Enum.KeyCode.ButtonR1 }, Hint = "Tab" },
+
+		--[[ Lobby ]]
+
+		Custom = { Keys = { Enum.KeyCode.ButtonX }, Hint = "Custom", Gui = true },
+		Invite = { Keys = { Enum.KeyCode.ButtonY }, Hint = "Invite", Gui = true },
+		Style = { Keys = { Enum.KeyCode.ButtonL1 }, Hint = "Style", Gui = true },
+		Crates = { Keys = { Enum.KeyCode.ButtonR1 }, Hint = "Crates", Gui = true },
+	},
+
+	--%%%%%%%%%%%%%%%%%%%% Selection
+
+	--[[
+		How long after B a selection that ends still counts as B backing out: Roblox clears the selection on B before
+		any script sees the press
+	]]
+	BACK_WINDOW = 0.25,
+
+	-- The guis Navigate (View) starts the selection in when no widget, focus or home shows, in order
+	--- @type { string }
+	NAVIGATION_GUIS = { "MatchBoard", "Lobby", "Loadout", "Party", "MatchHud", "TopBar" },
+
+	--%%%%%%%%%%%%%%%%%%%% Names
+
+	-- What texts call each button on either pad (I.Console.GetButtonName), by Enum.KeyCode name
+	--- @type { [string]: { [string]: string } }
+	BUTTON_NAMES = {
+
+		--[[ Xbox ]]
+
+		Xbox = {
+			ButtonA = "A",
+			ButtonB = "B",
+			ButtonX = "X",
+			ButtonY = "Y",
+			ButtonL1 = "LB",
+			ButtonR1 = "RB",
+			ButtonL2 = "LT",
+			ButtonR2 = "RT",
+			ButtonL3 = "LS",
+			ButtonR3 = "RS",
+			Thumbstick1 = "the left stick",
+			Thumbstick2 = "the right stick",
+			DPadUp = "D-pad up",
+			DPadDown = "D-pad down",
+			DPadLeft = "D-pad left",
+			DPadRight = "D-pad right",
+			ButtonSelect = "View",
+			ButtonStart = "Menu",
+		},
+
+		--[[ PlayStation ]]
+
+		PlayStation = {
+			ButtonA = "Cross",
+			ButtonB = "Circle",
+			ButtonX = "Square",
+			ButtonY = "Triangle",
+			ButtonL1 = "L1",
+			ButtonR1 = "R1",
+			ButtonL2 = "L2",
+			ButtonR2 = "R2",
+			ButtonL3 = "L3",
+			ButtonR3 = "R3",
+			Thumbstick1 = "the left stick",
+			Thumbstick2 = "the right stick",
+			DPadUp = "D-pad up",
+			DPadDown = "D-pad down",
+			DPadLeft = "D-pad left",
+			DPadRight = "D-pad right",
+			ButtonSelect = "the touchpad",
+			ButtonStart = "Options",
+		},
+	},
+
+	--%%%%%%%%%%%%%%%%%%%% Icons
+
+	--[[
 		Gamepad icons by pad, icon style and Enum.KeyCode name: a copy of the System theme's Gamepad.lua in ume-gui, so
 		an exported gui's icon can be swapped to the same button and style on the other pad
 	]]

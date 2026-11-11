@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -231,14 +232,15 @@ end
 
 --[[
 	Returns the shown button a key presses: the one on the gui with the highest DisplayOrder that takes input, and on
-	a tie the one shown last. None while gamepad navigation has a selection, which presses the selected button itself.
+	a tie the one shown last. None for A while gamepad navigation has a selection, which A presses itself; the other
+	keys still press their buttons then (a menu's X, LB or RB shortcuts).
 ]]
 --- @return GuiButton?
 function Module._getTarget(keyCode: Enum.KeyCode)
 	--[[ Checks ]]
 
-	-- Skip while gamepad navigation has a selection
-	if I.S.GuiService.SelectedObject then
+	-- Skip A while gamepad navigation has a selection
+	if keyCode == Enum.KeyCode.ButtonA and I.S.GuiService.SelectedObject then
 		return nil
 	end
 

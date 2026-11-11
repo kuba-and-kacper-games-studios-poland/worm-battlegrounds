@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -87,6 +88,11 @@ function Module._refresh(model)
 	local nowBroken: boolean = Module._isBelowShellHealth(model)
 
 	--[[ Checks ]]
+
+	-- Check if the snail is in play: a knocked-out one goes as its ghost with its shell as it was
+	if model:GetAttribute("Alive") == false then
+		return
+	end
 
 	-- Check if the shell changed
 	if nowBroken == broken[model] then

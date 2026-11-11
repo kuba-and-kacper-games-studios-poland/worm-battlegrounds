@@ -858,3 +858,391 @@ Things learned on the way:
   gradient cut at the share stopped at 70% to the eye. The cut is now the share times `BAR_FILL`.
 
 Rules: Maps and placeholders → "The lobby is a party stage"; Server and client.
+
+## Shots aimed into the ground start on it (2026-11-10)
+
+**Before.** A shot started a fixed distance from the snail's ball along the aim (`ROOT_SIZE / 2 + MUZZLE_GAP`, 2.1
+studs), wherever that was. Aimed down at the ground under the snail, that point was inside the terrain.
+
+**Why it changed.** Grenades and Bazooka shots aimed down went through about 5 studs of ground and burst under it.
+`Ballistics` finds what a shot touches with a spherecast per step, and **a cast that starts inside a part never hits
+that part**: the shot fell through the ground until it came out the other side.
+
+**Now.** `Projectiles.GetStart` (`I.Combat.GetShotStart`) raycasts from the ball's middle along the aim and starts the
+shot just short of the terrain or snail in the way, or `MUZZLE_GAP` past the ball when nothing is. `Fire` and the
+bots' predictions (`Predict.GetShot`, `Aim.GetContact`) use it, so a bot foresees the same shot. Rule: Snails → "Shots
+fly by the game's own simulation".
+
+## A map dragged off the plane (2026-11-10)
+
+**Before.** The arena plays wherever its template stands, and everything that turns the screen into the arena (the
+drop picker, the aim, the shot simulation's plane) takes the plane as Z = 0, as the maps are authored.
+
+**Why it changed.** In custom lobbies, which default to Picnic Plains, the aim was inverted, the drop couldn't be
+picked, and invisible shots carved the bottom of the map. The `PicnicPlains` template in the place had been dragged in
+Studio to Z −810.5, so the match played far off the plane every screen read. Nothing checked it, and other maps were
+fine.
+
+**Now.** Arena's `Loader._cacheTemplates` warns and moves a template back onto Z = 0 when its Bounds aren't on it, so
+one dragged by accident still plays. Rule: Arena → "Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas`".
+
+## Shots through water, bots for dropped players, the leader picks (2026-11-10)
+
+**Before.** Any liquid, a pond too, blew up an explosive shot that touched it, and only the spear sank. A player who
+dropped kept their seat for 60 seconds, skipping their turns, and their snail was then knocked out. A party member
+could press Join, Solo and Custom like their leader.
+
+**Why it changed.** The owner (2026-11-10): "in water you should be able to shoot through it, projectiles move through
+water but slower". A drop on a phone shouldn't lose a team its snail, and a party's members shouldn't start matches
+their leader didn't pick.
+
+**Now.** `Ballistics.Step` slows a shot as it enters liquid and drags it while it's under (`SINK_*`); behaviours burst
+it on what it touches there or by its fuse. A bot plays a dropped player's turns (Match's `Autopilot`), and the
+player takes over again from their next turn. A party member's board buttons are greyed out, and a custom lobby takes
+the leader's whole party in. Rules: Arena → "Shots fly on through any liquid"; Snails → "A dropped player's snail
+plays on under a bot"; Maps and placeholders → "A party's leader picks the match".
+
+## Turns announced, and fights that hit harder (2026-11-10)
+
+**Before.** A turn started with a sound and the banner's text; the player's last seconds only ticked. A blast's
+effects, the camera and the damage number looked the same for a scratch and a knockout. Turns waited on settling up to
+8 seconds and bots thought for up to 2.2.
+
+**Why it changed.** The owner approved a "your turn" and "fight feel" draft: players should feel their turn start and
+run out, and a big blow should land. The first callout was drawn in the GUI kit's yellow Hazard plate; the owner
+turned it down: "this is old style, the new style is MatchBoard or MatchHud".
+
+**Now.** MatchHud plays a callout as each turn starts and tightens the last seconds (`U_Tension`, the timer's colours, faster ticks).
+Combat's client stops the world for a beat on a big blow (`_hitStop`, `I.MatchCamera.Freeze`) and the camera punches in
+on a knockout (`Combat_Hit`'s `knockout`, `I.MatchCamera.PunchIn`); damage numbers grow with the hit (`POP_TIERS`);
+lobbed shots whistle as they fall and the camera leads flying shots. Settling and bots' thinking are shorter
+(`SETTLE_HOLD`, `MAX_SETTLE`, `THINK_TIME`, `AIM_TIME`). Rules: Snails → "Big blows stop the world for a beat"; Guis →
+"Turns are announced, and the end of a turn tightens", and "The studio's screens are 1:1 `Primitive` ports".
+
+The second callout, two blocks on the timer's trapezoid frame (`U_TurnCallout`, `U_TurnCalloutOther`), was turned
+down the same day: "the ui your turn looks bad, polish it up, make it look professional", and "add the player
+avatar/bot icon". It became one banner as `Primitive` nodes, `U_TurnCallout`: a full-width dark band with accent
+lines, the snail's avatar (`Teams.SetAvatar`), a gold or white gradient title and a line under it, opening, sliding
+in and settling, then sliding on as it closes (MatchHud's `CALLOUT_*`).
+
+## Ponds the sea reaches, obsidian, bots that always fire (2026-11-10)
+
+**Before.** Only liquid at or just over the sea's level knocked snails out, so a pond the rising sea had flooded into
+stayed safe above that level. Water and lava passed through each other. A bot whose brain found no plan let its turn
+run out.
+
+**Why it changed.** A pond the sea had flooded into looked like the sea but was safe to fall in; water and lava met
+with nothing happening; a bot with no shot stood still for its whole turn. (The change came with no recorded owner
+quote.)
+
+**Now.** Arena's `Liquid._markSea` flood-fills the liquid of the sea's kind joined to the cells under its level (after
+a build, `RaiseLiquid` and every `SEA_MARK_STEPS` steps), and `GetHazard` treats it as the sea (`Liquid.IsSea`). On a
+map with both liquids, water touching lava turns solid each step and `Obsidian.Build` makes it terrain parts that
+blasts cut. Bots fire the Bazooka toward the nearest enemy when they have no plan (`_fireAnyway`). Rules: Arena →
+"Only the sea knocks snails out"; Snails → "Bots play like players".
+
+## A mood for each place (2026-11-10)
+
+**Before.** The lobby and every map shared the place's own lighting: colour correction saturation 1.0, a teal ambient
+and a purple outdoor ambient, latitude 76 at 14:30. Nothing moved in the world between shots, a blast through a tree
+only threw its pieces, and falls into water or lava only splashed when a snail was knocked out.
+
+**Why it changed.** The owner asked for "some kind of atmosphere system, so each of the levels have different feeling
+based on the theme", "subtle, high quality, minimalistic but visible", "not ultra realistic", keeping "worms type of
+colors, but in a professional way": leaves from destroyed trees, lava bubbles, splashes when something falls in, the
+particles in the style of the existing ones, and a lobby lighting that is "solid, universal, visible, peaceful". A
+drawn plan of the four moods and six reactions was approved before building.
+
+**Now.** The Atmosphere module (client only, no remotes) picks the mood from `InMatch` and the match's `MapId`, sets
+its preset from `Lighting.Presets`, streams its `Ambient_` prefabs over the map's bounds with the wind's pull, plays
+surface and ceiling effects on spots in view, deepens the light in sudden death, and reacts to Arena's `Arena_Carve`
+and `Arena_Fall` and to chips, shots, props and snails crossing a liquid's surface (Arena's liquid parts now carry
+`Arena_Liquid`). Tuning in a playtest taught two things: Rockslide Ridge first came out slate blue, because the bright
+blue skybox lights shaded rock through `EnvironmentDiffuseScale` and the haze pulls toward the sky, so the cave keeps
+that at 0.25 with a warm-grey haze; and the dust puffs cloned from the additive spawn smoke vanished on sand, so the
+module's puffs blend normally. The music per mood was added to the same module by the sound work the same day. Rule:
+Snails → "Each place has its own mood, subtle and in the game's colours".
+
+## The game's own sounds and music (2026-11-10)
+
+**Before.** Every sound was a free Creator Store id (the owner, 2026-11-08: "find roblox ids, no uploading"): a mix
+of licensed effects, community uploads and a 3-note "ta ra ra ra ram" turn sting the owner disliked. The lobby and
+every match played one placeholder `BGM` track and a separate `Ambient` loop; maps had no music of their own.
+
+**Why it changed.** The owner asked for the game's own sounds, made like the farm game's, in "the roblox 2005
+soundscape... Great Strategy is the vibe": the old rocket launcher for the bazooka, classic notifications, a death
+sound, music per map that loops, is epic and isn't annoying, and a faster, more dynamic sudden death. They listened to
+each round in a preview page before anything was uploaded. Rounds changed: GM-instrument themes were "not the style";
+unique tunes per theme on the classic samples were "cool"; then the themes became Worms Armageddon-style level streams
+(ambience and a quiet level song mixed as one), whose wind, sand and birds were first too loud, then whose melodies
+"need to chill out"; Rockslide Ridge's busier take was kept ("epic"); the lobby became "really really subtle, but
+iconic" over a plains ambience; the turn calls went "military" for a battle game.
+
+**Now.** The kit in `art/sfx` builds everything from code (numpy, the classic Roblox sample pack, Roblox's 2009 sound
+ids) and a preview page. 18 effects are Roblox's own 2009 sounds played from their ids (and the official OOF); 28
+effects and 9 music pieces were uploaded to The Snail Studio through Open Cloud (all approved by moderation) under
+plain titles. Studio's own import was tried first and lost its queue when a playtest reloaded the place; Open Cloud
+needs the upload folder approved in Studio's Assistant Settings → MCP Permissions, which only the owner sets. Hooks
+added: time up, the knockout ding, the sea rising, obsidian's hiss, a window opening, the teleport card's whoosh out
+and in. Rules: Maps and placeholders → "Sounds are the classic 2005-2009 Roblox soundscape" and "The music is a level
+stream".
+
+## The camera follows every shot (2026-11-10)
+
+**Before.** While it followed a shot in flight, the camera dropped its ceiling by adding `Vector3.yAxis * math.huge`
+to the bounds' top. Zero times infinity is NaN, so the bounds' width became NaN, the sideways clamp failed, and the
+view slid to the arena's middle while the rocket flew elsewhere (a playtest log: rocket at X 880, camera at 805).
+`pan = goal - center` then stored that slide, and every clamp at a map's edge, as if the player had panned, so the
+camera stayed off its blast and off the next snail. Guns and swings (hitscan) left no part to follow, so the camera
+stayed on the shooter and then snapped to the next snail at full follow speed.
+
+**Why it changed.** The owner: "we shoot and the camera does not follow the bullet, switches fast to another player.
+Make sure all is shown, make sure the camera works and is not confusing."
+
+**Now.** The clamp keeps the top as a number of its own, and the pan is measured from where the view sits with no
+pan, so it's only what the player moved. The camera glides to where bullets landed (`Combat_Tracer`), holds where a
+shot ended with no blast here, follows a snail a blow sent flying, and glides to the next snail. Checked in a Studio
+match on Rockslide Ridge: the camera stays 5 to 10 studs ahead of the rocket, settles on the blast, and moves on after
+it. Rule: Snails → "The match camera shows every shot to its end".
+
+## One place for the pad (2026-11-10)
+
+**Before.** Each module bound its own gamepad buttons with `Enum.KeyCode` names: SnailControl (D-pad, A, left stick),
+MatchHud's LoadoutBar (LB, RB) and Aim (RT, B, right stick, LT), MatchCamera (right stick with LT) and the drop
+picker (left stick, A). The Console module only showed `Console_Hint` elements and swapped their icons; the game's
+guis had two hints (LB and RB as text). Nothing selected a gui on a pad, and Utils' ButtonPress ignored every key
+while one was selected, so B, X and the shoulders did nothing once a player pressed View. LB and RB stepping onto a
+utility used it, and stayed on it, so a pad could never reach the weapons after a utility.
+
+**Why it changed.** The owner: "add console button hints and design everything to correctly work with gamepads ...
+use 0_Console module for all gamepad related keybinds", after research into how popular Roblox games and console games
+map pads (Start is Roblox's, A confirms, B backs out, shoulders switch, triggers fire).
+
+**Now.** The Console module's `ACTIONS` setting is the scheme: every action's buttons, hint text and priority. Modules
+bind through `I.Console.Bind` or read through `IsAction` / `IsHeld`; buttons that guis press (`Utils_ButtonKey`) are
+`Gui` rows, and their hints name the action (`Console_Action`), so a hint shows the scheme's button and text for the
+player's pad. The module also runs the selection on Console: View starts it where the player is, widgets with buttons
+no key presses get it (their A button first), the lobby rests it on Solo vs bots, panels and the emote wheel hold it
+(`Focus`), and B, which Roblox spends on clearing a selection, backs out. ButtonPress now skips only A while a gui is
+selected. LB and RB step past utilities (Y uses one). The game's own glyphs were drawn as a kit (`art/console_glyphs`)
+and stay local until the owner approves them; `HINT_STYLE` swaps them in. MatchHud's Aim still reads RT, B, the right
+stick and LT itself until its hold-to-charge rework moves them to the scheme. Rule: Guis → "The pad goes through the
+Console module".
+
+## Chat bubbles and badges after names (2026-11-10)
+
+**Before.** Chat showed only in Roblox's chat window and its own bubbles, which floated over the players' avatars,
+parked out of sight under the map, never over their snails. Names (on the SnailTag, the turn list, Party, Results)
+were plain text: nothing told the owner, the developers or Roblox staff apart.
+
+**Why it changed.** The owner picked a drafted look, "Bubble Style B, and the icons are good", and asked: "if a player
+has multiple, display multiple (so for example I'm a developer, a game owner, and I'm verified and also have premium,
+display all of them)".
+
+**Now.** The ChatBubbles client turns Roblox's bubbles off and listens to `MessageReceived` (Shop already uses
+`OnIncomingMessage`, which takes one callback). A message becomes a bubble in the `ChatBubble` billboard over the
+speaker's snail on this screen, found by the `InMatch` attribute: the match snail, standing over its SnailTag's
+`S_Stack` (an Id added for this), or the lobby stage's snail (`I.Lobby.GetStageSnail`, the Lobby client's first API).
+Bubbles are sized from `TextService:GetTextBoundsAsync`, but scaled text draws about 5% bigger than it measures, and a
+box that fits exactly wraps "Watch the wind" onto two lines: the box gets 6% more room (`TEXT_ROOM`). The tail is a
+square on its corner behind the body, with a white joint over the body's outline where they meet, so the outline runs
+on down the tail with no picture.
+
+Badges are the PlayerBadges server's: it writes a `Badges` Player attribute from `I.Group` (The Snail Studio's ranks,
+Roblox's group, Video Stars), `I.AdminPanel.CanOpenDashboard`, `HasVerifiedBadge` and `MembershipType`. The studio's
+group has five roles at rank 1 (Member, Tester, Build, Management, LEAD), so ranks can't tell a developer from a
+member: the owner picked role names (`OWNER_ROLES` LEAD; `DEVELOPER_ROLES` LEAD, Management, Build) beside the ranks
+(255 the crown, 254 and up the wrench). Roblox's verified and Premium glyphs (`U+E000`, `U+E001`) draw in the game's fonts (checked in Studio: the
+verified badge keeps its blue, Premium takes the text colour), so only five icons were drawn, as a kit in
+`art/badges` (SVGs, a build script, a preview), local until the owner approves them. Each name keeps an `S_Badges`
+frame beside it; `I.PlayerBadges.Show` narrows the name by the badges' room and places them after its text. Narrowed
+scaled text with `TextWrapped` broke names mid-word ("HungryN00 / B"), and turning wrapping off made Roblox stop
+shrinking it, so the name's `UITextSizeConstraint` is lowered to the size that fits one line, measured once per text.
+Rules: Guis → "Chat shows in bubbles over the snails, never Roblox's" and "Badges after a name are the server's, and
+every one shows".
+
+## Worms Armageddon's shot: hold to charge (2026-11-10)
+
+**Before.** Since 2026-11-07 the power was how far the held mouse (or finger) was from the snail on the screen
+(`MIN_PULL` to `MAX_PULL`), and letting go fired; a pad's RT bounced the power up and down. The power circles ran
+from the weapon's muzzle to the crosshair's centre (`muzzle:Lerp(aimPoint, …)`), so the last one sat on the
+crosshair, and since the muzzle is off the snail's centre the row was bent away from the line the mouse made.
+
+**Why it changed.** The owner: make the shooting the same as in Worms Armageddon, hold to charge; the power bar
+mustn't overlap the crosshair and must be straight with the mouse aim; the crosshair in the team's colour, or the
+snail's own outside a team. Research (worms2d.info through the Wayback Machine, a native-size screenshot and a
+gameplay video measured frame by frame) gave W:A's numbers: the charge is linear, about 1.3 s to full, and fires by
+itself at full; the crosshair sits about 6 worm heights out (about 20 % of the screen's height), in the team's
+colour; the power is a cone of about 14 discs growing from the weapon, dark red to pale yellow.
+
+**Now.** Holding the mouse button, RT or FIRE (touch) charges for `CHARGE_SECONDS` (1.3), letting go fires, and a
+full charge fires by itself; guns and melee weapons fire on the press. The crosshair is drawn from gui shapes (a ring
+and an X, outlined, spinning), since the studio's picture is painted blue and can't take another colour, and it
+sits 11 studs out. The 14 circles go straight along the aim from the muzzle's distance, and the last one's edge is
+laid out each frame to stop `POWER_GAP` short of the crosshair at any zoom. Checked in a Studio match: a 0.9 s hold
+fired on release, a held press fired by itself 1.34 s in, a right click mid-charge fired nothing, and the crosshair
+took the snail's `Color`. Rule: Snails → "Shooting is Worms Armageddon's: point, hold to charge, let go".
+
+**Then (2026-11-11).** The owner: the charge "feels choppy", then "it behaves weirdly, flickers; zoomed in it's very
+small balls with a big distance, zoomed out it's cramped". The circles had popped in whole, one every 0.09 s; each
+was its own on-top BillboardGui at the same depth, so overlapping ones swapped draw order frame to frame; the cone
+started at the held weapon's muzzle, which moves a little every frame; and the crosshair's distance stayed in world
+studs while the sizes followed the zoom. Now the aim is drawn on the HUD's `U_Aim` layer in pixels (ZIndex fixes the
+order), from a fixed start, in units that scale with the screen and not the zoom, and each circle grows in from
+nothing. Checked in Studio at the closest zoom (45 studs), the default and zoomed out: the cone and crosshair keep one
+size and spacing; over 5 s of a turn the crosshair stayed shown every frame with no jumps.
+
+## The crate opening, CS2's way (2026-11-11)
+
+**Before.** Buying a crate opened the `CrateOpen` window over the GACHA screen: the crate shook for 1.2 s, then the
+results appeared as the GUI kit's reward tiles, all at once. Every crate looked the same (one placeholder crate
+picture), a premium crate felt like a coin crate, and nothing marked a rare drop.
+
+**Why it changed.** The owner asked for an opening like CS:GO's: its layout in the game's own gui style, satisfying,
+with sounds and effects, several reels for packs, crates with their own theme and real icons, a premium crate that
+feels premium through small changes, big moments for rare drops and a drop of its own for each of the rarest items,
+and a hybrid soundscape (refined clicks for the ticks, the Great Strategy instruments for the melodies). Research in
+CS2's own UI code gave the numbers: a 38-card strip, `cubic-bezier(0.075, 0.82, 0.165, 1)` over 6 s, the line landing
+10 % to 90 % across the winning card, a magnified centre window, legendaries never used as filler, and a gold ★ card
+followed by a reel of the case's rare items. The owner approved a playable HTML draft (`art/crates/preview`) and then
+said "Build it".
+
+**Now.** The opening plays on the `Crates` gui itself: `Reveal` runs it, `Reel` builds and rolls the reels, `Showcase`
+dresses the crate in its row's look, `Effects` draws every particle with `I.UIEmitter`, and `Drops` plays the black
+hole, variety grenade, skeleton and low gravity potion drops. The pictures (`art/crates`) and 21 sounds
+(`art/sfx/make_crates.py`) were uploaded to The Snail Studio group. Checked in a Studio playtest with the result forced:
+x1, x3 and x10 layouts, the premium look, each legendary drop, the golden reel, Skip, Quick open and Open again
+(through the server). Two things found there: a click placed by screen position has to be scaled from the capture
+(1920 × 997) to the playtest's viewport (1586 × 824), since an unscaled one pressed CONTINUE and looked like the
+opening closing itself; and the letterbox bars covered the crate's title and SKIP, so both draw over them now. Rule: Guis → "Crates open on the
+GACHA screen, CS2's way".
+
+## The gui maker's polish and the studio's trails (2026-11-11)
+
+**Before.** The Currency bar and the emote shop were the GUI kit's theme controls; the lobby's locked slot, lobby
+cards, SOLO VS BOTS and CUSTOM, the HUD's FIRE, power and stamina bars and jump, and the party card were the
+2026-11-09 ports. Shots flew with no trail, and a jetpack showed none.
+
+**Why it changed.** A gui maker polished six screens in Studio (`Workspace.Changes1_Gui`: Currency, Emotes, Loadout,
+MatchBoard, MatchHud, Party) and the studio sent four trails (`Workspace.Trails_New`); the owner asked for both to be
+plugged in and working. Their copies were made from the 2026-11-09 export, so laid over ours they would have dropped
+everything added since (the aim cone, the turn callout, the tension band, pad hints, name badges), and every
+component attribute in them was back at TagList+'s defaults (blank `Currency_Name`, no pad keys, the touch controls
+shown on desktop, device scales 0).
+
+**Now.** Their visual changes were ported into the gui tables node for node (a Studio serializer turns their
+instances into `Primitive` nodes, spliced over the subtrees they changed), with our attributes, tags and later
+additions kept; Currency and the emote shop became 1:1 ports. Things learned on the way:
+
+- **Diff a designer's copy against the export it started from** (the commit they took it from), never against
+  today's: only that tells their changes from ours.
+- **Their bar picture fills its whole width,** so MatchHud's `BAR_FILL` went from 0.744 to 1.
+- **`I.PlayerBadges.Show` needs a `UITextSizeConstraint` on the name:** their name label had lost it.
+- **A panel that takes another's place hides it** (Lobby's `PANEL_WIDGETS`): the emote panel stands where Loadout is.
+- **A Trail between attachments that line up with the motion draws nothing,** even with `FaceCamera`: the trail
+  prefabs' attachments sit on X, and a shot flying along X collapsed them to a line. Their attachments are turned to
+  Z (toward the camera), as `Trail_Snail`'s are, and shot trails ride a carrier part that follows the shot without
+  turning.
+
+Rules: Snails → "Effects are the studio's particle prefabs" (the trails); Guis → "The studio's screens are 1:1
+`Primitive` ports" (Currency, EmoteShop).
+
+## Emote bubbles and bot faces (2026-11-11)
+
+**Before.** A played emote showed only its name ("Wave!") in plain text over the snail, or beside the party card in
+the lobby, and nothing moved: the emotes have no animations yet. Every emote's icon was the placeholder crate, and
+every bot's avatar was the same smiley.
+
+**Why it changed.** The owner asked for icons for the emotes ("for wave a hand waving in the color of the snail"),
+shown over the player in a message bubble while the snail plays the emote, for everyone, beside the player's name in
+the lobby, with placeholder animations until the real ones arrive; and for the bots, headshots of snails with
+personalities ("snail in glasses, snail military").
+
+**Now.** The emote icons are drawn in the game's icon style (`art/emotes`); the first Flex icon, a bent pink arm,
+read as something else, and became a dumbbell in the snail's pink grip. The bubble is ChatBubbles' own (an
+`S_Icon` in its bubble and a public `ShowIcon` / `BuildIconBubble`), so it stacks with chat over the snail. SnailRig
+gained `Emote`: an `Animation` named after the emote plays when it exists, else a stand-in moves the body bone and the
+hands after the animations each frame, taking last frame's offsets off first so a bone no animation moves never
+builds them up. The bots' headshots are voxel busts of the game's snail rendered in Blender (`art/bots`): eight
+personalities were drawn, then the owner chose one default snail for every bot for now ("we gonna do it later in a
+way where we have custom rare bots"). Rule: Guis → "An emote shows its icon in a speech bubble and plays on the snail".
+
+## The crates in 3D (2026-11-11)
+
+**Before.** The opening started with the crate's drawn picture coming to the middle of the GACHA screen, rattling and
+bursting, and a legendary went from the gold card straight to the golden reel.
+
+**Why it changed.** The owner liked the opening's style and asked for 3D crates in its place: models in a
+ViewportFrame in the style of the game's models (the snail as the reference), TAP TO OPEN at the bottom, hatches opening
+first and then the crate, a smooth hand-over to the reels; three crates for x3 and ten for x10, opened by one tap; and
+for a legendary, another crate, the same one with effects, tapped open again. They approved a three.js draft of the
+models and the motion (`art/crates/preview/crate3d.js`) with "Yes, build it".
+
+**Now.** `Stage3D` clones the row's model into the gui's `U_Stage` viewport and animates it in code: each piece turns
+about its hinge every frame (`HINGES`), the light is a Neon ball (a ViewportFrame has no glow or lights of its own), and
+the 2D effects are placed at points projected from the viewport's camera. `Result` was split out of `Reveal`, which
+had passed 1000 lines. Two lessons from getting the models in:
+
+- **A baked texture came out black but for the glow:** a Blender image made in code (`bpy.data.images.new`) makes its
+  pixels again when it is rendered, so the stud pattern was lost. It is saved as a PNG and loaded back before baking,
+  and the bake keeps what is already in the target (`use_clear` off) so each piece adds its part.
+- **A model's pivot sat 14 studs under its floor:** an imported MeshPart keeps the pivot the FBX gave it
+  (`PivotOffset`), and with a `PrimaryPart` set that wins over the Model's `WorldPivot`. Each part's `PivotOffset` is set
+  so the pivot is the middle of the floor. FBXs also come in at 100 times their size (metres read as centimetres) and
+  turned to Roblox's axes (Blender x, y, z → −x, z, y).
+
+The models' textures load the first time they are seen, so the first opening showed grey crates: `Stage3D.Start`
+preloads the `Crates` folder. Checked in a Studio playtest: x1, x3 and x10, the tutorial crate on the real buy path,
+the golden crate before a legendary (with the golden reel, and with a single legendary's rising card), and Quick open.
+
+The owner then asked for the same model on the shop's pedestal, and found three things off: the reveal card's picture sat high with empty space under it (the card was laid out for a name under the picture, and the big card shows none), long names ran past the reel cards' slanted edges (the name box was wider than the card at its foot), and the black hole didn't look like the draft. That last one was a layer order: the result layer, with its tint, draws over the reels' layer, so the drop's near-black tint hid the reels it was swallowing. The drop no longer tints (the backdrop is dark already), and it shrinks the whole reels' layer into the hole with a UIScale, since a rotated layer would stop the reels from clipping their strips.
+
+Then: "the 10 crates opening is heavy on performance". Measured in a playtest, ten crates added about 25 ms a frame in
+every step, even while they only bobbed, waiting for the tap. Each crate is only about 4,500 triangles, and a test in
+the playtest found the cause: moving any part placed straight in a ViewportFrame (even one) redraws every mesh in it,
+about 27 ms for ten crates; moving only the camera costs almost nothing, and the same ten crates moving inside a
+WorldModel in the viewport cost under 1 ms. The crates (and the pedestal's) now sit in a WorldModel; on top of that a
+ten-pack shares one set of effects and drops the balls of light. Lighter models were not needed. Rule: Guis → "Models
+that move in a ViewportFrame sit in a WorldModel inside it".
+Rule: Guis → "Crates open on the GACHA screen, CS2's way".
+
+## The confirmation dialog, kept simple (2026-11-11)
+
+The owner asked for the "You sure?" dialog (System's blue-bannered card) to fit the game's new screens. The first try
+was built only from the screens' own pictures: the Loadout slot's slanted dark panel as the card, the EMOTES title plate
+over its top edge, the red kick button as a close on its corner, and the crate shop's slanted buttons. The owner: "its
+ugly. dont make it too complicated". The slot's picture is drawn for a card a tenth of the size, so stretched into a
+dialog its grey outline and rounded corners grew several times thicker than anywhere else, and the plate and the corner
+button made the card busy. The remake is one rounded dark panel drawn with Roblox's own fill, `UICorner` and two
+`UIStroke`s in the screens' colours (scaled with the screen by `Utils_UIStroke`), the title and the question in white
+Londrina, and only the buttons from the design pictures, near the size they were drawn at, tinted green and red. DECLINE
+closes it, so the X went too (B presses DECLINE on a pad).
+Rule: Guis → "Dialogs in the new look stay simple".
+
+## Skins on Classic's skeleton (2026-11-11)
+
+The owner put nine skin snails in `Workspace.NewSnails` ("rename them based on our skins... RIG them, use the same
+animations as we use for the default snail") and asked for their snails in the Skin crate's cards. They came static:
+separate MeshParts (body, shell, hats and the like) with the artist's SurfaceAppearances, no bones, no hands. Their
+bodies are Classic's body mesh at full size (Classic is the same rig scaled 0.45), so each was rigged onto a copy of
+Classic's skeleton in Blender and uploaded as a skinned FBX. Four things learned:
+
+- **Classic's rest pose isn't how it looks:** its shell floats above its back and its hands stick out to the sides;
+  every animation moves the shell bone 5.3 studs (at full size) onto the back and the hands in front. The artist
+  modelled the shells where Idle puts Classic's, so each shell is moved back by Idle's offset before it is bound, and
+  anything showing a snail without animating it holds it in Idle's first frame (`I.SnailRig.Pose`). The Skins
+  window's previews were too small to show it (each snail a speck at the top of its tile); they now fill the tile.
+- **Roblox's FBX import turns every bone 180° about its own length:** the first upload's bones stood in the right
+  places but their axes were flipped, which would play every animation mirrored. The bones are built turned back by
+  that much, and come in matching Classic's to a millionth.
+- **Studio's OBJ export (`PluginManager():ExportSelection`) fails in a playtest's datamodel** ("Failed to export
+  obj") and works in Edit mode; it opens its save dialog in the background, which can be filled through its window
+  handle without touching the mouse. EditableMesh, the other way to read a mesh, needs the experience's Mesh APIs
+  setting, which is the owner's.
+- **An unweighted vertex flies to the world's origin:** bone heat left the Devil's wings and parts of the Robot
+  unweighted, and in game each stretched a spike from the snail across the screen. Such vertices now take the nearest
+  weighted vertex's weights.
+- **No hands came with the skins:** Classic's hands are added to each body mesh, their UVs on one spot of the skin's
+  texture with the body's colour where the hands rest, so the Robot's are steel and the Devil's red.
+
+Rule: Snails → "Every skin is a snail on Classic's skeleton".

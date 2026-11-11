@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -102,6 +103,8 @@ function Module._onShot(id: number, kind: string, name: string, start: number, p
 		History = { [0] = Ballistics.GetState(body) },
 		Offset = Vector3.zero,
 		LastBounce = 0,
+		Whistled = false,
+		Whistle = nil,
 	}
 	shots[id] = shot
 
@@ -178,6 +181,9 @@ function Module._onEnd(id: number, position: Vector3)
 
 	--[[ Removing ]]
 
+	if shot.Whistle then
+		shot.Whistle:Stop()
+	end
 	shot.Part.CFrame = CFrame.new(position)
 	shot.Part:Destroy()
 	shots[id] = nil
@@ -211,7 +217,50 @@ function Module._step(deltaTime: number)
 		local angle: number = before.Angle + (body.Angle - before.Angle) * alpha
 		shot.Offset *= fade
 		shot.Part.CFrame = CFrame.new(position + shot.Offset) * CFrame.Angles(0, 0, angle)
+		Module._whistle(shot)
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Whistle
+
+--[[
+	Whistles a lobbed shot (WHISTLE_KINDS) once from its part as it starts coming down fast, and hushes it as it lands,
+	rests or rises again.
+]]
+--- @param shot Combat_ClientShot
+function Module._whistle(shot)
+	--[[ Local Variables ]]
+
+	local body = shot.Body --- @type Combat_Body
+
+	--[[ Hushing ]]
+
+	if shot.Whistle then
+		if body.Stopped or body.Grounded or body.Sunk or body.Velocity.Y > 0 then
+			shot.Whistle:Stop()
+			shot.Whistle = nil
+		end
+		return
+	end
+
+	--[[ Checks ]]
+
+	-- Check if it's a lobbed shot coming down fast for the first time
+	if shot.Whistled or not _settings.WHISTLE_KINDS[body.Kind] or body.Velocity.Y > -_settings.WHISTLE_FALL_SPEED then
+		return
+	end
+
+	--[[ Playing ]]
+
+	shot.Whistled = true
+	shot.Whistle = I.Sound.Play({
+		Name = "Shot_Whistle",
+		Location = shot.Part,
+		SoundGroup = "SFX",
+		Volume = 0.5,
+		RollOffMin = _settings.SOUND_ROLLOFF_MIN,
+		RollOffMax = _settings.SOUND_ROLLOFF_MAX,
+	})
 end
 
 --%%%%%%%%%%%%%%%%%%%% Catch Up

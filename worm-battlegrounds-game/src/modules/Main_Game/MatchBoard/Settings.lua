@@ -124,6 +124,11 @@ local _settings = {
 	SELECTED_TRANSPARENCY = 0.2,
 	TILE_COLOR = Color3.fromRGB(0, 0, 0),
 	TILE_TRANSPARENCY = 0.7,
+
+	-- A party member's Join, Play and Custom buttons while their leader picks the match: the face, its outline, the text
+	LOCKED_MAIN_COLOR = Color3.fromRGB(70, 70, 80),
+	LOCKED_STROKE_COLOR = Color3.fromRGB(130, 130, 130),
+	LOCKED_TEXT_COLOR = Color3.fromRGB(153, 153, 153),
 }
 
 return _settings

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -38,7 +39,8 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% New
 
 --[[
-	Returns a new shot body on the arena's plane at a position, moving at a velocity, at step 0.
+	Returns a new shot body on the arena's plane at a position, moving at a velocity, at step 0: a tumbling one already
+	turning the way it's thrown.
 ]]
 --- @param options Combat_ShotOptions
 --- @return Combat_Body
@@ -56,7 +58,7 @@ function Module.New(position: Vector3, velocity: Vector3, options)
 		Position = Vector3.new(position.X, position.Y, 0),
 		Velocity = Vector3.new(velocity.X, velocity.Y, 0),
 		Angle = 0,
-		Spin = 0,
+		Spin = if options.Tumble then math.clamp(-velocity.X * _settings.AIR_SPIN, -_settings.AIR_SPIN_MAX, _settings.AIR_SPIN_MAX) else 0,
 		Grounded = false,
 		Stopped = false,
 		Sunk = false,
@@ -113,10 +115,13 @@ function Module.Step(body, world)
 
 	--[[ Sinking ]]
 
-	if not body.Sunk and world.IsLiquid(body.Position) then
-		body.Sunk = true
+	-- Liquid slows a shot as it splashes in, then drags it along while it's under; it keeps flying through
+	local inLiquid: boolean = world.IsLiquid(body.Position)
+	if inLiquid and not body.Sunk then
 		body.SunkStep = body.Step
+		body.Velocity *= _settings.SINK_ENTRY_KEEP
 	end
+	body.Sunk = inLiquid
 	if body.Sunk then
 		acceleration = Vector3.new(0, -gravity * _settings.SINK_GRAVITY, 0)
 		body.Velocity *= _settings.SINK_KEEP ^ STEP

@@ -24,10 +24,21 @@ local _settings = {
 	HINTS = {
 		Walk = "Walk with A and D, or the arrow keys",
 		Jump = "Jump with Space",
-		Fire = "Drag toward the bot to aim: the longer the drag, the stronger the shot. Let go to fire, or press FIRE on a touch screen",
+		Fire = "Point at the bot to aim, hold the mouse button to charge, let go to fire. On a touch screen, tap to aim and hold FIRE",
 		BotTurn = "The bot's turn. Watch out!",
 		Finish = "Two hits knock it out. Finish it!",
 		Equip = "Put the Grenade and the Shotgun in your loadout",
+	},
+
+	--[[
+		What the match hints say on a pad instead, where they differ: each {Action} is the button of that action in
+		the Console module's scheme, named for the player's pad ("RT" or "R2")
+	]]
+	--- @type { [string]: string }
+	PAD_HINTS = {
+		Walk = "Walk with {Move} or the D-pad",
+		Jump = "Jump with {Jump}, hold it to fly",
+		Fire = "Aim at the bot with {Aim}, hold {Fire} to charge, let go to fire",
 	},
 
 	-- How fast a snail must rise, in studs per second, to count as a jump

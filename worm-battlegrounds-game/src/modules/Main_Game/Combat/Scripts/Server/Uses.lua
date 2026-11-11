@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -124,7 +125,10 @@ function Module.Give(participantId: string, itemId: string)
 	--[[ Data ]]
 
 	local participant = I.Match.GetParticipant(participantId) --- @type Match_Participant?
-	local row = I.G_Arsenal.GetAll()[itemId] --- @type (Arsenal_WeaponData | Arsenal_UtilityData)?
+	local weapons = {} --- @type { [string]: Arsenal_WeaponData }
+	local utilities = {} --- @type { [string]: Arsenal_UtilityData }
+	weapons, utilities = I.G_Arsenal.GetAll()
+	local row = weapons[itemId] or utilities[itemId] --- @type (Arsenal_WeaponData | Arsenal_UtilityData)?
 
 	--[[ Checks ]]
 

@@ -18,16 +18,19 @@ local _settings = {
 	-- Seconds a player waits between two emotes
 	EMOTE_COOLDOWN = 5,
 
-	-- How long an emote's placeholder label shows over the snail, in seconds
-	EMOTE_SECONDS = 2.5,
+	-- How long an emote plays on the snail and its bubble shows beside a name in the lobby, in seconds
+	EMOTE_SECONDS = 3,
+
+	-- The gap between a name on a lobby party card and the emote bubble beside it, in design px
+	CARD_BUBBLE_GAP = 8,
 
 	-- How far from the wheel's centre its emotes sit, as a share of its size
 	WHEEL_RADIUS = 0.38,
 
 	--%%%%%%%%%%%%%%%%%%%% Previews
 
-	-- How far the skin preview's camera stands from the snail, in the model's sizes
-	PREVIEW_DISTANCE = 1.6,
+	-- How far the skin preview's camera stands from the snail's middle, in the model's sizes (0.6 fills a tile's preview)
+	PREVIEW_DISTANCE = 0.6,
 
 	--%%%%%%%%%%%%%%%%%%%% Gui
 

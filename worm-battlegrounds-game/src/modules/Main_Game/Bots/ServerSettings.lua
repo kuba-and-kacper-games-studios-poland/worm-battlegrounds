@@ -20,6 +20,9 @@ local _settings = {
 		"Studs",
 	},
 
+	-- The difficulty a bot plays a dropped player's snail at, with that player's own loadout
+	TAKEOVER_DIFFICULTY = "Medium",
+
 	-- What each difficulty takes into a match: weapons, and the jetpack and heals it moves and heals with
 	--- @type { [string]: { string } }
 	LOADOUTS = {
@@ -58,7 +61,7 @@ local _settings = {
 
 	-- A bot thinks for a random time between these before it moves and takes aim, in seconds (its plan is made meanwhile)
 	--- @type { number }
-	THINK_TIME = { 1.2, 2.2 },
+	THINK_TIME = { 0.8, 1.5 },
 
 	-- A short pause after a heal or a walk, so it reads like a player's, in seconds
 	ACTION_PAUSE = 0.4,
@@ -68,7 +71,7 @@ local _settings = {
 		as a player would (Combat's CHARGE_SECONDS for full power), all sent every AIM_STEP and shown to every player,
 		and fires
 	]]
-	AIM_TIME = 1.5,
+	AIM_TIME = 1.2,
 	AIM_STEP = 0.1,
 
 	-- How much of each hit a difficulty's bot takes: the tutorial bot falls to two Bazooka hits (35 x 3 = 105 of 200)

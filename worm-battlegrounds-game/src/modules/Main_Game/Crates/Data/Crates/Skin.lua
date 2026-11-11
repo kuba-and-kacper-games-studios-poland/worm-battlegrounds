@@ -5,9 +5,19 @@ local _data = {
 
 	Name = "Skin crate",
 	TabName = "Skins",
-	Picture = "rbxassetid://121731184312632",
 	LayoutOrder = 4,
 	Hidden = false,
+
+	--[[ Look ]]
+
+	-- The showcase's theme: its glow and its second colour, the particles round it, and the premium dressing
+	Glow = Color3.fromRGB(255, 106, 213),
+	Accent = Color3.fromRGB(176, 77, 255),
+	Ambient = "Sparkles",
+	Premium = false,
+
+	-- The 3D crate the opening drops in (ReplicatedStorage_Assets/Crates)
+	Model = "PREFAB | Crate_Skin",
 
 	--[[ Prices ]]
 

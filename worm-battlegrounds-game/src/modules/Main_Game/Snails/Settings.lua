@@ -31,8 +31,8 @@ local _settings = {
 	WALK_ANIMATION_SPEED = 1.5,
 
 	--[[
-		A thrown snail (faster than HIDE_SPEED, not under its player's control) hides in its shell, and comes out once
-		slower than SHOW_SPEED, HIDE_SECONDS after it last flew that fast
+		A snail hides in its shell the moment it's hit, or when thrown (faster than HIDE_SPEED, not under its player's
+		control), and comes out once slower than SHOW_SPEED, HIDE_SECONDS after the hit or after it last flew that fast
 	]]
 	HIDE_SPEED = 25,
 	SHOW_SPEED = 2,
@@ -62,10 +62,18 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Ghosts
 
-	-- A knocked-out snail's ghost floats GHOST_RISE studs up over GHOST_RISE_TIME seconds, this see-through
-	GHOST_RISE = 4,
-	GHOST_RISE_TIME = 1.5,
-	GHOST_TRANSPARENCY = 0.6,
+	--[[
+		A knocked-out snail turns into its ghost on every screen: lit up in GHOST_COLOR, it floats GHOST_RISE studs up over
+		GHOST_TIME seconds, bobbing GHOST_BOB studs side to side GHOST_BOB_RATE times a second and swaying GHOST_SWAY degrees,
+		fading out from GHOST_FADE_FROM of the way up, and then it's gone from sight
+	]]
+	GHOST_RISE = 9,
+	GHOST_TIME = 1.8,
+	GHOST_BOB = 0.5,
+	GHOST_BOB_RATE = 1.2,
+	GHOST_SWAY = 10,
+	GHOST_FADE_FROM = 0.3,
+	GHOST_COLOR = Color3.fromRGB(205, 235, 255),
 
 	--%%%%%%%%%%%%%%%%%%%% Tags
 
@@ -75,9 +83,44 @@ local _settings = {
 	-- The name colour of a VIP player's snail
 	VIP_NAME_COLOR = Color3.fromRGB(255, 206, 46),
 
+	--[[
+		As a turn starts, the red turn arrow drops onto the active snail's tag from ARROW_DROP_FROM design px above
+		(off the top of the screen), bouncing in over ARROW_DROP_SECONDS, then bobs ARROW_BOB_HEIGHT px up and down
+		ARROW_BOB_SPEED radians a second
+	]]
+	ARROW_DROP_FROM = 700,
+	ARROW_DROP_SECONDS = 0.7,
+	ARROW_BOB_HEIGHT = 7,
+	ARROW_BOB_SPEED = 6,
+
+	--[[
+		Worms Armageddon's way: once the active snail moves (TAG_HIDE_MOVE studs from where its turn started), aims
+		(TAG_HIDE_AIM radians, or charges a shot) or shoots, its tag and arrow hide until the turn ends. The aim follows
+		the pointer, so it counts only while this screen's camera is still (moving less than TAG_HIDE_CAMERA_STILL studs a
+		frame): the camera flying to the snail as the turn starts drifts it
+	]]
+	TAG_HIDE_MOVE = 0.75,
+	TAG_HIDE_AIM = math.rad(4),
+	TAG_HIDE_CAMERA_STILL = 0.02,
+
 	-- A damage number rises POP_RISE studs while it fades
 	POP_RISE = 3,
 	POP_TWEENINFO = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+
+	--[[
+		Bigger hits pop bigger and warmer: each row is the damage it starts at, the number's size (times its design size)
+		and its colour; the last row an amount reaches is used. Numbers above the first row punch in (POP_PUNCH_TWEENINFO)
+		from POP_PUNCH times their size
+	]]
+	--- @type { { any } }
+	POP_TIERS = {
+		{ 0, 1, Color3.fromRGB(255, 255, 255) },
+		{ 25, 1.3, Color3.fromRGB(255, 220, 60) },
+		{ 45, 1.65, Color3.fromRGB(255, 120, 40) },
+	},
+
+	POP_PUNCH = 1.5,
+	POP_PUNCH_TWEENINFO = TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 
 	--%%%%%%%%%%%%%%%%%%%% Gear
 
@@ -120,6 +163,9 @@ local _settings = {
 
 	-- A snail shows its trail (the Trail_Snail effect) while it flies faster than this, in studs a second: knocked back, not walking
 	TRAIL_SPEED = 45,
+
+	-- Where the jetpack's jet (the Trail_Jet effect) comes out, from the snail's ball: under the worn jetpack (GEAR)
+	JET_TRAIL_OFFSET = Vector3.new(0, -0.6, 2.4),
 
 	-- The healing crosses are drawn this many times their made size, so they read from the match camera's distance
 	HEAL_VFX_SCALE = 2,

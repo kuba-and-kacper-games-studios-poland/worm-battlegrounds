@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -18,6 +19,7 @@ local Shell = require(_scripts:FindFirstChild("Client"):FindFirstChild("Shell"))
 local Sounds = require(_scripts:FindFirstChild("Client"):FindFirstChild("Sounds")) --- @type Snails_Client_Sounds
 local Effects = require(_scripts:FindFirstChild("Client"):FindFirstChild("Effects")) --- @type Snails_Client_Effects
 local Motion = require(_scripts:FindFirstChild("Client"):FindFirstChild("Motion")) --- @type Snails_Client_Motion
+local Ghost = require(_scripts:FindFirstChild("Client"):FindFirstChild("Ghost")) --- @type Snails_Client_Ghost
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -73,6 +75,7 @@ function Module.Start()
 	Sounds.Start(snailsFolder)
 	Effects.Start(snailsFolder)
 	Motion.Start(snailsFolder)
+	Ghost.Start(snailsFolder)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

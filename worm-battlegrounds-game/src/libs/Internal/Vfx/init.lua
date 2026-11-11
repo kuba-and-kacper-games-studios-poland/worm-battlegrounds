@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName = "Vfx"
@@ -148,44 +149,58 @@ end
 --%%%%%%%%%%%%%%%%%%%% Add Trail
 
 --[[
-	Puts a trail prefab's Trail on a part: its two attachments at the same offsets from the part as from the prefab's
-	part, the Trail between them. Returns the Trail, nil when the prefab is missing.
+	Puts a trail prefab's Trails on a part (a prefab may layer several): their attachments at the same offsets from the
+	part as from the prefab's part, each Trail between its two, and the prefab's other attachments with what they hold
+	(an exhaust's emitters, left as the prefab has them). Returns the Trails, none when the prefab is missing.
 ]]
---- @return Trail?
+--- @return { Trail }
 function Vfx.AddTrail(name: string, part: BasePart)
 	--[[ Data ]]
 
 	local prefab: BasePart? = Vfx.Get(name)
 	if not prefab then
-		return nil
+		return {}
 	end
 
-	--[[ Elements ]]
+	--[[ Local Variables ]]
 
-	local source: Trail? = prefab:FindFirstChildWhichIsA("Trail", true)
-
-	--[[ Checks ]]
-
-	-- Check if the prefab has a trail between two attachments
-	if not source or not source.Attachment0 or not source.Attachment1 then
-		warn(`[{_localName}::{script.Name}]: Prefab ({name}) has no Trail between two attachments!`)
-		return nil
-	end
+	local trails = {} --- @type { Trail }
+	local copies = {} --- @type { [Attachment]: Attachment }
 
 	--[[ Building ]]
 
-	local trail: Trail = source:Clone()
-	local attachment0: Attachment = source.Attachment0:Clone()
-	local attachment1: Attachment = source.Attachment1:Clone()
-	attachment0.Parent = part
-	attachment1.Parent = part
-	trail.Attachment0 = attachment0
-	trail.Attachment1 = attachment1
-	trail.Parent = part
+	for _index: number, source: Instance in ipairs(prefab:GetDescendants()) do
+		if not source:IsA("Trail") or not source.Attachment0 or not source.Attachment1 then
+			continue
+		end
+		local trail: Trail = source:Clone()
+		for _index2: number, attachment: Attachment in ipairs({ source.Attachment0, source.Attachment1 }) do
+			if not copies[attachment] then
+				copies[attachment] = attachment:Clone()
+				copies[attachment].Parent = part
+			end
+		end
+		trail.Attachment0 = copies[source.Attachment0]
+		trail.Attachment1 = copies[source.Attachment1]
+		trail.Parent = part
+		table.insert(trails, trail)
+	end
+	for _index: number, attachment: Instance in ipairs(prefab:GetChildren()) do
+		if attachment:IsA("Attachment") and not copies[attachment] then
+			attachment:Clone().Parent = part
+		end
+	end
+
+	--[[ Checks ]]
+
+	-- Check if the prefab had a trail between two attachments
+	if #trails == 0 then
+		warn(`[{_localName}::{script.Name}]: Prefab ({name}) has no Trail between two attachments!`)
+	end
 
 	--[[ Returning ]]
 
-	return trail
+	return trails
 end
 
 --%%%%%%%%%%%%%%%%%%%% Scale

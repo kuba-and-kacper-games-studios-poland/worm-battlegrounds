@@ -10,13 +10,14 @@ in this server stand on the pods around it, each in their own skin (the `Equippe
 writes), by user id; empty pods stay bare. Each client builds its own snails, so everyone sees themselves in front.
 The client shows the lobby's panels and holds the camera on the stage except while the player is in a match (the
 `InMatch` Player attribute, which only changes on the Studio map), and hides the panels while a full-screen widget
-(`FULL_SCREEN_WIDGETS`: Skins, Crates) is open, from WidgetManager's `WidgetManager_Opened` and `WidgetManager_Closed`
-Topics.
+(`FULL_SCREEN_WIDGETS`: Skins, Crates) is open, or the one panel a widget stands in for (`PANEL_WIDGETS`: the emote
+shop over Loadout), from WidgetManager's `WidgetManager_Opened` and `WidgetManager_Closed` Topics.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Lobby` |
 | Runs on | Server, Client · Lobby map, Studio map |
+| Exposes | `I.Lobby` (client) |
 | Uses | `I.Player`, `I.Tutorial`, `I.MatchBoard`, `I.TeleportExternal`, `I.TeleportToServer`, `I.WidgetManager`, `I.UserInterface`, `I.G_Cosmetics`, `I.SnailRig`, `I.Buff` (the `FOV` buff), the `PartyId` and `EquippedSkin` Player attributes (Party, Cosmetics) |
 | Saves | `Profile.Match` (read and cleared here, written by the Match server) |
 
@@ -26,8 +27,16 @@ Topics.
 | --- | --- |
 | `Server.lua` | Routing on join, the rejoin offer, `Workspace.Ume.Lobby` (where clients stand the party's snails) |
 | `Client.lua` | Shows `LOBBY_GUIS` outside matches and while no full-screen widget is open, closes a lobby window still open when a match starts (the Studio map's custom lobby), asks "Rejoin your match?" |
-| `Scripts/Client/Stage.lua` | The stage: the camera on its marker outside matches, and the party's snails on its pods (idle, animated by `I.SnailRig`), rebuilt when someone joins or leaves the party or changes skin |
+| `Scripts/Client/Stage.lua` | The stage: the camera on its marker outside matches, and the party's snails on its pods (idle, animated by `I.SnailRig`), rebuilt when someone joins or leaves the party or changes skin; `GetSnail` (`I.Lobby.GetStageSnail`), which ChatBubbles stands a member's chat bubbles over |
 | `Settings.lua` | `Lobby_Settings` |
+
+## API
+
+### Client: `I.Lobby`
+
+| Function | Returns | What it does |
+| --- | --- | --- |
+| `GetStageSnail(player: Player)` | `Model?` | The snail the player stands as on this screen's stage (its `PrimaryPart` is the skin's RootPart), or nil when they stand on none |
 
 ## Network
 
@@ -53,6 +62,7 @@ Topics.
 | --- | --- | --- |
 | `LOBBY_GUIS` | Lobby, MatchBoard, Party, Loadout, Currency | The guis the client shows outside matches |
 | `FULL_SCREEN_WIDGETS` | Skins, Crates | The widgets that cover the whole screen: `LOBBY_GUIS` hide while one is open |
+| `PANEL_WIDGETS` | EmoteShop: Loadout | The widgets that stand in one lobby panel's place, by widget: those panels hide while one is open |
 | `STAGE_PREFAB`, `PODS_FOLDER`, `POD_PREFIX`, `CAMERA_MARKER`, `SNAIL_MARKER` | `"PREFAB \| Stage"`, `"Pods"`, `"Pod_"`, `"Camera"`, `"Snail"` | The stage's prefab in Lobby's assets, its pods (`Pod_1` the player's), and the markers the camera and each snail stand on |
 | `STAGE_FOV` | `50` | The stage camera's field of view (the `FOV` buff's base) |
 | `TELEPORT_GUI` | `"TeleportGui"` | The teleport screen |

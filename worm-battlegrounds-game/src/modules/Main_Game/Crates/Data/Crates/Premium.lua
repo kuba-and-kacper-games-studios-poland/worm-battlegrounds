@@ -5,9 +5,19 @@ local _data = {
 
 	Name = "Premium crate",
 	TabName = "Premium",
-	Picture = "rbxassetid://121731184312632",
 	LayoutOrder = 2,
 	Hidden = false,
+
+	--[[ Look ]]
+
+	-- The showcase's theme: its glow and its second colour, the particles round it, and the premium dressing
+	Glow = Color3.fromRGB(92, 225, 255),
+	Accent = Color3.fromRGB(255, 210, 74),
+	Ambient = "Glints",
+	Premium = true,
+
+	-- The 3D crate the opening drops in (ReplicatedStorage_Assets/Crates)
+	Model = "PREFAB | Crate_Premium",
 
 	--[[ Prices ]]
 

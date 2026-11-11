@@ -82,6 +82,22 @@ local data = {
 		},
 	},
 
+	-- The local player's turn starts: two quick taps
+	["Match_YourTurn"] = {
+		Mode = "Haptic",
+		Type = Enum.HapticEffectType.Custom,
+		Looped = false,
+
+		Position = Vector3.zero,
+		Radius = 1,
+		WaveformKeys = {
+			FloatCurveKey.new(0, 0.7, Enum.KeyInterpolationMode.Linear),
+			FloatCurveKey.new(70, 0, Enum.KeyInterpolationMode.Linear),
+			FloatCurveKey.new(140, 0.9, Enum.KeyInterpolationMode.Linear),
+			FloatCurveKey.new(240, 0, Enum.KeyInterpolationMode.Linear),
+		},
+	},
+
 	-- The local player's own snail is hurt
 	["Combat_Hurt"] = {
 		Mode = "Haptic",

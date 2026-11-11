@@ -28,8 +28,8 @@ local _settings = {
 		After a shot, the match waits until snails, debris and projectiles have been at rest for SETTLE_HOLD seconds,
 		or MAX_SETTLE seconds have passed
 	]]
-	SETTLE_HOLD = 0.5,
-	MAX_SETTLE = 8,
+	SETTLE_HOLD = 0.3,
+	MAX_SETTLE = 6,
 
 	-- The wind each turn is a whole number from -WIND_MAX to WIND_MAX
 	WIND_MAX = 10,
@@ -40,8 +40,12 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% End
 
-	-- How long a dropped player has to come back before their snail is knocked out as a leaver, in seconds
-	REJOIN_SECONDS = 60,
+	--[[
+		How long the lobby offers a dropped player to go back to their match, in seconds; meanwhile a bot plays their
+		snail's turns, and a player dropping mid-turn leaves the bot at least TAKEOVER_SECONDS of it
+	]]
+	REJOIN_SECONDS = 900,
+	TAKEOVER_SECONDS = 12,
 
 	-- How long the rematch vote stays open after the results, in seconds
 	REMATCH_SECONDS = 20,

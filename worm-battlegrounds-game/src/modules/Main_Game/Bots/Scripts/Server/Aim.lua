@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -54,9 +55,8 @@ function Module.GetContact(origin: Vector3, angle: number, power: number, itemId
 	--[[ Local Variables ]]
 
 	local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
-	local muzzle: number = I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP
 	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(itemId, angle, power)
-	local points = I.Combat.PredictArc(origin + direction * muzzle, velocity, wind, _settings.ARC_SECONDS, _settings.ARC_STEP) --- @type { Vector3 }
+	local points = I.Combat.PredictArc(I.Combat.GetShotStart(origin, direction, shooter), velocity, wind, _settings.ARC_SECONDS, _settings.ARC_STEP) --- @type { Vector3 }
 	arcParams.FilterDescendantsInstances = { shooter, I.Dirs.UmeWorkspace:FindFirstChild("Combat") }
 
 	--[[ Searching ]]

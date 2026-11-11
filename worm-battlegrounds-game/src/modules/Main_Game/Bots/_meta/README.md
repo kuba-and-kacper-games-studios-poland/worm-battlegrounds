@@ -1,7 +1,9 @@
 # Bots
 
 Computer players for solo, public, party and tutorial matches. Match asks for a bot participant when it fills the
-seats, where each bot parachutes in (`GetStart`), and for a bot's turn when one is active. A bot plays its turn like a
+seats, where each bot parachutes in (`GetStart`), and for a bot's turn when one is active, or the turn of a player who
+dropped out (Match's `Autopilot`: the bot plays their snail with their loadout at `TAKEOVER_DIFFICULTY` until they
+come back). A bot plays its turn like a
 player, through its **brain**: a planner that weighs every plan it can see with a **genome** (the weights in
 `ServerData/Brains.lua`, trained by self-play in the **gym**) and plays it through its difficulty's **skill** (its hand, its
 reading of the wind, how far it looks: `SKILLS`).
@@ -25,8 +27,9 @@ reading of the wind, how far it looks: `SKILLS`).
    beside the target. With no shot at anyone at all, it aims at the terrain in the way to a target instead, from the
    spot nearest it (it digs).
 5. **Simulation.** The `Finalists` nearest misses are simulated in full (`Scripts/Server/Predict.lua`): the shot flies
-   by Combat's own simulation (`I.G_Combat.StepBody`), with bounces, fuses, bomblets, bullets and swings as Combat's
-   behaviors do them; its blasts hurt and throw snails as Combat's do; thrown snails are followed to where they land
+   by Combat's own simulation (`I.G_Combat.StepBody`) from where Combat would start it (`I.Combat.GetShotStart`),
+   with bounces, fuses, bomblets, bullets, swings and flight on through water or lava as Combat's behaviors do them;
+   its blasts hurt and throw snails as Combat's do; thrown snails are followed to where they land
    (into the sea knocks them out, a long drop costs fall damage), and snails whose ground the craters cut away drop
    through them. Each plan's score is the genome's weighing of what it does (damage and knockouts to enemies, harm to
    friends and itself, the ammo it spends) and of the spot it shoots from.
@@ -36,7 +39,14 @@ Then it walks to the spot (flying its jetpack when the spot needs it, or before 
 where it stands if the walk fell short, holds its weapon, swings its crosshair and charges its power for everyone to
 see (`AIM_TIME`, Combat's `CHARGE_SECONDS`), and fires with its hand's error (`AimNoise`, `PowerNoise`), which narrows
 by `Ranging` with each shot in a row at the same target from about the same spot, as players walk their shots in.
-From placed Dynamite it runs toward the side with more ground, flying when it wears a jetpack. The tutorial bot stays
+From placed Dynamite it runs toward the side with more ground, flying when it wears a jetpack.
+
+**It never passes.** When the brain has no plan at all (at the start of the turn, or again after a walk that fell
+short), the bot still fires the Bazooka at the nearest snail not on its team (its `Team` attribute): on the first arc
+`I.Combat.GetArcs` gives at `POWER_STEPS`, or, when no arc reaches, at 45° toward it (135° when it's to the left) at
+full power. Only with no enemy left does it fire nothing.
+
+The tutorial bot stays
 put and fires the Bazooka beside the nearest enemy, never at it, and takes `DAMAGE_TAKEN` times each hit.
 
 **Difficulties.** Easy, Medium, Hard and the secret Nightmare (only in custom lobbies: `SKILLS`, `LOADOUTS`) share the brain
@@ -64,7 +74,7 @@ weapons) and gives the champion as Lua for `ServerData/Brains.lua`. The code fol
 
 | File | What it controls |
 | --- | --- |
-| `Server.lua` | Making bot participants, a bot's turn: its view, healing, walking to its plan's spot, aiming, firing, running from Dynamite; the tutorial bot; drop spots |
+| `Server.lua` | Making bot participants, a bot's turn: its view, healing, walking to its plan's spot, aiming, firing, running from Dynamite, firing anyway when the brain has no plan (`_fireAnyway`); the tutorial bot; drop spots |
 | `ServerData/Brains.lua` | Each difficulty's trained genome (`Bots_Genome`) |
 | `Scripts/Server/Brain.lua` | The planner: spots and what it knows of them, targets, aim points, rough shots, the full simulations and scores, the choice; heals and drop spots |
 | `Scripts/Server/Aim.lua` | Where an arc first touches, the hand's error, and the self-check of Combat's arc solver (`GetArcs`) |
@@ -82,7 +92,7 @@ weapons) and gives the champion as Lua for `ServerData/Brains.lua`. The code fol
 | Function | Returns | What it does |
 | --- | --- | --- |
 | `CreateParticipant(difficulty: string, number: number)` | `Match_Participant` | A new bot (`Id` `B_<number>`) with an unused name, its difficulty's loadout and `DamageTaken`. Number 1 starts the names and the bots' memory over |
-| `TakeTurn(participantId: string)` | | Plays a bot's turn; gives up quietly when the turn ends meanwhile |
+| `TakeTurn(participantId: string)` | | Plays a bot's turn, or a dropped player's (a participant with no `Difficulty` plays at `TAKEOVER_DIFFICULTY`); with no plan it still fires the Bazooka toward the nearest enemy; gives up quietly when the turn ends meanwhile |
 | `GetStart(difficulty: string, spots: { Vector3 }, taken: { Vector3 })` | `Vector3` | The land spot a bot parachutes onto: the one its genome likes best (away from deadly edges and thin ground, high, apart from the spots taken) |
 
 ## Usage
@@ -116,11 +126,12 @@ A run needs the Studio map with no match playing: it loads each map into the are
 | `BOT_NAMES` | a list of names | Picked without repeats in a match |
 | `LOADOUTS` | Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Baseball Bat, Jetpack, Medkit · Nightmare: Hard's and a Grenade | What each difficulty takes into a match (others use Easy's) |
 | `SKILLS` | Easy, Medium, Hard, Nightmare (below) | Each difficulty's skill (`Bots_Skill`); others use Easy's |
-| `THINK_TIME` | `{ 1.2, 2.2 }` | Seconds a bot thinks (and plans) before it moves and takes aim |
+| `TAKEOVER_DIFFICULTY` | `"Medium"` | The difficulty a bot plays a dropped player's snail at, with that player's own loadout |
+| `THINK_TIME` | `{ 0.8, 1.5 }` | Seconds a bot thinks (and plans) before it moves and takes aim |
 | `ACTION_PAUSE` | `0.4` | Its pause after a heal or a walk |
-| `AIM_TIME`, `AIM_STEP` | `1.5`, `0.1` | How long its crosshair swings to the shot (the charge follows), and how often its aim is sent |
+| `AIM_TIME`, `AIM_STEP` | `1.2`, `0.1` | How long its crosshair swings to the shot (the charge follows), and how often its aim is sent |
 | `DAMAGE_TAKEN` | Tutorial 3 | Damage multiplier on a difficulty's bot (two Bazooka hits, 35 × 3, knock out 200 health) |
-| `POWER_STEPS` | 0.4 to 1 by 0.1 | The powers arcs are solved for (a low and a high arc each) |
+| `POWER_STEPS` | 0.4 to 1 by 0.1 | The powers arcs are solved for (a low and a high arc each), for plans and for a shot fired with no plan |
 | `ARC_SECONDS`, `ARC_STEP` | `4`, `1 / 20` | How far ahead a rough arc is checked against the terrain |
 | `PREDICT_SECONDS` | `6.4` | A full simulation's longest flight, in the shot's own (slowed) time |
 | `THINK_SLICE` | `0.008` | Seconds of planning before it gives the server a frame |

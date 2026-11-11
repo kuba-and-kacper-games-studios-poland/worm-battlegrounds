@@ -16,7 +16,7 @@ applies, and the match HUD's touch buttons press the controls through `Hold`.
 | Folder | `src/modules/Main_Game/SnailControl` |
 | Runs on | Server, Client |
 | Exposes | `I.SnailControl` (server, client) |
-| Uses | `I.Snails`, `ContextActionService`, `I.AdminPanel_CommandBar` |
+| Uses | `I.Snails`, `I.Console`, `ContextActionService`, `I.AdminPanel_CommandBar` |
 
 ## Files
 
@@ -66,10 +66,11 @@ through physics ownership.
 
 | Action | Keyboard | Gamepad | Touch |
 | --- | --- | --- | --- |
-| Walk | A / D, ← / → | Left stick, D-pad | The match HUD's ◀ ▶ buttons (`Hold`) |
-| Jump | Space | A | The match HUD's jump button (`Hold`) |
+| Walk | A / D, ← / → | Left stick, D-pad ← / → (Console's `Move`, `WalkLeft`, `WalkRight`) | The match HUD's ◀ ▶ buttons (`Hold`) |
+| Jump | Space | A (Console's `Jump`) | The match HUD's jump button (`Hold`) |
 
-Bound at `Enum.ContextActionPriority.High` while `CanMove` is on, and sunk.
+Bound at `Enum.ContextActionPriority.High` while `CanMove` is on, and sunk: the keys here, the pad's buttons through
+`I.Console.Bind` (the Console module's scheme owns which buttons they are).
 
 ## Settings
 

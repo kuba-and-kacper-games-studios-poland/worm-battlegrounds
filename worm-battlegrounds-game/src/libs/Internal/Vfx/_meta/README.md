@@ -22,7 +22,7 @@ attributes, and removes the copy once its last particle is gone. Trail prefabs h
 | --- | --- | --- |
 | `I.Vfx.Play(name: string, cframe: CFrame, parent: Instance, scale: number?)` | `BasePart?` | Copies the `name` prefab to `cframe` in `parent`, scaled, fires it (`Emit`) and removes it when done. Nil when the prefab is missing |
 | `I.Vfx.Emit(root: Instance, scale: number?)` | `number` | Fires every ParticleEmitter under `root` by its attributes (below), after scaling it; returns the seconds until its last particle is gone |
-| `I.Vfx.AddTrail(name: string, part: BasePart)` | `Trail?` | Copies a trail prefab's Trail and its two attachments onto `part`, at the same offsets they have on the prefab's part |
+| `I.Vfx.AddTrail(name: string, part: BasePart)` | `{ Trail }` | Copies a trail prefab's Trails (a prefab may layer several) and their attachments onto `part`, at the same offsets they have on the prefab's part, and its other attachments with what they hold (an exhaust's emitters, as the prefab has them); none when the prefab is missing |
 | `I.Vfx.Get(name: string)` | `BasePart?` | The `PREFAB \| <name>` part in `Assets/Vfx`; warns and returns nil when it's missing |
 
 A scale resizes the particles, their speed and acceleration, and the attachments' offsets, so an effect made for one
@@ -45,7 +45,7 @@ Emitters stay `Enabled = false` in their prefabs; `Emit` turns streams on and of
 Prefabs live in `Workspace.Ume.ReplicatedStorage_Assets/Vfx/`, moved into `ReplicatedStorage.Ume.Assets`
 (`I.Dirs.Assets`) when the game starts. Each is an anchored, invisible part named `PREFAB | <name>` (a trail prefab
 keeps its visible mesh, as a guide for its attachments), standing in a row from X −300 at Y −14. They came from the
-studio's `Particles_1` and `Particles_2` folders (2026-11-09):
+studio's `Particles_1` and `Particles_2` folders (2026-11-09), the trails from the studio's `Trails_New` (2026-11-11):
 
 | Prefab | From | Played by |
 | --- | --- | --- |
@@ -62,6 +62,10 @@ studio's `Particles_1` and `Particles_2` folders (2026-11-09):
 | `Splash_Water`, `Splash_Lava` | Water Splash, Lava Splash | Snails: a snail knocked out in water or lava |
 | `Healing` | Healing | Snails: a snail healing |
 | `Trail_Snail` | Snail (its trail) | Snails: a trail on each snail while it flies |
+| `Trail_Jet` | Trails_New: jet (BeamFilled wavey) | Snails: the jetpack's jet while a snail climbs on it |
+| `Trail_Smoke` | Trails_New: smoke (BeamWavey fog, made a little grey and subtler), plus an `Exhaust` attachment: `Smoke` (soft grey puffs) and `Thruster` (a tiny orange flame), both off | Combat: the Bazooka's and Homing missile's shots |
+| `Trail_BlackHole` | Trails_New: blackhole (BeamNoise cloud, BeamChromatic Thick) | Combat: the Black hole grenade's shot |
+| `Trail_Variety` | Trails_New: verity (BeamGlow strays) | Combat: the Variety grenade's shot |
 
 The Spear's and the Bat's trails are on their Arsenal models instead (Arsenal's README → In the place).
 
@@ -72,5 +76,5 @@ The Spear's and the Bat's trails are on their Arsenal models instead (Arsenal's 
 I.Vfx.Play("Explosion_Big", CFrame.new(position), effectsFolder, 9 / 6.5)
 
 -- A trail that shows only while it's enabled
-local trail: Trail? = I.Vfx.AddTrail("Trail_Snail", model.PrimaryPart)
+local trails = I.Vfx.AddTrail("Trail_Snail", model.PrimaryPart) --- @type { Trail }
 ```

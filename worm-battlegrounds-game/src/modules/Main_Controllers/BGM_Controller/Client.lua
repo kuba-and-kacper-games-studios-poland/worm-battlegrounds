@@ -1,5 +1,6 @@
 --[[
     Created By:     Nari
+    Edited By:     HungryN00B
 ]]
 
 --- @type Ume
@@ -61,23 +62,20 @@ end
 --%%%%%%%%%%%%%%%%%%%% Play Start Tracks
 
 --[[
-	Starts the `BGM` music and the `Ambient` sound once the player has loaded,
-	unless another module already chose them.
+	Starts the `BGM` music once the player has loaded, unless another module already chose it. The game's music carries
+	its own ambience, so no ambient sound starts.
 ]]
 function Module._playStartTracks()
-	--[[ Music ]]
+	--[[ Checks ]]
 
 	-- Skip when another module already chose the music
-	if not musicName then
-		Module.Play("BGM")
+	if musicName then
+		return
 	end
 
-	--[[ Ambient ]]
+	--[[ Music ]]
 
-	-- Skip when another module already chose the ambient sound
-	if not ambientName then
-		Module.SetAmbient("Ambient")
-	end
+	Module.Play("BGM")
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control

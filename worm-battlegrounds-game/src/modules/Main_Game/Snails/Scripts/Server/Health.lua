@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -139,8 +140,8 @@ end
 
 --[[
 	**SERVER** |
-	Knocks a snail out: it becomes a see-through ghost that touches nothing and floats up, and Snails_Died is published
-	with the cause ("Water", "Lava", "Bounds", a weapon's cause), the killer and the item, falling back on whoever last
+	Knocks a snail out: it becomes a ghost that touches nothing (each screen draws it floating up and fading away), and
+	Snails_Died is published with the cause ("Water", "Lava", "Bounds", a weapon's cause), the killer and the item, falling back on whoever last
 	hurt or pushed it.
 ]]
 function Module.Kill(participantId: string, cause: string, sourceId: string?)
@@ -163,9 +164,10 @@ function Module.Kill(participantId: string, cause: string, sourceId: string?)
 
 	--[[ Saving ]]
 
-	model:SetAttribute("Health", 0)
+	-- Out before its health drops, so screens don't break its shell as it goes
 	model:SetAttribute("Alive", false)
 	model:SetAttribute("Ghost", true)
+	model:SetAttribute("Health", 0)
 
 	--[[ Ghost ]]
 
@@ -173,16 +175,6 @@ function Module.Kill(participantId: string, cause: string, sourceId: string?)
 	root.Anchored = true
 	root.CollisionGroup = "Ghost"
 	root:FindFirstChild("Walk").Enabled = false
-	for _index: number, part: Instance in ipairs(model:FindFirstChild("Skin"):GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Transparency = math.max(part.Transparency, _settings.GHOST_TRANSPARENCY)
-		end
-	end
-
-	local Rise_TweenInfo: TweenInfo = TweenInfo.new(_settings.GHOST_RISE_TIME, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-	local Rise_TweenGoal = { CFrame = root.CFrame + Vector3.yAxis * _settings.GHOST_RISE }
-	local Rise_Tween: Tween = I.S.TweenService:Create(root, Rise_TweenInfo, Rise_TweenGoal)
-	Rise_Tween:Play()
 
 	--[[ Publishing ]]
 

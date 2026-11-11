@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -25,6 +26,9 @@ local items = {} --- @type { string }
 local boxes = {} --- @type { [string]: ImageButton }
 local selected: string = "Bazooka"
 local bound: boolean = false
+
+-- The utility box the pad's LB and RB rest on (they pass utilities without using them; Y uses it), nil on the held weapon
+local padCursor: string? = nil
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -109,6 +113,7 @@ function Module.Select(itemId: string)
 	--[[ Saving ]]
 
 	selected = itemId
+	padCursor = nil
 	I.Network.Fire("Combat_Select", itemId)
 
 	--[[ Refreshing ]]
@@ -206,6 +211,7 @@ function Module._rebuild()
 	if not boxes[selected] then
 		selected = "Bazooka"
 	end
+	padCursor = nil
 	Module._refreshBoxes()
 end
 
@@ -247,7 +253,8 @@ end
 
 --[[
 	Shows each box's uses left, its cooldown (the icon darkened under the turns left) and whether it's the selected one
-	(the design's white outline, from the box's Look_ attributes); the key numbers only on Desktop.
+	(the design's white outline, from the box's Look_ attributes; the pad's utility box instead while LB or RB rest
+	there, with its Y hint); the key numbers only on Desktop.
 ]]
 function Module._refreshBoxes()
 	--[[ Checks ]]
@@ -257,9 +264,14 @@ function Module._refreshBoxes()
 		return
 	end
 
+	--[[ Local Variables ]]
+
+	local picked: string = padCursor or selected
+
 	--[[ Applying ]]
 
 	for itemId: string, box: ImageButton in pairs(boxes) do
+		box:FindFirstChild("S_UseHint"):SetAttribute("Console_HintHidden", itemId ~= padCursor)
 		local uses: number = combatRep:GetAttribute(`Uses_{itemId}`) or 0
 		local cooldown: number = combatRep:GetAttribute(`Cooldown_{itemId}`) or 0
 		local icon: ImageLabel = box:FindFirstChild("S_Icon")
@@ -274,7 +286,7 @@ function Module._refreshBoxes()
 		if model then
 			model.ImageColor3 = iconColor
 		end
-		box:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = box:GetAttribute(if itemId == selected then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+		box:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = box:GetAttribute(if itemId == picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
 	end
 end
 
@@ -293,6 +305,7 @@ function Module._onMyTurn(myTurn: boolean)
 
 	--[[ Selecting ]]
 
+	padCursor = nil
 	if (combatRep:GetAttribute(`Uses_{selected}`) or 0) == 0 or (combatRep:GetAttribute(`Cooldown_{selected}`) or 0) > 0 then
 		selected = "Bazooka"
 	end
@@ -302,7 +315,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Bind Keys
 
 --[[
-	Binds the box keys (1 to 6, LB and RB) while the bar shows, and unbinds them when it hides.
+	Binds the box keys (1 to 6) and the pad's buttons (the Console module's WeaponPrevious, WeaponNext and UseUtility)
+	while the bar shows, and unbinds them when it hides.
 ]]
 function Module._bindKeys()
 	--[[ Checks ]]
@@ -315,20 +329,24 @@ function Module._bindKeys()
 	--[[ Binding ]]
 
 	bound = elems["Bar"].Visible
+	padCursor = nil
 	if bound then
-		local keys = table.clone(_settings.SLOT_KEYS) --- @type { Enum.KeyCode }
-		table.insert(keys, Enum.KeyCode.ButtonL1)
-		table.insert(keys, Enum.KeyCode.ButtonR1)
-		I.S.ContextActionService:BindActionAtPriority("MatchHud_Slots", Module._onKey, false, Enum.ContextActionPriority.High.Value, table.unpack(keys))
+		I.S.ContextActionService:BindActionAtPriority("MatchHud_Slots", Module._onKey, false, Enum.ContextActionPriority.High.Value, table.unpack(_settings.SLOT_KEYS))
+		I.Console.Bind("WeaponPrevious", Module._onStep)
+		I.Console.Bind("WeaponNext", Module._onStep)
+		I.Console.Bind("UseUtility", Module._onUse)
 	else
 		I.S.ContextActionService:UnbindAction("MatchHud_Slots")
+		I.Console.Unbind("WeaponPrevious")
+		I.Console.Unbind("WeaponNext")
+		I.Console.Unbind("UseUtility")
 	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Key
 
 --[[
-	Picks the box a number key names, or steps to the previous or next box with LB and RB.
+	Picks the box a number key names.
 ]]
 --- @return Enum.ContextActionResult
 function Module._onKey(_action: string, state: Enum.UserInputState, input: InputObject)
@@ -342,13 +360,68 @@ function Module._onKey(_action: string, state: Enum.UserInputState, input: Input
 	--[[ Selecting ]]
 
 	local index: number? = table.find(_settings.SLOT_KEYS, input.KeyCode)
-	if not index then
-		local step: number = if input.KeyCode == Enum.KeyCode.ButtonL1 then -1 else 1
-		index = ((table.find(items, selected) or 1) - 1 + step) % #items + 1
-	end
-	if items[index] then
+	if index and items[index] then
 		Module.Select(items[index])
 	end
+
+	--[[ Returning ]]
+
+	return Enum.ContextActionResult.Sink
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Step
+
+--[[
+	LB and RB: step to the previous or next box. A weapon is picked at once; a utility only gets the pad's cursor, so
+	stepping past it never uses it, and Y uses it (On Use).
+]]
+--- @return Enum.ContextActionResult
+function Module._onStep(action: string, state: Enum.UserInputState, _input: InputObject)
+	--[[ Checks ]]
+
+	-- Act on presses only
+	if state ~= Enum.UserInputState.Begin or #items == 0 then
+		return Enum.ContextActionResult.Sink
+	end
+
+	--[[ Local Variables ]]
+
+	local step: number = if action == "WeaponPrevious" then -1 else 1
+	local index: number = ((table.find(items, padCursor or selected) or 1) - 1 + step) % #items + 1
+	local itemId: string = items[index]
+
+	--[[ Selecting ]]
+
+	if I.G_Arsenal.IsUtility(itemId) then
+		padCursor = itemId
+		Module._refreshBoxes()
+	else
+		padCursor = nil
+		Module.Select(itemId)
+	end
+
+	--[[ Returning ]]
+
+	return Enum.ContextActionResult.Sink
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Use
+
+--[[
+	Y: uses the utility the pad's cursor rests on (Select uses a utility on the player's turn).
+]]
+--- @return Enum.ContextActionResult
+function Module._onUse(_action: string, state: Enum.UserInputState, _input: InputObject)
+	--[[ Checks ]]
+
+	-- Act on presses with the cursor on a utility
+	if state ~= Enum.UserInputState.Begin or not padCursor then
+		return Enum.ContextActionResult.Sink
+	end
+
+	--[[ Using ]]
+
+	Module.Select(padCursor)
 
 	--[[ Returning ]]
 

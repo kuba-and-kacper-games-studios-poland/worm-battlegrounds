@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -108,8 +109,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Lists the party's members (just the local player when they have none) with their avatar, name and level, the
-	crown on the leader and Kick for the leader, then a + card per free place for a player who may invite.
+	Lists the party's members (just the local player when they have none) with their avatar, name (their badges after
+	it) and level, the crown on the leader and Kick for the leader, then a + card per free place for a player who may
+	invite.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -141,6 +143,8 @@ function Module._refresh()
 		card.LayoutOrder = if player:GetAttribute("PartyLeader") then 0 else index
 		card.Visible = true
 		card:FindFirstChild("S_Name", true).Text = player.DisplayName
+		card:FindFirstChild("S_Username", true).Text = `@{player.Name}`
+		I.PlayerBadges.Show(card:FindFirstChild("S_Name", true), player.UserId)
 		card:FindFirstChild("S_Level", true).Text = `Lv {player:GetAttribute("Level") or 1}`
 		card:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={player.UserId}&w=150&h=150`
 		card:FindFirstChild("S_Crown", true).Visible = player:GetAttribute("PartyLeader") == true

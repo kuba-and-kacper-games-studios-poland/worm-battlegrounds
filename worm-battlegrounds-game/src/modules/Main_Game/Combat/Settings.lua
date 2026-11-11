@@ -9,8 +9,11 @@ local _settings = {
 	-- How far in front of the snail's ball a shot starts, in studs
 	MUZZLE_GAP = 0.8,
 
-	-- Seconds a held RT takes to fill a pad player's power bar from no power to full, then back down; bots charge as fast
-	CHARGE_SECONDS = 1.6,
+	--[[
+		Seconds a held press (the mouse button, FIRE on touch, RT) takes to fill the power from none to full, at one even
+		rate, as in Worms Armageddon; a full charge fires by itself. Bots charge as fast
+	]]
+	CHARGE_SECONDS = 1.3,
 
 	-- For this long after leaving, a shot can't hit the snail that fired it, in seconds
 	SHOOTER_GRACE = 0.25,
@@ -44,6 +47,13 @@ local _settings = {
 	REST_SPEED = 8,
 
 	--[[
+		A thrown bomb (its Tumble option) leaves the hand turning AIR_SPIN radians a second (of its flight) for each stud a
+		second it flies across, at most AIR_SPIN_MAX, and keeps turning through the air until the ground rolls it
+	]]
+	AIR_SPIN = 0.35,
+	AIR_SPIN_MAX = 30,
+
+	--[[
 		A rolling shot slows by ROLL_DRAG studs per second squared, and stops below STOP_SPEED on ground flatter than
 		REST_NORMAL_Y (the Y of its normal; 1 is flat): on a slope gravity keeps it rolling down
 	]]
@@ -52,12 +62,14 @@ local _settings = {
 	REST_NORMAL_Y = 0.9,
 
 	--[[
-		A shot in water or lava sinks, as in Worms: gravity pulls it at SINK_GRAVITY of its strength, it keeps SINK_KEEP of
-		its speed each second, and it's gone after SINK_SECONDS without a blast
+		A shot flies on through water or lava, slowed: it keeps SINK_ENTRY_KEEP of its speed as it splashes in, then
+		gravity pulls it at SINK_GRAVITY of its strength and it keeps SINK_KEEP of its speed each second of its flight
+		while under; it bursts on what it touches there, and it's gone after SINK_SECONDS (real seconds) under without one
 	]]
-	SINK_GRAVITY = 0.15,
-	SINK_KEEP = 0.05,
-	SINK_SECONDS = 1.5,
+	SINK_ENTRY_KEEP = 0.5,
+	SINK_GRAVITY = 0.3,
+	SINK_KEEP = 0.12,
+	SINK_SECONDS = 4,
 
 	--[[
 		The server sends each shot's state every STATE_INTERVAL seconds; a client whose copy was more than
@@ -101,6 +113,14 @@ local _settings = {
 	]]
 	HAPTIC_BIG = 0.6,
 	HAPTIC_SMALL = 0.15,
+
+	--[[
+		A hit of HITSTOP_DAMAGE or more stops the blast's effects and the camera for HITSTOP_SECONDS on every screen; a
+		knockout blow stops them for HITSTOP_KNOCKOUT and the camera punches in on the snail (MatchCamera's PunchIn)
+	]]
+	HITSTOP_DAMAGE = 30,
+	HITSTOP_SECONDS = 0.07,
+	HITSTOP_KNOCKOUT = 0.16,
 
 	--[[
 		The most chunks of ground a blast throws, how fast they fly (studs per second), the smallest and biggest side
@@ -153,6 +173,15 @@ local _settings = {
 	BOUNCE_SOUND_SPEED = 15,
 	BOUNCE_SOUND_GAP = 0.12,
 
+	--[[
+		A lobbed shot of these kinds whistles (Shot_Whistle) once as it starts coming down faster than WHISTLE_FALL_SPEED
+		(studs per second of its flight), and hushes as it lands
+	]]
+	--- @type { [string]: boolean }
+	WHISTLE_KINDS = { Bouncer = true, Rocket = true, Crawler = true },
+
+	WHISTLE_FALL_SPEED = 25,
+
 	--%%%%%%%%%%%%%%%%%%%% Behaviors
 
 	-- Bomblets fly out of a cluster bomb at a random speed between these, in studs per second
@@ -197,13 +226,6 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Placeholders
 
-	--[[
-		shortcut: weapons whose shot flies as another weapon's projectile model until the studio makes their own (the
-		Bazooka's rocket as the homing missile's missile)
-	]]
-	--- @type { [string]: string }
-	PROJECTILE_STAND_INS = { Bazooka = "HomingMissile" },
-
 	-- shortcut: projectiles are plain neon parts in these colours until the real models exist
 	--- @type { [string]: Color3 }
 	PROJECTILE_COLORS = {
@@ -222,6 +244,21 @@ local _settings = {
 		aside); hits still use PROJECTILE_SIZE
 	]]
 	PROJECTILE_DRAW_SCALE = 2,
+
+	--[[
+		The trail (a Vfx effect, with its exhaust's emitters when it has one) a weapon's shot draws behind it while it
+		flies, by item id; it fades out where the shot ends. TRAIL_SCALE widens every one, and a rocket's starts
+		TRAIL_TAIL studs behind its middle, at its drawn tail
+	]]
+	--- @type { [string]: string }
+	PROJECTILE_TRAILS = {
+		Bazooka = "Trail_Smoke",
+		HomingMissile = "Trail_Smoke",
+		BlackHoleGrenade = "Trail_BlackHole",
+		VarietyGrenade = "Trail_Variety",
+	},
+	TRAIL_SCALE = 1,
+	TRAIL_TAIL = 2,
 
 	-- A worm's model sways from side to side as it digs: how far, in radians, and how fast, in swings a second
 	WORM_SWAY = 0.35,

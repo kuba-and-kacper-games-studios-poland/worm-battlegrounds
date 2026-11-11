@@ -108,7 +108,8 @@ end
 
 --[[
 	Scales every panel to the screen: its height over the design height (or its width over the design width on a
-	narrower screen), bigger on short Mobile screens.
+	narrower screen), bigger on short Mobile screens, and on other devices never under the floor (smaller in a window
+	narrower than MIN_SCALE_WIDTH).
 ]]
 function Module._applyScale()
 	--[[ Local Variables ]]
@@ -119,11 +120,11 @@ function Module._applyScale()
 	-- A screen narrower than the layout (4:3, 5:4, a tablet) scales by its width, so side-by-side panels still fit
 	screenScale = math.min(height / _settings.DESIGN_HEIGHT, width / _settings.DESIGN_WIDTH)
 
-	-- Boost short touch screens; anything else never shrinks below the floor
+	-- Boost short touch screens; anything else never shrinks below the floor, which narrows with a window under MIN_SCALE_WIDTH
 	if I.Platform.Current == "Mobile" and height < _settings.SMALL_SCREEN then
 		screenScale *= _settings.MOBILE_BOOST
 	elseif I.Platform.Current ~= "Mobile" then
-		screenScale = math.max(screenScale, _settings.MIN_SCALE)
+		screenScale = math.max(screenScale, _settings.MIN_SCALE * math.min(1, width / _settings.MIN_SCALE_WIDTH))
 	end
 
 	--[[ Applying ]]
@@ -140,12 +141,24 @@ end
 
 --[[
 	Sets one panel's scale: the screen's times its device scale, which Utils_PlatformScale keeps in the UIScale's
-	Utils_BaseScale attribute (1 without the tag).
+	Utils_BaseScale attribute (1 without the tag), never bigger than lets a top-level panel fit inside FIT_MARGIN of the
+	screen.
 ]]
 function Module._fitScale(uiScale: UIScale)
 	--[[ Local Variables ]]
 
 	local scale: number = screenScale * (uiScale:GetAttribute(_settings.BASE_SCALE_ATTRIBUTE) or 1)
+	local panel: Instance? = uiScale.Parent
+	local viewport: Vector2 = I.Env.Camera.ViewportSize
+
+	-- A panel straight on its ScreenGui, at its unscaled size, never grows past the screen (the boost on a short phone)
+	if panel and panel:IsA("GuiObject") and panel.Parent and panel.Parent:IsA("LayerCollector") then
+		local width: number = panel.Size.X.Scale * viewport.X + panel.Size.X.Offset
+		local height: number = panel.Size.Y.Scale * viewport.Y + panel.Size.Y.Offset
+		if width > 0 and height > 0 then
+			scale = math.min(scale, _settings.FIT_MARGIN * math.min(viewport.X / width, viewport.Y / height))
+		end
+	end
 
 	--[[ Applying ]]
 

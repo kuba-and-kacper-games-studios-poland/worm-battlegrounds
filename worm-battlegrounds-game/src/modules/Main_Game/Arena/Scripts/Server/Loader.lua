@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -106,6 +107,13 @@ function Module._cacheTemplates()
 		if not template:IsA("Model") or not template:FindFirstChild("Terrain") or not markers or not markers:FindFirstChild("Bounds") then
 			warn(`[{_localName}::{script.Name}]: Map ({template.Name}) needs to be a Model with Terrain, Markers and Markers.Bounds - skipped! -`, template)
 			continue
+		end
+
+		-- Check if the map sits on the play plane (Z = 0), which shots, aims and drops keep to: one dragged off it is put back
+		local planeZ: number = markers:FindFirstChild("Bounds"):GetPivot().Position.Z
+		if math.abs(planeZ) > 0.01 then
+			warn(`[{_localName}::{script.Name}]: Map ({template.Name}) Bounds sit at Z {planeZ}, not 0 - moved back onto the plane! -`, template)
+			template:PivotTo(template:GetPivot() - Vector3.zAxis * planeZ)
 		end
 
 		--[[ Applying ]]

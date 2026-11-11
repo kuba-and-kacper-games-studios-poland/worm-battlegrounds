@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -48,7 +49,6 @@ function Module.Init()
 
 		--[[ Methods ]]
 
-		GetMuzzle = Held.GetMuzzle,
 		GetAimGuides = Aimbot.GetGuides,
 	}
 end

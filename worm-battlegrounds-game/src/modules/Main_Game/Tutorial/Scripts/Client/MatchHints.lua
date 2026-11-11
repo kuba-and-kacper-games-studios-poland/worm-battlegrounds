@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -119,7 +120,7 @@ function Module._tick()
 	--[[ Applying ]]
 
 	moduleGui.Enabled = inMatch and (if step == "BotTurn" then phase == "Turn" and not myTurn else myTurn and step ~= "Done")
-	elems["Text"].Text = _settings.HINTS[step] or ""
+	elems["Text"].Text = Module._getHint(step)
 
 	--[[ Finishing ]]
 
@@ -127,6 +128,28 @@ function Module._tick()
 		tickConnection:Disconnect()
 		tickConnection = nil
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Hint
+
+--[[
+	Returns what a step's hint says: on a pad its PAD_HINTS text, with each {Action} named for the player's pad by the
+	Console module, else its HINTS text.
+]]
+--- @return string
+function Module._getHint(stepName: string)
+	--[[ Checks ]]
+
+	-- Use the keyboard and touch text off a pad, or when the step's text names no button
+	if I.Platform.Current ~= "Console" or not _settings.PAD_HINTS[stepName] then
+		return _settings.HINTS[stepName] or ""
+	end
+
+	--[[ Returning ]]
+
+	return (string.gsub(_settings.PAD_HINTS[stepName], "{(%w+)}", I.Console.GetButtonName))
 end
 
 return Module

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -52,6 +53,7 @@ function Module.Init()
 		--[[ Control ]]
 
 		AddXP = Module.AddXP,
+		AddLevels = Module.AddLevels,
 
 		--[[ Methods ]]
 
@@ -123,6 +125,29 @@ function Module.AddXP(player: Player, amount: number)
 	--[[ Returning ]]
 
 	return after, after > before
+end
+
+--%%%%%%%%%%%%%%%%%%%% Add Levels
+
+--[[
+	**SERVER** |
+	Gives a player the XP that takes them up a number of levels (MAX_LEVEL at most), through AddXP, so each level's
+	rewards, Topic and toast come as they do after a match. Returns the level they're at now and whether it went up.
+]]
+--- @return number, boolean
+function Module.AddLevels(player: Player, levels: number)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return 0, false
+	end
+
+	--[[ Local Variables ]]
+
+	local target: number = math.clamp(Module.GetLevel(player) + math.floor(levels), 1, _settings.MAX_LEVEL)
+
+	--[[ Returning ]]
+
+	return Module.AddXP(player, Module._getTotalFor(target) - Module._getXP(player))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Publish

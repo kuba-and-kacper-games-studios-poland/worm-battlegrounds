@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -60,7 +61,8 @@ end
 --[[
 	**SERVER** |
 	Makes a custom lobby the player owns, on a map from MAP_POOL, in Deathmatch or Teams, for 2 to 8 snails, its empty
-	places filled with bots of a CUSTOM_DIFFICULTIES difficulty, or with none.
+	places filled with bots of a CUSTOM_DIFFICULTIES difficulty, or with none. Only a party's leader makes one, and
+	their party is in it at once (their windows stay closed until they open CUSTOM).
 ]]
 --- @return boolean
 function Module.Create(player: Player, mapId: string, mode: string, size: number, difficulty: string)
@@ -81,12 +83,34 @@ function Module.Create(player: Player, mapId: string, mode: string, size: number
 		return false
 	end
 
+	-- Check if the player may bring the party
+	if player:GetAttribute("PartyId") and not player:GetAttribute("PartyLeader") then
+		Launch._tell({ player }, "Only your party's leader can make a custom lobby.")
+		return false
+	end
+
+	local group = Rows.GetGroup(player) --- @type { Player }
+
+	-- Check if the party fits the lobby, on one team in Teams
+	if #group > (if mode == "Teams" then size // 2 else size) then
+		Launch._tell({ player }, "Your party doesn't fit: pick more players.")
+		return false
+	end
+
 	--[[ Creating ]]
 
 	Rows.Leave(player)
 	local row = Rows.AddRow("Custom", mode, size, mapId, player.UserId) --- @type MatchBoard_Row
 	row.Difficulty = difficulty
 	table.insert(row.Players, player.UserId)
+
+	-- The party joins with its leader, who stays first
+	for _index: number, member: Player in ipairs(group) do
+		if member ~= player then
+			Rows.Leave(member)
+			table.insert(row.Players, member.UserId)
+		end
+	end
 	Rows.Publish(row)
 
 	--[[ Returning ]]
@@ -197,6 +221,22 @@ function Module.Start(player: Player)
 	-- Check if anyone else, or bots, will play
 	if #row.Players < 2 and row.Difficulty == "None" then
 		Launch._tell({ player }, "Invite at least one more player, or add bots.")
+		return false
+	end
+
+	-- Players outside the owner's party: a party always shares a team
+	local partyId: string? = player:GetAttribute("PartyId")
+	local rivals: number = 0
+	for _index: number, userId: number in ipairs(row.Players) do
+		local member: Player? = I.S.Players:GetPlayerByUserId(userId)
+		if not partyId or not member or member:GetAttribute("PartyId") ~= partyId then
+			rivals += 1
+		end
+	end
+
+	-- Check if a Teams lobby without bots has someone to play against
+	if row.Mode == "Teams" and row.Difficulty == "None" and rivals == 0 then
+		Launch._tell({ player }, "Your party plays on one team: invite players from outside it, or add bots.")
 		return false
 	end
 

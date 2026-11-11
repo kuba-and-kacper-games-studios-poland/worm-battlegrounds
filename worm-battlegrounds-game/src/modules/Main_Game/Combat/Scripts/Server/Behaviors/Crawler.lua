@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -55,8 +56,8 @@ function Module.Run(shot)
 	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
 		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif body.Sunk or (body.Stopped and Ballistics.GetSnail(hit)) then
-			shot.Damage += Module._explode(shot, if hit and not body.Sunk then hit.Position else body.Position)
+		elseif body.Stopped and Ballistics.GetSnail(hit) then
+			shot.Damage += Module._explode(shot, if hit then hit.Position else body.Position)
 			break
 		elseif body.Stopped then
 			landed = if hit then hit.Position + hit.Normal * _settings.PROJECTILE_SIZE / 2 else body.Position

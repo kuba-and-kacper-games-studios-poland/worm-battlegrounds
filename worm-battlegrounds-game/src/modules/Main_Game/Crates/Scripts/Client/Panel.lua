@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -34,8 +35,9 @@ local paying = {} --- @type { [string]: string }
 -- Whether a crate is opening, so a second press waits
 local busy: boolean = false
 
--- Draws a crate's odds in the left list, and shows what a crate gave
+-- Draws a crate's odds in the left list, dresses the showcase, and shows what a crate gave
 local drawOdds: (crateId: string, currency: string) -> ()
+local drawShowcase: (crateId: string) -> ()
 local showResults --- @type (crateId: string, count: number, payWith: string, results: { Crates_Result }) -> ()
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,13 +59,13 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Start
 
 --- @param oddsDrawer (crateId: string, currency: string) -> ()
+--- @param showcaseDrawer (crateId: string) -> ()
 --- @param resultsOpener (crateId: string, count: number, payWith: string, results: { Crates_Result }) -> ()
-function Module.Start(oddsDrawer, resultsOpener)
+function Module.Start(oddsDrawer, showcaseDrawer, resultsOpener)
 	--[[ Elements ]]
 
 	moduleGui = I.UserInterface.UI[_settings.GUI_NAME]
 	elems["Tabs"] = moduleGui:FindFirstChild("U_Tabs", true) --- @type Frame
-	elems["Crate"] = moduleGui:FindFirstChild("U_Crate", true) --- @type ImageLabel
 	prefabs["CrateTab"] = elems["Tabs"]:FindFirstChild("PREFAB | CrateTab") --- @type ImageButton
 	elems["Menu"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_Menu", true) --- @type Frame
 	elems["Badge"] = elems["Menu"]:FindFirstChild("S_Badge", true) --- @type Frame
@@ -75,6 +77,7 @@ function Module.Start(oddsDrawer, resultsOpener)
 		buyButtons[count] = moduleGui:FindFirstChild(`U_BuyX{count}`, true)
 	end
 	drawOdds = oddsDrawer
+	drawShowcase = showcaseDrawer
 	showResults = resultsOpener
 
 	--[[ Building ]]
@@ -105,6 +108,7 @@ function Module.Start(oddsDrawer, resultsOpener)
 		end)
 	end
 	I.Topic.Subscribe("WidgetManager_Opened", Module._onOpened)
+	I.Topic.Subscribe("WidgetManager_Closed", Module._onClosed)
 	I.Topic.Subscribe("Currency_Changed", Module._refreshBadge)
 	I.OnLoaded(I.Priority.Replicator, Module._connectReplicator)
 end
@@ -199,7 +203,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Opened
 
 --[[
-	Draws the crates widget when it opens.
+	Draws the crates widget when it opens, and binds the pad's LB and RB to its tabs (the Console module's TabPrevious
+	and TabNext) while it's open.
 ]]
 function Module._onOpened(widgetName: string)
 	--[[ Checks ]]
@@ -212,6 +217,75 @@ function Module._onOpened(widgetName: string)
 	--[[ Drawing ]]
 
 	Module._draw()
+
+	--[[ Binding ]]
+
+	I.Console.Bind("TabPrevious", Module._onTabKey)
+	I.Console.Bind("TabNext", Module._onTabKey)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Closed
+
+--[[
+	Unbinds the pad's tab buttons when the crates widget closes.
+]]
+function Module._onClosed(widgetName: string)
+	--[[ Checks ]]
+
+	-- Check if it's the crates widget
+	if widgetName ~= _settings.GUI_NAME then
+		return
+	end
+
+	--[[ Unbinding ]]
+
+	I.Console.Unbind("TabPrevious")
+	I.Console.Unbind("TabNext")
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Tab Key
+
+--[[
+	LB or RB: picks the previous or next shown tab, in their order, with the tab's press look.
+]]
+--- @return Enum.ContextActionResult
+function Module._onTabKey(action: string, state: Enum.UserInputState, _input: InputObject)
+	--[[ Checks ]]
+
+	-- Act on presses only
+	if state ~= Enum.UserInputState.Begin then
+		return Enum.ContextActionResult.Sink
+	end
+
+	--[[ Local Variables ]]
+
+	local shown = {} --- @type { string }
+	for crateId: string, _tab: ImageButton in pairs(tabs) do
+		if Module._isShown(crateId) then
+			table.insert(shown, crateId)
+		end
+	end
+	table.sort(shown, function(a: string, b: string)
+		return tabs[a].LayoutOrder < tabs[b].LayoutOrder
+	end)
+
+	--[[ Checks ]]
+
+	-- Check if there is another tab to go to
+	if #shown < 2 then
+		return Enum.ContextActionResult.Sink
+	end
+
+	--[[ Selecting ]]
+
+	local step: number = if action == "TabPrevious" then -1 else 1
+	selected = shown[((table.find(shown, selected) or 1) - 1 + step) % #shown + 1]
+	I.Utils.PlayPress(tabs[selected])
+	Module._draw()
+
+	--[[ Returning ]]
+
+	return Enum.ContextActionResult.Sink
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh
@@ -286,18 +360,20 @@ function Module._draw()
 
 	--[[ Tabs ]]
 
+	-- The premium crate's tab is gold
 	for crateId: string, tab: ImageButton in pairs(tabs) do
 		local picked: boolean = crateId == selected
+		local look: string = if I.G_Crates.GetAll()[crateId].Premium then "Premium" else ""
 		tab.Visible = Module._isShown(crateId)
 		tab:FindFirstChild("S_Stroke2", true).Image = tab:GetAttribute(if picked then "Look_SelectedStroke2" else "Look_Stroke2")
 		tab:FindFirstChild("S_Stroke", true).Image = tab:GetAttribute(if picked then "Look_SelectedStroke" else "Look_Stroke")
-		tab:FindFirstChild("S_Stroke", true).ImageColor3 = tab:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
-		tab:FindFirstChild("S_Name", true).TextColor3 = tab:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
+		tab:FindFirstChild("S_Stroke", true).ImageColor3 = tab:GetAttribute(if picked then `Look_{look}SelectedStrokeColor` else `Look_{look}StrokeColor`)
+		tab:FindFirstChild("S_Name", true).TextColor3 = tab:GetAttribute(if picked then `Look_{look}SelectedTextColor` else `Look_{look}TextColor`)
 	end
 
-	--[[ Picture ]]
+	--[[ Showcase ]]
 
-	elems["Crate"].Image = row.Picture
+	drawShowcase(selected)
 
 	--[[ Balance ]]
 
@@ -311,12 +387,14 @@ function Module._draw()
 
 	--[[ Buy Buttons ]]
 
-	-- A hidden crate (the tutorial's) opens only one at a time; VIP's free crate is the x1
+	-- A hidden crate (the tutorial's) opens only one at a time; VIP's free crate is the x1; diamonds turn them blue
 	for count: number, button: ImageButton in pairs(buyButtons) do
 		local icon: ImageLabel = button:FindFirstChild("S_Icon", true)
 		local freeOne: boolean = free and count == 1
 		button.Visible = not row.Hidden or count == 1
 		button:FindFirstChild("S_Price", true).Text = if freeOne then _settings.PRICE_FREE else I.Format.Text(I.G_Crates.GetPrice(selected, paying[selected], count))
+		button:FindFirstChild("S_Main", true).ImageColor3 = button:GetAttribute(`Look_{paying[selected]}MainColor`)
+		button:FindFirstChild("S_Stroke", true).ImageColor3 = button:GetAttribute(`Look_{paying[selected]}StrokeColor`)
 		icon.Visible = not freeOne
 		icon.Image = button:GetAttribute(`Look_{paying[selected]}Icon`)
 	end

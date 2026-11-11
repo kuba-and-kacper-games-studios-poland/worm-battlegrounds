@@ -48,6 +48,10 @@ local _combat_Shot = {}
 --- @field Drive number?
 --- @field HopSpeed number?
 ---
+--- # Drawing #
+---
+--- @field Tumble boolean?
+---
 --- # Homing #
 ---
 --- @field Target Vector3?
@@ -136,6 +140,8 @@ local _combat_Behavior = {}
 --- # Sound #
 ---
 --- @field LastBounce number
+--- @field Whistled boolean
+--- @field Whistle Sound?
 local _combat_ClientShot = {}
 
 --- @class Combat_FlyingShot
@@ -144,6 +150,7 @@ local _combat_ClientShot = {}
 ---
 --- @field Model Model
 --- @field Kind string
+--- @field Carrier BasePart?
 ---
 --- # Motion #
 ---

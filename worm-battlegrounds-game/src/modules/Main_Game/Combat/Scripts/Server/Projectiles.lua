@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -235,6 +236,24 @@ function Module.GetOptions(shot)
 	return options
 end
 
+--%%%%%%%%%%%%%%%%%%%% Get Start
+
+--[[
+	Returns where a weapon's shot leaves a snail's ball along a direction: MUZZLE_GAP past the ball, or short of the
+	terrain or snail in the way when that's closer, so a shot aimed into the ground starts on it, never inside it.
+]]
+--- @return Vector3
+function Module.GetStart(origin: Vector3, direction: Vector3, shooter: Model)
+	--[[ Local Variables ]]
+
+	local reach: number = I.Settings["Snails"].ROOT_SIZE / 2 + _settings.MUZZLE_GAP
+	local hit: RaycastResult? = Module.Cast(origin, origin + direction * reach, shooter)
+
+	--[[ Returning ]]
+
+	return origin + direction * (if hit then math.max(hit.Distance - _settings.PROJECTILE_SIZE / 2 - _settings.PROJECTILE_SKIN, 0) else reach)
+end
+
 --%%%%%%%%%%%%%%%%%%%% Cast
 
 --[[
@@ -286,12 +305,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Gone
 
 --[[
-	Returns whether a simulated shot is over without a blast: lost (IsLost), or sunk in liquid SINK_SECONDS ago.
+	Returns whether a simulated shot is over without a blast: lost (IsLost), or sinking through liquid for SINK_SECONDS
+	(one resting on the ground under it waits for its fuse).
 ]]
 --- @param body Combat_Body
 --- @return boolean
 function Module.IsGone(body, elapsed: number)
-	return Module.IsLost(body.Position, elapsed) or body.Sunk and (body.Step - body.SunkStep) * STEP >= _settings.SINK_SECONDS
+	return Module.IsLost(body.Position, elapsed) or body.Sunk and not body.Grounded and (body.Step - body.SunkStep) * STEP >= _settings.SINK_SECONDS
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Liquid

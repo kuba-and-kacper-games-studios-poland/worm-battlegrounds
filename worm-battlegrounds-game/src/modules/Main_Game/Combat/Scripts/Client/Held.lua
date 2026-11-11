@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -227,24 +228,6 @@ function Module._putAway(snail: Model, itemId: string?, weapon: Model)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
-
---%%%%%%%%%%%%%%%%%%%% Get Muzzle
-
---[[
-	**CLIENT** |
-	Returns where the held weapon's shot leaves it (the `Muzzle` attachment on its RootPart), or nil when nothing is held
-	or the weapon has no muzzle.
-]]
---- @return Vector3?
-function Module.GetMuzzle()
-	--[[ Data ]]
-
-	local muzzle: Attachment? = heldModel and heldModel.PrimaryPart and heldModel.PrimaryPart:FindFirstChild("Muzzle")
-
-	--[[ Returning ]]
-
-	return muzzle and muzzle.WorldPosition
-end
 
 --%%%%%%%%%%%%%%%%%%%% Get Holder
 

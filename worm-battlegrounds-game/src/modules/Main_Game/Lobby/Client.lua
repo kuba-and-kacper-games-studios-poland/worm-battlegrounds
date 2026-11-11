@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -22,6 +23,9 @@ local Stage = require(_scripts:FindFirstChild("Client"):FindFirstChild("Stage"))
 -- The full-screen widgets open now (one at a time, but a switch closes one before it opens the next)
 local fullScreenOpen = {} --- @type { [string]: boolean }
 
+-- The widgets open now that stand in a lobby panel's place (PANEL_WIDGETS)
+local panelOpen = {} --- @type { [string]: boolean }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -36,6 +40,21 @@ local fullScreenOpen = {} --- @type { [string]: boolean }
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 local Module = {}
+
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	----------------------------
+	---- ASSIGN TO INSTANCE ----
+	----------------------------
+
+	I.Lobby = {
+
+		--[[ Methods ]]
+
+		GetStageSnail = Stage.GetSnail,
+	}
+end
 
 --%%%%%%%%%%%%%%%%%%%% Start
 
@@ -62,18 +81,28 @@ end
 
 --[[
 	Shows the lobby's screens, except while the player is in a match (the Studio map plays both on one server) or a
-	full-screen widget covers them, and closes a lobby window still open (the custom lobby's) when the match starts.
+	full-screen widget covers them, or a panel's own while a widget stands in its place, and closes a lobby window
+	still open (the custom lobby's) when the match starts.
 ]]
 function Module._refreshGuis()
 	--[[ Local Variables ]]
 
 	local inLobby: boolean = not I.S.Players.LocalPlayer:GetAttribute("InMatch")
 	local covered: boolean = next(fullScreenOpen) ~= nil
+	local replaced = {} --- @type { [string]: boolean }
+
+	--[[ Panels ]]
+
+	for widgetName: string in pairs(panelOpen) do
+		for _index: number, guiName: string in ipairs(_settings.PANEL_WIDGETS[widgetName]) do
+			replaced[guiName] = true
+		end
+	end
 
 	--[[ Applying ]]
 
 	for _index: number, guiName: string in ipairs(_settings.LOBBY_GUIS) do
-		I.UserInterface.UI[guiName].Enabled = inLobby and not covered
+		I.UserInterface.UI[guiName].Enabled = inLobby and not covered and not replaced[guiName]
 	end
 	if not inLobby then
 		I.WidgetManager.CloseCurrent()
@@ -83,20 +112,24 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Widget Changed
 
 --[[
-	Hides the lobby's screens while a full-screen widget (FULL_SCREEN_WIDGETS) is open, and brings them back when it
-	closes.
+	Hides the lobby's screens while a full-screen widget (FULL_SCREEN_WIDGETS) is open, or the panel a widget stands in
+	for (PANEL_WIDGETS), and brings them back when it closes.
 ]]
 function Module._onWidgetChanged(widgetName: string, opened: boolean)
 	--[[ Checks ]]
 
-	-- Check if the widget covers the whole screen
-	if not table.find(_settings.FULL_SCREEN_WIDGETS, widgetName) then
+	-- Check if the widget covers the whole screen or a panel
+	if not table.find(_settings.FULL_SCREEN_WIDGETS, widgetName) and not _settings.PANEL_WIDGETS[widgetName] then
 		return
 	end
 
 	--[[ Saving ]]
 
-	fullScreenOpen[widgetName] = if opened then true else nil
+	if _settings.PANEL_WIDGETS[widgetName] then
+		panelOpen[widgetName] = if opened then true else nil
+	else
+		fullScreenOpen[widgetName] = if opened then true else nil
+	end
 
 	--[[ Applying ]]
 

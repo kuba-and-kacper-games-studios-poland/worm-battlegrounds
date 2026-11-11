@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 -- --- @type Ume
@@ -14,6 +15,12 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 
 local Panel = require(_scripts:FindFirstChild("Client"):FindFirstChild("Panel")) --- @type Crates_Client_Panel
 local Odds = require(_scripts:FindFirstChild("Client"):FindFirstChild("Odds")) --- @type Crates_Client_Odds
+local Showcase = require(_scripts:FindFirstChild("Client"):FindFirstChild("Showcase")) --- @type Crates_Client_Showcase
+local Reel = require(_scripts:FindFirstChild("Client"):FindFirstChild("Reel")) --- @type Crates_Client_Reel
+local Effects = require(_scripts:FindFirstChild("Client"):FindFirstChild("Effects")) --- @type Crates_Client_Effects
+local Drops = require(_scripts:FindFirstChild("Client"):FindFirstChild("Drops")) --- @type Crates_Client_Drops
+local Result = require(_scripts:FindFirstChild("Client"):FindFirstChild("Result")) --- @type Crates_Client_Result
+local Stage3D = require(_scripts:FindFirstChild("Client"):FindFirstChild("Stage3D")) --- @type Crates_Client_Stage3D
 local Reveal = require(_scripts:FindFirstChild("Client"):FindFirstChild("Reveal")) --- @type Crates_Client_Reveal
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,8 +46,14 @@ function Module.Start()
 	----------------------------
 
 	Odds.Start()
+	Showcase.Start()
+	Reel.Start()
+	Effects.Start()
+	Drops.Start()
+	Result.Start()
+	Stage3D.Start()
 	Reveal.Start(Panel.Open)
-	Panel.Start(Odds.Draw, Reveal.Show)
+	Panel.Start(Odds.Draw, Showcase.Draw, Reveal.Show)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

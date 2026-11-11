@@ -73,5 +73,37 @@ local _snails_SoundState = {}
 --- # Moving #
 ---
 --- @field LastRise number
---- @field Trail Trail?
+--- @field Trails { Trail }
+---
+--- # Jetpack #
+---
+--- @field Jet { Trail }
+--- @field Climbing number
+--- @field Resting number
+--- @field Jetting boolean
 local _snails_EffectState = {}
+
+--%%%%%%%%%%%%%%%%%%%% Tags
+
+--- @class Snails_TagTurn
+---
+--- # General #
+---
+--- @field Model Model
+--- @field Tag BillboardGui
+--- @field Root BasePart
+--- @field Arrow ImageLabel
+---
+--- # Start #
+---
+--- @field Start Vector3
+--- @field StartedAt number
+--- @field ServerStart number
+---
+--- # Acting #
+---
+--- @field CameraAt Vector3
+--- @field AimBase number?
+--- @field SawTurn boolean
+--- @field Hidden boolean
+local _snails_TagTurn = {}

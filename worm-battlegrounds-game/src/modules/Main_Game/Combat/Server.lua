@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -94,6 +95,7 @@ function Module.Init()
 		IsIdle = Fire.IsIdle,
 		GetArcs = Arcs.GetArcs,
 		PredictArc = Arcs.PredictArc,
+		GetShotStart = Projectiles.GetStart,
 	}
 end
 

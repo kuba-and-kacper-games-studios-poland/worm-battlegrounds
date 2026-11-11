@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -131,7 +132,7 @@ end
 
 --[[
 	**SERVER** |
-	Plays a bot's turn as a player would. While it thinks (THINK_TIME) its brain plans the turn with its difficulty's
+	Plays a bot's turn as a player would (or a dropped player's, at TAKEOVER_DIFFICULTY). While it thinks (THINK_TIME) its brain plans the turn with its difficulty's
 	trained genome (ServerData/Brains) and skill (SKILLS): it heals when hurt, walks or flies its jetpack to the spot it
 	picked, plans again from where it ended up if the walk fell short, and fires with its hand's error, which narrows
 	as it keeps shooting at the same target. Gives up quietly when the turn ends meanwhile.
@@ -162,7 +163,7 @@ function Module.TakeTurn(participantId: string)
 
 	--[[ Healing ]]
 
-	local difficulty: string = participant.Difficulty or "Easy"
+	local difficulty: string = participant.Difficulty or if participant.IsBot then "Easy" else _settings.TAKEOVER_DIFFICULTY
 	local genome = Brains[difficulty] or Brains.Hard --- @type Bots_Genome
 	local skill = _settings.SKILLS[difficulty] or _settings.SKILLS.Easy --- @type Bots_Skill
 	model:SetAttribute("Stamina", I.Settings["SnailControl"].STAMINA_STUDS)
@@ -175,7 +176,13 @@ function Module.TakeTurn(participantId: string)
 
 	local plan = Brain.GetPlan(Module._getView(participantId, model), genome, skill) --- @type Bots_Plan?
 	task.wait(math.max(thinkUntil - os.clock(), 0))
-	if not plan or not Module._isTurn(participantId) or not model:GetAttribute("Alive") then
+	if not Module._isTurn(participantId) or not model:GetAttribute("Alive") then
+		return
+	end
+
+	-- No shot reaches anyone: it fires anyway, as a player would
+	if not plan then
+		Module._fireAnyway(participantId, model)
 		return
 	end
 
@@ -195,7 +202,11 @@ function Module.TakeTurn(participantId: string)
 	-- A walk that ended off its spot plans the shot again from where it stands
 	if (model.PrimaryPart.Position - plan.Spot.Position).Magnitude > _settings.ARRIVE_DISTANCE + _settings.CLOSE_SLACK then
 		plan = Brain.GetPlan(Module._getView(participantId, model), genome, skill, true)
-		if not plan or not Module._isTurn(participantId) then
+		if not Module._isTurn(participantId) then
+			return
+		end
+		if not plan then
+			Module._fireAnyway(participantId, model)
 			return
 		end
 		row = I.G_Arsenal.Get(plan.ItemId)
@@ -298,6 +309,43 @@ function Module._playTutorial(participantId: string, model: Model)
 	local aimAt: Vector3 = target.PrimaryPart.Position + Vector3.new(random:NextNumber(4, 8) * (if random:NextNumber() < 0.5 then -1 else 1), -2, 0)
 	local wind: number = I.G_Combat.GetWindAcceleration("Bazooka", I.Match.GetWind())
 	local arc: Vector2 = I.Combat.GetArcs(origin, aimAt, "Bazooka", wind, _settings.POWER_STEPS)[1] or Vector2.new(math.rad(45), 0.6)
+	if Module._showAim(participantId, "Bazooka", arc.X, arc.Y) then
+		I.Combat.Fire(participantId, "Bazooka", arc.X, arc.Y)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Fire Anyway
+
+--[[
+	A turn the brain found no shot for (everyone out of reach or out of sight): the bot still fires its Bazooka at the
+	nearest snail not on its team, on the arc that lands nearest it, or lobbed toward it at full power when no arc
+	reaches, so a bot never just lets its turn run out.
+]]
+function Module._fireAnyway(participantId: string, model: Model)
+	--[[ Local Variables ]]
+
+	local origin: Vector3 = model.PrimaryPart.Position
+	local target: Model? = nil
+	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
+		local enemy: boolean = other ~= model and other:GetAttribute("Team") ~= model:GetAttribute("Team")
+		if enemy and (not target or (other.PrimaryPart.Position - origin).Magnitude < (target.PrimaryPart.Position - origin).Magnitude) then
+			target = other
+		end
+	end
+
+	--[[ Checks ]]
+
+	-- Check if anyone is left to shoot at
+	if not target then
+		return
+	end
+
+	--[[ Firing ]]
+
+	local aimAt: Vector3 = target.PrimaryPart.Position
+	local wind: number = I.G_Combat.GetWindAcceleration("Bazooka", I.Match.GetWind())
+	local toward: number = if aimAt.X < origin.X then math.rad(135) else math.rad(45)
+	local arc: Vector2 = I.Combat.GetArcs(origin, aimAt, "Bazooka", wind, _settings.POWER_STEPS)[1] or Vector2.new(toward, 1)
 	if Module._showAim(participantId, "Bazooka", arc.X, arc.Y) then
 		I.Combat.Fire(participantId, "Bazooka", arc.X, arc.Y)
 	end

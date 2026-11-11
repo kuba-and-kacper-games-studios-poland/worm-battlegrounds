@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -282,7 +283,7 @@ function Module.GetHazard(position: Vector3)
 	if math.abs(inside.X) > bounds.Size.X / 2 or inside.Y < -bounds.Size.Y / 2 then
 		return "Bounds"
 	end
-	return if position.Y <= Liquid.GetSeaLevel() + _settings.SEA_SLACK then Liquid.GetLiquid(position) else nil
+	return if position.Y <= Liquid.GetSeaLevel() + _settings.SEA_SLACK or Liquid.IsSea(position) then Liquid.GetLiquid(position) else nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Free

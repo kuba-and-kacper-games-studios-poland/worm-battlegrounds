@@ -1,6 +1,6 @@
 # BGM_Controller
 
-The game's background music and ambience. Once the player has loaded, it plays the `BGM` music and the `Ambient` sound (names from `src/global_data/Sound/SoundsList.lua`) looped, at half volume, in the `Music` sound group, unless another module already chose a track. Other modules switch either one by name; the new sound fades in while the old one fades out and is removed.
+The game's background music and ambience. Once the player has loaded, it plays the `BGM` music (a name from `src/global_data/Sound/SoundsList.lua`) looped, at half volume, in the `Music` sound group, unless another module already chose a track; in this game Atmosphere's moods choose it (the lobby's theme, each map's track and its sudden-death version). No ambient sound starts on its own, since the game's music carries its ambience. Other modules switch the music or an ambient sound by name; the new sound fades in while the old one fades out and is removed.
 
 | | |
 | --- | --- |
@@ -13,7 +13,7 @@ The game's background music and ambience. Once the player has loaded, it plays t
 
 | File | What it controls |
 | --- | --- |
-| `Client.lua` | The start tracks, switching and crossfading the music and the ambient sound |
+| `Client.lua` | The start track, switching and crossfading the music and an ambient sound |
 
 ## API
 

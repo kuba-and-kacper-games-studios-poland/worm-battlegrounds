@@ -5,7 +5,9 @@ places them by screen fractions, and gives each one a UIScale named `S_ScreenSca
 the screen's height / 1080 (or its width / 1920 on a screen narrower than 16:9), ×1.3 on Mobile screens shorter than
 500 px and never under 0.6 on other devices (so text on a small PC window stays readable), at start, when the screen
 changes size and when the platform changes. The floor wins over the width rule: at 1024 × 768 the scale is 0.6, not
-0.533, and the lobby's side-by-side panels are placed to fit it.
+0.533, and the lobby's side-by-side panels are placed to fit it; a window narrower than 1024 px lowers the floor with
+its width (`MIN_SCALE_WIDTH`), so they still fit. A panel straight on its ScreenGui is never scaled past `FIT_MARGIN`
+of the screen (the Mobile boost would push the shop past a 667 × 375 phone's edges).
 
 A panel sized per device carries ume's `Utils_PlatformScale` tag: that component writes the device's scale on the
 same UIScale and keeps it in its `Utils_BaseScale` attribute. This module multiplies the screen's scale by that
@@ -45,6 +47,8 @@ their root is laid out at its design size with an `S_ScreenScale`, and this modu
 | `DESIGN_WIDTH` | `1920` | The screen width they're laid out for: a narrower screen scales by width / this instead, so panels side by side still fit |
 | `SMALL_SCREEN`, `MOBILE_BOOST` | `500`, `1.3` | Mobile screens shorter than this are scaled up by this much more |
 | `MIN_SCALE` | `0.6` | The smallest screen scale on every device but Mobile, before the device scale (the kit's 0.75 on Desktop: 0.45) |
+| `MIN_SCALE_WIDTH` | `1024` | A window narrower than this many pixels lowers `MIN_SCALE` with its width, so panels laid out to fit at the floor on 1024 px still fit |
+| `FIT_MARGIN` | `0.86` | A panel straight on its ScreenGui is never scaled past this share of the screen, whatever the boost or device scale, leaving room for a kit window's title plate and close button over its edge |
 | `BASE_SCALE_ATTRIBUTE` | `Utils_BaseScale` | The UIScale attribute `Utils_PlatformScale` keeps a panel's device scale in; the screen's scale is multiplied by it |
 
 ## Network

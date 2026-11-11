@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -62,8 +63,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Snail
 
 --[[
-	Starts drawing a snail's effects: a puff where a new one appears, its flying trail, and healing crosses when its
-	health goes up, until it's gone.
+	Starts drawing a snail's effects: a puff where a new one appears, its flying trail, its jetpack's jet, and healing
+	crosses when its health goes up, until it's gone.
 ]]
 function Module._watchSnail(model: Instance, appeared: boolean)
 	--[[ Checks ]]
@@ -76,17 +77,34 @@ function Module._watchSnail(model: Instance, appeared: boolean)
 	--[[ Local Variables ]]
 
 	local root: BasePart = model.PrimaryPart
-	local trail: Trail? = I.Vfx.AddTrail("Trail_Snail", root)
+	local trails = I.Vfx.AddTrail("Trail_Snail", root) --- @type { Trail }
+	local jet = I.Vfx.AddTrail("Trail_Jet", root) --- @type { Trail }
 
 	--[[ Saving ]]
 
-	if trail then
+	for _index: number, trail: Trail in ipairs(trails) do
 		trail.Enabled = false
+	end
+	-- The jet comes out under the jetpack, its attachments along Z so it keeps its width (trails may share them)
+	local moved = {} --- @type { [Attachment]: boolean }
+	for _index: number, trail: Trail in ipairs(jet) do
+		trail.Enabled = false
+		for _index2: number, attachment: Attachment in ipairs({ trail.Attachment0, trail.Attachment1 }) do
+			if not moved[attachment] then
+				moved[attachment] = true
+				local offset: Vector3 = attachment.Position
+				attachment.Position = Vector3.new(0, offset.Y, offset.X + offset.Z) + _settings.JET_TRAIL_OFFSET
+			end
+		end
 	end
 	states[model] = {
 		Health = model:GetAttribute("Health") or 0,
 		LastRise = 0,
-		Trail = trail,
+		Trails = trails,
+		Jet = jet,
+		Climbing = 0,
+		Resting = 0,
+		Jetting = false,
 	}
 
 	--[[ Effects ]]
@@ -160,10 +178,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Every frame, shows each snail's trail while it flies faster than TRAIL_SPEED, and puffs dust where one lands after
-	a fall (as fast as Snail_Land's).
+	Every frame, shows each snail's trail while it flies faster than TRAIL_SPEED, the active snail's jet while it climbs
+	on its jetpack (as its hum: Sounds), and puffs dust where one lands after a fall (as fast as Snail_Land's).
 ]]
-function Module._step()
+function Module._step(deltaTime: number)
 	--[[ Watching ]]
 
 	--- @param state Snails_EffectState
@@ -174,9 +192,23 @@ function Module._step()
 		end
 		local velocity: Vector3 = root.AssemblyLinearVelocity
 		local alive: boolean = model:GetAttribute("Alive") == true
+		local flying: boolean = alive and velocity.Magnitude > _settings.TRAIL_SPEED
 
-		if state.Trail then
-			state.Trail.Enabled = alive and velocity.Magnitude > _settings.TRAIL_SPEED
+		-- A jump passes through the climbing speeds too fast to count
+		local climbing: boolean = alive and model:GetAttribute("Active") == true and model:GetAttribute("JetpackFuel") ~= nil and velocity.Y > _settings.JETPACK_SOUND_RISE and velocity.Y < _settings.JUMP_SOUND_SPEED
+		state.Climbing = if climbing then state.Climbing + deltaTime else 0
+		state.Resting = if climbing then 0 else state.Resting + deltaTime
+		if state.Climbing >= _settings.JETPACK_SOUND_HOLD then
+			state.Jetting = true
+		elseif state.Resting >= _settings.JETPACK_SOUND_HOLD or not alive then
+			state.Jetting = false
+		end
+
+		for _index: number, trail: Trail in ipairs(state.Trails) do
+			trail.Enabled = flying
+		end
+		for _index: number, trail: Trail in ipairs(state.Jet) do
+			trail.Enabled = state.Jetting
 		end
 		if alive and state.LastRise < -_settings.LAND_SOUND_SPEED and velocity.Y > -_settings.LAND_SOUND_STOP then
 			I.Vfx.Play("Fall", CFrame.new(root.Position - Vector3.yAxis * root.Size.Y / 2), effectsFolder)

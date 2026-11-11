@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -110,9 +111,17 @@ function Module._registerCommands()
 
 	--[[ Dictionaries ]]
 
+	-- Weapons and utilities (the jetpack, potions, heals), so either can be given for testing
 	local itemIds = {} --- @type { string }
+	local weapons = {} --- @type { [string]: Arsenal_WeaponData }
+	local utilities = {} --- @type { [string]: Arsenal_UtilityData }
+	weapons, utilities = I.G_Arsenal.GetAll()
 	--- @param _row Arsenal_WeaponData
-	for itemId: string, _row in pairs(I.G_Arsenal.GetAll()) do
+	for itemId: string, _row in pairs(weapons) do
+		table.insert(itemIds, itemId)
+	end
+	--- @param _row Arsenal_UtilityData
+	for itemId: string, _row in pairs(utilities) do
 		table.insert(itemIds, itemId)
 	end
 	table.sort(itemIds)

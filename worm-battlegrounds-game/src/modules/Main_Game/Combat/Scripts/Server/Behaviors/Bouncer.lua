@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -51,8 +52,8 @@ local Module = {}
 --[[
 	A thrown or placed bomb. One with a Fuse bounces around and explodes when it runs out (the Grenade, the Dynamite
 	placed at the feet); one that bursts on contact explodes on the first thing it touches (Cluster bomb, Variety
-	grenade); any explodes as it touches water or lava. Then a cluster bomb scatters its bomblets and a variety grenade
-	lets out its snails.
+	grenade); water or lava only slows it. Then a cluster bomb scatters its bomblets and a variety grenade lets out its
+	snails.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -63,6 +64,7 @@ function Module.Run(shot)
 	local options = Projectiles.GetOptions(shot) --- @type Combat_ShotOptions
 	options.Wind = I.G_Combat.GetWindAcceleration(shot.ItemId, I.Match.GetWind())
 	options.Bounce = if row.BurstOnContact then nil else row.Elasticity or 0.5
+	options.Tumble = true
 	local body = Projectiles.Launch("Bouncer", shot.ItemId, shot.Origin, velocity, options) --- @type Combat_Body
 	local burst: Vector3? = nil
 
@@ -71,14 +73,14 @@ function Module.Run(shot)
 
 	--[[ Flying ]]
 
-	-- One that touches water or lava blows up there
+	-- Water or lava only slows it: it bursts on what it touches under them, or when its fuse runs out
 	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
 		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif body.Stopped and not body.Sunk then
+		elseif body.Stopped then
 			burst = if hit then hit.Position else body.Position
 			break
-		elseif body.Sunk or fuse and elapsed >= fuse then
+		elseif fuse and elapsed >= fuse then
 			burst = body.Position
 			break
 		end
@@ -147,8 +149,8 @@ function Module._runBomblet(shot, from: Vector3)
 	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
 		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif body.Stopped or body.Sunk then
-			local center: Vector3 = if hit and not body.Sunk then hit.Position else body.Position
+		elseif body.Stopped then
+			local center: Vector3 = if hit then hit.Position else body.Position
 			shot.Damage += Blast.Explode(center, bomblets.Radius, shot.ItemId, shot.ParticipantId, shot.Shiny, bomblets.DamageMax, bomblets.DamageEdge, "Small")
 			break
 		end

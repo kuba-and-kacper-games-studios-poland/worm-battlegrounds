@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -23,6 +24,9 @@ local arenaFolder: Instance
 local shaker
 
 local random: Random = Random.new()
+
+-- Until when a hit stop holds the world (os.clock)
+local stoppedUntil: number = 0
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -156,12 +160,23 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Hit
 
 --[[
-	Vibrates a phone or pad when the local player's own snail is hurt.
+	Stops the world for a beat on a big blow (longer on a knockout, with the camera punching in on the snail and the
+	knockout's ding), and vibrates a phone or pad when the local player's own snail is hurt.
 ]]
-function Module._onHit(participantId: string, damage: number, _position: Vector3)
+function Module._onHit(participantId: string, damage: number, position: Vector3, knockout: boolean?)
 	--[[ Data ]]
 
 	local mine: Model? = I.Snails.GetMine()
+
+	--[[ Hit Stop ]]
+
+	if knockout then
+		Module._hitStop(_settings.HITSTOP_KNOCKOUT)
+		I.MatchCamera.PunchIn(position)
+		I.Sound.Play({ Name = "Match_Knockout", SoundGroup = "SFX" })
+	elseif damage >= _settings.HITSTOP_DAMAGE then
+		Module._hitStop(_settings.HITSTOP_SECONDS)
+	end
 
 	--[[ Checks ]]
 
@@ -173,6 +188,54 @@ function Module._onHit(participantId: string, damage: number, _position: Vector3
 	--[[ Feel ]]
 
 	I.Haptic.PlayOnce("Combat_Hurt")
+end
+
+--%%%%%%%%%%%%%%%%%%%% Hit Stop
+
+--[[
+	Stops the world for a beat: the effects' particles and the thrown chunks of ground freeze and the camera holds
+	(MatchCamera's Freeze), then all go on as they were. A stop already running isn't stretched.
+]]
+function Module._hitStop(seconds: number)
+	--[[ Checks ]]
+
+	-- Check if a stop is already running
+	if os.clock() < stoppedUntil then
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local emitters = {} --- @type { [ParticleEmitter]: number }
+	local chunks = {} --- @type { [BasePart]: Vector3 }
+	stoppedUntil = os.clock() + seconds
+
+	--[[ Freezing ]]
+
+	for _index: number, child: Instance in ipairs(effectsFolder:GetDescendants()) do
+		if child:IsA("ParticleEmitter") then
+			emitters[child] = child.TimeScale
+			child.TimeScale = 0
+		elseif child:IsA("BasePart") and child.Name == "Debris" and not child.Anchored then
+			chunks[child] = child.AssemblyLinearVelocity
+			child.Anchored = true
+		end
+	end
+	I.MatchCamera.Freeze(seconds)
+
+	--[[ Releasing ]]
+
+	task.delay(seconds, function()
+		for emitter: ParticleEmitter, timeScale: number in pairs(emitters) do
+			emitter.TimeScale = timeScale
+		end
+		for chunk: BasePart, velocity: Vector3 in pairs(chunks) do
+			if chunk.Parent then
+				chunk.Anchored = false
+				chunk.AssemblyLinearVelocity = velocity
+			end
+		end
+	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Throw Debris

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -8,6 +9,10 @@ local _localName = "MatchHud"
 
 --- @type MatchHud_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Teams = require(script.Parent:FindFirstChild("Teams")) --- @type MatchHud_Client_Teams
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -72,8 +77,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Results
 
 --[[
-	Opens the results when the match ends: every player's place in team colours with their coins, what the local
-	player earned, their match stats, and the rematch vote.
+	Opens the results when the match ends: every player's place in team colours (their badges after the name) with
+	their coins, what the local player earned, their match stats, and the rematch vote.
 ]]
 --- @param placements { Match_Placement }
 --- @param stats { [string]: Match_Stats }
@@ -109,9 +114,10 @@ function Module._onResults(placements, stats, earned)
 		row:FindFirstChild("S_Place", true).Text = Module._getOrdinal(placement.Place)
 		nameLabel.Text = entry and entry:GetAttribute("DisplayName") or "?"
 		nameLabel.TextColor3 = entry and entry:GetAttribute("Color") or Color3.new(1, 1, 1)
+		I.PlayerBadges.Show(nameLabel, userId)
 		row:FindFirstChild("S_Coins", true).Text = `+{earned.Coins[placement.ParticipantId] or "0"} coins`
-		if userId > 0 then
-			avatar.Image = `rbxthumb://type=AvatarHeadShot&id={userId}&w=150&h=150`
+		if entry then
+			Teams.SetAvatar(avatar, entry)
 		end
 		row.Parent = elems["Placings"]
 		if placement.ParticipantId == myId then

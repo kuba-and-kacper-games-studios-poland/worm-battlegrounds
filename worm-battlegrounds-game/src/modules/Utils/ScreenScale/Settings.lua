@@ -13,9 +13,7 @@ local _settings = {
 		"PartyInvite",
 		"PartyInvited",
 		"CrateOpen",
-		"EmoteShop",
 		"Shop",
-		"Currency",
 		"TutorialHint",
 	},
 
@@ -33,9 +31,17 @@ local _settings = {
 
 	--[[
 		The smallest screen scale on every device but Mobile (whose phones have their own sizes): small 4:3 PC screens
-		keep their text at 14 px or more instead of shrinking to 0.53
+		keep their text at 14 px or more instead of shrinking to 0.53. A window narrower than MIN_SCALE_WIDTH pixels
+		lowers the floor with its width, so panels laid out to fit at the floor on 1024 px still fit
 	]]
 	MIN_SCALE = 0.6,
+	MIN_SCALE_WIDTH = 1024,
+
+	--[[
+		A panel straight on its ScreenGui is never scaled past this share of the screen (on short phones the boost would),
+		leaving room for a kit window's title plate and close button, which stand out over its edge
+	]]
+	FIT_MARGIN = 0.86,
 
 	--[[
 		The UIScale attribute Utils_PlatformScale keeps a panel's device scale in (a panel tagged with it is sized per

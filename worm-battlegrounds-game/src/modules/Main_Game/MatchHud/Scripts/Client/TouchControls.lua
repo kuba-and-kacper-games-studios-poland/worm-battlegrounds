@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -32,6 +33,7 @@ function Module.Start(gui: ScreenGui)
 	--[[ Elements ]]
 
 	elems["Touch"] = gui:FindFirstChild("U_Touch") --- @type Frame
+	elems["PadControls"] = gui:FindFirstChild("U_PadControls") --- @type Frame
 
 	--[[ Connections ]]
 
@@ -71,7 +73,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the buttons during the player's turn only (Utils_HideOnPlatform keeps the frame to touch screens).
+	Shows the buttons during the player's turn only (Utils_HideOnPlatform keeps the frame to touch screens), and the
+	pad's controls strip then too (a Console_Hint, so only on Console).
 ]]
 function Module._refresh(myTurn: boolean)
 	--[[ Applying ]]
@@ -79,6 +82,7 @@ function Module._refresh(myTurn: boolean)
 	for _index: number, control: string in ipairs({ "Left", "Right", "Jump" }) do
 		elems["Touch"]:FindFirstChild(`S_{control}`, true).Visible = myTurn
 	end
+	elems["PadControls"]:SetAttribute("Console_HintHidden", not myTurn)
 end
 
 return Module

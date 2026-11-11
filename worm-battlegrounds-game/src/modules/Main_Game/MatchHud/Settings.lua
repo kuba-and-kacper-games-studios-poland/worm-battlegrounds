@@ -16,8 +16,44 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Turn
 
-	-- On the player's own turn, the timer ticks (Turn_Tick) each second from this many seconds left
+	--[[
+		On the player's own turn the timer turns TIMER_WARN_COLOR from TIMER_WARN_FROM seconds left, then TIMER_DANGER_COLOR
+		from TICK_SOUND_FROM, when it ticks aloud (Turn_Tick) each second, twice a second from TICK_FAST_FROM, and a band
+		pulses along the screen's sides, TENSION_PULSE_RATE times a second at first and twice as fast at the end
+	]]
+	TIMER_WARN_FROM = 8,
 	TICK_SOUND_FROM = 5,
+	TICK_FAST_FROM = 3,
+	TIMER_WARN_COLOR = Color3.fromRGB(255, 170, 40),
+	TIMER_DANGER_COLOR = Color3.fromRGB(255, 70, 50),
+	TENSION_PULSE_RATE = 1.5,
+
+	--[[
+		A turn's callout banner: its band opens (CALLOUT_BAND_TWEENINFO) while its content slides CALLOUT_SLIDE of the
+		screen in and settles from CALLOUT_START_SCALE (CALLOUT_IN_TWEENINFO), stays CALLOUT_HOLD seconds, then slides on
+		as the band closes (CALLOUT_OUT_TWEENINFO); anyone else's turn is shown at CALLOUT_OTHER_SCALE
+	]]
+	CALLOUT_START_SCALE = 1.3,
+	CALLOUT_SLIDE = 0.06,
+	CALLOUT_HOLD = 1,
+	CALLOUT_OTHER_SCALE = 0.8,
+	CALLOUT_BAND_TWEENINFO = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	CALLOUT_IN_TWEENINFO = TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+	CALLOUT_OUT_TWEENINFO = TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
+
+	-- The callout's lines and avatar frame on the player's own turn (anyone else's take their colour)
+	CALLOUT_ACCENT_COLOR = Color3.fromRGB(255, 140, 20),
+
+	-- The callout title's gradient, top to bottom: gold on the player's own turn, white on anyone else's
+	--- @type { Color3 }
+	CALLOUT_MINE_GRADIENT = { Color3.fromRGB(255, 232, 110), Color3.fromRGB(255, 140, 20) },
+
+	--- @type { Color3 }
+	CALLOUT_OTHER_GRADIENT = { Color3.fromRGB(255, 255, 255), Color3.fromRGB(200, 215, 235) },
+
+	-- When the player is next, their "You're next!" line flashes this colour (with Turn_Next) and fades back
+	NEXT_FLASH_COLOR = Color3.fromRGB(255, 220, 60),
+	NEXT_FLASH_TWEENINFO = TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 
 	-- The stamina bar's text, with its share in percent
 	STAMINA_FORMAT = "Stamina %d%%",
@@ -36,8 +72,11 @@ local _settings = {
 	-- A knocked-out snail's avatar tint in the team panels
 	OUT_AVATAR_COLOR = Color3.fromRGB(70, 70, 70),
 
-	-- A bot's avatar in the team panels and the turn list (the theme's wb-smiley; the design's own picture draws blank)
-	BOT_AVATAR = "rbxassetid://75798902746408",
+	--[[
+		A bot's avatar in the team panels, the turn list, the turn callout and the results: the default snail's voxel
+		headshot (art/bots). A local picture until the owner approves it and it's uploaded
+	]]
+	BOT_AVATAR = "rbxasset://textures/wb_bots/Bot_Default.png",
 
 	--%%%%%%%%%%%%%%%%%%%% Top Bar
 
@@ -79,43 +118,40 @@ local _settings = {
 	AIM_SEND_INTERVAL = 0.1,
 
 	--[[
-		The mouse or a held finger aims: the weapon points from the snail toward it, and while it's held the power is how
-		far it is from the snail on the screen, in shares of the screen's height: none at MIN_PULL (let go closer, it
-		cancels), full at MAX_PULL
-	]]
-	MIN_PULL = 0.02,
-	MAX_PULL = 0.3,
-
-	--[[
 		Another snail's angle marker and power show while its aim keeps arriving (none for AIM_SHOW_GRACE seconds hides
 		them), eased toward each update at AIM_SMOOTHING (higher is snappier)
 	]]
 	AIM_SHOW_GRACE = 0.4,
 	AIM_SMOOTHING = 15,
 
-	-- The angle marker, the studio's crosshair picture: how far from the snail's middle it sits and its size (studs)
-	CROSSHAIR_DISTANCE = 9,
-	CROSSHAIR_SIZE = 3,
-	CROSSHAIR_IMAGE = "rbxassetid://91912077604159",
-
 	--[[
-		The power bar, a row of POWER_DOTS circles from the muzzle to the crosshair that light up as it fills: their colours
-		and sizes (studs) from the first circle to the last, which sits on the crosshair and fills its ring (0.7 of
-		CROSSHAIR_SIZE)
+		The aim, Worms Armageddon's, drawn on the HUD's aim layer (U_Aim) in units: a stud at MatchCamera's starting
+		distance (DISTANCE), so it looks the same at any zoom. The power's cone: POWER_DOTS circles from POWER_START
+		units out from the snail's middle (further when zoomed in, clear of its ball), POWER_LENGTH units from the first
+		circle's middle to the last's, growing from the first size to the last and from dark red to pale yellow, each
+		growing in as the power passes it. Then POWER_GAP units of room, then the crosshair (the gui's ring and X, in the
+		aiming snail's colour), CROSSHAIR_SIZE units across, spinning CROSSHAIR_SPIN degrees a second
 	]]
-	POWER_DOTS = 32,
+	POWER_DOTS = 14,
 
 	--- @type { Color3 }
-	POWER_COLORS = { Color3.fromRGB(255, 220, 60), Color3.fromRGB(240, 60, 30) },
+	POWER_COLORS = { Color3.fromRGB(170, 0, 0), Color3.fromRGB(248, 223, 108) },
 
 	--- @type { number }
-	POWER_DOT_SIZE = { 0.5, 2.1 },
+	POWER_DOT_SIZE = { 0.9, 2.3 },
+
+	-- In units: where the cone starts, its length, the room before the crosshair, the crosshair's size; then its spin
+	POWER_START = 2.3,
+	POWER_LENGTH = 7,
+	POWER_GAP = 0.3,
+	CROSSHAIR_SIZE = 3.4,
+	CROSSHAIR_SPIN = 60,
 
 	--[[
-		The power slider's and stamina bar's picture is filled across only this share of its width (the rest is clear),
-		so the gui draws it wider by as much and code cuts its fill at the share times this
+		The share of the power slider's and stamina bar's picture that its fill covers (the rest clear), which code cuts
+		the fill at; the gui maker's bar picture (2026-11-11) fills its whole width
 	]]
-	BAR_FILL = 0.744,
+	BAR_FILL = 1,
 
 	-- The marker on a homing missile's target
 	TARGET_COLOR = Color3.fromRGB(255, 70, 70),

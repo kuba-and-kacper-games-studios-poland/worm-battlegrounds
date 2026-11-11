@@ -6,7 +6,7 @@ in the same server who isn't in a party (only the leader invites once there is o
 **Invite** (it turns to **Sent**). An invited player gets the `PartyInvited` box: who asked, **Join party** or **No
 thanks** (closing it lets the invite run out). The leader can kick; when the leader leaves, the next member leads.
 **Invite friends** in that box opens Roblox's game invite. Party state lives in two Player attributes, so every client draws the `Party` column
-(the PARTY column at the left: a card per member with their avatar, name and level, a crown on the leader, Kick for
+(the PARTY column at the left: a card per member with their avatar, name (their badges after it, `I.PlayerBadges.Show`) and level, a crown on the leader, Kick for
 the leader, then a **+** card per free place for a player who may invite, and the red Leave button by the PARTY title
 while in a party) without its own remote.
 
@@ -15,7 +15,7 @@ while in a party) without its own remote.
 | Folder | `src/modules/Main_Game/Party` |
 | Runs on | Server, Client · Lobby map |
 | Exposes | `I.Party` (server) |
-| Uses | `I.WidgetManager`, `I.Interact`, `I.Friends` (client) |
+| Uses | `I.WidgetManager`, `I.Interact`, `I.Friends`, `I.PlayerBadges` (client) |
 
 ## Files
 
@@ -70,7 +70,7 @@ while in a party) without its own remote.
 
 ## In the place
 
-Drives the `Party` column: `U_Members` › `PREFAB | Member` (named by user id: `S_Avatar`, `S_Name`, `S_Level`,
+Drives the `Party` column: `U_Members` › `PREFAB | Member` (named by user id: `S_Avatar`, `S_Name` (the display name), `S_Username` (`@` and the user name), `S_Level`,
 `S_Crown`, `S_Kick`) and `PREFAB | Invite` (the + cards), and `U_Party` › `S_Leave`.
 Fills `PartyInvite` (`U_Players` › `PREFAB | Invitable`: `S_Avatar`, `S_Name`, `S_Invite`; `S_Empty`;
 `S_InviteFriends`) and `PartyInvited` (`S_Avatar`, `S_Text`, `S_Accept`, `S_Decline`).

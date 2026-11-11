@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -60,7 +61,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Avatar
 
 --[[
-	Shows a participant's avatar headshot on an image, or BOT_AVATAR for a bot.
+	Shows a participant's avatar headshot on an image, or BOT_AVATAR (the default snail's headshot) for a bot.
 ]]
 function Module.SetAvatar(image: ImageLabel, entry: Configuration)
 	--[[ Local Variables ]]
@@ -204,7 +205,7 @@ function Module._buildTeam(side: string, index: number, team: number, teamMember
 	for playerIndex: number, entry: Configuration in ipairs(teamMembers) do
 		local slot: Frame = playerPrefab:Clone()
 		local background: Frame = slot:FindFirstChild("Background")
-		local avatar: ImageLabel = slot:FindFirstChild("S_Avatar")
+		local avatar: ImageLabel = slot:FindFirstChild("S_Avatar", true)
 		slot.Name = "TeamPlayer"
 		slot.LayoutOrder = playerIndex
 		slot.Size = UDim2.fromScale(1 / #teamMembers, slot.Size.Y.Scale)

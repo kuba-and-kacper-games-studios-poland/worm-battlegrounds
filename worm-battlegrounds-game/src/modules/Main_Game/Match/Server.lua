@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -107,6 +108,7 @@ function Module.Init()
 		GetWind = Module.GetWind,
 		GetMetadata = Roster.GetMetadata,
 		IsActivePlayer = Module.IsActivePlayer,
+		IsAutopilot = Module.IsAutopilot,
 	}
 end
 
@@ -230,7 +232,7 @@ end
 
 --[[
 	**SERVER** |
-	Returns whether it's this player's snail's turn.
+	Returns whether it's this player's snail's turn, played by them (not by a bot while they were away).
 ]]
 --- @return boolean
 function Module.IsActivePlayer(player: Player)
@@ -241,7 +243,18 @@ function Module.IsActivePlayer(player: Player)
 
 	--[[ Returning ]]
 
-	return Module.GetActive() == `P_{player.UserId}`
+	return Module.GetActive() == `P_{player.UserId}` and not Module.IsAutopilot()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Autopilot
+
+--[[
+	**SERVER** |
+	Returns whether a bot plays this turn for a player who dropped.
+]]
+--- @return boolean
+function Module.IsAutopilot()
+	return matchFolder:GetAttribute("Autopilot") == true
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

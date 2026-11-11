@@ -15,7 +15,7 @@ Player attribute).
 | Folder | `src/modules/Main_Game/Tutorial` |
 | Runs on | Server, Client · every map |
 | Exposes | `I.Tutorial` (server) |
-| Uses | `I.Currency`, `I.Loadout`, `I.Match` (client), `I.Replicator`, `I.Topic` |
+| Uses | `I.Currency`, `I.Loadout`, `I.Match` (client), `I.Replicator`, `I.Topic`, `I.Platform`, `I.Console` (client: the pad's button names) |
 | Saves | `Profile.Tutorial` |
 
 ## Files
@@ -24,7 +24,7 @@ Player attribute).
 | --- | --- |
 | `Server.lua` | Saved progress, the match's end, the crate, the equip step |
 | `Client.lua` | Starts the match hints on the Match map, the lobby hints on the Lobby map, both on the Studio map |
-| `Scripts/Client/MatchHints.lua` | The hints during the tutorial match |
+| `Scripts/Client/MatchHints.lua` | The hints during the tutorial match (on a pad, `PAD_HINTS` with the pad's button names) |
 | `Scripts/Client/LobbyHints.lua` | The equip hint and the arrow in the lobby; reports the equip step |
 | `Settings.lua` | `Tutorial_Settings` |
 
@@ -66,6 +66,7 @@ It listens to `Match_Ended` (Match map) and `Crates_Opened` (Lobby map) when tho
 | `STARTER_WEAPONS` | `{ "Grenade", "Shotgun" }` | What the crate gives, and what the equip step checks |
 | `MATCH_MAP`, `LOBBY_MAP`, `MATCH_KIND` | `"Match"`, `"Lobby"`, `"Tutorial"` | The maps that run only the match hints or only the lobby hints, and the match kind |
 | `HINTS` | Walk, Jump, Fire, BotTurn, Finish, Equip | What each hint says |
+| `PAD_HINTS` | Walk, Jump, Fire | What those match hints say on a pad: each `{Action}` becomes that action's button in the Console module's scheme, named for the player's pad (`I.Console.GetButtonName`: "RT" or "R2") |
 | `JUMP_SPEED` | `6` | How fast a snail must rise to count as a jump, in studs per second |
 | `HINT_GUI_NAME`, `LOBBY_GUI_NAME`, `LOADOUT_GUI_NAME` | | The hint bubble, and the guis the arrow lives in and points into |
 

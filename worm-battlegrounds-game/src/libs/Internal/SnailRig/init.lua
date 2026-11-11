@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName = "SnailRig"
@@ -49,12 +50,64 @@ local PRIORITIES = {
 	Show = Enum.AnimationPriority.Action2,
 }
 
+-- The animation a skin shown still is held in (Pose): its first frame puts the shell on the back and the hands in front
+local STILL_ANIMATION: string = "Idle"
+
 -- Seconds a track fades in or out, and how close to its end the shell hide stops and holds
 local FADE_TIME: number = 0.15
 local HIDE_HOLD_MARGIN: number = 0.08
 
+-- The shell hide snaps in: how fast it plays, and the short blend it starts with
+local HIDE_PLAY_SPEED: number = 1.8
+local HIDE_FADE_TIME: number = 0.05
+
 -- How far a weapon pitches from level, either way
 local MAX_PITCH: number = math.rad(90)
+
+--[[ Emotes ]]
+
+-- Seconds an emote's stand-in motion blends in and out
+local EMOTE_BLEND_IN: number = 0.18
+local EMOTE_BLEND_OUT: number = 0.25
+
+-- How long the backflip's flip takes, and how high it hops (studs)
+local FLIP_SECONDS: number = 0.9
+local FLIP_HEIGHT: number = 2.2
+
+--[[ Walk ]]
+
+-- The Walk animation plays this much faster than it was made, so its steps read
+local WALK_PLAY_SPEED: number = 1.5
+
+--[[
+	Walking also moves the snail in code, over its animations and a held weapon's pose (which hides Walk's body): two
+	steps per cycle, each lifting and rocking the body, the shell swaying side to side, the tail and eyestalks swinging
+	after it. It blends in and out over WALK_BLEND_TIME
+]]
+local WALK_CYCLES_PER_SECOND: number = 1.4
+local WALK_BLEND_TIME: number = 0.15
+
+-- How far each step lifts the body (studs) and rocks it forward and back
+local WALK_BOB: number = 0.35
+local WALK_LEAN: number = math.rad(6)
+
+-- How far the shell sways side to side, and lifts after the body (studs)
+local WALK_SHELL_SWAY: number = math.rad(8)
+local WALK_SHELL_BOB: number = 0.2
+
+-- How far each tail bone and eyestalk swings, and how far each lags the one before (radians of the step)
+local WALK_TAIL_SWING: number = math.rad(14)
+local WALK_EYE_SWING: number = math.rad(14)
+local WALK_LAG: number = 0.7
+
+-- The rig's shell, tail and eyestalk bones (the stalks' bases, then their middles)
+local SHELL: string = "Bone.013"
+
+--- @type { string }
+local TAIL = { "Bone.009", "Bone.010", "Bone.011" }
+
+--- @type { string }
+local EYESTALKS = { "Bone.005.L", "Bone.005.R", "Bone.006.L", "Bone.006.R" }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -93,8 +146,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Motion
 
 --[[
-	Plays a skin's body motion: "Idle" or "Walk" (looped), or "Hidden", which pulls the snail into its shell and holds it
-	there; leaving "Hidden" brings it back out.
+	Plays a skin's body motion: "Idle" or "Walk" (looped), or "Hidden", which snaps the snail into its shell (at
+	HIDE_PLAY_SPEED) and holds it there; leaving "Hidden" brings it back out.
 ]]
 function SnailRig.SetMotion(skin: Model, motion: "Idle" | "Walk" | "Hidden")
 	--[[ Data ]]
@@ -117,9 +170,12 @@ function SnailRig.SetMotion(skin: Model, motion: "Idle" | "Walk" | "Hidden")
 	--[[ Hiding ]]
 
 	if motion == "Hidden" then
-		SnailRig._stop(rig, "Idle")
-		SnailRig._stop(rig, "Walk")
-		SnailRig._play(rig, "Hide", true)
+		SnailRig._stop(rig, "Idle", HIDE_FADE_TIME)
+		SnailRig._stop(rig, "Walk", HIDE_FADE_TIME)
+		local hide: AnimationTrack? = SnailRig._play(rig, "Hide", true, HIDE_FADE_TIME)
+		if hide then
+			hide:AdjustSpeed(HIDE_PLAY_SPEED)
+		end
 		return
 	end
 
@@ -133,7 +189,10 @@ function SnailRig.SetMotion(skin: Model, motion: "Idle" | "Walk" | "Hidden")
 	--[[ Moving ]]
 
 	SnailRig._stop(rig, if motion == "Idle" then "Walk" else "Idle")
-	SnailRig._play(rig, motion, true)
+	local track: AnimationTrack? = SnailRig._play(rig, motion, true)
+	if track and motion == "Walk" then
+		track:AdjustSpeed(WALK_PLAY_SPEED)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Hold
@@ -260,13 +319,100 @@ function SnailRig.Shoot(skin: Model, seconds: number?)
 	return length
 end
 
+--%%%%%%%%%%%%%%%%%%%% Emote
+
+--[[
+	Plays an emote on a skin for a number of seconds: its animation from `Assets/Snails/Animations` (named after the
+	emote) once it exists, until then a stand-in motion of the body and hands made here, toward the camera.
+]]
+function SnailRig.Emote(skin: Model, emoteId: string, seconds: number)
+	--[[ Data ]]
+
+	local rig = SnailRig._getRig(skin) --- @type SnailRig_Rig?
+	if not rig then
+		return
+	end
+
+	--[[ Animation ]]
+
+	animationsFolder = animationsFolder or I.Dirs.Assets:FindFirstChild("Snails"):FindFirstChild("Animations")
+	if animationsFolder:FindFirstChild(emoteId) then
+		local track: AnimationTrack? = SnailRig._play(rig, emoteId, false)
+		if track then
+			return
+		end
+	end
+
+	--[[ Stand-in ]]
+
+	-- shortcut: a motion made in code stands in for each emote until its animation exists (named after the emote)
+	rig.Emote = (string.gsub(emoteId, "^Emote_", ""))
+	rig.EmoteStart = os.clock()
+	rig.EmoteUntil = rig.EmoteStart + seconds
+end
+
+--%%%%%%%%%%%%%%%%%%%% Pose
+
+--[[
+	Holds a skin still in the first frame of one of its animations (STILL_ANIMATION unless named) by setting its bones'
+	Transforms, with no Animator: for a skin shown without being animated, as in a ViewportFrame, whose rest pose has
+	its shell above its back and its hands held out.
+]]
+function SnailRig.Pose(skin: Model, name: string?)
+	--[[ Data ]]
+
+	animationsFolder = animationsFolder or I.Dirs.Assets:FindFirstChild("Snails"):FindFirstChild("Animations")
+	local animation: Instance? = animationsFolder:FindFirstChild(name or STILL_ANIMATION)
+	local keyframes: KeyframeSequence? = animation and animation:FindFirstChildOfClass("KeyframeSequence")
+	local root: BasePart? = skin.PrimaryPart
+
+	-- The first frame (GetKeyframes isn't in time order)
+	local first: Keyframe? = nil
+	for _index: number, keyframe: Keyframe in ipairs(if keyframes then keyframes:GetKeyframes() else {}) do
+		if not first or keyframe.Time < first.Time then
+			first = keyframe
+		end
+	end
+
+	--[[ Checks ]]
+
+	-- Check if the animation has a frame and the skin its bones
+	if not first or not root then
+		warn(`[{_localName}]: Can't pose ({skin.Name}) in ({name or STILL_ANIMATION}): no keyframes or no PrimaryPart!`)
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	-- Each bone's pose in the first frame
+	local poses = {} --- @type { [string]: CFrame }
+	for _index: number, pose: Instance in ipairs(first:GetDescendants()) do
+		if pose:IsA("Pose") then
+			poses[pose.Name] = pose.CFrame
+		end
+	end
+
+	-- An Animator scales the poses' moves with the model; a Transform set here isn't, so it's scaled the same
+	local scale: number = skin:GetScale()
+
+	--[[ Applying ]]
+
+	for _index: number, bone: Instance in ipairs(root:GetDescendants()) do
+		local pose: CFrame? = poses[bone.Name]
+		if bone:IsA("Bone") and pose then
+			bone.Transform = pose.Rotation + pose.Position * scale
+		end
+	end
+end
+
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Runs after the animations each frame, before physics: holds the shell hide on its last frame, ends shots, and moves
-	each held weapon and its hands to the camera's side of the snail and along its aim.
+	Runs after the animations each frame, before physics: holds the shell hide on its last frame, ends shots, moves a
+	walking snail's body, shell, tail and eyestalks, and moves each held weapon and its hands to the camera's side of
+	the snail and along its aim.
 ]]
-function SnailRig._step()
+function SnailRig._step(deltaTime: number)
 	--[[ Local Variables ]]
 
 	local now: number = os.clock()
@@ -288,10 +434,264 @@ function SnailRig._step()
 				track:AdjustSpeed(0)
 			end
 		end
+
+		-- Before the aim, which builds on where the walk put the hands and the weapon
+		SnailRig._walk(rig, now, deltaTime)
 		if rig.Pose then
 			SnailRig._aimHands(rig, camera)
 		end
+		if rig.Emote then
+			SnailRig._emote(rig, now, camera)
+		end
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Emote Step
+
+--[[
+	Moves a skin through its emote's stand-in for this frame, on top of its animations: the body hops, sways, leans or
+	flips about its base, and the hands rise and move, all toward the camera so every screen sees it the same way.
+]]
+--- @param rig SnailRig_Rig
+function SnailRig._emote(rig, now: number, camera: Vector3)
+	--[[ Restoring ]]
+
+	-- A bone no animation moves still holds last frame's stand-in: take it off first, so it never builds up
+	--- @param applied SnailRig_EmoteTransform
+	for bone: Bone, applied in pairs(rig.EmoteBones) do
+		if bone.Transform == applied.Set then
+			bone.Transform = applied.Base
+		end
+	end
+	table.clear(rig.EmoteBones)
+
+	--[[ Checks ]]
+
+	-- Check if the emote is over
+	local t: number = now - rig.EmoteStart
+	local length: number = rig.EmoteUntil - rig.EmoteStart
+	if t >= length then
+		rig.Emote = nil
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local weight: number = math.clamp(math.min(t / EMOTE_BLEND_IN, (length - t) / EMOTE_BLEND_OUT), 0, 1)
+	local frame: CFrame = rig.Root.CFrame
+	local up: Vector3 = Vector3.yAxis
+	local flat: Vector3 = (camera - frame.Position) * Vector3.new(1, 0, 1)
+	local toCamera: Vector3 = if flat.Magnitude > 0.01 then flat.Unit else frame.LookVector
+	local side: Vector3 = up:Cross(toCamera).Unit
+
+	-- The hand nearer the camera (and to the screen's right) leads one-handed emotes
+	local lead: string = HANDS[1]
+	local leadScore: number = -math.huge
+	for _index: number, name: string in ipairs(HANDS) do
+		local offset: Vector3 = rig.Hands[name].TransformedWorldCFrame.Position - frame.Position
+		local score: number = offset:Dot(toCamera) + offset:Dot(side) * 0.5
+		if score > leadScore then
+			lead, leadScore = name, score
+		end
+	end
+	local other: string = if lead == HANDS[1] then HANDS[2] else HANDS[1]
+
+	--[[ Motion ]]
+
+	local hop: number = 0
+	local sway: number = 0
+	local lean: number = 0
+	local flip: number = 0
+	local hands = {} --- @type { [string]: Vector3 }
+	local beat: number = math.sin(t * math.pi * 3.2)
+	if rig.Emote == "Wave" then
+		sway = math.rad(-6)
+		hands[lead] = up * 1.3 + side * (0.3 + math.sin(t * 14) * 0.35)
+	elseif rig.Emote == "ThumbsUp" then
+		hop = if t < 0.35 then math.sin(t / 0.35 * math.pi) * 0.4 else 0
+		lean = math.rad(-5)
+		hands[lead] = up * 0.9 + toCamera * 0.6
+	elseif rig.Emote == "Laugh" then
+		sway = math.sin(t * 18) * math.rad(7)
+		hop = math.abs(math.sin(t * 9)) * 0.25
+		hands[lead] = up * 0.3 + side * math.sin(t * 18) * 0.12
+		hands[other] = up * 0.3 - side * math.sin(t * 18) * 0.12
+	elseif rig.Emote == "Dance" then
+		sway = beat * math.rad(14)
+		hop = math.abs(beat) * 0.45
+		hands[lead] = up * (if beat > 0 then 1.2 else 0.2)
+		hands[other] = up * (if beat > 0 then 0.2 else 1.2)
+	elseif rig.Emote == "Flex" then
+		lean = math.rad(-8)
+		local pump: number = (math.sin(t * math.pi * 4) + 1) * 0.08
+		hands[lead] = up * 1.2 + side * (0.4 - pump)
+		hands[other] = up * 1.2 - side * (0.4 - pump)
+	elseif rig.Emote == "Taunt" then
+		lean = math.rad(12)
+		local wiggle: number = math.sin(t * 16) * 0.2
+		hands[lead] = up * 1.4 - side * 0.6 + toCamera * wiggle
+		hands[other] = up * 1.4 + side * 0.6 - toCamera * wiggle
+	elseif rig.Emote == "Cry" then
+		lean = math.rad(10)
+		hop = math.abs(math.sin(t * 10)) * 0.06
+		hands[lead] = up * 1.2 - side * 1.0 + toCamera * 0.3
+		hands[other] = up * 1.2 + side * 1.0 + toCamera * 0.3
+	elseif rig.Emote == "Backflip" then
+		local k: number = math.clamp(t / FLIP_SECONDS, 0, 1)
+		hop = 4 * k * (1 - k) * FLIP_HEIGHT
+		flip = -2 * math.pi * (1 - (1 - k) ^ 2)
+	elseif rig.Emote == "VictoryTrumpet" then
+		hop = math.abs(math.sin(t * math.pi * 2.4)) * 0.35
+		sway = math.sin(t * math.pi * 1.2) * math.rad(5)
+		hands[lead] = up * 1.6 + side * 0.2
+		hands[other] = up * 1.6 - side * 0.2
+	end
+
+	--[[ Body ]]
+
+	local body: Bone = rig.Body
+	local rest: CFrame = frame * body.CFrame
+	local current: CFrame = rest * body.Transform
+	local base: Vector3 = rest.Position
+	local middle: Vector3 = base + up * 1.6
+	local move: CFrame = CFrame.new(up * hop * weight)
+		* CFrame.new(base)
+		* CFrame.fromAxisAngle(toCamera, sway * weight)
+		* CFrame.fromAxisAngle(side, lean * weight)
+		* CFrame.new(-base)
+		* CFrame.new(middle)
+		* CFrame.fromAxisAngle(toCamera, flip * weight)
+		* CFrame.new(-middle)
+	local bodyBase: CFrame = body.Transform
+	body.Transform = rest:Inverse() * move * current
+	rig.EmoteBones[body] = { Base = bodyBase, Set = body.Transform }
+
+	--[[ Hands ]]
+
+	for name: string, offset: Vector3 in pairs(hands) do
+		local bone: Bone = rig.Hands[name]
+		local parent: Bone = bone.Parent
+		local handRest: CFrame = parent.TransformedWorldCFrame * bone.CFrame
+		local handBase: CFrame = bone.Transform
+		bone.Transform = handRest:Inverse() * CFrame.new(offset * weight) * handRest * handBase
+		rig.EmoteBones[bone] = { Base = handBase, Set = bone.Transform }
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Walk Step
+
+--[[
+	Moves a walking skin for this frame, on top of its animations and a held pose: each step lifts the body and rocks it
+	about its base (the held weapon's Handle with it), the shell sways side to side and lifts after it, and the tail
+	and eyestalks swing, each bone lagging the one before. Blends in and out with the walk.
+]]
+--- @param rig SnailRig_Rig
+function SnailRig._walk(rig, now: number, deltaTime: number)
+	--[[ Restoring ]]
+
+	-- A joint no animation moves still holds last frame's walk: take it off first, so it never builds up
+	--- @param applied SnailRig_EmoteTransform
+	for joint: Bone | Motor6D, applied in pairs(rig.WalkJoints) do
+		if joint.Transform == applied.Set then
+			joint.Transform = applied.Base
+		end
+	end
+	table.clear(rig.WalkJoints)
+
+	--[[ Blending ]]
+
+	local step: number = deltaTime / WALK_BLEND_TIME
+	rig.WalkWeight = math.clamp(rig.WalkWeight + (if rig.Motion == "Walk" then step else -step), 0, 1)
+
+	--[[ Checks ]]
+
+	-- Check if the snail walks, or is still settling from it
+	if rig.WalkWeight <= 0 then
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local weight: number = rig.WalkWeight
+	local cycle: number = now * WALK_CYCLES_PER_SECOND * 2 * math.pi
+	local frame: CFrame = rig.Root.CFrame
+	local up: Vector3 = Vector3.yAxis
+	local forward: Vector3 = frame.LookVector
+	local side: Vector3 = frame.RightVector
+
+	--[[ Body ]]
+
+	local base: Vector3 = (frame * rig.Body.CFrame).Position
+	local lift: number = (0.5 - 0.5 * math.cos(cycle * 2)) * WALK_BOB * weight
+	local lean: number = math.sin(cycle * 2 - 0.6) * WALK_LEAN * weight
+	local move: CFrame = CFrame.new(up * lift) * CFrame.new(base) * CFrame.fromAxisAngle(side, lean) * CFrame.new(-base)
+	SnailRig._moveJoint(rig, rig.Body, frame * rig.Body.CFrame, move)
+	SnailRig._moveJoint(rig, rig.Motor, rig.Motor.Part0.CFrame * rig.Motor.C0, move)
+
+	--[[ Shell ]]
+
+	local shell: Bone? = rig.Bones[SHELL]
+	if shell then
+		local rest: CFrame = shell.Parent.TransformedWorldCFrame * shell.CFrame
+		local pivot: Vector3 = (rest * shell.Transform).Position
+		local sway: number = math.sin(cycle) * WALK_SHELL_SWAY * weight
+		local shellLift: number = (0.5 - 0.5 * math.cos(cycle * 2 - WALK_LAG)) * WALK_SHELL_BOB * weight
+		SnailRig._moveJoint(rig, shell, rest, CFrame.new(up * shellLift + pivot) * CFrame.fromAxisAngle(forward, sway) * CFrame.new(-pivot))
+	end
+
+	--[[ Tail And Eyestalks ]]
+
+	-- Each swings about the snail's side, a lag behind the bone before it
+	for index: number, name: string in ipairs(TAIL) do
+		SnailRig._swingBone(rig, rig.Bones[name], side, math.sin(cycle * 2 - index * WALK_LAG) * WALK_TAIL_SWING * weight)
+	end
+	for index: number, name: string in ipairs(EYESTALKS) do
+		local lag: number = if index > 2 then 2 else 1
+		SnailRig._swingBone(rig, rig.Bones[name], side, math.sin(cycle * 2 - (lag + 1) * WALK_LAG) * WALK_EYE_SWING * weight)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Swing Bone
+
+--[[
+	Turns a bone about an axis through its own joint for this frame's walk, carrying its children; a missing bone (a
+	skin without it) is skipped.
+]]
+--- @param rig SnailRig_Rig
+function SnailRig._swingBone(rig, bone: Bone?, axis: Vector3, angle: number)
+	--[[ Checks ]]
+
+	-- Check if the skin has the bone
+	if not bone then
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local rest: CFrame = bone.Parent.TransformedWorldCFrame * bone.CFrame
+	local pivot: Vector3 = (rest * bone.Transform).Position
+
+	--[[ Applying ]]
+
+	SnailRig._moveJoint(rig, bone, rest, CFrame.new(pivot) * CFrame.fromAxisAngle(axis, angle) * CFrame.new(-pivot))
+end
+
+--%%%%%%%%%%%%%%%%%%%% Move Joint
+
+--[[
+	Moves a bone or Motor6D by a world move on top of its animated Transform, from its rest (its parent's frame times its
+	own offset), and keeps both Transforms so the next frame can take the move off again.
+]]
+--- @param rig SnailRig_Rig
+function SnailRig._moveJoint(rig, joint: Bone | Motor6D, rest: CFrame, move: CFrame)
+	--[[ Local Variables ]]
+
+	local before: CFrame = joint.Transform
+
+	--[[ Applying ]]
+
+	joint.Transform = rest:Inverse() * move * rest * before
+	rig.WalkJoints[joint] = { Base = before, Set = joint.Transform }
 end
 
 --%%%%%%%%%%%%%%%%%%%% Aim Hands
@@ -411,9 +811,14 @@ function SnailRig._getRig(skin: Model)
 	local root: BasePart? = skin.PrimaryPart
 	local animator: Animator? = skin:FindFirstChildWhichIsA("Animator", true)
 	local motor: Motor6D? = root and root:FindFirstChild("Handle")
+	local body: Bone? = root and root:FindFirstChildOfClass("Bone")
 	local hands = {} --- @type { [string]: Bone }
+	local bones = {} --- @type { [string]: Bone }
 	if root then
 		for _index: number, bone: Instance in ipairs(root:GetDescendants()) do
+			if bone:IsA("Bone") then
+				bones[bone.Name] = bone
+			end
 			if bone:IsA("Bone") and table.find(HANDS, bone.Name) then
 				hands[bone.Name] = bone
 			end
@@ -423,7 +828,7 @@ function SnailRig._getRig(skin: Model)
 	--[[ Checks ]]
 
 	-- Check if the skin is rigged
-	if not root or not animator or not motor or not motor:IsA("Motor6D") or not hands[HANDS[1]] or not hands[HANDS[2]] then
+	if not root or not animator or not motor or not motor:IsA("Motor6D") or not body or not hands[HANDS[1]] or not hands[HANDS[2]] then
 		return nil
 	end
 
@@ -435,8 +840,13 @@ function SnailRig._getRig(skin: Model)
 		Animator = animator,
 		Motor = motor,
 		Handle = motor.Part1,
+		Body = body,
 		Hands = hands,
+		Bones = bones,
 		Tracks = {},
+		EmoteBones = {},
+		WalkJoints = {},
+		WalkWeight = 0,
 		Motion = "",
 	}
 	rigs[skin] = rig

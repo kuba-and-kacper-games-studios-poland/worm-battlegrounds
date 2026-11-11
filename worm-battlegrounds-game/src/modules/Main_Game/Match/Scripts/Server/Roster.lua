@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -203,12 +204,7 @@ function Module.Build()
 		--- @type Match_Participant
 		local participant = participants[id]
 		participant.Color = if teamSize > 1 then _settings.TEAMS[participant.Team].Color else _settings.FFA_COLORS[(participant.Team - 1) % #_settings.FFA_COLORS + 1]
-		if teamSize > 1 and not participant.IsBot then
-			--- @type Match_TeamStyle
-			local style = _settings.TEAMS[participant.Team]
-			I.Team.Create(style.Name, style.Color, false)
-			I.Team.Assign(I.S.Players:GetPlayerByUserId(participant.UserId), style.Name)
-		end
+		Module.AssignTeam(participant)
 		Module._write(participant)
 	end
 end
@@ -268,6 +264,38 @@ function Module.SetInfo(participantId: string, name: string, value: any)
 	--[[ Saving ]]
 
 	entry:SetAttribute(name, value)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Assign Team
+
+--[[
+	**SERVER** |
+	Puts a participant's player on their Roblox team in a team match, at the start and when they come back after
+	dropping.
+]]
+--- @param participant Match_Participant
+function Module.AssignTeam(participant)
+	--[[ Data ]]
+
+	local player: Player? = I.S.Players:GetPlayerByUserId(participant.UserId or 0)
+
+	--[[ Checks ]]
+
+	-- Check if it's a player here, in a team match
+	if participant.IsBot or not player or Module._getTeamSize() <= 1 then
+		return
+	end
+
+	--[[ Assigning ]]
+
+	--- @type Match_TeamStyle
+	local style = _settings.TEAMS[participant.Team]
+
+	-- Made once per server: a teammate or an earlier match on it already made it
+	if not I.S.Teams:FindFirstChild(style.Name) then
+		I.Team.Create(style.Name, style.Color, false)
+	end
+	I.Team.Assign(player, style.Name)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Add

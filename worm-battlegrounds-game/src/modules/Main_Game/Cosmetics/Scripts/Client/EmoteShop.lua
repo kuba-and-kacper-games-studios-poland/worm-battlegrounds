@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -40,8 +41,8 @@ function Module.Start()
 	--[[ Elements ]]
 
 	moduleGui = I.UserInterface.UI[_settings.EMOTE_SHOP_GUI_NAME]
-	elems["Emotes"] = moduleGui:FindFirstChild("U_Emotes", true) --- @type ScrollingFrame
-	prefabs["EmoteRow"] = elems["Emotes"]:FindFirstChild("PREFAB | EmoteRow") --- @type Frame
+	elems["Emotes"] = moduleGui:FindFirstChild("U_Emotes", true) --- @type Frame
+	prefabs["EmoteCard"] = elems["Emotes"]:FindFirstChild("PREFAB | EmoteCard") --- @type ImageButton
 
 	--[[ Connections ]]
 
@@ -90,13 +91,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Draw
 
 --[[
-	Draws one row per emote, cheapest first: its name, the level it needs, its price, and Buy or Owned.
+	Draws one card per emote, cheapest first: its icon, name and rarity; one not owned yet wears the locked cover with
+	its price and the level it needs, and a press buys it.
 ]]
 function Module._draw()
 	--[[ Clearing ]]
 
 	for _index: number, child: Instance in ipairs(elems["Emotes"]:GetChildren()) do
-		if child:IsA("Frame") and child ~= prefabs["EmoteRow"] then
+		if child:IsA("ImageButton") and child ~= prefabs["EmoteCard"] then
 			child:Destroy()
 		end
 	end
@@ -105,7 +107,7 @@ function Module._draw()
 
 	local standard = I.Inventory.Items and I.Inventory.Items.Standard or {} --- @type { [string]: string }
 
-	--[[ Rows ]]
+	--[[ Cards ]]
 
 	--- @param emote Cosmetics_EmoteData
 	for emoteId: string, emote in pairs(I.G_Cosmetics.GetEmotes()) do
@@ -114,20 +116,23 @@ function Module._draw()
 			continue
 		end
 		local owned: boolean = standard[emoteId] ~= nil
-		local row: Frame = prefabs["EmoteRow"]:Clone()
-		row.Name = emoteId
-		row.LayoutOrder = emote.Level * 1000 + (tonumber(emote.Coins) or 0) // 10
-		row.Visible = true
-		local buy: Frame = row:FindFirstChild("S_Buy", true)
-		row:FindFirstChild("S_Icon", true).Image = item.IconId
-		row:FindFirstChild("S_Name", true).Text = item.Name
-		row:FindFirstChild("S_Level", true).Text = `Level {emote.Level}`
-		row:FindFirstChild("S_Price", true).Text = if emote.Coins == "0" then "Free" else `{emote.Coins} coins`
-		row:FindFirstChild("S_Owned", true).Visible = owned
-		buy.Visible = not owned
-		row.Parent = elems["Emotes"]
-		I.Interact.OnPress(buy:FindFirstChild("Button"), function()
-			Module._buy(emoteId)
+		local look = I.Rarity.GetLook(item.Rarity) --- @type Rarity_Look?
+		local card: ImageButton = prefabs["EmoteCard"]:Clone()
+		local locked: Frame = card:FindFirstChild("S_Locked")
+		card.Name = emoteId
+		card.LayoutOrder = emote.Level * 1000 + (tonumber(emote.Coins) or 0) // 10
+		card.Visible = true
+		card:FindFirstChild("S_Icon").Image = item.IconId
+		card:FindFirstChild("S_Name").Text = item.Name
+		card:FindFirstChild("S_Rarity").ImageColor3 = if look then look.Base else Color3.new(1, 1, 1)
+		locked.Visible = not owned
+		locked:FindFirstChild("S_Price").Text = if emote.Coins == "0" then "Free" else I.Format.Text(emote.Coins)
+		locked:FindFirstChild("S_Level").Text = if emote.Level <= 1 then "Any level" else `Level {emote.Level}`
+		card.Parent = elems["Emotes"]
+		I.Interact.OnPress(card, function()
+			if not owned then
+				Module._buy(emoteId)
+			end
 		end)
 	end
 end

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -111,8 +112,8 @@ end
 --[[
 	Plays the next turn: picks the next snail (team by team), starts a new round when the order wrapped, raises the
 	liquid in sudden death, rolls the wind, tells every client who plays after it (`TurnOrder`), hands the snail to
-	its player (or its bot), waits for a shot or the timer, takes the snail back, waits for the shot and then the
-	arena to settle, and knocks out every snail left at 0 health.
+	its player (or its bot, or a bot standing in for a player who dropped: `Autopilot`), waits for a shot or the timer,
+	takes the snail back, waits for the shot and then the arena to settle, and knocks out every snail left at 0 health.
 ]]
 function Module.RunTurn()
 	--[[ Round ]]
@@ -153,12 +154,15 @@ function Module.RunTurn()
 	model:SetAttribute("Active", true)
 	matchFolder:SetAttribute("Wind", random:NextInteger(-_settings.WIND_MAX, _settings.WIND_MAX))
 	matchFolder:SetAttribute("TurnOrder", table.concat(Module._getUpcoming(), ","))
+	-- A dropped player's snail plays on under a bot until they come back
+	local autopilot: boolean = participant.IsBot or not participant.Connected
+	matchFolder:SetAttribute("Autopilot", autopilot and not participant.IsBot)
 	matchFolder:SetAttribute("ActiveId", participantId)
 	Module._setDeadline(turnSeconds or _settings.TURN_SECONDS)
 	setPhase("Turn")
 	I.Topic.Publish("Match_TurnStarted", participantId)
 
-	if participant.IsBot then
+	if autopilot then
 		task.spawn(I.Bots.TakeTurn, participantId)
 	else
 		I.SnailControl.StartTurn(participantId)
@@ -166,8 +170,16 @@ function Module.RunTurn()
 
 	--[[ Waiting ]]
 
-	-- The turn ends with a shot, the timer (or an admin skipping it), the snail going out, or its player leaving
-	while os.clock() < turnDeadline and not shotFired and model:GetAttribute("Alive") and (participant.IsBot or participant.Connected) do
+	-- The turn ends with a shot, the timer (or an admin skipping it), or the snail going out
+	while os.clock() < turnDeadline and not shotFired and model:GetAttribute("Alive") do
+		-- A player who drops during their turn hands it to a bot, with at least TAKEOVER_SECONDS left to play it
+		if not autopilot and not participant.Connected then
+			autopilot = true
+			matchFolder:SetAttribute("Autopilot", true)
+			I.SnailControl.EndTurn(participantId)
+			Module._setDeadline(math.max(turnDeadline - os.clock(), _settings.TAKEOVER_SECONDS))
+			task.spawn(I.Bots.TakeTurn, participantId)
+		end
 		task.wait()
 	end
 
@@ -185,7 +197,11 @@ function Module.RunTurn()
 
 	setPhase("Settle")
 	Module._settle()
-	Module._resolveDeaths()
+
+	-- A snail knocked out here turns into its ghost before the next turn takes the camera away
+	if Module._resolveDeaths() > 0 then
+		task.wait(I.Settings["Snails"].GHOST_TIME)
+	end
 
 	--[[ Ending ]]
 
@@ -193,6 +209,7 @@ function Module.RunTurn()
 		model:SetAttribute("Active", nil)
 	end
 	matchFolder:SetAttribute("ActiveId", "")
+	matchFolder:SetAttribute("Autopilot", false)
 	I.Topic.Publish("Match_TurnEnded", participantId)
 end
 
@@ -283,16 +300,26 @@ end
 --%%%%%%%%%%%%%%%%%%%% Resolve Deaths
 
 --[[
-	Knocks out every snail still in play at 0 health; the last snail that hurt it gets the knockout.
+	Knocks out every snail still in play at 0 health; the last snail that hurt it gets the knockout. Returns how many.
 ]]
+--- @return number
 function Module._resolveDeaths()
+	--[[ Local Variables ]]
+
+	local knocked: number = 0
+
 	--[[ Resolving ]]
 
 	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
 		if model:GetAttribute("Health") <= 0 then
 			I.Snails.Kill(model.Name, "Damage")
+			knocked += 1
 		end
 	end
+
+	--[[ Returning ]]
+
+	return knocked
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -371,7 +398,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Can Play
 
 --[[
-	Returns whether a participant can take a turn: still in, with a snail in play, and here (bots always are).
+	Returns whether a participant can take a turn: still in, with a snail in play (a dropped player's plays under a bot).
 ]]
 --- @return boolean
 function Module._canPlay(participantId: string)
@@ -382,7 +409,7 @@ function Module._canPlay(participantId: string)
 
 	--[[ Returning ]]
 
-	return participant ~= nil and not participant.Out and model ~= nil and model:GetAttribute("Alive") == true and (participant.IsBot or participant.Connected)
+	return participant ~= nil and not participant.Out and model ~= nil and model:GetAttribute("Alive") == true
 end
 
 --%%%%%%%%%%%%%%%%%%%% Find Next

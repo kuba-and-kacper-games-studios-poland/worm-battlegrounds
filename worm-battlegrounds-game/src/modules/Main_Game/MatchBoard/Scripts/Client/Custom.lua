@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -25,6 +26,12 @@ local pickedMap: string = _settings.MAP_POOL[1]
 local pickedMode: string = "Deathmatch"
 local pickedSize: number = 4
 local pickedDifficulty: string = "None"
+
+--[[ Room ]]
+
+-- The lobby the player is in, and whether they asked to leave it (so its closing only shows the create step then)
+local myRoomId: string? = nil
+local leaving: boolean = false
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -102,6 +109,7 @@ function Module.Start()
 		I.Network.Fire("MatchBoard_StartCustom")
 	end)
 	I.Interact.OnPress(Module._getButton("S_Leave"), function()
+		leaving = true
 		I.Network.Fire("MatchBoard_LeaveCustom")
 	end)
 	I.Interact.OnPress(Module._getButton("S_InviteFriends"), function()
@@ -116,7 +124,7 @@ function Module.Start()
 	for _index: number, config: Instance in ipairs(boardFolder:GetChildren()) do
 		config.AttributeChanged:Connect(Module._refreshRoom)
 	end
-	boardFolder.ChildRemoved:Connect(Module._refreshRoom)
+	boardFolder.ChildRemoved:Connect(Module._onRoomRemoved)
 	I.S.Players.PlayerAdded:Connect(Module._refreshRoom)
 	I.S.Players.PlayerRemoving:Connect(Module._refreshRoom)
 	I.Network.Fired("MatchBoard_Invited", Module._onInvited)
@@ -167,6 +175,24 @@ function Module._refreshChoices()
 	end
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Room Removed
+
+--[[
+	A lobby closed: when it was the player's and they didn't leave it (it started, or its owner closed it), the window
+	closes instead of going back to the create step.
+]]
+function Module._onRoomRemoved(config: Instance)
+	--[[ Closing ]]
+
+	if config.Name == myRoomId and not leaving then
+		I.WidgetManager.Close(_settings.CUSTOM_GUI_NAME)
+	end
+
+	--[[ Refreshing ]]
+
+	Module._refreshRoom()
+end
+
 --%%%%%%%%%%%%%%%%%%%% Refresh Room
 
 --[[
@@ -177,6 +203,8 @@ function Module._refreshRoom()
 	--[[ Data ]]
 
 	local room: Instance? = Module._getMyRoom()
+	myRoomId = if room then room.Name else nil
+	leaving = leaving and room ~= nil
 
 	--[[ Visibility ]]
 

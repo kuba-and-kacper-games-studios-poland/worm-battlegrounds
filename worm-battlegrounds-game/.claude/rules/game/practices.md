@@ -39,7 +39,8 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   SmoothPlastic with `2022 Stud`, sorted into islands, ledges and backdrop, with its own markers.
 - **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), their
   play plane (Bounds) at Z = 0, side by side along +X in 400-stud slots (MapLab's: X = (slot − 1) × 400) so none
-  overlaps another, and cached by the Arena module at start. The drop picker reads the plane as Z = 0. Nothing starts
+  overlaps another, and cached by the Arena module at start. The drop picker, aims and shots read the plane as Z = 0,
+  so a template dragged off it in Studio is put back on it at start, with a warning (Arena's Loader). Nothing starts
   in the bounds' top 20 studs (Arena's `START_TOP_GAP`), so a map's roof is never a spawn, and the liquid is drawn as
   deep as the map's bedrock, measured at load, never the bounds' depth: a map needs neither set by hand. Weapon models are authored in
   `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/` and cached by Arsenal (its README → In the place).
@@ -47,8 +48,15 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   and drawn as merged rectangles in `2022 Small Stud`, so they hop like a brick film. They are the only thing in the
   arena on a grid, and the cells stay fine (never one-stud or bigger blocks).
 - **Only the sea knocks snails out** (the owner's pick, 2026-11-08): the liquid whose marker starts at the bounds'
-  bottom, raised by sudden death (Arena's `GetHazard`, `SEA_SLACK`). A pond higher up, like Desert's oasis, is safe to
-  fall in. Any liquid, ponds too, sets off an explosive shot that touches it.
+  bottom, raised by sudden death (Arena's `GetHazard`, `SEA_SLACK`), and since 2026-11-10 any liquid of its kind
+  joined to it, so a pond the rising sea reaches becomes the sea (Arena's `Liquid.IsSea`, `SEA_MARK_STEPS`). A pond on
+  its own, like Desert's oasis, is safe to fall in. **Lava turns the water it touches into obsidian** (2026-11-10), on
+  a map holding both: those cells leave the liquid and become terrain parts that blasts cut like any ground (Arena's
+  `Obsidian`). It's the one terrain built in code, merged from the liquid's half-stud cells, an exception to "Terrain
+  is authored parts". **Shots fly on through any liquid, ponds too, slowed** (the owner's pick, 2026-11-10: "projectiles move
+through water but slower"): water and lava never set a shot off; it bursts on what it touches under them, or by its
+fuse (Combat's `SINK_*`). Only the black hole grenade's roll, the spider bomb's crawl and the variety grenade's worms
+end in liquid.
 
 ## Snails
 
@@ -64,24 +72,34 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **The snail is the studio's rig, animated on each client** (2026-11-09): the `Classic` skin has bones, hands and a
   `Handle`, and the `SnailRig` library plays its animations (idle, walk, hiding in its shell while it's thrown) from
   how its ball moves (Snails' `Motion`), never from the server. Only the skin's RootPart is welded to the ball. Its
-  animations stay unpublished until the owner publishes them: Studio plays their keyframes, live servers nothing.
+  animations are published to The Snail Studio's group (2026-11-10; the ids are on the place's Animation instances
+  under `Assets/Snails/Animations`), so live servers play them once the place with those ids is published. A hit
+  snail ducks into its shell at once (Snails' `Motion` hears `Combat_Hit`), the hide sped up by SnailRig's
+  `HIDE_PLAY_SPEED`.
+- **Every skin is a snail on Classic's skeleton** (2026-11-11, the artist's nine): the same bone names and frames,
+  scaled 0.45, a skinned `Body` (accessories and Classic's hands in it) and `Shell`, Classic's `Handle`, so Classic's
+  animations and SnailRig play on it unchanged (`art/skins`: the rigging, and why the shell is moved back by the
+  Idle's offset). The rig's rest pose has the shell floating above the back and the hands held out, so a skin shown
+  unanimated (a ViewportFrame) is held in its idle frame with `I.SnailRig.Pose`, never shown at rest.
 - **The active snail holds its weapon in its hands, in the weapon's pose** (the row's `HoldPose`: the studio's Gun,
   MiniGun, Bazooka and ShotGun snails; other items in the Gun pose), welded to the rig's `Handle` at the model's
   `Grip`, and always on the camera's side: a snail facing left swaps its hands over. The hands and weapon pitch to the
   aim (up to 90° either way), and a snail standing still turns to face its aim (its player's screen; the server for
   bots), so the weapon never points back through it. A gun plays its pose's shot when it fires. It's drawn by each
   client from the snail's `HeldItem` (Combat's `Held` handler), never welded on the server.
-- **Aiming points from the snail at the mouse** (the owner's pick, 2026-11-07, after the drag measured from the
-  press felt off): on PC the weapon follows the mouse from the snail even before a press; holding the button (or a
-  finger on touch) sets the power by how far the pointer is from the snail on the screen, in shares of the screen's
-  height so it feels the same on every screen, and letting go fires (on touch, letting go keeps the aim and its power,
-  and the HUD's FIRE button fires it, since 2026-11-09). The camera doesn't edge-pan while the button is
-  held. On a pad the right stick aims and a held RT runs the power bar
-  up and down (Combat's `CHARGE_SECONDS` each way). The aim shows as an angle marker (the studio's crosshair picture, MatchHud's
-  `CROSSHAIR_IMAGE`, a fixed distance from the snail, the direction only, never the shot's path) and a power bar (a row of circles from the held weapon's
-  `Muzzle` attachment to it, lit as the power fills). Both keep their size on the screen whatever the zoom, and the
-  screen that draws an aim turns the held weapon with it at once (no wait for the server's copy). Only letting go
-  (or FIRE on touch) fires, never the turn running out.
+- **Shooting is Worms Armageddon's: point, hold to charge, let go** (the owner's pick, 2026-11-10, replacing the
+  2026-11-07 power-by-distance drag). The weapon always points from the snail at the mouse (a finger on touch, the
+  right stick on a pad). Holding the mouse button, RT or the HUD's FIRE (touch) fills the power at one even rate,
+  none to full in Combat's `CHARGE_SECONDS` (1.3, W:A's measured charge); letting go fires, and a full charge fires
+  by itself. Guns, melee weapons and weapons placed at the feet fire on the press. Right click, Esc and the pad's
+  `CancelAim` drop a charge. On touch a finger on the arena only points; FIRE shoots. The camera doesn't edge-pan
+  while the button is held. The aim draws W:A's way, on the MatchHud gui's aim layer (`U_Aim`, under the rest of the
+  HUD) in screen pixels, never as billboards in the world (overlapping billboards at one depth swap their draw order
+  and flicker): a cone of circles, dark red to pale yellow, straight along the aim from a fixed start, each growing in
+  as the power passes it, then a gap and the crosshair (a ring with an X, spinning, in the aiming snail's `Color`: its
+  team's, or its own in a free-for-all). Every length is in units, a stud at MatchCamera's starting distance, so the
+  aim looks the same at any zoom (zoomed in, the cone starts past the snail's grown ball). The screen that draws an aim
+  turns the held weapon with it at once (no wait for the server's copy). The turn running out never fires.
 - **Everyone sees the active snail aim:** its angle marker and power show on every screen through its turn, players'
   and bots' alike, from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots turn their
   marker, then fill their power, before they fire.
@@ -91,26 +109,54 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   blast's size and its distance from the middle of the view, and nothing is felt outside a match. The player's own
   shot ticks and a hit on their own snail thumps. The chunks of ground a blast throws are physics parts in Arena's
   `Chip` collision group: they bounce on the terrain, never on snails or shots, and fade after `DEBRIS_LIFETIME`.
+- **Big blows stop the world for a beat** (the owner's pick, 2026-11-10): a hit of Combat's `HITSTOP_DAMAGE` or more
+  freezes the effects' particles and thrown chunks and holds the camera for a moment on every screen (`HITSTOP_*`,
+  `I.MatchCamera.Freeze`), longer for a knockout, when the camera also punches in on the snail
+  (`I.MatchCamera.PunchIn`). It's drawn by each client from `Combat_Hit`'s `knockout`; the simulation and the server
+  never stop. Bigger hits pop bigger, warmer damage numbers (Snails' `POP_TIERS`).
 - **A snail's shell breaks below 50 health:** each screen hides the skin's `Shell` part (its
-  `LocalTransparencyModifier`, so the server's ghost see-through can't bring it back) while `Health` is under the
+  `LocalTransparencyModifier`) while `Health` is under the
   Snails module's `SHELL_BREAK_HEALTH`, and throws chips in its colours as it breaks; healing back up shows it again.
   It's driven by the `Health` attribute alone, with no remote. A skin without a `Shell` part never breaks.
+- **A knocked-out snail's ghost is drawn by each screen** (2026-11-10): the server only sets `Alive` false and
+  `Ghost` true (before `Health` drops to 0, so the shell doesn't break as it goes) and anchors the ball; every client
+  floats it up glowing and fades it out (Snails' `Ghost` handler), and Match waits `GHOST_TIME` so it's seen before
+  the next turn.
 - **Effects are the studio's particle prefabs, played by the Vfx library** (2026-11-09): each effect is a part named
   `PREFAB | <Name>` in `Workspace.Ume.ReplicatedStorage_Assets/Vfx` (from the studio's `Particles_1` and
   `Particles_2`), its emitters disabled, with `EmitCount`, `EmitDelay` and `EmitDuration` attributes saying how each
   fires. Code plays one by name (`I.Vfx.Play(name, cframe, parent, scale?)`), clones a trail (`I.Vfx.AddTrail`), and
   never builds particles of its own. Blasts pick theirs by size (Combat's `BLAST_VFX`); guns, the punch and the
-  snails' spawn, landing, healing, splash and trail have theirs (Combat's and Snails' client `Effects`).
+  snails' spawn, landing, healing, splash and trail have theirs (Combat's and Snails' client `Effects`). Missiles and
+  the black hole and variety grenades draw the studio's trails as they fly (Combat's `PROJECTILE_TRAILS`), and a
+  jetpack its jet (Snails' `Trail_Jet`); a trail's attachments stand along Z, toward the camera, so it keeps its width.
+- **Each place has its own mood, subtle and in the game's colours** (the owner's pick, 2026-11-10: "subtle, high
+  quality, minimalistic but visible… worms type of colors, but in a professional way"): the Atmosphere module sets
+  the lobby's or the map's lighting preset (`Lobby`, `Plains`, `Desert`, `Cave`, in `Lighting.Presets`), a few
+  ambient particles that drift with the match's wind, effects on liquid surfaces and a cave's ceiling, and reactions
+  to what happens (leaves from blasted trees, splashes, landing dust, steam), all on each client and from Vfx prefabs
+  made from the studio's existing emitters. A new map gets a `PROFILES` row (Atmosphere's Settings), and a preset
+  of its own when no existing one fits. The match camera looks along −Z from 110 studs, so a map's sun keeps a high
+  `GeographicLatitude` (its light comes from the camera's side); the lobby's stage camera looks along +Z, so its
+  latitude is negative. Saturation stays well under the old 1.0 (0.2 to 0.35), and an effect seen on bright ground
+  blends normally (`LightEmission` 0): additive smoke vanishes on sand.
+- **The match camera shows every shot to its end** (the owner, 2026-11-10: "make sure all is shown, the camera
+  works and is not confusing"): with the player's `CameraFollowsShot` on, it flies with a shot (led a little), glides
+  to where a gun's bullets or a swing landed, follows a snail a blow sent flying or that fell, and holds on what
+  happened until the next turn starts, then glides (never snaps) to the next snail (MatchCamera's `TRAVEL_*`,
+  `CHASE_*`, `BLAST_HOLD`). The player's pan is only what they moved; the arena's edges limit the view but never
+  build up into the pan.
 - **Shots fly by the game's own simulation, not Roblox physics:** Combat's `Ballistics` (Scripts/Helpers) steps every
   flying shot the same on the server and every client, on the server's clock, with Worms' arcade rules (bounces that
-  lose speed along the ground, resting and rolling off ledges, explosive shots that blow up as they touch liquid). The server is
+  lose speed along the ground, resting and rolling off ledges, shots slowed through liquid). A shot starts on the
+  terrain or snail it's aimed into, never inside it (Combat's `GetShotStart`, which bots' predictions use too). The server is
   the authority (launch, states every 0.1 s, end; it alone decides blasts), and each client simulates its own copy for
   smooth flight, rewinding to the server's state when it drifts. Never give a flying shot Roblox physics or move it by
   replicated parts.
 - **Shots fly in slow motion** (the tester's notes, 2026-11-08): the simulation runs at Combat's
   `PROJECTILE_TIME_SCALE` (0.5, half speed) along the same paths, so eyes can follow a shot. A thrown bomb's `Fuse`
   counts its own slowed flight time, so it bursts where it did at full speed; a placed one's (Dynamite) stays in real
-  seconds. Anything that steps a shot (bots' predictions too) counts flight in the shot's own time. Only the piercing spear sinks in liquid; every other shot blows up there.
+  seconds. Anything that steps a shot (bots' predictions too) counts flight in the shot's own time.
 - **Strong items start on their cooldown** (2026-11-08): an item with a `Cooldown` waits that many of the player's
   own turns before its first use too (Combat's `Uses.Reset`, mirrored in the bots' `Sim`), so nobody opens a match
   with the strongest weapons. Admin `give` and `refill` clear it, for testing.
@@ -123,7 +169,13 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   (3.5 s) goes off after that.
 - **Bots play like players** (2026-11-08): they walk, climb, jump and fly their jetpack with SnailControl's speeds and
   stamina (Bots' `Move`), never step into the sea or down a drop that hurts, walk to a spot their shot lands from,
-  close in to swing or place Dynamite and run, and heal when hurt. Their snails stay server-owned.
+  close in to swing or place Dynamite and run, and heal when hurt. Their snails stay server-owned. A bot never passes
+  a turn (2026-11-10): when its brain finds no plan it still fires the Bazooka toward the nearest enemy (Bots'
+  `_fireAnyway`).
+- **A dropped player's snail plays on under a bot** (2026-11-10): it's never knocked out for being away. A bot plays
+  its turns with the player's loadout (Match's `Autopilot`, Bots' `TAKEOVER_DIFFICULTY`), taking over mid-turn too,
+  and the player, back from the lobby's rejoin offer, plays from their snail's next turn as the bot left it. Only the
+  Leave button forfeits.
 - **Bots think with a trained brain** (2026-11-08): each turn the Bots module's brain plans with the game's own
   simulation (Combat's shot bodies, blasts, throws, craters and the sea) and scores every plan with its difficulty's
   genome (`ServerData/Brains.lua`), which self-play in Studio trains (the gym, the `train-bots` skill). Difficulty is skill
@@ -165,7 +217,8 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   `gui/format.md` → Buttons and Surfaces ("other guis, built from `Primitive` nodes").
 - **The studio's screens are 1:1 `Primitive` ports** (the owner's pick, 2026-11-09): the match HUD (`MatchHud`,
   `SnailTag`, `DamagePop`), the lobby (`Lobby`, `Party`, `Loadout`, `LoadoutPicker`, `MatchBoard`), `Crates` and
-  `Skins` are the studio's `HUD`, `LobbyInventory`, `Gacha` and `Customise` designs converted node for node into
+  `Skins` are the studio's `HUD`, `LobbyInventory`, `Gacha` and `Customise` designs (and since 2026-11-11 `Currency` and
+  `EmoteShop`, the gui maker's) converted node for node into
   `Primitive` nodes (their pictures, fonts and screen-fraction layout), with U_/S_ Ids, prefabs for lists, button tags
   and WidgetManager's widget shape added. They override the rule above and the GUI kit's look rules (yellow leads
   the eye, kit picked states) for these guis: a picked or locked look is copied from the design into `Look_*`
@@ -173,7 +226,72 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   dialogs, the kill feed, the emote wheel, the match setup and waiting room) stay theme controls in the same table
   (`Theme = "WormBattlegroundsBrawl"`). They lay themselves out by screen fractions with aspect-ratio constraints, so
   they need no `S_ScreenScale` and aren't in ScreenScale's `GUIS` (MatchHud and MatchBoard stay, for their kept
-  blocks).
+  blocks). A block added to these screens since is built from the design's own pictures and fonts as `Primitive`
+  nodes, never as a theme control (the turn callout and the tension band, 2026-11-10: the owner, on the GUI kit's
+  Hazard plate, "this is old style, the new style is MatchBoard or MatchHud").
+- **Dialogs in the new look stay simple** (the owner, 2026-11-11, on a confirmation built from the Loadout slot's
+  slanted art scaled up, the EMOTES title plate and a red X: "its ugly. dont make it too complicated"): one rounded
+  dark panel (fill 25, 25, 35, a dark outer line and the grey 130 line inside, `UIStroke`s scaled by
+  `Utils_UIStroke`), white Londrina text, and the design's buttons at about their own size, tinted. A design picture
+  made for a small card is never stretched into a big panel: its outline and corners grow with it. The confirmation
+  (`WidgetManager_Confirmation`, the game's copy of System's) is the pattern.
+- **Turns are announced, and the end of a turn tightens** (the owner's pick, 2026-11-10): as a turn starts a dark
+  banner opens across the screen with the snail's avatar (its headshot, or the bot picture) and whose turn it is
+  (MatchHud's `U_TurnCallout`, the owner: "make it look professional"): "Your turn!" in gold over orange lines for the
+  player's own, with a sound and a haptic tap; anyone else's smaller, in white over lines in the snail's team colour,
+  with how long until the player's own. The player hears when they're next. In the last seconds of their own turn the timer turns orange, then red, ticks faster and higher, and a
+  red band pulses along the screen's sides (MatchHud's `TIMER_*`, `TICK_*`, `TENSION_PULSE_RATE`).
+- **Crates open on the GACHA screen, CS2's way** (the owner's pick, 2026-11-11: "use our gui style but use the layout
+  of cs go crate opening"): the shop makes way and the opening plays on the `Crates` gui itself, never in a window of
+  its own (`CrateOpen` is unused). The bought crates drop in as 3D models in a ViewportFrame (the owner, 2026-11-11:
+  "instead of the 3d icon floating crate - do a 3d model there"), one, three (one in front, two behind) or ten, wait
+  for one tap, and open hatches first, then walls, into a ball of light that flashes into a reel of item cards under a
+  fixed line on CS2's curve, landing anywhere across the winning card; packs as stacked bands (x3) or columns (x10),
+  the rarest stopping last; a legendary first lands as a gold ★ card, then a golden crate (the same model lit gold) is
+  tapped open, a golden reel picks which and its own drop plays (Crates' `LEGENDARY_DROPS`: a new legendary gets a
+  drop of its own there, or the plain legendary reveal). The crate models are `PREFAB | Crate_<Name>` in
+  `ReplicatedStorage_Assets/Crates`, named by the row's `Model` (the shop's pedestal shows the same model, never a
+  picture), in the snail's model look (chunky bevelled parts, flat colours, the stud baked into one texture,
+  `art/crates/bake_models.py`); their pieces turn on hinges in code, so a new crate keeps the eight piece names and the
+  pivot in the middle of its floor. A ten-pack shares one set of effects and has no per-crate balls of light (Crates'
+  `STAGE_LIGHT_COUNT`). A crate's colour and particles are its data row's look
+  (`Glow`, `Accent`, `Ambient`); the premium crate shows it's premium by small touches (a gold tab, a halo, the violet
+  backdrop, a PREMIUM tag, a pale-gold line), never another layout. Gui particles are `I.UIEmitter`'s. The sounds mix
+  crisp clicks for the reel with the Great Strategy instruments for the melodies (`art/sfx/make_crates.py`).
+- **Models that move in a ViewportFrame sit in a WorldModel inside it** (2026-11-11, measured on the ten-pack: the owner
+  asked for it light on performance): moving even one part placed straight in a ViewportFrame redraws every mesh in
+  it, about 25 ms a frame for ten crates, while the same crates moving in a WorldModel cost under 1 ms, and moving
+  only the camera is nearly free. Code makes the WorldModel beside the viewport's Camera (Crates' stage and pedestal);
+  a still model may sit in the ViewportFrame itself.
+- **The pad goes through the Console module** (the owner's pick, 2026-11-10: "use 0_Console module for all gamepad
+  related keybinds"): its `ACTIONS` setting is the one scheme (the module's README → Scheme), modules bind or read pad
+  buttons only through `I.Console` (`Bind`, `IsAction`, `IsHeld`), never `Enum.KeyCode.Button*` of their own, and
+  keyboard, mouse and touch stay with them. Start is Roblox's menu and never bound; A confirms, B backs out, LB / RB
+  step weapons or tabs, RT charges and fires. A gui button a pad presses carries its action's first button as
+  `Utils_GamepadKey` and a `Console_Hint` badge naming the action (`Console_Action`; the theme Button's `Hint`), and a
+  screen of pad controls a hint strip of the same (MatchHud's `U_PadControls`); a pick list or panel that wants the
+  selection asks for it (`I.Console.Focus`). The game's own glyphs (`art/console_glyphs`) stay local until the owner
+  approves them; then `HINT_STYLE` names their uploaded style.
+- **Chat shows in bubbles over the snails, never Roblox's** (the owner's pick, 2026-11-10: "Bubble Style B"): each
+  client turns Roblox's bubble chat off and shows every player message it receives (the filtered
+  `TextChatMessage.Text`, through `MessageReceived`: TextChatService's `OnIncomingMessage` is Shop's VIP tag) in a
+  `ChatBubble` billboard over the speaker's snail on this screen: in a match over its SnailTag's `S_Stack`, never on
+  it, and in the lobby over their snail on the stage (`I.Lobby.GetStageSnail`). White rounded bubbles with the ink
+  outline and Londrina text, sized to their text by TextService, three at most, the newest lowest with the tail
+  (ChatBubbles' README). No snail on this screen, no bubble.
+- **An emote shows its icon in a speech bubble and plays on the snail** (the owner's pick, 2026-11-11: "the icons are
+  going to appear over the player in a message bubble type of way when player clicks the emote + animation is going
+  to play"): over the snail in a match, in its chat stack (`I.ChatBubbles.ShowIcon`), and in the lobby beside the
+  player's name on their party card, the tail pointing at the name. Every screen plays the emote on the snail
+  (`I.SnailRig.Emote`); until an emote's animation is published under its name, a stand-in motion made in code plays.
+  Emote and bot pictures are the game's own drawn art (`art/emotes`, `art/bots`), local until approved like the rest.
+- **Badges after a name are the server's, and every one shows** (the owner's pick, 2026-11-10: "if a player has
+  multiple, display multiple"): the PlayerBadges server writes the `Badges` Player attribute (owner, developer by
+  rank or role name in The Snail Studio's group, since its roles share rank 1, the AdminPanel's admins, Roblox staff, Video Stars, verified, Premium), and every
+  name a player's badges belong after (SnailTag, the turn list, Party, Results) has an `S_Badges` frame beside it
+  that `I.PlayerBadges.Show` lays out, shrinking the name first. Verified and Premium are Roblox's own glyphs
+  (`U+E000`, `U+E001`, which the game's fonts draw); the rest are the `art/badges` kit's pictures, local until the
+  owner approves them, one `Image` each in PlayerBadges' `BADGES`.
 - **No value controls in a game gui** (`Dropdown`, `Segmented`, `Slider`, `Toggle`, `Input`): exports are static, so
   they do nothing in game. Use buttons the module selects. Preview modules may use them in their `Settings`.
 - **Lists code fills use `Cells`,** not the shared `Grid`: `Grid` lays its cells out in code, which exports don't run.
@@ -218,17 +336,26 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
   the game starts: nothing in play stands on it (avatars are parked anchored, the lobby's stage has its own ground).
 - **Placeholders until the owner provides the real thing:** developer products and game passes keep `Id = 0`; weapon
-  projectiles, effects and skins other than Classic are made in code or fall back to the Classic snail. Each such spot
-  has a `shortcut:` comment or a README line saying it's a placeholder. Never create products, passes or models on
-  the owner's behalf.
-- **Match sounds are free Creator Store ids, played by name** (the owner, 2026-11-08: "find roblox ids, no
-  uploading"): every id lives once in `src/global_data/Sound/SoundsList.lua` under its name (`Fire_<itemId>`,
-  `Use_<itemId>`, `Explosion_*`, `Snail_*`, `Turn_*`, `Match_*`), checked to load in Studio, and code plays the
-  name in the `SFX` group. Prefer Roblox's licensed uploads (creators `ProSoundEffects`, `APMOfficial`, `Roblox`) and
-  plain sound effects over rips from other games or memes. Sounds in the world play where they happen within Combat's
+  projectiles and effects are made in code, and skins without a snail of their own (FBI Agent, Prisoner, VIP, Wizard)
+  fall back to the Classic snail. Each such spot has a `shortcut:` comment or a README line saying it's a placeholder.
+  Never create products, passes or models on the owner's behalf.
+- **Sounds are the classic 2005-2009 Roblox soundscape, the studio's own, played by name** (the owner's pick,
+  2026-11-10, replacing 2026-11-08's free Creator Store ids: "use the roblox 2005 soundscape... Great Strategy is the
+  vibe"): every id lives once in `src/global_data/Sound/SoundsList.lua` under its name (`Fire_<itemId>`,
+  `Use_<itemId>`, `Explosion_*`, `Snail_*`, `Turn_*`, `Match_*`, `Music_<MapId>`), and code plays the name (match
+  sounds in `SFX`, the interface's in `UI`, music in `Music`). They come from the repo's sound kit (`art/sfx`):
+  Roblox's own 2009 sounds played straight from their ids, sounds built from them, and calls and music played on the
+  classic Roblox tracker samples. The owner hears them in the kit's preview first; only approved ones are uploaded,
+  to The Snail Studio group through Open Cloud, under plain titles ("Snail Turn Bugle": no weapon words, no other
+  game's names), as the kit's README → Uploading says. Sounds in the world play where they happen within Combat's
   `SOUND_ROLLOFF_MIN`/`MAX` (the camera sits 45 to 200 studs away, past Roblox's default 100-stud fade); turn and
-  result sounds are 2D. A new weapon or utility gets its `Fire_` or `Use_` row in the same change. They're
-  placeholders until the studio's own sounds: swapping one is a one-line id change.
+  result sounds are 2D. A new weapon or utility gets its `Fire_` or `Use_` row in the same change, a classic id until
+  the kit has its own.
+- **The music is a level stream, as Worms Armageddon's** (the owner's pick, 2026-11-10): each map's track is its
+  ambience and a light song that sounds like the place, mixed as one, mostly one instrument at a time playing a bit of
+  the tune; its sudden-death version is faster and driving, and Rockslide Ridge stays epic all through (the owner:
+  "keep it as it is"). The lobby plays the game's signature tune, barely there, over a meadow. Atmosphere's moods pick
+  the track (`Music`, `SuddenDeathMusic`) and BGM_Controller crossfades them; no separate ambient sound plays.
 - **Panels scale with the screen in position and size:** every game gui's panels are laid out for a 1920 × 1080
   screen. Their positions are screen fractions (`UDim2.fromScale`, never pixel offsets, which don't scale), and their
   size is an `S_ScreenScale` UIScale the ScreenScale module (Utils) sets: by height, by width on a screen narrower
@@ -273,6 +400,9 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   empty seat (one player can play Trios), and a fresh row on another map takes its place, joined or not. A party can
   also play alone (friends only): with bots it pays like a public match, without bots half (MatchRewards'
   `PARTY_NO_BOTS_SHARE`).
+- **A party's leader picks the match** (2026-11-10): members see Join, Solo vs bots and Custom greyed out (MatchBoard's
+  `LOCKED_*`), and the server refuses their joins and lobbies. A custom lobby the leader makes takes the whole party
+  in at once, and a party always shares a team.
 - **Check guis shown together for overlaps** before calling a layout done: PC sizes from 1024 × 768 to 3840 × 2160,
   tablets, and phones down to 667 × 375.
 

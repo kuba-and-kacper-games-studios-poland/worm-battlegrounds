@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -134,7 +135,7 @@ function Module.Join(player: Player, rowId: string)
 	--[[ Data ]]
 
 	local row = rows[rowId] --- @type MatchBoard_Row?
-	local group = Module._getGroup(player) --- @type { Player }
+	local group = Module.GetGroup(player) --- @type { Player }
 
 	--[[ Checks ]]
 
@@ -379,10 +380,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Group
 
 --[[
+	**SERVER** |
 	Returns the players who travel with a player: their party's members in this server, or just them.
 ]]
 --- @return { Player }
-function Module._getGroup(player: Player)
+function Module.GetGroup(player: Player)
 	--[[ Data ]]
 
 	local partyId: string? = player:GetAttribute("PartyId")

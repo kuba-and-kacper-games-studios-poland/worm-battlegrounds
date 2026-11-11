@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -171,7 +172,7 @@ function Module._refresh()
 		box:FindFirstChild("S_Plus").Visible = empty
 		box:FindFirstChild("S_Shiny").Visible = item ~= nil and copies >= _settings.SHINY_COPIES
 		box:FindFirstChild("S_Lock").Visible = locked
-		box:FindFirstChild("S_Price", true).Text = if _settings.SLOT_PRICES[slot] then `{_settings.SLOT_PRICES[slot]} coins` else ""
+		box:FindFirstChild("S_Price", true).Text = if _settings.SLOT_PRICES[slot] then I.Format.Text(_settings.SLOT_PRICES[slot]) else ""
 		background:FindFirstChild("Stroke2").Image = box:GetAttribute(if selected then "Look_SelectedStroke2" else "Look_Stroke2")
 		stroke.Image = box:GetAttribute(if selected then "Look_SelectedStroke" else "Look_Stroke")
 		stroke.ImageColor3 = box:GetAttribute(if selected then "Look_SelectedStrokeColor" elseif empty then "Look_EmptyStrokeColor" else "Look_StrokeColor")

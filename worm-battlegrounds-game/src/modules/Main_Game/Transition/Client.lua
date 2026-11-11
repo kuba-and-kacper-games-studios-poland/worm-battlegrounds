@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -42,6 +43,21 @@ function Module.Init()
 	I.S.Players.LocalPlayer:FindFirstChildOfClass("PlayerGui").ChildAdded:Connect(Module._onGuiAdded)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Start
+
+function Module.Start()
+	--[[ Checks ]]
+
+	-- Check if the player came by teleport, with the card the arrival script slides off once this client started
+	if not I.S.TeleportService:GetArrivingTeleportGui() then
+		return
+	end
+
+	--[[ Playing ]]
+
+	I.Sound.Play({ Name = "Teleport_In", SoundGroup = "UI" })
+end
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
 --%%%%%%%%%%%%%%%%%%%% On Destination
@@ -66,8 +82,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Gui Added
 
 --[[
-	Slides the teleport card over the screen when a teleport clones it in, and hands Roblox a copy to show through the
-	teleport, which the next server's arrival script takes over (`src/replicated_first/Transition`).
+	Slides the teleport card over the screen with its whoosh (Teleport_Out) when a teleport clones it in, and hands
+	Roblox a copy to show through the teleport, which the next server's arrival script takes over
+	(`src/replicated_first/Transition`).
 ]]
 function Module._onGuiAdded(gui: Instance)
 	--[[ Checks ]]
@@ -99,6 +116,7 @@ function Module._onGuiAdded(gui: Instance)
 	local Wipe_TweenGoal = { Position = UDim2.fromScale(0.5, 0.5) }
 	local Wipe_Tween: Tween = I.S.TweenService:Create(backdrop, _settings.WIPE_TWEENINFO, Wipe_TweenGoal)
 	Wipe_Tween:Play()
+	I.Sound.Play({ Name = "Teleport_Out", SoundGroup = "UI" })
 end
 
 --%%%%%%%%%%%%%%%%%%%% Hand Over

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -16,9 +17,6 @@ local Roster = require(script.Parent:FindFirstChild("Roster")) --- @type Match_S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local matchFolder: Folder
-
--- When each dropped player's snail is knocked out if they don't come back, by participant id
-local rejoinDeadlines = {} --- @type { [string]: number }
 
 -- When each player was last sent to the lobby, so one already on the way isn't sent twice
 local sentAt = setmetatable({}, { __mode = "k" }) --- @type { [Player]: number }
@@ -59,7 +57,6 @@ function Module.Start()
 
 	I.G_Player.OnPlayerAdded(I.Priority.Default, Module._onPlayerAdded)
 	I.G_Player.OnPlayerRemoving(I.Priority.Default, Module._onPlayerRemoving)
-	I.S.RunService.Heartbeat:Connect(Module._checkDeadlines)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -186,8 +183,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Player Removing
 
 --[[
-	A player dropped: their snail stays and skips its turns for REJOIN_SECONDS, and their profile remembers the match
-	so the lobby can offer to send them back.
+	A player dropped: their snail stays in the match and a bot plays its turns (Turns), and their profile remembers the
+	match for REJOIN_SECONDS so the lobby can offer to send them back.
 ]]
 function Module._onPlayerRemoving(player: Player)
 	--[[ Data ]]
@@ -201,7 +198,6 @@ function Module._onPlayerRemoving(player: Player)
 
 	participant.Connected = false
 	Roster.SetInfo(participant.Id, "Connected", false)
-	rejoinDeadlines[participant.Id] = os.clock() + _settings.REJOIN_SECONDS
 
 	--[[ Remembering ]]
 
@@ -221,7 +217,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Player Added
 
 --[[
-	A dropped player came back in time: their snail is theirs again from its next turn.
+	A dropped player came back: their snail is theirs again from its next turn, as the bot left it (its moves, shots and
+	uses stay), and the arena streams around it again.
 ]]
 function Module._onPlayerAdded(player: Player)
 	--[[ Data ]]
@@ -260,23 +257,11 @@ function Module._onPlayerAdded(player: Player)
 	--[[ Saving ]]
 
 	participant.Connected = true
-	rejoinDeadlines[participant.Id] = nil
 	Roster.SetInfo(participant.Id, "Connected", true)
-end
-
---%%%%%%%%%%%%%%%%%%%% Check Deadlines
-
---[[
-	Knocks out the snails of players who didn't come back within REJOIN_SECONDS, as leavers.
-]]
-function Module._checkDeadlines()
-	--[[ Checking ]]
-
-	for participantId: string, deadline: number in pairs(rejoinDeadlines) do
-		if os.clock() >= deadline and Module._isRunning() then
-			rejoinDeadlines[participantId] = nil
-			Module._knockOutLeaver(Roster.GetParticipant(participantId))
-		end
+	Roster.AssignTeam(participant)
+	local model: Model? = I.Snails.Get(participant.Id)
+	if model then
+		player.ReplicationFocus = model.PrimaryPart
 	end
 end
 

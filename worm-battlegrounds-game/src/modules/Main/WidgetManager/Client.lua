@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -304,7 +305,7 @@ end
 
 --[[
     **CLIENT** |
-    Opens a widget with the given `widgetName`, and plays the tween animation.\
+    Opens a widget with the given `widgetName`, and plays the tween animation and the `Window_Open` sound.\
     Returns `true` if the widget was opened.
 ]]
 --- @return boolean
@@ -350,6 +351,10 @@ function Module.Open(widgetName: string, tweenName: string?)
 	local tween: Tween, translate = getTweenForWidget(widget, tweenName or widget:GetAttribute("WidgetManager_Tween") or "Default")
 	translate(widget)
 	tween:Play()
+
+	--[[ Sound ]]
+
+	I.Sound.Play({ Name = "Window_Open", SoundGroup = "UI" })
 
 	--[[ Returning ]]
 

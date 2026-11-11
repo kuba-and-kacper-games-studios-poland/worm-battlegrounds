@@ -1,6 +1,6 @@
 # WidgetManager
 
-One menu at a time. Every full-screen widget (a `ScreenGui` from `I.UserInterface`) opens through WidgetManager: opening one closes the current one, a queue holds widgets waiting for their turn, and opening plays a tween preset while the background blurs, dims and widens its field of view. It also has two utility widgets, a message and a confirmation dialog; they queue behind each other instead of replacing the one on screen. The server can drive a player's widgets through its own `I.WidgetManager`.
+One menu at a time. Every full-screen widget (a `ScreenGui` from `I.UserInterface`) opens through WidgetManager: opening one closes the current one, a queue holds widgets waiting for their turn, and opening plays a tween preset and the `Window_Open` sound (UI group) while the background blurs, dims and widens its field of view. It also has two utility widgets, a message and a confirmation dialog; they queue behind each other instead of replacing the one on screen. The server can drive a player's widgets through its own `I.WidgetManager`.
 
 | | |
 | --- | --- |
@@ -13,7 +13,7 @@ One menu at a time. Every full-screen widget (a `ScreenGui` from `I.UserInterfac
 
 | File | What it controls |
 | --- | --- |
-| `Client.lua` | Opening, closing, the queue, tweens, blur and field of view, `I.WidgetManager` |
+| `Client.lua` | Opening (with its sound), closing, the queue, tweens, blur and field of view, `I.WidgetManager` |
 | `Server.lua` | Creates the remotes the server uses to drive a client, and the server `I.WidgetManager` that fires them |
 | `Settings.lua` | Utility widgets, field of view, blur and dim |
 | `Data/TweenPresets.lua` | Open tweens by name (`Default`, `Rise`) |

@@ -126,6 +126,19 @@ local _settings = {
 
 	--- @type { [string]: number }
 	LIQUID_TRANSPARENCY = { Water = 0.2, Lava = 0 },
+
+	--[[
+		Lava turns the water it touches into obsidian: terrain blocks in OBSIDIAN_COLOR, in MaterialService's
+		OBSIDIAN_VARIANT, that blasts cut like any ground
+	]]
+	OBSIDIAN_COLOR = Color3.fromRGB(38, 28, 52),
+	OBSIDIAN_VARIANT = "2022 Stud",
+
+	--[[
+		Every SEA_MARK_STEPS liquid steps (and after sudden death raises it), the liquid joined to the sea counts as the
+		sea, so a pond the rising sea reaches knocks snails out too
+	]]
+	SEA_MARK_STEPS = 8,
 }
 
 return _settings

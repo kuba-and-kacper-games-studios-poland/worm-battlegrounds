@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -235,18 +236,25 @@ function Module._setMoving(state: boolean)
 
 	--[[ Binding ]]
 
+	-- The keys here, the pad's buttons through the Console module's scheme
 	local priority: number = Enum.ContextActionPriority.High.Value
 	if state then
-		I.S.ContextActionService:BindActionAtPriority("SnailControl_Left", Module._onWalk, false, priority, Enum.KeyCode.A, Enum.KeyCode.Left, Enum.KeyCode.DPadLeft)
-		I.S.ContextActionService:BindActionAtPriority("SnailControl_Right", Module._onWalk, false, priority, Enum.KeyCode.D, Enum.KeyCode.Right, Enum.KeyCode.DPadRight)
-		I.S.ContextActionService:BindActionAtPriority("SnailControl_Jump", Module._onJump, false, priority, Enum.KeyCode.Space, Enum.KeyCode.ButtonA)
-		I.S.ContextActionService:BindActionAtPriority("SnailControl_Stick", Module._onStick, false, priority, Enum.KeyCode.Thumbstick1)
+		I.S.ContextActionService:BindActionAtPriority("SnailControl_Left", Module._onWalk, false, priority, Enum.KeyCode.A, Enum.KeyCode.Left)
+		I.S.ContextActionService:BindActionAtPriority("SnailControl_Right", Module._onWalk, false, priority, Enum.KeyCode.D, Enum.KeyCode.Right)
+		I.S.ContextActionService:BindActionAtPriority("SnailControl_Jump", Module._onJump, false, priority, Enum.KeyCode.Space)
+		I.Console.Bind("WalkLeft", Module._onWalk)
+		I.Console.Bind("WalkRight", Module._onWalk)
+		I.Console.Bind("Jump", Module._onJump)
+		I.Console.Bind("Move", Module._onStick)
 		stepConnection = I.S.RunService.PreSimulation:Connect(Module._step)
 		return
 	end
 
-	for _index: number, action: string in ipairs({ "SnailControl_Left", "SnailControl_Right", "SnailControl_Jump", "SnailControl_Stick" }) do
+	for _index: number, action: string in ipairs({ "SnailControl_Left", "SnailControl_Right", "SnailControl_Jump" }) do
 		I.S.ContextActionService:UnbindAction(action)
+	end
+	for _index: number, action: string in ipairs({ "WalkLeft", "WalkRight", "Jump", "Move" }) do
+		I.Console.Unbind(action)
 	end
 	if stepConnection then
 		stepConnection:Disconnect()
@@ -264,13 +272,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Walk
 
 --[[
-	Holds or releases a walk direction.
+	Holds or releases a walk direction: its keys' action, or the pad's (WalkLeft, WalkRight).
 ]]
 --- @return Enum.ContextActionResult
 function Module._onWalk(action: string, state: Enum.UserInputState, _input: InputObject?)
 	--[[ Saving ]]
 
-	held[if action == "SnailControl_Left" then "Left" else "Right"] = state == Enum.UserInputState.Begin
+	held[if action == "SnailControl_Left" or action == "WalkLeft" then "Left" else "Right"] = state == Enum.UserInputState.Begin
 
 	--[[ Returning ]]
 

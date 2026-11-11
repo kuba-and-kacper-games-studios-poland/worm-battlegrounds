@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -60,11 +61,10 @@ function Module.Run(shot)
 	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
 		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif body.Stopped and not body.Sunk then
+		elseif body.Stopped then
 			burst = if hit then hit.Position else body.Position
 			break
-		elseif body.Sunk or elapsed >= lockDelay and (target - body.Position).Magnitude <= _settings.CONTACT_DISTANCE then
-			-- Water or lava sets it off too
+		elseif elapsed >= lockDelay and (target - body.Position).Magnitude <= _settings.CONTACT_DISTANCE then
 			burst = body.Position
 			break
 		end

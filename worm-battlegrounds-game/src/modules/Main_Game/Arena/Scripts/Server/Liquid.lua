@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -12,6 +13,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Loader = require(script.Parent:FindFirstChild("Loader")) --- @type Arena_Server_Loader
+local Obsidian = require(script.Parent:FindFirstChild("Obsidian")) --- @type Arena_Server_Obsidian
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -27,6 +29,10 @@ local depth: number = 0
 local solid: buffer = buffer.create(0)
 local liquid: buffer = buffer.create(0)
 local moved: buffer = buffer.create(0)
+
+-- The liquid cells joined to the sea (1), and whether the map holds both water and lava, which react
+local sea: buffer = buffer.create(0)
+local reactive: boolean = false
 
 -- How many liquid blocks each row holds (row + 1), so empty rows are skipped
 local rowCounts = {} --- @type { number }
@@ -174,6 +180,7 @@ function Module.Build()
 	mapKind = nil
 	seaLevel = -math.huge
 	blockParts = {}
+	reactive = false
 	colors = table.clone(_settings.LIQUID_COLORS)
 	for _index: number, marker: BasePart in ipairs(markers) do
 		colors[marker:GetAttribute("Arena_Liquid")] = marker:GetAttribute("Arena_LiquidColor") or colors[marker:GetAttribute("Arena_Liquid")]
@@ -202,6 +209,7 @@ function Module.Build()
 	solid = buffer.create(cols * rows)
 	liquid = buffer.create(cols * rows)
 	moved = buffer.create(cols * rows)
+	sea = buffer.create(cols * rows)
 	rowCounts = table.create(rows, 0)
 	for id: number, name: string in ipairs(_settings.LIQUID_KINDS) do
 		spreads[id] = _settings.LIQUID_SPREAD[name]
@@ -255,6 +263,14 @@ function Module.Build()
 	end
 
 	--[[ Starting ]]
+
+	-- Water and lava react where they meet (a lava sea under a water pond, or the other way round)
+	local kinds = {} --- @type { [string]: boolean }
+	for _index: number, marker: BasePart in ipairs(markers) do
+		kinds[marker:GetAttribute("Arena_Liquid")] = true
+	end
+	reactive = kinds.Water == true and kinds.Lava == true
+	Module._markSea()
 
 	awake = true
 	task.spawn(Module._mainLoop, generation)
@@ -349,6 +365,7 @@ function Module.RaiseLiquid(rowsToFill: number)
 
 	--[[ Saving ]]
 
+	Module._markSea()
 	awake = true
 end
 
@@ -405,9 +422,118 @@ function Module._step()
 		anyMoved = true
 	end
 
+	--[[ Reacting ]]
+
+	if reactive and Module._react() then
+		anyMoved = true
+	end
+	if stepCount % _settings.SEA_MARK_STEPS == 0 then
+		Module._markSea()
+	end
+
 	--[[ Saving ]]
 
 	awake = anyMoved
+end
+
+--%%%%%%%%%%%%%%%%%%%% React
+
+--[[
+	Turns the water lava touches (beside, above or below it) into obsidian: those cells leave the liquid and become
+	terrain (Obsidian), which blasts cut like any ground. Returns whether
+	any did.
+]]
+--- @return boolean
+function Module._react()
+	--[[ Local Variables ]]
+
+	local water: number = Module._getKindId("Water")
+	local lava: number = Module._getKindId("Lava")
+	local cells = {} --- @type { number }
+
+	--[[ Finding ]]
+
+	for cy: number = 0, rows - 1 do
+		if rowCounts[cy + 1] == 0 then
+			continue
+		end
+		for cx: number = 0, cols - 1 do
+			local index: number = cy * cols + cx
+			if buffer.readu8(liquid, index) ~= water then
+				continue
+			end
+			local below: boolean = cy > 0 and buffer.readu8(liquid, index - cols) == lava
+			local above: boolean = cy < rows - 1 and buffer.readu8(liquid, index + cols) == lava
+			local left: boolean = cx > 0 and buffer.readu8(liquid, index - 1) == lava
+			local right: boolean = cx < cols - 1 and buffer.readu8(liquid, index + 1) == lava
+			if below or above or left or right then
+				table.insert(cells, index)
+			end
+		end
+	end
+
+	--[[ Checks ]]
+
+	-- Check if lava touched any water
+	if #cells == 0 then
+		return false
+	end
+
+	--[[ Hardening ]]
+
+	for _index: number, index: number in ipairs(cells) do
+		setLiquid(index, 0)
+		buffer.writeu8(solid, index, 1)
+	end
+
+	--[[ Building ]]
+
+	Obsidian.Build(cells, cols, origin, CELL, depth)
+
+	--[[ Returning ]]
+
+	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Mark Sea
+
+--[[
+	Marks which liquid is the sea: every cell of the sea's kind (water on a map whose sudden death raises it) at or
+	under its level, and all of that kind joined to it, so a pond the rising sea reaches is the sea's from then on.
+]]
+function Module._markSea()
+	--[[ Local Variables ]]
+
+	local kind: number = Module._getKindId(mapKind or "Water")
+	local top: number = math.min(math.floor((seaLevel - origin.Y) / CELL) - 1, rows - 1)
+	local stack = {} --- @type { number }
+	buffer.fill(sea, 0, 0)
+
+	--[[ Seeding ]]
+
+	for cy: number = 0, top do
+		for cx: number = 0, cols - 1 do
+			local index: number = cy * cols + cx
+			if buffer.readu8(liquid, index) == kind then
+				buffer.writeu8(sea, index, 1)
+				table.insert(stack, index)
+			end
+		end
+	end
+
+	--[[ Spreading ]]
+
+	while #stack > 0 do
+		local index: number = stack[#stack]
+		stack[#stack] = nil
+		local cx: number = index % cols
+		for _side: number, neighbour: number in ipairs({ index - cols, index + cols, if cx > 0 then index - 1 else -1, if cx < cols - 1 then index + 1 else -1 }) do
+			if neighbour >= 0 and neighbour < cols * rows and buffer.readu8(sea, neighbour) == 0 and buffer.readu8(liquid, neighbour) == kind then
+				buffer.writeu8(sea, neighbour, 1)
+				table.insert(stack, neighbour)
+			end
+		end
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Pressure
@@ -632,6 +758,11 @@ function Module._render()
 			part.Color = colors[name]
 			part.Transparency = _settings.LIQUID_TRANSPARENCY[name]
 		end
+
+		-- Its kind, for clients' effects (Atmosphere's splashes, bubbles and glints)
+		if part:GetAttribute("Arena_Liquid") ~= name then
+			part:SetAttribute("Arena_Liquid", name)
+		end
 		if part.Parent ~= liquidFolder then
 			part.Parent = liquidFolder
 		end
@@ -690,6 +821,24 @@ function Module.GetLiquid(position: Vector3)
 	--[[ Returning ]]
 
 	return _settings.LIQUID_KINDS[buffer.readu8(liquid, cy * cols + cx)]
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Sea
+
+--[[
+	**SERVER** |
+	Returns whether a position is in liquid joined to the sea (a pond the rising sea reached).
+]]
+--- @return boolean
+function Module.IsSea(position: Vector3)
+	--[[ Local Variables ]]
+
+	local cx: number = math.floor((position.X - origin.X) / CELL)
+	local cy: number = math.floor((position.Y - origin.Y) / CELL)
+
+	--[[ Returning ]]
+
+	return cx >= 0 and cx < cols and cy >= 0 and cy < rows and buffer.readu8(sea, cy * cols + cx) == 1
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Sea Level

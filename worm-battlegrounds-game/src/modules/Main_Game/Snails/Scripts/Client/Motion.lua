@@ -42,6 +42,7 @@ function Module.Start(folder: Folder)
 	--[[ Connections ]]
 
 	I.S.RunService.Heartbeat:Connect(Module._step)
+	I.Network.Fired("Combat_Hit", Module._onHit)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -50,8 +51,8 @@ end
 
 --[[
 	Animates every snail's skin from how its ball moves: it walks while it moves along the ground, hides in its shell
-	while it's thrown (faster than HIDE_SPEED and not under its player's control), comes out once it's slower than
-	SHOW_SPEED and HIDE_SECONDS have passed, and idles otherwise.
+	when it's hit or thrown (faster than HIDE_SPEED and not under its player's control), comes out once it's slower
+	than SHOW_SPEED and HIDE_SECONDS have passed, and idles otherwise.
 ]]
 function Module._step()
 	--[[ Local Variables ]]
@@ -86,6 +87,28 @@ function Module._step()
 			hidden[model] = nil
 		end
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Hit
+
+--[[
+	Pulls a snail into its shell the moment it's hit, before its knockback reaches this screen.
+]]
+function Module._onHit(participantId: string, damage: number, _position: Vector3, _knockout: boolean?)
+	--[[ Data ]]
+
+	local model: Instance? = snailsFolder:FindFirstChild(participantId)
+
+	--[[ Checks ]]
+
+	-- Check if the hit hurt a snail that's here
+	if damage <= 0 or not model or not model:IsA("Model") then
+		return
+	end
+
+	--[[ Hiding ]]
+
+	hidden[model] = os.clock()
 end
 
 return Module

@@ -8,11 +8,17 @@ board's place: the bots' difficulty (Easy, Medium, Hard, what each means and wha
 against a bot. In a party the button reads **Play with party**: its leader sets up a friends-only deathmatch with bots
 (`PARTY_BOTS_PER_PLAYER` per member) or with **No bots**, which pays half (MatchRewards). Joining a public match shows
 the waiting room in the panel's place (the match, the countdown, the players, **Vote to start**, **Leave match**). A
-party leader joins a row for the whole party. Every public row's `ROW_SECONDS` timer always runs, players or not, so
+party leader joins a row for the whole party, and only the leader picks the match: a party member's Join ("Host
+picks"), Solo vs bots ("Waiting for host") and Custom ("Host picks") are greyed out, and pressing one says "Your
+party's leader picks the match." Every public row's `ROW_SECONDS` timer always runs, players or not, so
 the board looks alive: the row starts when it's full, when its timer runs out (with whoever joined, bots filling every
 empty seat, so one player can play Trios alone; with nobody, it only resets), or when `VOTE_FRACTION` of its players
 vote to start early. A started row is replaced by a fresh one of its mode on another map, its timer starting over.
-**Custom** makes a room that friends are invited into and its owner starts, its empty places filled with bots of the difficulty picked in its Bots row (`CUSTOM_DIFFICULTIES`: Off, Easy, Medium, Hard, and Nightmare, which plays only here). Without bots it needs 2 or more players; with bots its owner may start it alone. Launching builds the match's teams
+**Custom** makes a room that friends are invited into and its owner starts, its empty places filled with bots of the difficulty picked in its Bots row (`CUSTOM_DIFFICULTIES`: Off, Easy, Medium, Hard, and Nightmare, which plays only here). Without bots it needs 2 or more players; with bots its owner may start it alone. In a party only the leader makes one,
+and the whole party is in it at once (their windows stay closed; their Custom reads "Party lobby" and opens it); the
+party must fit (on one team in Teams: `size // 2`), and a Teams lobby without bots needs someone from outside the
+party. When the player's lobby closes without them pressing Leave (it started, or its owner closed it), the window
+closes. Launching builds the match's teams
 (parties stay together), writes the match's metadata and teleports everyone to a reserved server of the Match map.
 On the Studio map (the lobby and the match on one Studio server) it hands the match to `I.Match.Host` instead, and
 refuses while one plays.
@@ -22,20 +28,20 @@ refuses while one plays.
 | Folder | `src/modules/Main_Game/MatchBoard` |
 | Runs on | Server, Client · Lobby map, Studio map |
 | Exposes | `I.MatchBoard` (server) |
-| Uses | `I.Party`, `I.Loadout`, `I.Teleport`, `I.Notify`, `I.Friends` (client), `I.WidgetManager`, `I.DoEvery` |
+| Uses | `I.Party`, `I.Loadout`, `I.Teleport`, `I.Notify`, `I.Friends` (client), `I.WidgetManager`, `I.DoEvery`, `I.Console` (client: the pad's selection) |
 
 ## Files
 
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Starts the three server handlers; the `I` table |
-| `Scripts/Server/Rows.lua` | Public and custom rows: joining, leaving, votes, timers, publishing them as `Configuration`s |
+| `Scripts/Server/Rows.lua` | Public and custom rows: joining, leaving, votes, timers, publishing them as `Configuration`s; `GetGroup(player)`, the players who travel with a player (their party here, or just them) |
 | `Scripts/Server/Custom.lua` | Custom rooms: creating, inviting, answering, starting, leaving |
 | `Scripts/Server/Launch.lua` | Teams, metadata and the teleport (on the Studio map, `I.Match.Host`); solo and party matches |
 | `Client.lua` | Starts the three client handlers |
-| `Scripts/Client/Board.lua` | The `MatchBoard` board: Solo vs bots (Play with party), the public lobby cards, the waiting room, votes and timers |
-| `Scripts/Client/Setup.lua` | The panel's setup for a solo or party match: the bots, their text, Start |
-| `Scripts/Client/Custom.lua` | The `CustomLobby` widget and room invites |
+| `Scripts/Client/Board.lua` | The `MatchBoard` board: Solo vs bots (Play with party), Custom, the public lobby cards, the waiting room, votes and timers; a party member's locked buttons. On a pad the selection rests on Solo vs bots (`I.Console.SetHome`) and stays in the waiting room while it shows (`I.Console.Focus`) |
+| `Scripts/Client/Setup.lua` | The panel's setup for a solo or party match: the bots, their text, Start. On a pad the panel holds the selection, Start first, and B goes back to the board (`I.Console.Focus`) |
+| `Scripts/Client/Custom.lua` | The `CustomLobby` widget and room invites; closes the widget when the player's lobby closes without them leaving it |
 | `Settings.lua` | `MatchBoard_Settings` |
 | `_meta/_types.lua` | `MatchBoard_RowOption`, `MatchBoard_MapRow`, `MatchBoard_Row` |
 
@@ -59,10 +65,10 @@ refuses while one plays.
 - `MatchBoard_Vote @ (player: Player)`: vote to start the row early
 - `MatchBoard_PlaySolo @ (player: Player, difficulty: string)`: refused in a party of 2 or more
 - `MatchBoard_PlayParty @ (player: Player, difficulty: string)`: a difficulty or `"None"` (no bots); the leader of a party of 2 or more
-- `MatchBoard_CreateCustom @ (player: Player, mapId: string, mode: string, size: number, difficulty: string)`: `difficulty` from `CUSTOM_DIFFICULTIES` (`"None"` for no bots)
+- `MatchBoard_CreateCustom @ (player: Player, mapId: string, mode: string, size: number, difficulty: string)`: `difficulty` from `CUSTOM_DIFFICULTIES` (`"None"` for no bots); not from a party member, and the party must fit
 - `MatchBoard_InviteCustom @ (player: Player, target: Player)`
 - `MatchBoard_InviteAnswer @ (player: Player, roomId: string, accept: boolean)`
-- `MatchBoard_StartCustom @ (player: Player)`: the owner, with 2 or more players, or alone with bots
+- `MatchBoard_StartCustom @ (player: Player)`: the owner, with 2 or more players, or alone with bots; a Teams lobby without bots needs a player from outside the owner's party
 - `MatchBoard_LeaveCustom @ (player: Player)`
 
 **Send: RemoteEvents**
@@ -73,7 +79,9 @@ refuses while one plays.
 
 Rows are `Configuration`s in `ReplicatedStorage.Ume.MatchBoard`, one per row, with the attributes `Kind`, `Mode`,
 `Size`, `MapId`, `Difficulty` (the bots: `PUBLIC_DIFFICULTY`, or a custom room's pick), `Players` (JSON list of user ids), `Votes`, `VotesNeeded`, `EndsAt` (server time) and `Owner`
-(custom rooms). The match metadata it sends is `Match_Metadata` (Match's types).
+(custom rooms). The match metadata it sends is `Match_Metadata` (Match's types). On the client, Join, Solo and Custom
+keep the design's look in `Look_MainColor`, `Look_StrokeColor`, `Look_TextColor`, `Look_HoverScale` and
+`Look_ClickScale` attributes the first time they're locked.
 
 ## Settings
 
@@ -93,3 +101,4 @@ Rows are `Configuration`s in `ReplicatedStorage.Ume.MatchBoard`, one per row, wi
 | `PARTY_BOTS_PER_PLAYER`, `PARTY_MAX_SIZE` | `1`, `8` | Bots per member in a party match with bots, and its most snails |
 | `BOARD_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |
 | `SELECTED_COLOR`, `SELECTED_TRANSPARENCY`, `TILE_COLOR`, `TILE_TRANSPARENCY` | `(40, 140, 255)`, `0.2`, `(0, 0, 0)`, `0.7` | A picked map's slot fill (its `Body`), and an unpicked one's, in the custom lobby. Difficulty, mode and player-count buttons swap to their selected skin instead (`Kit_SelectedImage`) |
+| `LOCKED_MAIN_COLOR`, `LOCKED_STROKE_COLOR`, `LOCKED_TEXT_COLOR` | `(70, 70, 80)`, `(130, 130, 130)`, `(153, 153, 153)` | A party member's Join, Solo and Custom while their leader picks the match: the face, its outline, the text |

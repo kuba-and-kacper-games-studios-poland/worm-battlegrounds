@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -62,15 +63,13 @@ function Module.Run(shot)
 			shot.Damage += Blast.Hit(snail.Name, row.DamageMax, push * I.G_Arsenal.GetKnockback(row.Knockback), shot.ItemId, shot.ParticipantId, at)
 		end
 
-		-- A piercing shot sinks in water or lava; any other blows up as it touches them
+		-- Water or lava only slows it on its way
 		if Projectiles.IsGone(body, elapsed) then
 			break
-		elseif body.Sunk and row.Pierce then
-			continue
-		elseif body.Stopped or body.Sunk then
+		elseif body.Stopped then
 			-- A piercing shot sticks in the terrain; any other bursts
 			if not row.Pierce then
-				local center: Vector3 = if hit and not body.Sunk then hit.Position else body.Position
+				local center: Vector3 = if hit then hit.Position else body.Position
 				shot.Damage += Blast.Explode(center, row.BlastRadius, shot.ItemId, shot.ParticipantId, shot.Shiny, row.DamageMax, row.DamageEdge, row.Knockback)
 			end
 			break

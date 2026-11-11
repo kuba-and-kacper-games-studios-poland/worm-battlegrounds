@@ -9,7 +9,7 @@ up shows a toast, updates the Level leaderstat and gives the skin `LEVEL_REWARDS
 | Folder | `src/modules/Main_Game/Progression` |
 | Runs on | Server · both maps |
 | Exposes | `I.Progression` (server) |
-| Uses | `I.Statistic`, `I.Leaderstats`, `I.Inventory`, `I.Notify`, `I.Replicator` |
+| Uses | `I.Statistic`, `I.Leaderstats`, `I.Inventory`, `I.Notify`, `I.Replicator`, `I.AdminPanel_CommandBar` |
 
 ## Files
 
@@ -17,6 +17,7 @@ up shows a toast, updates the Level leaderstat and gives the skin `LEVEL_REWARDS
 | --- | --- |
 | `Server.lua` | Adding XP, the level, rewards, publishing |
 | `ServerSettings.lua` | `Progression_Settings`, under a server name so clients never get the level curve |
+| `Scripts/AdminPanel/CommandBar/Server.lua` | The `progression` command |
 
 ## API
 
@@ -25,6 +26,7 @@ up shows a toast, updates the Level leaderstat and gives the skin `LEVEL_REWARDS
 | Function | Returns | What it does |
 | --- | --- | --- |
 | `AddXP(player, amount: number)` | `number, boolean` | Adds XP; returns the level and whether it went up |
+| `AddLevels(player, levels: number)` | `number, boolean` | Adds the XP those levels take (to `MAX_LEVEL` at most), through `AddXP`, so their rewards and toast come too; returns the level and whether it went up |
 | `GetLevel(player)` | `number` | The player's level |
 
 ## Network
@@ -53,3 +55,11 @@ No remotes: the level travels in the Replicator and a Player attribute.
 | `MAX_LEVEL` | `100` | The highest level |
 | `LEVEL_BASE_XP`, `LEVEL_STEP_XP` | `100`, `4` | Level 2 takes 104 XP, and each level 4 more than the one before |
 | `LEVEL_REWARDS` | 25 Prisoner, 50 FBI Agent, 100 Wizard | The skin item given on reaching a level |
+
+## Commands
+
+`progression` (server, level 255):
+
+| Subcommand | Arguments |
+| --- | --- |
+| `add_level` | `player`, `levels` (a whole number above 0) |

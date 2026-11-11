@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -81,8 +82,8 @@ end
 
 --[[
 	**SERVER** |
-	Hurts one snail and throws it at a velocity change, credits the shooter, and tells every client. Returns the damage
-	when it hit a snail other than the shooter's, else 0.
+	Hurts one snail and throws it at a velocity change, credits the shooter, and tells every client, with whether the blow
+	knocks it out (its health went to 0). Returns the damage when it hit a snail other than the shooter's, else 0.
 ]]
 --- @return number
 function Module.Hit(participantId: string, damage: number, velocityChange: Vector3, itemId: string, sourceId: string?, position: Vector3)
@@ -101,12 +102,13 @@ function Module.Hit(participantId: string, damage: number, velocityChange: Vecto
 
 	-- The tutorial bot takes more damage, so a new player knocks it out in two hits
 	local taken: number = math.floor(damage * (model:GetAttribute("DamageTaken") or 1) + 0.5)
+	local before: number = model:GetAttribute("Health")
 	I.Snails.Damage(participantId, taken, sourceId, itemId)
 	I.Snails.Knockback(participantId, velocityChange * model.PrimaryPart.AssemblyMass, sourceId, itemId)
 
 	--[[ Publishing ]]
 
-	I.Network.FireAll("Combat_Hit", participantId, taken, position)
+	I.Network.FireAll("Combat_Hit", participantId, taken, position, before > 0 and model:GetAttribute("Health") <= 0)
 
 	--[[ Returning ]]
 

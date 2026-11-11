@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -76,7 +77,7 @@ function Module.GetShot(origin: Vector3, itemId: string, angle: number, power: n
 
 	local combat = I.Settings["Combat"] --- @type Combat_Settings
 	local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
-	local start: Vector3 = if row.Aim == "Feet" then origin else origin + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + combat.MUZZLE_GAP)
+	local start: Vector3 = if row.Aim == "Feet" then origin else I.Combat.GetShotStart(origin, direction, shooter)
 	--- @type Bots_Shot
 	local shot = {
 		Landed = start,
@@ -530,14 +531,12 @@ function Module._fly(start: Vector3, velocity: Vector3, options, row, left: Mode
 	for _step: number = 1, math.ceil(_settings.PREDICT_SECONDS / (combat.PROJECTILE_STEP * combat.PROJECTILE_TIME_SCALE)) do
 		local hit: RaycastResult? = I.G_Combat.StepBody(body, world)
 		local elapsed: number = body.Step * combat.PROJECTILE_STEP
-		local sunkFor: number = if body.Sunk then (body.Step - body.SunkStep) * combat.PROJECTILE_STEP else 0
+		local sunkFor: number = if body.Sunk and not body.Grounded then (body.Step - body.SunkStep) * combat.PROJECTILE_STEP else 0
 		if I.Arena.GetHazard(body.Position) == "Bounds" or sunkFor >= combat.SINK_SECONDS then
 			return nil, body.Ignore
-		elseif body.Sunk and options.Pierce then
-			continue
-		elseif body.Stopped and not body.Sunk then
+		elseif body.Stopped then
 			return if hit then hit.Position else body.Position, body.Ignore
-		elseif body.Sunk or fuse and elapsed >= fuse then
+		elseif fuse and elapsed >= fuse then
 			return body.Position, body.Ignore
 		elseif options.Target and body.Step >= (options.LockStep or 0) and (options.Target - body.Position).Magnitude <= combat.CONTACT_DISTANCE then
 			return body.Position, body.Ignore

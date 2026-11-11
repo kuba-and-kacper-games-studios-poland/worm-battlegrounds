@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -247,6 +248,17 @@ function Module._holdCamera()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Snail
+
+--[[
+	**CLIENT** |
+	Returns the snail a player stands as on this screen's stage, or nil when they stand on none.
+]]
+--- @return Model?
+function Module.GetSnail(player: Player)
+	return snails[player]
+end
 
 --%%%%%%%%%%%%%%%%%%%% Get Members
 

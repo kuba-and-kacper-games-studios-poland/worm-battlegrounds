@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -95,7 +96,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Input Changed
 
 --[[
-	Moves the local player's spot under the mouse, and remembers the left stick's lean.
+	Moves the local player's spot under the mouse, and remembers the left stick's lean (the Console module's Move).
 ]]
 function Module._onInputChanged(input: InputObject)
 	--[[ Checks ]]
@@ -107,7 +108,7 @@ function Module._onInputChanged(input: InputObject)
 
 	--[[ Applying ]]
 
-	if input.KeyCode == Enum.KeyCode.Thumbstick1 then
+	if I.Console.IsAction("Move", input.KeyCode) then
 		stick = if input.Position.Magnitude > 0.2 then Vector2.new(input.Position.X, input.Position.Y) else Vector2.zero
 	elseif input.UserInputType == Enum.UserInputType.MouseMovement then
 		pick = Module._getPlanePoint(Vector2.new(input.Position.X, input.Position.Y))
@@ -117,7 +118,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Input Began
 
 --[[
-	Places the spot on a left click or the gamepad's A button.
+	Places the spot on a left click or the gamepad's A button (the Console module's PlaceDrop).
 ]]
 function Module._onInputBegan(input: InputObject, gameProcessed: boolean)
 	--[[ Checks ]]
@@ -129,7 +130,7 @@ function Module._onInputBegan(input: InputObject, gameProcessed: boolean)
 
 	--[[ Placing ]]
 
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.KeyCode == Enum.KeyCode.ButtonA then
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or I.Console.IsAction("PlaceDrop", input.KeyCode) then
 		Module._place()
 	end
 end

@@ -11,6 +11,10 @@ local _settings = {
 	--- @type { string }
 	FULL_SCREEN_WIDGETS = { "Skins", "Crates" },
 
+	-- The widgets that stand in one lobby panel's place, by widget: those panels hide while one is open
+	--- @type { [string]: { string } }
+	PANEL_WIDGETS = { EmoteShop = { "Loadout" } },
+
 	--%%%%%%%%%%%%%%%%%%%% Stage
 
 	--[[
