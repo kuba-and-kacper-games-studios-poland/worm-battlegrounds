@@ -97,7 +97,7 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | `TURN_LIST_ENTRIES` | `6` | How many snails the turn list shows |
 | `TEAM_PLAYER_WIDTH` | `0.235` | A player's share of a team panel's width |
 | `OUT_AVATAR_COLOR` | `(70, 70, 70)` | A knocked-out snail's avatar tint in the team panels |
-| `BOT_AVATAR` | `rbxasset://textures/wb_bots/Bot_Default.png` | A bot's avatar in the team panels, the turn list, the turn callout and the results: the default snail's voxel headshot (`art/bots`). A local picture until the owner approves it and it's uploaded |
+| `BOT_AVATAR` | `rbxassetid://75705415395334` | A bot's avatar in the team panels, the turn list, the turn callout and the results: the default snail's voxel headshot (`art/bots`), uploaded to The Snail Studio group |
 | `LEAVE_TEXT`, `MUSIC_TEXT`, `LEAVE_QUESTION` | | The top bar buttons and the leave confirmation |
 | `SLOT_KEYS` | One … Six | Keys that pick slots 1 to 6 (the Bazooka first); also how many slots the bar shows |
 | `MODEL_FOV`, `MODEL_VIEW_DIRECTION`, `MODEL_PADDING` | `30`, `0.3, 0.25, 1`, `1.15` | A slot's weapon model: the camera's field of view, the direction it looks from (the muzzle points right), and the room around the model's longest side |

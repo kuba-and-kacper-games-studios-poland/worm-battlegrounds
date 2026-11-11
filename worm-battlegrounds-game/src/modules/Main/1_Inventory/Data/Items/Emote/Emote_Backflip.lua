@@ -5,7 +5,7 @@ local _data = {
 
 	Name = "Backflip",
 	-- shortcut: the emote kit's picture (art/emotes), local until approved and uploaded
-	IconId = "rbxasset://textures/wb_emotes/Emote_Backflip.png",
+	IconId = "rbxassetid://134218829069464",
 
 	--[[ Classification ]]
 

@@ -34,6 +34,12 @@ python -I to_studio.py
 
 Every bot shows `Default`, the classic pink snail with no outfit (the owner, 2026-11-11: "lets do a default snail for
 the bot. one icon"): MatchHud's `BOT_AVATAR`, in the team panels, the turn list, the turn callout and the results.
-The eight personalities wait for rare bots with their own skins and avatars. The picture points at the local
-`rbxasset://textures/wb_bots/` copy until the owner approves it; then it's uploaded to The Snail Studio group (as
-`../crates` did, README → Uploading) and `BOT_AVATAR` takes its `rbxassetid://` id.
+The eight personalities wait for rare bots with their own skins and avatars. The owner approved the upload on 2026-11-11.
+`Default` went up as a Decal to The Snail Studio group (566704940), titled "Bot Avatar", with PrepKit's pixel-fix. It
+passed moderation, and `BOT_AVATAR` holds its image id:
+
+| Bot | Decal | Image id |
+| --- | --- | --- |
+| `Default` ("Bot Avatar") | 100735489129619 | 75705415395334 |
+
+A personality's picture is uploaded the same way when a rare bot uses it.

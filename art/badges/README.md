@@ -28,22 +28,23 @@ python -I build.py --studio   # the same, then into <Studio>/content/textures/wb
 
 ## In the game
 
-The game's `PlayerBadges` module lists the badges in `Settings.lua` (`BADGES`): each picture row's `Image` is
-`rbxasset://textures/wb_badges/<name>.png` until the owner approves the icons. Such a picture shows only in a Studio
-on the PC that ran `build.py --studio`, and blanks after the next Studio update (practices.md: pictures stay local
-until the owner approves them).
+The game's `PlayerBadges` module lists the badges in `Settings.lua` (`BADGES`). Each picture row's `Image` is the
+badge's uploaded `rbxassetid://` id. A local `rbxasset://textures/wb_badges/` copy (`build.py --studio`) shows only in
+Studio on the PC that built it, and is blank on live servers.
 
 ## Uploading
 
-Only when the owner says so: give the five PNGs PrepKit's pixel-fix, upload them to The Snail Studio group (Creator
-566704940) as Decals or Images under plain titles ("Badge Crown", "Badge Wrench", "Badge Shield", "Badge Tilted
-Square", "Badge Star"), and put each `rbxassetid://<id>` in its row's `Image` in `PlayerBadges/Settings.lua`: one
-line per badge.
+Only when the owner says so:
+1. Give the five PNGs PrepKit's pixel-fix.
+2. Upload them to The Snail Studio group (Creator 566704940) as Decals, with plain titles.
+3. Put each image id in its row's `Image` in `PlayerBadges/Settings.lua`.
 
-| Upload | Row |
-| --- | --- |
-| `out/owner.png` | `Owner` |
-| `out/developer.png` | `Developer` |
-| `out/admin.png` | `Admin` |
-| `out/staff.png` | `Staff` |
-| `out/star.png` | `Star` |
+The owner approved the upload on 2026-11-11, and all five passed moderation:
+
+| Upload | Row | Title | Decal | Image id |
+| --- | --- | --- | --- | --- |
+| `out/owner.png` | `Owner` | Badge Crown | 94629238217739 | 103399252005394 |
+| `out/developer.png` | `Developer` | Badge Wrench | 103241706532430 | 85832783383908 |
+| `out/admin.png` | `Admin` | Badge Shield | 86581086662272 | 108039580969964 |
+| `out/staff.png` | `Staff` | Badge Tilted Square | 131460692768892 | 101046945125974 |
+| `out/star.png` | `Star` | Badge Star | 86516685687235 | 120533067442932 |

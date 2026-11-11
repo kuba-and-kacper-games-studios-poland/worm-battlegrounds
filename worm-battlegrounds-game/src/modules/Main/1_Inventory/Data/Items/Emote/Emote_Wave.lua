@@ -5,7 +5,7 @@ local _data = {
 
 	Name = "Wave",
 	-- shortcut: the emote kit's picture (art/emotes), local until approved and uploaded
-	IconId = "rbxasset://textures/wb_emotes/Emote_Wave.png",
+	IconId = "rbxassetid://122190966104251",
 
 	--[[ Classification ]]
 

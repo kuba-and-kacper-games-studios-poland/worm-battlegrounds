@@ -66,7 +66,7 @@ No remotes: the server writes the `Badges` Player attribute, which replicates to
 | Key | Default | What |
 | --- | --- | --- |
 | `ATTRIBUTE` | `"Badges"` | The Player attribute the server writes |
-| `BADGES` | Owner, Developer, Admin, Staff, Star (pictures), Verified, Premium (glyphs) | Every badge in its order: `Id`, and `Image` (`rbxasset://textures/wb_badges/<name>.png` until the owner approves the kit, then the uploaded `rbxassetid://` id) or `Glyph` (`"\u{E000}"` verified, `"\u{E001}"` Premium) |
+| `BADGES` | Owner, Developer, Admin, Staff, Star (pictures), Verified, Premium (glyphs) | Every badge in its order: `Id`, and `Image` (the picture's uploaded `rbxassetid://` id, from `art/badges`) or `Glyph` (`"\u{E000}"` verified, `"\u{E001}"` Premium) |
 | `BADGE_SIZE`, `BADGE_GAP` | `0.85`, `0.12` | A badge's size and the gap before it, times the name label's height |
 | `MAX_SHARE` | `0.4` | The most of the name's width the badges take: the name shrinks first, and past it the badges shrink too |
 | `TEXT_ROOM` | `1.06` | Scaled text draws about 5% wider than TextService measures it: room kept when fitting a name on one line |

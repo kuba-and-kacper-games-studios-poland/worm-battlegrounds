@@ -98,5 +98,3 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
   put them in place, so the Skins widget's previews hold each clone in its idle pose (`I.SnailRig.Pose`).
 - Emote animations and voice lines aren't made yet: each emote plays a stand-in motion made in code
   (`I.SnailRig.Emote`, the SnailRig README → Emotes), replaced by its animation once one is published under its name.
-- The emotes' icons (`art/emotes`) are local pictures (`rbxasset://textures/wb_emotes/`) until the owner approves
-  and they're uploaded: on another PC or a live server they draw blank until then.

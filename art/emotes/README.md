@@ -31,6 +31,21 @@ python -I ../bots/to_studio.py   # into Studio's content folder: rbxasset://text
 
 ## In the game
 
-Each emote's Inventory row (`Main/1_Inventory/Data/Items/Emote/Emote_<Id>.lua`) points its `IconId` at the local
-`rbxasset://textures/wb_emotes/` copy until the owner approves the icons; then they're uploaded to The Snail Studio
-group and the rows take their `rbxassetid://` ids.
+Each emote's Inventory row (`Main/1_Inventory/Data/Items/Emote/Emote_<Id>.lua`) points its `IconId` at the icon's
+uploaded `rbxassetid://` id. The owner approved the upload on 2026-11-11 ("upload all assets that you did not upload to
+roblox"). All nine were uploaded as Decals to The Snail Studio group (566704940) and passed moderation:
+
+| Emote | Decal | Image id |
+| --- | --- | --- |
+| `Backflip` ("Emote Backflip") | 128794711905099 | 134218829069464 |
+| `Cry` ("Emote Cry") | 105978838837842 | 78834361903065 |
+| `Dance` ("Emote Dance") | 109450066513188 | 101472172112086 |
+| `Flex` ("Emote Flex") | 72492820626800 | 84814176236864 |
+| `Laugh` ("Emote Laugh") | 90478304899115 | 134169553529809 |
+| `Taunt` ("Emote Taunt") | 95289636879822 | 123361365197050 |
+| `ThumbsUp` ("Emote Thumbs Up") | 128771872157457 | 133574145418278 |
+| `VictoryTrumpet` ("Emote Victory Trumpet") | 130124302503814 | 89999271140028 |
+| `Wave` ("Emote Wave") | 87945181381605 | 122190966104251 |
+
+A new or redrawn icon is uploaded the same way (the crate kit's README → Uploading), and its row takes the new image
+id. A local `rbxasset://` copy shows only in Studio on this PC, and is blank on live servers.

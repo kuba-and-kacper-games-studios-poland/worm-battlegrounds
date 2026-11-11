@@ -1267,3 +1267,18 @@ window frames it. The rolling reels didn't, and measuring them in Studio taught 
   icons. Still cards stay live, and the Crates module draws a card's snail again once the card settles in sight.
 
 Rule: Guis → "Rolling reels show the snails as pictures".
+
+## Pictures blank on live servers (2026-11-11)
+
+The owner found icons and the wind blank in the live game while Studio showed them. Two causes turned up:
+
+- **15 pictures were still local:** the emote icons, the bot avatar and the player badges pointed at
+  `rbxasset://textures/wb_*`, a copy in this PC's Studio. They were uploaded to The Snail Studio group that day.
+- **Most uploaded pictures belong to a person, not the group.** The code uses 529 image ids. 345 were uploaded by
+  Studio's Assistant under the signed-in user (viridianscape: the 2026-11-07 icons, the wind), 145 by the studio's
+  designer (Otron_TV), 25 by the group, and a few by other creators. The game is the group's. Roblox lets a creator's
+  own games use their pictures whatever their privacy, but another owner's game needs the picture Open Use or a
+  permission grant for its universe. So a person's picture can load in their Studio and still be blank live. The fix
+  is a Use grant for the game's universe on those pictures, or re-uploading them under the group.
+
+Rule: Guis → "Pictures drawn for the game stay local until the owner approves them" (they go up under the group).

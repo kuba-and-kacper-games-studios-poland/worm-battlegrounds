@@ -74,9 +74,9 @@ local _settings = {
 
 	--[[
 		A bot's avatar in the team panels, the turn list, the turn callout and the results: the default snail's voxel
-		headshot (art/bots). A local picture until the owner approves it and it's uploaded
+		headshot (art/bots), uploaded to The Snail Studio group
 	]]
-	BOT_AVATAR = "rbxasset://textures/wb_bots/Bot_Default.png",
+	BOT_AVATAR = "rbxassetid://75705415395334",
 
 	--%%%%%%%%%%%%%%%%%%%% Top Bar
 

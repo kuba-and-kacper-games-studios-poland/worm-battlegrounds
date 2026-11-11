@@ -206,9 +206,13 @@ end in liquid.
   and writes the theme's `Icons.lua` and `Skins.lua`. Nothing is uploaded to Roblox before the owner says so; then
   the pictures get PrepKit's pixel-fix, are uploaded, and `Icons.lua` points at their `rbxassetid://` ids. Both kits
   are uploaded: the GUI kit on 2026-11-04, the first kit's item, emote, currency and crate pictures and the wind on
-  2026-11-07, after a Studio update had wiped their local copies and blanked every icon. The game uses no local
-  picture now; a new one shows only on the PC that built it, and blanks after the next Studio update, until it's
-  uploaded (each kit's README → Uploading).
+  2026-11-07, after a Studio update had wiped their local copies and blanked every icon. The emote, bot and badge
+  pictures followed on 2026-11-11 (the owner: "in live game the icons, wind etc is not working"). The game uses no
+  local picture now. A new one shows only on the PC that built it, blanks after the next Studio update, and never
+  shows on live servers until it's uploaded (each kit's README → Uploading). **Pictures go up under The Snail Studio
+  group** (566704940, the game's owner), through Open Cloud, never under a person's account. Studio's Assistant
+  uploads under the signed-in user, as the 2026-11-07 icons and the wind were (viridianscape): such a picture loads
+  in that user's Studio but may not on the group's live servers.
 - **The game's guis are built from the theme's controls** (`WormBattlegroundsBrawl`, over `WormBattlegrounds`),
   never from raw `Primitive` nodes holding their own colours and sizes (as ume-gui's System guis are): `Widget` for
   every WidgetManager widget, `Box` for panels and cards, `Item` for item cards, `Cells` for lists and grids code
@@ -290,14 +294,14 @@ end in liquid.
   to play"): over the snail in a match, in its chat stack (`I.ChatBubbles.ShowIcon`), and in the lobby beside the
   player's name on their party card, the tail pointing at the name. Every screen plays the emote on the snail
   (`I.SnailRig.Emote`); until an emote's animation is published under its name, a stand-in motion made in code plays.
-  Emote and bot pictures are the game's own drawn art (`art/emotes`, `art/bots`), local until approved like the rest.
+  Emote and bot pictures are the game's own drawn art (`art/emotes`, `art/bots`), uploaded to the group (2026-11-11).
 - **Badges after a name are the server's, and every one shows** (the owner's pick, 2026-11-10: "if a player has
   multiple, display multiple"): the PlayerBadges server writes the `Badges` Player attribute (owner, developer by
   rank or role name in The Snail Studio's group, since its roles share rank 1, the AdminPanel's admins, Roblox staff, Video Stars, verified, Premium), and every
   name a player's badges belong after (SnailTag, the turn list, Party, Results) has an `S_Badges` frame beside it
   that `I.PlayerBadges.Show` lays out, shrinking the name first. Verified and Premium are Roblox's own glyphs
-  (`U+E000`, `U+E001`, which the game's fonts draw); the rest are the `art/badges` kit's pictures, local until the
-  owner approves them, one `Image` each in PlayerBadges' `BADGES`.
+  (`U+E000`, `U+E001`, which the game's fonts draw); the rest are the `art/badges` kit's pictures, uploaded to
+  the group (2026-11-11), one `Image` each in PlayerBadges' `BADGES`.
 - **No value controls in a game gui** (`Dropdown`, `Segmented`, `Slider`, `Toggle`, `Input`): exports are static, so
   they do nothing in game. Use buttons the module selects. Preview modules may use them in their `Settings`.
 - **Lists code fills use `Cells`,** not the shared `Grid`: `Grid` lays its cells out in code, which exports don't run.
