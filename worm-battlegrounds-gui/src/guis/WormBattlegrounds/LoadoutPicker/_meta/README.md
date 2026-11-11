@@ -56,7 +56,7 @@ WidgetManager opens it (Loadout calls `I.WidgetManager.Open("LoadoutPicker")` wh
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Close | Click X | Tap X | B | `S_Close` tags (`Interact_Button` → WidgetManager `CloseCurrent`, `Utils_ButtonKey`) |
+| Close | Click X | Tap X | B | `S_Close` tags (`Interact_Button` → WidgetManager `CloseCurrent`, `Utils_ButtonKey`); its `PadHint` badge on Console |
 | Pick an owned item, empty the slot | Click | Tap | Select and A | Loadout (`I.Interact.OnPress`); locked cards do nothing |
 | Item details | Hover | Long press | Select | `HoverInfo_Target` (name, uses and cooldown, rarity) |
 

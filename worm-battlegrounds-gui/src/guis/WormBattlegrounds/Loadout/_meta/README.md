@@ -8,7 +8,8 @@ picture, name and copies, a + on an empty slot, the lock and price on the next s
 laid out in screen fractions with aspect-ratio constraints (no `S_ScreenScale`). The design's slot looks are kept as
 attributes on the slot prefab (normal, selected, the + slot's darker outline). Added: the shiny mark, the lock cover
 (the design's locked inventory card) with the price, and the EMOTES row, which the design lacks, built from copies of
-its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`).
+its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker polished the lock cover
+(2026-11-11): the design's darker locked card with a coin before the price.
 
 |  |  |
 | --- | --- |
@@ -32,7 +33,7 @@ its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`)
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| Slot` | `U_TopRow` | An ImageButton: `S_Number`, `S_Icon`, `S_Name`, `S_Amount` ("x5"), `S_Plus` (empty slot), `S_Shiny`, `S_Lock` › `S_Price`. `Background` › `Stroke2` / `Stroke` take the looks in its attributes |
+| `PREFAB \| Slot` | `U_TopRow` | An ImageButton: `S_Number`, `S_Icon`, `S_Name`, `S_Amount` ("x5"), `S_Plus` (empty slot), `S_Shiny`, `S_Lock` (the gui maker's locked card, 2026-11-11: `Main`, `Stroke`, `LockIcon`) › `S_Price` (white, with its `CurrencyIcon` coin). `Background` › `Stroke2` / `Stroke` take the looks in its attributes |
 | `PREFAB \| Emote` | `U_Emotes` | An ImageButton: `S_Icon`, `S_Name`; a press plays the emote |
 
 ## Driven by
@@ -74,4 +75,4 @@ turns it on outside matches (and off while a full-screen widget is open). It kee
 | Picker open for the slot | `Slot` › `Background` | `Stroke2`, `Stroke`, colour from `Look_SelectedStroke2`, `Look_SelectedStroke`, `Look_SelectedStrokeColor` (white); otherwise `Look_Stroke2`, `Look_Stroke`, `Look_StrokeColor` |
 | Empty slot | `Slot` | `S_Plus` shown, the outline `Look_EmptyStrokeColor` |
 | Item | `Slot` › `S_Name` | The item's rarity colour (`I.Rarity.GetLook(rarity).Base`) |
-| Locked | `Slot` › `S_Lock` | Shown, with the price in `S_Price` |
+| Locked | `Slot` › `S_Lock` | Shown, with the price in `S_Price` (the number alone, "2,500": the coin is the picture beside it) |

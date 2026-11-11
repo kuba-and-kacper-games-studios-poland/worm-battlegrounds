@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type { [string]: UmeGui_Style }
@@ -32,6 +33,8 @@ local _styles = {
 		PaddingX = "L",
 		IconSize = "Glyph",
 		IconGap = "S",
+		-- The pad shortcut's badge on the button's top left corner (the node's Hint), shown only on Console
+		HintSize = "Glyph",
 		-- The base theme's flat states are replaced: white text on every skin
 		States = {
 			Selected = { Text = "Text", TextStroke = "Ink" },

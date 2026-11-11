@@ -6,7 +6,9 @@ and the tutorial's arrow layer. Under every other gui, so the lobby's backdrop m
 **Look.** The menu is ported 1:1 from the studio's `LobbyInventory` gui (its `TopRight` frame, 2026-11-09) as
 `Primitive` nodes, laid out in screen fractions with aspect-ratio constraints (no `S_ScreenScale`). The badge, which
 the design lacks, is the design's red close look behind a count. The design has no logo, so the game's name that
-stood at the top is gone. The arrow layer is the kit's (`WormBattlegroundsBrawl`), kept from before the port.
+stood at the top is gone. Each menu button carries an `Icon` (since 2026-11-11): a drawn picture from `art/crates`
+(STYLE a snail shell with a paintbrush, WEAPONS the weapon crate, SKINS the skin crate) over the button's art, behind its text. The
+arrow layer is the kit's (`WormBattlegroundsBrawl`), kept from before the port.
 
 |  |  |
 | --- | --- |
@@ -44,8 +46,10 @@ Ids and prefab names.
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Open Skins | Click STYLE | Tap | Select and A | `S_Style` tags (`Interact_Button` → WidgetManager `Toggle`, `Skins`) |
-| Open a crate | Click WEAPONS or SKINS | Tap | Select and A | Crates (`I.Interact.OnPress`) |
+| Open Skins | Click STYLE | Tap | LB (L1), or select and A | `S_Style` tags (`Interact_Button` → WidgetManager `Toggle`, `Skins`; `Utils_ButtonKey`) |
+| Open a crate | Click WEAPONS or SKINS | Tap | RB (R1) opens WEAPONS; or select and A | Crates (`I.Interact.OnPress`); `S_Weapons` tags (`Utils_ButtonKey`) |
+
+On Console `S_Style` and `S_Weapons` show their button in a corner badge (`PadHint`, `Console_Action` `Style` and `Crates`). Every pad hint is a `Console_Hint` the game's Console module shows only on Console; one with a `Console_Action` attribute shows that action's button from the module's scheme, for the player's pad.
 
 ### Looks
 

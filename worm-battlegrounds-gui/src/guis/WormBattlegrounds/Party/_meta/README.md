@@ -6,9 +6,10 @@ then a **+** card per free place that opens the invite box, and the red Leave bu
 **Look.** Ported 1:1 from the studio's `LobbyInventory` gui (its `Left` frame, 2026-11-09) as `Primitive` nodes: its
 dark slanted cards (a member's outlined orange, a + card grey), pictures and fonts, laid out in screen fractions with
 aspect-ratio constraints, so it scales with the screen by itself (no `S_ScreenScale`). Changed from the design: the
-cards are shorter (`0.2275` of the list, no aspect constraint on the + card), so a full party of 4 fits above
+cards are shorter (`0.2059` of the list since the gui maker's polish, no aspect constraint on the + card), so a full party of 4 fits above
 ACTIVE LOBBIES; added: the name, level, crown and Kick on a member card, and Leave (a copy of the design's red close),
-with button tags (`Utils_ButtonScale`, `Utils_ButtonSound`).
+with button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker reworked the member card (2026-11-11): the name and
+"@username" at its right, left-aligned, and the level on a badge under the avatar.
 
 |  |  |
 | --- | --- |
@@ -29,7 +30,7 @@ with button tags (`Utils_ButtonScale`, `Utils_ButtonSound`).
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| Member` | `U_Members` | A Frame: `S_Avatar`, `S_Name`, `S_Level` ("Lv 12"), `S_Crown` (leader), `S_Kick` (ImageButton, the leader sees it on others). Party names it by user id; Cosmetics puts a played emote's label beside it |
+| `PREFAB \| Member` | `U_Members` | A Frame: `S_Avatar`, `S_Name` (with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name, whose `UITextSizeConstraint` it lowers so the name stays on one line), `S_Level` (the level on the `LevelBadge` under the avatar; capitals by `TextCase_Upper`), `S_Username` ("@name", under the name), `S_Crown` (leader), `S_Kick` (ImageButton, the leader sees it on others). Party names it by user id; Cosmetics puts a played emote's label beside it |
 | `PREFAB \| Invite` | `U_Members` | An ImageButton with a +: opens `PartyInvite` |
 
 ## Driven by
@@ -55,7 +56,8 @@ turns it on outside matches (and off while a full-screen widget is open). It kee
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Invite (open `PartyInvite`), Kick, Leave | Click | Tap | Select and A | Party (`I.Interact.OnPress`) |
+| Invite (open `PartyInvite`) | Click | Tap | Y (Triangle), or select and A | Party (`I.Interact.OnPress`); `PREFAB \| Invite` tags (`Utils_ButtonKey`), its `PadHint` badge (`Console_Action` `Invite`) on Console |
+| Kick, Leave | Click | Tap | Select and A | Party (`I.Interact.OnPress`) |
 
 ### Looks
 

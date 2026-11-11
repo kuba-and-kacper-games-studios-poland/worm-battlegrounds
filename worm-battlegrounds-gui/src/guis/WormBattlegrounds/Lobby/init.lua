@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type UmeGui_Gui
@@ -59,6 +60,7 @@ local _gui = {
 									Size = UDim2.fromScale(0.3185, 1),
 								},
 								Attributes = {
+									Utils_GamepadKey = "ButtonL1",
 									HoverSound_SoundGroup = "UI",
 									ClickSound_PitchMax = 1,
 									Utils_ClickScale = 0.92,
@@ -81,11 +83,30 @@ local _gui = {
 									ClickSound_Name = "Button_Click",
 								},
 								Tags = {
+									["Utils_ButtonKey"] = {},
 									["Interact_Button"] = {},
 									["Utils_ButtonScale"] = {},
 									["Utils_ButtonSound"] = {},
 								},
 								Children = {
+									-- Its pad button (Utils_ButtonKey), shown on Console
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "PadHint",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											Image = "rbxassetid://83675298913757",
+											Position = UDim2.fromScale(0.12, 0.14),
+											ScaleType = Enum.ScaleType.Fit,
+											Size = UDim2.fromScale(0.38, 0.38),
+											SizeConstraint = Enum.SizeConstraint.RelativeYY,
+											Visible = false,
+											ZIndex = 8,
+										},
+										Attributes = { Console_Action = "Style" },
+										Tags = { Console_Hint = {} },
+									},
 									{
 										Primitive = "Frame",
 										Props = {
@@ -153,6 +174,22 @@ local _gui = {
 											},
 										},
 									},
+									-- Its picture: a shell with a paintbrush (art/crates)
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Icon",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											Image = "rbxassetid://130223906536662",
+											Position = UDim2.fromScale(0.53, 0.4),
+											ScaleType = Enum.ScaleType.Fit,
+											Size = UDim2.fromScale(0.72, 0.72),
+											SizeConstraint = Enum.SizeConstraint.RelativeYY,
+											ZIndex = 2,
+										},
+									},
 									{
 										Primitive = "TextLabel",
 										Props = {
@@ -202,6 +239,7 @@ local _gui = {
 									ZIndex = 2,
 								},
 								Attributes = {
+									Utils_GamepadKey = "ButtonR1",
 									HoverSound_SoundGroup = "UI",
 									ClickSound_PitchMax = 1,
 									Utils_ClickScale = 0.92,
@@ -222,10 +260,29 @@ local _gui = {
 									ClickSound_Name = "Button_Click",
 								},
 								Tags = {
+									["Utils_ButtonKey"] = {},
 									["Utils_ButtonScale"] = {},
 									["Utils_ButtonSound"] = {},
 								},
 								Children = {
+									-- Its pad button (Utils_ButtonKey), shown on Console
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "PadHint",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											Image = "rbxassetid://118989647484332",
+											Position = UDim2.fromScale(0.12, 0.14),
+											ScaleType = Enum.ScaleType.Fit,
+											Size = UDim2.fromScale(0.38, 0.38),
+											SizeConstraint = Enum.SizeConstraint.RelativeYY,
+											Visible = false,
+											ZIndex = 8,
+										},
+										Attributes = { Console_Action = "Crates" },
+										Tags = { Console_Hint = {} },
+									},
 									{
 										Primitive = "Frame",
 										Props = {
@@ -292,6 +349,22 @@ local _gui = {
 													_ImageName = "1117_69__LobbyInventory__Stroke_gray",
 												},
 											},
+										},
+									},
+									-- Its picture: the weapon crate (art/crates)
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Icon",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											Image = "rbxassetid://100039001608184",
+											Position = UDim2.fromScale(0.53, 0.4),
+											ScaleType = Enum.ScaleType.Fit,
+											Size = UDim2.fromScale(0.72, 0.72),
+											SizeConstraint = Enum.SizeConstraint.RelativeYY,
+											ZIndex = 2,
 										},
 									},
 									{
@@ -559,6 +632,22 @@ local _gui = {
 													_ImageName = "1117_69__LobbyInventory__Stroke_gray",
 												},
 											},
+										},
+									},
+									-- Its picture: the skin crate (art/crates)
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Icon",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											Image = "rbxassetid://130190991872708",
+											Position = UDim2.fromScale(0.53, 0.4),
+											ScaleType = Enum.ScaleType.Fit,
+											Size = UDim2.fromScale(0.72, 0.72),
+											SizeConstraint = Enum.SizeConstraint.RelativeYY,
+											ZIndex = 2,
 										},
 									},
 									{

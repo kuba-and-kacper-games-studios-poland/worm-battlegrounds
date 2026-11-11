@@ -26,7 +26,7 @@ The end of a match: every player's place in team colours, what the player earned
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | Placing` | `U_Placings` | A tall card, centred top to bottom: `S_Place`, `S_Avatar`, `S_Name` (team colour), `S_Coins` |
+| `PREFAB | Placing` | `U_Placings` | A tall card, centred top to bottom: `S_Place`, `S_Avatar`, `NameRow` (a Frame as tall as a Strong label, 45 px) holding `S_Name` (team colour) and `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name, whose `UITextSizeConstraint` it lowers so the name stays on one line), `S_Coins` |
 
 ## Driven by
 
@@ -53,6 +53,8 @@ Export it with the Gui tool: a ScreenGui named `Results`. Then set the attribute
 | --- | --- | --- | --- | --- |
 | Rematch | Click | Tap | A (Cross) | `S_Rematch` tags (`Utils_ButtonKey`); MatchHud connects it |
 | Back to lobby | Click | Tap | B (Circle) | `S_Lobby` tags (`Utils_ButtonKey`); MatchHud connects it |
+
+Both buttons show their pad button in a badge on Console (the theme Button's `Hint`: `Confirm`, `Back`).
 
 ### Looks
 

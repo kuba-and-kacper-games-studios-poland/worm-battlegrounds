@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type UmeGui_Gui
@@ -41,9 +42,17 @@ local _gui = {
 						Id = "S_Accept",
 						Text = "Join party",
 						Style = { "Primary", "Large" },
+						Hint = "Confirm",
 						Tags = { Utils_ButtonKey = { Utils_GamepadKey = "ButtonA" } },
 					},
-					{ Control = "Button", Id = "S_Decline", Text = "No thanks", Style = { "Danger", "Large" } },
+					{
+						Control = "Button",
+						Id = "S_Decline",
+						Text = "No thanks",
+						Style = { "Danger", "Large" },
+						Hint = "Decline",
+						Tags = { Utils_ButtonKey = { Utils_GamepadKey = "ButtonX" } },
+					},
 				},
 			},
 		},

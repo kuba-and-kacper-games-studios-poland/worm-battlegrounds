@@ -53,7 +53,7 @@ Style records merge over the base theme's, so each file lists only what changes.
 | --- | --- |
 | `Slab.lua` | Default adds the kit's keys: `Skin` (a `wb-skin-` icon name), `SkinScale` (0.5: the PNGs are 2×), `SkinTint`, `Drop` / `DropTransparency` (the ink drop under a raised skin), `Fill` / `FillTransparency` / `Inset` (the body), `Gradient` (a `ColorSequence` from the kit's library, top to bottom), `Fade` (the body's bottom transparency in its `UIGradient`), and the diamond `Pattern` at 96 % transparency |
 | `Widget.lua` | Default (1000 × 700): the Hazard plate window: `Panel` (border, drop, sea gradient, pattern), the plate (`Plate`, `PlateWidth` / `PlateHeight` 460 × 112, `PlateRise` 64 above the window, `PlateX` −28, `PlateLip`, `Tilt` −3°, title 48), the close (`CloseWidth` / `CloseHeight` 118 × 96, `CloseOut` 30 past the right edge, `CloseY`), `PlatformScale` (Desktop 0.75). Sizes `Small` (760 × 540), `Large` (1400 × 880, 0.8 on Mobile), `Screen` (1600 × 920, 0.78 on Mobile). Colours `Royal` (premium, VIP) and `Ember` (events) |
-| `Button.lua` | Default: a blue skin (`Skin`, `SelectedSkin`, `DisabledSkin` grey), 96 tall, text 40 lifted above the lip (`TextLift`), a drop, a bouncy press and sounds. Jobs: `Primary` (yellow and slanted: the skin names its height, `wb-skin-slant_yellow_{height}`), `Secondary` (blue), `Price` and `Confirm` (green), `Danger` (red), `Event` (purple), `Tab` (slate, blue when selected), `Muted` (grey). Sizes: `Small` (text 32), `Large` (112), `Hero` (144), `Square` (no side padding, for an icon). `Close` (the Hazard plate's slanted close) |
+| `Button.lua` | Default: a blue skin (`Skin`, `SelectedSkin`, `DisabledSkin` grey), 96 tall, text 40 lifted above the lip (`TextLift`), a drop, a bouncy press and sounds, a pad hint badge `HintSize` (`Glyph`, 48) when the node has a `Hint`. Jobs: `Primary` (yellow and slanted: the skin names its height, `wb-skin-slant_yellow_{height}`), `Secondary` (blue), `Price` and `Confirm` (green), `Danger` (red), `Event` (purple), `Tab` (slate, blue when selected), `Muted` (grey). Sizes: `Small` (text 32), `Large` (112), `Hero` (144), `Square` (no side padding, for an icon). `Close` (the Hazard plate's slanted close) |
 | `Box.lua` | Default: a slot (black, 30 % fading to 18 %, no outline), a cyan title. `Panel`: a window without the plate (the `frame_window` skin, the sea gradient, a `header_sea` band). `Hud`: a darker slot for the match's hud. `Pill`: the dark pill (currencies). `Card`: a raised slate card for people and places, with `Winner` (gold), `Event` (purple) and `Highlight` (blue). `Badge`: a notification pill on a button's corner (the `dot_red` skin stretched; FREE, a count). `PlatformScale` (Desktop 0.75) for a `Screen` box |
 | `Item.lua` | Default: a thing on a slot, the picture over its name and one line. `Square`, `Small` (112), `Difficulty` (200 × 220, the line in the coins' colour). Rewards `Common` … `Legendary`: a framed tile, the rarity's stage inside (`Stage`), silver for common to rare and gold with light behind (`Glow`, rays) for epic and legendary |
 | `Label.lua` | Default: the ink outline. `Heading`, `Title`, `Hero` (capitals, heavy outline). Tones `Accent`, `Map`, `Cream`, `Gold`, `Price` |
@@ -80,6 +80,10 @@ The shared Button's structure with a skin behind the text. States: `Pressed` tin
 `Disabled` swap it (`SelectedSkin`, `DisabledSkin`). `Icon`: a picture at the left, or alone in the middle when
 `Text` is `""`. `AutoWidth` doesn't count the icon: don't use both. `Screen` gives one placed on the screen by itself
 (the match's touch buttons) an `S_ScreenScale` and the `Utils_PlatformScale` tag from the style's `PlatformScale`.
+`Hint` names an action of the game's Console module (`Confirm`, `Back`, `Decline`…) for a button with a pad key: a
+badge `PadHint` (`HintSize`, on the button's top left corner) shows the key's icon from the theme's gamepad icons (the
+node's `Utils_ButtonKey` › `Utils_GamepadKey`), tagged `Console_Hint` with a `Console_Action` attribute, so the Console
+module shows it only on Console and draws the action's button for the player's pad.
 
 Exports can't run the control, so its `Face` records its three skins for game code, which swaps `Face.Image` to show
 a state:
@@ -94,7 +98,8 @@ a state:
 
 The Hazard plate window in WidgetManager's shape: `Bg_Bottom` holds the window slab, `Bg_Top` (rising `PlateRise`
 above the window) the plate with `Title` and the close button, `Content` starts under the plate. Params `Title` and
-`Close`; `SetTitle` on the handle. Tagged `Utils_PlatformScale` from the style's `PlatformScale`.
+`Close`; `SetTitle` on the handle. Tagged `Utils_PlatformScale` from the style's `PlatformScale`. The close button
+carries the style's `CloseTags` (WidgetManager's `CloseCurrent`, B) and B's badge (`Hint = "Back"`).
 
 ### Box
 

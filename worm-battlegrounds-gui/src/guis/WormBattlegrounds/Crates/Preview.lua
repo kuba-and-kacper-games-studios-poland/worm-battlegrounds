@@ -1,8 +1,13 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "CratesPreview"
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Services
+
+local Workspace: Workspace = game:GetService("Workspace")
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -25,6 +30,14 @@ local ODDS = {
 -- The weapon crate's prices in coins, by pack size
 --- @type { [number]: string }
 local PRICES = { [1] = "100", [3] = "300", [10] = "900" }
+
+--[[ Showcase ]]
+
+-- The 3D crate's camera, field of view and turn, as the Crates module's SHOWCASE_* settings
+local SHOWCASE_CAMERA: Vector3 = Vector3.new(0, 5.2, -10.8)
+local SHOWCASE_FOCUS: Vector3 = Vector3.new(0, 1.25, 0)
+local SHOWCASE_FOV: number = 26
+local SHOWCASE_YAW: number = -0.45
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -57,7 +70,7 @@ local Module = {
 
 --[[
 	Fills the widget as the Crates module does: the tabs (the first selected), the paying currency's chip picked, the
-	buy buttons' prices and the weapon crate's odds by rarity.
+	buy buttons' prices, the weapon crate's odds by rarity and its 3D model on the pedestal (when the place has it).
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -135,6 +148,23 @@ function Module.Apply(preview)
 			clone.Parent = card.Parent
 		end
 		card.Visible = false
+	end
+
+	--[[ Showcase ]]
+
+	-- The weapon crate's 3D model on the pedestal, framed and lit as the Crates module shows it
+	local viewport: ViewportFrame = preview.View:Get("U_Crate").Instance
+	local prefab: Model? = Workspace:FindFirstChild("PREFAB | Crate_Weapon", true)
+	if prefab then
+		local camera: Camera = Instance.new("Camera")
+		camera.FieldOfView = SHOWCASE_FOV
+		camera.CFrame = CFrame.lookAt(SHOWCASE_CAMERA, SHOWCASE_FOCUS)
+		camera.Parent = viewport
+		viewport.CurrentCamera = camera
+		local model: Model = prefab:Clone()
+		model:PivotTo(CFrame.Angles(0, SHOWCASE_YAW, 0))
+		model:FindFirstChild("Inner").Color = Color3.fromRGB(255, 179, 71):Lerp(Color3.new(1, 1, 1), 0.45)
+		model.Parent = viewport
 	end
 end
 

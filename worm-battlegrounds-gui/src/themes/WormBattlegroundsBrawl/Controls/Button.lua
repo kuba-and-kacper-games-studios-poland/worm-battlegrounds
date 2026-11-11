@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "Button"
@@ -43,6 +44,7 @@ local Module = {
 		Disabled = "boolean?",
 		Selected = "boolean?",
 		Screen = "boolean?",
+		Hint = "string?",
 	},
 }
 
@@ -105,6 +107,29 @@ function Module.Build(node, style, ctx)
 	-- An auto-width button fits its styled text
 	if node.AutoWidth then
 		ctx.FitWidth(parts)
+	end
+
+	-- A pad shortcut: a badge naming the game's Console action (Hint), with the icon of the key its Utils_ButtonKey
+	-- tag gives it; the game's Console module shows it only on Console and draws the action's button for the pad
+	if node.Hint then
+		local hintSize: number = ctx.Number("Size", style.HintSize)
+		local keyTag = node.Tags and node.Tags.Utils_ButtonKey --- @type { [string]: any }?
+		local key: string? = if keyTag then keyTag.Utils_GamepadKey else nil
+		local padIcons = ctx.Theme.Gamepad and ctx.Theme.Gamepad.Xbox and ctx.Theme.Gamepad.Xbox.Color --- @type { [string]: string }?
+		local badge: ImageLabel = ctx.Create("ImageLabel", {
+			Name = "PadHint",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			BackgroundTransparency = 1,
+			Image = if key and padIcons then padIcons[key] or "" else "",
+			Position = UDim2.fromOffset(hintSize / 4, hintSize / 4),
+			ScaleType = Enum.ScaleType.Fit,
+			Size = UDim2.fromOffset(hintSize, hintSize),
+			Visible = false,
+			ZIndex = 10,
+			Parent = button,
+		})
+		badge:SetAttribute("Console_Action", node.Hint)
+		ctx.Tag(badge, { Console_Hint = {} })
 	end
 
 	--[[ States ]]

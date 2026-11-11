@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "LoadoutPreview"
@@ -16,7 +17,7 @@ local ITEMS = { "Bazooka", "Grenade", "Shotgun", "", "Uzi", "Dynamite" }
 local SLOTS_PER_ROW: number = 3
 
 --- @type { [number]: string }
-local SLOT_PRICES = { [4] = "2500", [5] = "6000" }
+local SLOT_PRICES = { [4] = "2,500", [5] = "6,000" }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -87,7 +88,7 @@ function Module.Apply(preview)
 		card:Get("S_Plus").Instance.Visible = empty
 		card:Get("S_Shiny").Instance.Visible = cell == 2 and preview.Values.S_Shiny
 		card:Get("S_Lock").Instance.Visible = locked
-		card:Get("S_Price").Instance.Text = `{SLOT_PRICES[slot] or ""} coins`
+		card:Get("S_Price").Instance.Text = SLOT_PRICES[slot] or ""
 		root:FindFirstChild("Background"):FindFirstChild("Stroke2").Image = root:GetAttribute(if selected then "Look_SelectedStroke2" else "Look_Stroke2")
 		stroke.Image = root:GetAttribute(if selected then "Look_SelectedStroke" else "Look_Stroke")
 		stroke.ImageColor3 = root:GetAttribute(if selected then "Look_SelectedStrokeColor" elseif empty then "Look_EmptyStrokeColor" else "Look_StrokeColor")

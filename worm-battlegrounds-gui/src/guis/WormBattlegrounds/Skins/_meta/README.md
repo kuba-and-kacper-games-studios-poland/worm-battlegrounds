@@ -53,7 +53,7 @@ it (the lobby's STYLE button). It keeps its `Name`, Ids and prefab name.
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
 | Equip a skin | Click an owned tile | Tap | Select | Cosmetics (`I.Interact.OnPress`) |
-| Close | BACK | BACK | B | `S_Close` tags (`Interact_Button`, `Utils_ButtonKey`) |
+| Close | BACK | BACK | B | `S_Close` tags (`Interact_Button`, `Utils_ButtonKey`); its `PadHint` badge on Console |
 
 ### Looks
 

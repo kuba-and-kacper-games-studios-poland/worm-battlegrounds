@@ -1,5 +1,8 @@
 # CrateOpen
 
+**Unused since 2026-11-11:** crates open on the `Crates` gui itself (its `U_Open` and `U_Result`), and the Crates
+module no longer drives this gui. It stays until the owner says to remove it.
+
 The crate reveal: the crate shakes, bursts in the result's rarity colour, then shows the item ("Shiny!" when it turned shiny), or the 10 items of a 10-pack, with **Open again**.
 
 **Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). Results are the kit's reward tiles: the rarity's stage inside a silver frame (common to rare) or a gold one with light behind it (epic, legendary). The single result is a big tile (300 × 380) whose frame grows with it (`SliceScale` 0.9). Open again is the one yellow.

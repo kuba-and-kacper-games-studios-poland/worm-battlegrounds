@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type UmeGui_Gui
@@ -26,14 +27,18 @@ local _gui = {
 		Children = {
 			-- Set with the billboard's size by ScreenScale, so the tag is as big for the screen as the hud
 			{ Primitive = "UIScale", Id = "S_ScreenScale" },
-			-- Stacks up from the billboard's bottom edge, the health bar nearest the snail
+			-- Stacks up from the billboard's bottom edge, the health bar nearest the snail; chat bubbles stand over it
 			{
 				Control = "Stack",
+				Id = "S_Stack",
 				Align = "Center",
 				Style = "None",
 				Props = { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1) },
 				Children = {
-					-- Over the snail whose turn it is: a marker and the turn's seconds (hidden for its own player)
+					--[[
+						Over the snail whose turn it is: the turn's seconds (hidden for its own player) and the red turn
+						arrow (art/hud), which code drops in from above the screen and bobs in its slot
+					]]
 					{
 						Control = "Stack",
 						Id = "S_Active",
@@ -42,7 +47,25 @@ local _gui = {
 						Style = "None",
 						Children = {
 							{ Control = "Label", Id = "S_Timer", Text = "15", Style = "Strong" },
-							{ Control = "Picture", Image = "chevron-small-down", Style = "Glyph" },
+							{
+								Primitive = "Frame",
+								Props = { Name = "ArrowSlot", BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromOffset(36, 45) },
+								Children = {
+									{
+										Primitive = "ImageLabel",
+										Id = "S_Arrow",
+										Props = {
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.5, 0.5),
+											Size = UDim2.fromScale(1, 1),
+											Image = "rbxassetid://107929925047000",
+											ScaleType = Enum.ScaleType.Fit,
+										},
+									},
+								},
+							},
 						},
 					},
 					{
@@ -84,6 +107,64 @@ local _gui = {
 										Props = {
 											Thickness = 0.15,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+										},
+									},
+									-- PlayerBadges lowers it so a name with badges stays on one line
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+								},
+							},
+							-- The player's badges after the name: PlayerBadges clones PREFAB | Badge per badge and lays them out
+							{
+								Primitive = "Frame",
+								Id = "S_Badges",
+								Props = {
+									AnchorPoint = Vector2.new(0, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Visible = false,
+								},
+								Children = {
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "PREFAB | Badge",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											Size = UDim2.fromScale(1, 1),
+											Visible = false,
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Children = {
+											-- Roblox's own verified badge and Premium icon: glyphs in its text, as big as the pictures
+											{
+												Primitive = "TextLabel",
+												Id = "S_Glyph",
+												Props = {
+													AnchorPoint = Vector2.new(0.5, 0.5),
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													Position = UDim2.fromScale(0.5, 0.5),
+													Size = UDim2.fromScale(1.25, 1.25),
+													Text = "",
+													TextColor3 = Color3.fromRGB(255, 255, 255),
+													TextSize = 20,
+													FontFace = Font.new("rbxassetid://113086061264643", Enum.FontWeight.Heavy, Enum.FontStyle.Normal),
+													RichText = true,
+													TextScaled = true,
+												},
+												Children = {
+													{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+													{
+														Primitive = "UIStroke",
+														Props = {
+															ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+															Color = Color3.fromRGB(25, 25, 42),
+															Thickness = 0.08,
+															StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+														},
+													},
+												},
+											},
 										},
 									},
 								},

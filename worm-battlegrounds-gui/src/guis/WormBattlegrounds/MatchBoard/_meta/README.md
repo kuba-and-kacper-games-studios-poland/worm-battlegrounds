@@ -27,8 +27,8 @@ JOIN) carry `TextCase_Upper`.
 | Element | Kind | What game code does with it |
 | --- | --- | --- |
 | `U_Play` | Frame, full screen | The board (`BottomLeft`, `BottomRight`); hidden while the setup or the waiting room shows |
-| `U_Play` › `S_Solo` | ImageButton (yellow) | Opens the setup; its `Name1` reads "Solo vs bots", or "Play with party" in a party |
-| `U_Play` › `S_Custom` | ImageButton (blue) | Opens `CustomLobby` (its tags) |
+| `U_Play` › `S_Solo` | ImageButton (yellow: the gui maker's painted button, `Background` › `Main` alone, 2026-11-11) | Opens the setup; its `Name1` reads "Solo vs bots", or "Play with party" in a party, or "Waiting for host" for a party member (greyed out) |
+| `U_Play` › `S_Custom` | ImageButton (blue, painted as Solo's) | Opens `CustomLobby` (its tags). For a party member it's greyed out and reads "Host picks" (its `Interact_Function` set to `""`), until they're in their leader's lobby: then "Party lobby", and it opens it |
 | `U_Rows` | ScrollingFrame (horizontal) | Holds one `Row` per public match |
 | `U_Setup` | Box (`Panel`, `Fixed`) | The solo or party setup, hidden until Solo vs bots. Has `S_ScreenScale` |
 | `U_Setup` › `S_Title` | Label (`Title`) | "Play solo" or "Play with party" |
@@ -49,7 +49,7 @@ JOIN) carry `TextCase_Upper`.
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | Row` | `U_Rows` | A lobby card: `S_MapIcon` (the map's picture; the design's until the map has a `Thumbnail`), `S_Mode`, `S_Players` ("3/6 players"), `S_Map` (the map's name), `S_Timer`, `S_Join` (ImageButton; its `Name1` reads Join or Join teams) |
+| `PREFAB | Row` | `U_Rows` | A lobby card (the gui maker's layout, 2026-11-11: a small map picture at the left, the texts beside it, the player count orange): `S_MapIcon` (the map's picture; the design's until the map has a `Thumbnail`), `S_Mode`, `S_Players` ("3/6 players"), `S_Map` (the map's name), `S_Timer`, `S_Join` (ImageButton; its `Name1` reads Join or Join teams, or "Host picks" greyed out for a party member) |
 | `PREFAB | PlayerName` | `U_Players` | `S_Avatar`, `S_Name` |
 
 ## Driven by
@@ -76,10 +76,12 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Open Custom | Click | Tap | Select and A | `S_Custom` tags (`Interact_Button` → WidgetManager `Toggle`) |
-| Solo vs bots, Join, a difficulty, Vote, Leave | Click | Tap | Select and A | MatchBoard connects them |
+| Open Custom | Click | Tap | X (Square), or select and A | `S_Custom` tags (`Interact_Button` → WidgetManager `Toggle`, `Utils_ButtonKey`) |
+| Solo vs bots, Join, a difficulty, Vote, Leave | Click | Tap | Select and A (the selection rests on Solo vs bots; it stays in the setup and the waiting room while they show) | MatchBoard connects them; Console (`SetHome`, `Focus`) |
 | Start | Click | Tap | A (Cross) | `S_Start` tags (`Utils_ButtonKey`); MatchBoard connects it |
-| Back | Click | Tap | B (Circle) | `S_Back` tags (`Utils_ButtonKey`); MatchBoard connects it |
+| Back | Click | Tap | B (Circle) | `S_Back` tags (`Utils_ButtonKey`); MatchBoard connects it (with a selection, B backs out through the Console module's focus) |
+
+On Console `S_Custom` and `S_Back` show their button in a badge (`PadHint`, `Console_Action` `Custom`, `Back`). Every pad hint is a `Console_Hint` the game's Console module shows only on Console; one with a `Console_Action` attribute shows that action's button from the module's scheme, for the player's pad.
 
 ### Looks
 
@@ -87,3 +89,4 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 | --- | --- | --- |
 | Hover, press | Buttons | `Utils_ButtonScale`: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds; a kit button's skin takes the theme's `Pressed` tint |
 | Picked difficulty | `S_None` … `S_Hard` › `Face` | `Kit_SelectedImage` (blue) when picked, else `Kit_Image` (slate) |
+| Locked (a party member: their leader picks) | `S_Solo`, `S_Custom`, a `Row`'s `S_Join` | `Background` › `Main` and `Stroke` `ImageColor3`, and `Name1` `TextColor3`, take MatchBoard's `LOCKED_MAIN_COLOR`, `LOCKED_STROKE_COLOR`, `LOCKED_TEXT_COLOR`; hover and press scales 1. The design's look is kept on the button (`Look_MainColor`, `Look_StrokeColor`, `Look_TextColor`, `Look_HoverScale`, `Look_ClickScale`) and put back when it unlocks |

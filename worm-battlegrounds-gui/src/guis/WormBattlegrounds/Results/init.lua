@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type UmeGui_Gui
@@ -76,12 +77,14 @@ local _gui = {
 						Id = "S_Rematch",
 						Text = "Rematch  2 / 4  0:15",
 						Style = "Primary",
+						Hint = "Confirm",
 						Tags = { Utils_ButtonKey = { Utils_GamepadKey = "ButtonA" } },
 					},
 					{
 						Control = "Button",
 						Id = "S_Lobby",
 						Text = "Back to lobby",
+						Hint = "Back",
 						Tags = { Utils_ButtonKey = { Utils_GamepadKey = "ButtonB" } },
 					},
 				},
@@ -106,7 +109,75 @@ local _gui = {
 					Children = {
 						{ Control = "Label", Id = "S_Place", Text = "1st", Align = "Center", Style = "Heading" },
 						{ Control = "Picture", Id = "S_Avatar", Style = "Avatar" },
-						{ Control = "Label", Id = "S_Name", Text = "PlayerName", Align = "Center", Style = "Strong" },
+						-- The name with the player's badges after it, as tall as a Strong label (36 px text, 45 px line)
+						{
+							Primitive = "Frame",
+							Props = {
+								Name = "NameRow",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								Size = UDim2.new(1, 0, 0, 45),
+							},
+							Children = {
+								{ Control = "Label", Id = "S_Name", Text = "PlayerName", Align = "Center", Style = "Strong" },
+								-- PlayerBadges clones PREFAB | Badge per badge and lays them out
+								{
+									Primitive = "Frame",
+									Id = "S_Badges",
+									Props = {
+										AnchorPoint = Vector2.new(0, 0.5),
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										Visible = false,
+									},
+									Children = {
+										{
+											Primitive = "ImageLabel",
+											Props = {
+												Name = "PREFAB | Badge",
+												BackgroundTransparency = 1,
+												BorderSizePixel = 0,
+												Size = UDim2.fromScale(1, 1),
+												Visible = false,
+												ScaleType = Enum.ScaleType.Fit,
+											},
+											Children = {
+												-- Roblox's own verified badge and Premium icon: glyphs in its text, as big as the pictures
+												{
+													Primitive = "TextLabel",
+													Id = "S_Glyph",
+													Props = {
+														AnchorPoint = Vector2.new(0.5, 0.5),
+														BackgroundTransparency = 1,
+														BorderSizePixel = 0,
+														Position = UDim2.fromScale(0.5, 0.5),
+														Size = UDim2.fromScale(1.25, 1.25),
+														Text = "",
+														TextColor3 = Color3.fromRGB(255, 255, 255),
+														TextSize = 20,
+														FontFace = Font.new("rbxassetid://113086061264643", Enum.FontWeight.Heavy, Enum.FontStyle.Normal),
+														RichText = true,
+														TextScaled = true,
+													},
+													Children = {
+														{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+														{
+															Primitive = "UIStroke",
+															Props = {
+																ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+																Color = Color3.fromRGB(25, 25, 42),
+																Thickness = 0.08,
+																StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						{ Control = "Label", Id = "S_Coins", Text = "+60 coins", Align = "Center", Style = "Coin" },
 					},
 				},

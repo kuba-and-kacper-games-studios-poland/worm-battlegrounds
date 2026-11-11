@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "PartyPreview"
@@ -56,6 +57,7 @@ function Module.Apply(preview)
 	--- @param member UmeGui_Subview
 	for index: number, member in ipairs(members) do
 		member:Get("S_Name").Instance.Text = `Player{index}`
+		member:Get("S_Username").Instance.Text = `@player{index}`
 		member:Get("S_Level").Instance.Text = `Lv {index * 7}`
 		member:Get("S_Crown").Instance.Visible = index == 1
 		member:Get("S_Kick").Instance.Visible = index > 1

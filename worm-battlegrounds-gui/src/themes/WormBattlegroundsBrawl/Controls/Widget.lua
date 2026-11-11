@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "Widget"
@@ -115,10 +116,13 @@ function Module.Build(node, style, ctx)
 
 	-- Closes through WidgetManager (style CloseTags): a click, or B on a gamepad
 	if node.Close ~= false then
-		local close = ctx.Build({ --- @type UmeGui_Handle
+		ctx.Build({
 			Control = "Button",
 			Text = "",
 			Style = style.CloseStyle,
+			-- B's badge on Console (the game's Console module, its Back action)
+			Hint = "Back",
+			Tags = style.CloseTags,
 			Props = {
 				Name = "CloseButton",
 				AnchorPoint = Vector2.new(1, 0),
@@ -127,7 +131,6 @@ function Module.Build(node, style, ctx)
 				Size = UDim2.fromOffset(closeWidth, closeHeight),
 			},
 		}, top)
-		ctx.Tag(close.Button, style.CloseTags)
 	end
 
 	--%%%%%%%%%%%%%%%%%%%% Content

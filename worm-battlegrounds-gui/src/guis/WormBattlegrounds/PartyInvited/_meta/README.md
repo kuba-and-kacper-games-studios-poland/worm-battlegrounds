@@ -37,7 +37,9 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Party
 | --- | --- | --- | --- | --- |
 | Close | Click ✕ | Tap ✕ | B (Circle) | `Bg_Top` › `CloseButton` tags (`Interact_Button` → WidgetManager `CloseCurrent`, `Utils_ButtonKey`) |
 | Join party | Click | Tap | A (Cross) | `S_Accept` tags (`Utils_ButtonKey`); Party connects it |
-| No thanks | Click | Tap | Select and A | Party connects it |
+| No thanks | Click | Tap | X (Square) | `S_Decline` tags (`Utils_ButtonKey`); Party connects it |
+
+Every button shows its pad button in a badge on Console (the theme Button's `Hint`: `Confirm`, `Decline`, and the close's `Back`).
 
 ### Looks
 

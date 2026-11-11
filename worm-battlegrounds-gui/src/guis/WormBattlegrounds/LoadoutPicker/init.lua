@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type UmeGui_Gui
@@ -321,6 +322,24 @@ local _gui = {
 															["Utils_ButtonSound"] = {},
 														},
 														Children = {
+															-- B closes it on a pad (its Utils_ButtonKey), shown on Console
+															{
+																Primitive = "ImageLabel",
+																Props = {
+																	Name = "PadHint",
+																	AnchorPoint = Vector2.new(0.5, 0.5),
+																	BackgroundTransparency = 1,
+																	Image = "rbxassetid://117564937183685",
+																	Position = UDim2.fromScale(0.2, 0.2),
+																	ScaleType = Enum.ScaleType.Fit,
+																	Size = UDim2.fromScale(0.5, 0.5),
+																	SizeConstraint = Enum.SizeConstraint.RelativeYY,
+																	Visible = false,
+																	ZIndex = 8,
+																},
+																Attributes = { Console_Action = "Back" },
+																Tags = { Console_Hint = {} },
+															},
 															{
 																Primitive = "Frame",
 																Props = {
