@@ -71,19 +71,23 @@ transparent PNGs, made in Studio:
    its operation, and read the image id in Studio (`InsertService:LoadAsset(decal)`, the Decal's `Texture`).
 4. The image id goes in the Crates module's `SKIN_PICTURES`, by model.
 
-Approved by the owner on 2026-11-11 ("Yes, upload them"); all six uploaded passed moderation.
+Approved by the owner on 2026-11-11 ("Yes, upload them"); all ten passed moderation.
 
 | Snail | Decal | Image id |
 | --- | --- | --- |
 | `Classic` ("Snail Skin Classic") | 114623271263896 | 86349344725414 |
+| `Clown` ("Snail Skin Clown") | 100125734706100 | 81428353214751 |
 | `Cowboy` ("Snail Skin Cowboy") | 79430738422489 | 81535697083664 |
 | `Devil` ("Snail Skin Devil") | 71413904534385 | 129536958641848 |
 | `Knight` ("Snail Skin Knight") | 103034927014487 | 86133641830063 |
 | `Ninja` ("Snail Skin Ninja") | 102384588377402 | 91308817099254 |
+| `Pirate` ("Snail Skin Pirate") | 79103218182234 | 92516621597215 |
+| `Robot` ("Snail Skin Robot") | 109582869308311 | 127764579921216 |
 | `Skeleton` ("Snail Skin Skeleton") | 91503535808891 | 103558601021448 |
+| `Soldier` ("Snail Skin Soldier") | 117493378261322 | 122213949366505 |
 
-Not uploaded yet: `Soldier`, `Pirate`, `Clown` and `Robot` (made, and staged in `../sfx/out/upload/`). Until they are,
-their reel cards show the skin's item picture. A new or redrawn snail gets its picture made and uploaded the same way.
+A new or redrawn snail gets its picture made and uploaded the same way; until then its reel cards show the skin's item
+picture.
 
 | File | What |
 | --- | --- |

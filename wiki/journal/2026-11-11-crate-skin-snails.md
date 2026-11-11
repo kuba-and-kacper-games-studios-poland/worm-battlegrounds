@@ -32,18 +32,22 @@ same in the rolling animation").
   holds still where it's seen (`SKIN_REDRAW_FRAMES`, 2 frames). Roblox left a card that flew in, or came back into
   view, with an empty picture box.
 - `Reel.FillCard`: a reel card shows `SKIN_PICTURES[model]` in `S_Icon`.
-- Settings `SKIN_PICTURES`: six image ids by snail model.
+- Settings `SKIN_PICTURES`: ten image ids by snail model.
 - The gui's `PREFAB | Card` and `PREFAB | OddsItem` each have an `S_Model` ViewportFrame.
 - The pictures come from `art/skins` (README → Pictures): a booth in a playtest, a black and a white capture, and
   `make_pictures.py`.
 
 **Uploaded** (The Snail Studio group, Decals, all passed moderation):
 - Classic: decal 114623271263896, image 86349344725414
+- Clown: decal 100125734706100, image 81428353214751
 - Cowboy: decal 79430738422489, image 81535697083664
 - Devil: decal 71413904534385, image 129536958641848
 - Knight: decal 103034927014487, image 86133641830063
 - Ninja: decal 102384588377402, image 91308817099254
+- Pirate: decal 79103218182234, image 92516621597215
+- Robot: decal 109582869308311, image 127764579921216
 - Skeleton: decal 91503535808891, image 103558601021448
+- Soldier: decal 117493378261322, image 122213949366505
 
 **How to check.** Open a Skin crate x10: every column's cards show snail pictures as they roll, and the ten result cards
 show live snails. x1 shows the pictures above the names and in the lens, then the big card is live. The Skeleton's
@@ -54,6 +58,4 @@ cards show the same snails as the Skins window.
 
 **From.** The owner's request through the main session, 2026-11-11.
 
-Still unsure: the Soldier, Pirate, Clown and Robot pictures are made but not uploaded (this session's permission check
-refused those four uploads), so their reel cards still show the item picture until their ids are added to
-`SKIN_PICTURES`. The place is unsaved until the owner saves it.
+Still unsure: the place is unsaved until the owner saves it.

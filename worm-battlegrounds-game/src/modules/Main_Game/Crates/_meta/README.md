@@ -166,7 +166,7 @@ reel. Closing the widget ends an opening at once.
 | `COLUMN_SIZE`, `COLUMN_GAP`, `COLUMN_Y` | 150 × 660, `12`, `540` | The ten-pack's columns |
 | `CARD_FILL`, `COLUMN_CARD_FILL`, `CARD_ASPECT`, `CARD_GAP` | `0.7`, `0.92`, `1.1169`, `0.08` | A card's size in its band or column, its shape, and the gap between cards |
 | `CARD_NAME_TEXT` | `0.1` | The tallest a reel card's name gets, as a share of the card's height: short names stay this size, long ones wrap and shrink |
-| `SKIN_PICTURES` | six image ids, by snail model | The pictures a rolling reel's cards show for the skins' snails (`art/skins` → Pictures); a snail missing here keeps its item picture there |
+| `SKIN_PICTURES` | ten image ids, by snail model | The pictures a rolling reel's cards show for the skins' snails (`art/skins` → Pictures); a snail missing here keeps its item picture there |
 | `SKIN_REDRAW_FRAMES` | `2` | Frames a card with a live snail holds still where it's seen before its snail is drawn again |
 | `LENS_WIDTH`, `LENS_ZOOM`, `LENS_DIM` | `1.5`, `1.06`, `0.45` | The one-crate reel's lens: width in cards, zoom, and the dim beside it |
 | `TICK_GAP`, `TICK_PITCH` | `0.042`, `0.975` to `1.035` | Fewest seconds between ticks, and their pitch spread |

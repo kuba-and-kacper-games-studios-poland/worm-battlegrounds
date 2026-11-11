@@ -176,11 +176,15 @@ local _settings = {
 	--- @type { [string]: string }
 	SKIN_PICTURES = {
 		Classic = "rbxassetid://86349344725414",
+		Clown = "rbxassetid://81428353214751",
 		Cowboy = "rbxassetid://81535697083664",
 		Devil = "rbxassetid://129536958641848",
 		Knight = "rbxassetid://86133641830063",
 		Ninja = "rbxassetid://91308817099254",
+		Pirate = "rbxassetid://92516621597215",
+		Robot = "rbxassetid://127764579921216",
 		Skeleton = "rbxassetid://103558601021448",
+		Soldier = "rbxassetid://122213949366505",
 	},
 
 	--[[
