@@ -1246,3 +1246,24 @@ Classic's skeleton in Blender and uploaded as a skinned FBX. Four things learned
   texture with the body's colour where the hands rest, so the Robot's are steel and the Devil's red.
 
 Rule: Snails → "Every skin is a snail on Classic's skeleton".
+
+## The skins' snails on the crate cards (2026-11-11)
+
+The owner asked for the skins' snails in ViewportFrames on the GACHA screen's cards, "same in the rolling animation".
+The odds list, the result cards and the big card took them easily: one posed snail per card, framed as the Skins
+window frames it. The rolling reels didn't, and measuring them in Studio taught three things about ViewportFrames:
+
+- **A model costs Roblox 3 to 4 ms the first time its viewport draws it,** whatever its textures, pose or bones, and
+  again whenever the viewport is hidden and shown or the model is taken out and put back. In a WorldModel adding one
+  costs about 7 ms, in one hitch (70 at once: a 200 ms frame); moving it afterwards is nearly free.
+- **A viewport whose content changed is drawn only once it holds still where it's seen.** One that moves with a reel
+  strip, or is hidden at the time, stays blank (or keeps its old picture) until it changes again in sight. So the
+  reels' first tries, viewports riding the strips, left whole columns blank; a still viewport whose camera follows
+  the strip does draw every frame, cheaply, but swapping snails in and out as cards pass cost 11 to 25 ms a frame on
+  the ten-pack. Even the result cards that fly into place came up empty until their cameras were nudged.
+- **So the reels show pictures.** The owner picked them over a hitch every opening: each snail rendered once in Studio
+  in the cards' pose, framing and light (a booth captured on black and on white gives the transparency), uploaded
+  with the owner's OK, and shown in the reel cards' `S_Icon`. The ten-pack rolls about 1 ms dearer than with the old
+  icons. Still cards stay live, and the Crates module draws a card's snail again once the card settles in sight.
+
+Rule: Guis → "Rolling reels show the snails as pictures".

@@ -77,6 +77,27 @@ local _crates_Ambient = {}
 --- @field TickPitch number
 local _crates_Reel = {}
 
+--%%%%%%%%%%%%%%%%%%%% Snails
+
+--- @class Crates_HeldSnail
+---
+--- # General #
+---
+--- @field Model Model
+--- @field Viewport ViewportFrame
+--- @field Camera Camera
+--- @field Shot CFrame
+---
+--- # Drawing #
+---
+--- @field Shown boolean
+--- @field Position Vector2
+--- @field Size Vector2
+--- @field Still number
+--- @field Drawn boolean
+--- @field Nudged boolean
+local _crates_HeldSnail = {}
+
 --%%%%%%%%%%%%%%%%%%%% Stage
 
 --- @class Crates_StageLayout

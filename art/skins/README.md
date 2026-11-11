@@ -55,7 +55,40 @@ world's origin in game). The textures are the artist's own SurfaceAppearances, a
 
 A redrawn skin is uploaded again as a new asset, and its id replaced in the table.
 
+## Pictures
+
+The Crates reel cards show each snail as a picture while they roll (the owner's pick, 2026-11-11). A rolling reel can't
+draw that many live snails; every still card shows its snail live. Each picture is the snail as a still card shows it:
+posed in Idle's first frame, framed and lit as the Crates cards' `S_Model` viewport. The pictures are 320 × 256
+transparent PNGs, made in Studio:
+
+1. In a playtest, run `picture_booth.luau` in the client (Studio's MCP `execute_luau`, Client). It shows the ten snails
+   six to a screen. Capture the screen with the booth black (`_G.SnailBooth.Paint(Color3.new(0, 0, 0))`) and white
+   (`Paint(Color3.new(1, 1, 1))`), then `_G.SnailBooth.Screen(2)` and both again.
+2. `python -I make_pictures.py <a_black> <a_white> <b_black> <b_white>`: the difference between each black and white
+   capture gives the transparency. It writes `out/SnailSkin_<Model>.png` and copies them into `../sfx/out/upload/`.
+3. Upload each as a Decal to The Snail Studio group (566704940) through Open Cloud (`POST /assets/v1/assets`), poll
+   its operation, and read the image id in Studio (`InsertService:LoadAsset(decal)`, the Decal's `Texture`).
+4. The image id goes in the Crates module's `SKIN_PICTURES`, by model.
+
+Approved by the owner on 2026-11-11 ("Yes, upload them"); all six uploaded passed moderation.
+
+| Snail | Decal | Image id |
+| --- | --- | --- |
+| `Classic` ("Snail Skin Classic") | 114623271263896 | 86349344725414 |
+| `Cowboy` ("Snail Skin Cowboy") | 79430738422489 | 81535697083664 |
+| `Devil` ("Snail Skin Devil") | 71413904534385 | 129536958641848 |
+| `Knight` ("Snail Skin Knight") | 103034927014487 | 86133641830063 |
+| `Ninja` ("Snail Skin Ninja") | 102384588377402 | 91308817099254 |
+| `Skeleton` ("Snail Skin Skeleton") | 91503535808891 | 103558601021448 |
+
+Not uploaded yet: `Soldier`, `Pirate`, `Clown` and `Robot` (made, and staged in `../sfx/out/upload/`). Until they are,
+their reel cards show the skin's item picture. A new or redrawn snail gets its picture made and uploaded the same way.
+
 | File | What |
 | --- | --- |
 | `rig_skins.py` | Imports the two OBJs, moves them into the rig's space, builds Classic's skeleton, rigs and exports each skin |
 | `classic_bones.json` | Classic's skeleton, read from the place |
+| `picture_booth.luau` | The picture booth: the posed snails, framed and lit as the cards' live ones, six to a screen |
+| `make_pictures.py` | Turns the booth's black and white captures into the snails' pictures |
+| `out/` | Made by `make_pictures.py`, not kept in the repo |

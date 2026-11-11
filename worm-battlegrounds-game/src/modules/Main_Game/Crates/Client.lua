@@ -14,6 +14,7 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Panel = require(_scripts:FindFirstChild("Client"):FindFirstChild("Panel")) --- @type Crates_Client_Panel
+local SkinModels = require(_scripts:FindFirstChild("Client"):FindFirstChild("SkinModels")) --- @type Crates_Client_SkinModels
 local Odds = require(_scripts:FindFirstChild("Client"):FindFirstChild("Odds")) --- @type Crates_Client_Odds
 local Showcase = require(_scripts:FindFirstChild("Client"):FindFirstChild("Showcase")) --- @type Crates_Client_Showcase
 local Reel = require(_scripts:FindFirstChild("Client"):FindFirstChild("Reel")) --- @type Crates_Client_Reel
@@ -45,6 +46,7 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
+	SkinModels.Start()
 	Odds.Start()
 	Showcase.Start()
 	Reel.Start()

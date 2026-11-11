@@ -3806,6 +3806,23 @@ local _gui = {
 						BorderSizePixel = 0,
 					},
 				},
+				-- A skin's snail, posed, in place of its picture (filled by the game)
+				{
+					Primitive = "ViewportFrame",
+					Id = "S_Model",
+					Props = {
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						Position = UDim2.fromScale(0.5, 0.39),
+						Size = UDim2.fromScale(0.66, 0.58),
+						ZIndex = 3,
+						Visible = false,
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+						Ambient = Color3.fromRGB(150, 150, 158),
+						LightColor = Color3.fromRGB(235, 235, 235),
+						LightDirection = Vector3.new(-5, -9, 7),
+					},
+				},
 				{
 					Primitive = "ImageLabel",
 					Id = "S_Star",
@@ -4785,6 +4802,22 @@ local _gui = {
 									},
 									Attributes = {
 										_ImageName = "1023_7__Gacha__Icon_image",
+									},
+								},
+								-- A skin's snail, posed, in place of its picture (filled by the game)
+								{
+									Primitive = "ViewportFrame",
+									Id = "S_Model",
+									Props = {
+										Position = UDim2.fromScale(0.22, 0.02),
+										Size = UDim2.fromScale(0.6, 0.66),
+										ZIndex = 3,
+										Visible = false,
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										Ambient = Color3.fromRGB(150, 150, 158),
+										LightColor = Color3.fromRGB(235, 235, 235),
+										LightDirection = Vector3.new(-5, -9, 7),
 									},
 								},
 								{

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -8,6 +9,10 @@ local _localName = "Crates"
 
 --- @type Crates_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local SkinModels = require(script.Parent:FindFirstChild("SkinModels")) --- @type Crates_Client_SkinModels
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -81,7 +86,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Add Item
 
 --[[
-	Adds one item's card to its rarity's section (made on its first item): its picture, name and chance.
+	Adds one item's card to its rarity's section (made on its first item): its picture (a skin's snail, posed, when it
+	has one), name and chance.
 ]]
 function Module._addItem(itemId: string, chanceText: string, order: number)
 	--[[ Data ]]
@@ -94,6 +100,7 @@ function Module._addItem(itemId: string, chanceText: string, order: number)
 	--[[ Local Variables ]]
 
 	local section: Frame = sections[item.Rarity] or Module._addSection(item.Rarity)
+	local snail: boolean = SkinModels.GetModelName(itemId) ~= nil
 
 	--[[ Cloning ]]
 
@@ -102,11 +109,17 @@ function Module._addItem(itemId: string, chanceText: string, order: number)
 	card.LayoutOrder = math.floor(order * 100)
 	card.Visible = true
 
-	--[[ Texts ]]
+	--[[ Applying ]]
 
 	card:FindFirstChild("S_Icon", true).Image = item.IconId
+	card:FindFirstChild("S_Icon", true).Visible = not snail
+	card:FindFirstChild("S_Model", true).Visible = snail
 	card:FindFirstChild("S_Name", true).Text = item.Name
 	card:FindFirstChild("S_Chance", true).Text = chanceText
+
+	--[[ Snail ]]
+
+	SkinModels.Put(card, itemId)
 
 	--[[ Rarity Look ]]
 

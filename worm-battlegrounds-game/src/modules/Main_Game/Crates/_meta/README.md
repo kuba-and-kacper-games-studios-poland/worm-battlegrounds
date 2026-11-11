@@ -18,7 +18,7 @@ holds more than one), and the legendary plays its own drop. The tutorial crate i
 | Folder | `src/modules/Main_Game/Crates` |
 | Runs on | Server, Client, Global · Lobby map |
 | Exposes | `I.Crates` (server), `I.G_Crates` (both) |
-| Uses | `I.Currency`, `I.Inventory`, `I.G_Inventory`, `I.Policy`, `I.Shop`, `I.Tutorial`, `I.Random`, `I.Rarity`, `I.WidgetManager`, `I.Replicator`, `I.Notify`, `I.Interact`, `I.Format`, `I.Console` (client: the pad's tab buttons), `I.Sound`, `I.UIEmitter` (client: every particle), `I.Topic` |
+| Uses | `I.Currency`, `I.Inventory`, `I.G_Inventory`, `I.Policy`, `I.Shop`, `I.Tutorial`, `I.Random`, `I.Rarity`, `I.WidgetManager`, `I.Replicator`, `I.Notify`, `I.Interact`, `I.Format`, `I.Console` (client: the pad's tab buttons), `I.Sound`, `I.UIEmitter` (client: every particle), `I.Topic`, `I.G_Cosmetics`, `I.SnailRig`, `I.Utils` (client: the skin snails on cards) |
 
 ## Files
 
@@ -28,9 +28,10 @@ holds more than one), and the legendary plays its own drop. The tutorial crate i
 | `Global.lua` | The crate rows and pack prices; warns at start when a crate's odds don't add up to 100 or name an unknown item |
 | `Client.lua` | Starts the client handlers |
 | `Scripts/Client/Panel.lua` | The Crates widget: tabs (on a pad LB and RB step through them while it's open, the Console module's `TabPrevious` and `TabNext`), the paying currency, the buy buttons (tinted by the currency they pay with), the lobby menu's Weapons and Skins buttons and badge, opening |
-| `Scripts/Client/Odds.lua` | The Crates widget's odds list, by rarity |
+| `Scripts/Client/Odds.lua` | The Crates widget's odds list, by rarity; a skin with a snail shows it live on its card (`SkinModels`) |
+| `Scripts/Client/SkinModels.lua` | The skins' snails on cards: `Put` shows an item's snail (its skin row's `Model` in `Assets/Skins`), posed in its idle frame (`I.SnailRig.Pose`), in a card's `S_Model` viewport, framed as the Skins window frames it (Cosmetics' `PREVIEW_DISTANCE`); `Release` takes it off; spare snails wait in a pool by model. While the widget is open it draws a card's snail again once the card holds still where it's seen (`SKIN_REDRAW_FRAMES`): Roblox doesn't draw a viewport that changed while it moved or was hidden until it changes again where it's seen |
 | `Scripts/Client/Showcase.lua` | The crate on its pedestal: its 3D model (the row's `Model`) in `U_Crate`'s viewport, dressed in the crate's `Look` (glow, rays, beam, ring, ambient particles, STANDARD or PREMIUM tag, name plate; the premium crate's halo and violet backdrop), turning rays, a bob, a sway and a breathing glow while the widget is open, a pop when the crate changes, and the leap off the pedestal when a crate is bought |
-| `Scripts/Client/Reel.lua` | The reels: builds them from the results (strips of cards with the winner placed by CS2's rules), rolls them on CS2's curve with ticks as cards pass the line, skips, settles onto the card's centre, and builds the golden reel. Makes and fills every card (a card with no name centres its picture; a reel card caps its name's size, `CARD_NAME_TEXT`) |
+| `Scripts/Client/Reel.lua` | The reels: builds them from the results (strips of cards with the winner placed by CS2's rules), rolls them on CS2's curve with ticks as cards pass the line, skips, settles onto the card's centre, and builds the golden reel. Makes and fills every card (a card with no name centres its picture; a reel card caps its name's size, `CARD_NAME_TEXT`): a skin with a snail shows it live (`SkinModels`), except on a reel card, which shows the snail's picture (`SKIN_PICTURES`, preloaded at start) |
 | `Scripts/Client/Effects.lua` | Every gui effect: bursts, rings, confetti, streams (flames, bubbles, rain, vortex, orbit), flashes, tints, shakes and each rarity's reveal burst, drawn with `I.UIEmitter` on the result's back and front layers |
 | `Scripts/Client/Drops.lua` | The legendaries' own drops (`LEGENDARY_DROPS`): the black hole opens over the reels with its disk turning, pulls the whole opening into itself (`S_Swallow`) with streaks of light, and implodes, the variety grenade bursts into confetti and smileys, the skeleton rises green in flames, the low gravity potion floats up in bubbles; any other legendary gets the plain legendary reveal |
 | `Scripts/Client/Stage3D.lua` | The 3D crates: clones the crate's model (its row's `Model`) into the stage's ViewportFrame in the pack's layout, drops them in, waits for the tap (not with Quick open), and opens them: a rattle with the hatches straining, the hatches springing open, the walls falling outward (each piece turned about its hinge in code), and a Neon ball of light rising and swelling into the flash. Draws the 2D effects at points projected from its camera, and dresses the legendary's golden crate (gold light, gold rays, sparkles). Preloads the models at start |
@@ -118,6 +119,8 @@ What the client plays, in order:
    never a legendary (unless every item is one). The reel rolls on CS2's curve (`ROLL_CURVE`) for `ROLL_SECONDS`, the
    rarest result stopping last (`ROLL_STAGGER`), lands at a random point across the card (`LAND_SPREAD`), then glides
    onto its centre (`SETTLE_*`). A tick (`Crate_Tick`) plays as each card passes the line, at most every `TICK_GAP`.
+   A skin's card shows its snail's picture (`SKIN_PICTURES`): a rolling reel can't draw that many live snails (each
+   snail costs Roblox 3 to 4 ms the first time its viewport draws it, and a viewport isn't redrawn while it moves).
 4. **Tease.** When an epic or better is coming (`TEASE_FROM_RARITY`), `TEASE_SECONDS` before it lands a heartbeat
    plays (`Crate_Tease`), letterbox bars slide in, the line burns brighter and the screen dims on each beat.
 5. **Gold moment.** A legendary lands as a gold ★ card (`Crate_GoldHit`). The reels give way to a golden crate: the
@@ -127,7 +130,8 @@ What the client plays, in order:
 6. **Reveal.** One result is one big card with its rarity's rays and burst (`REVEAL_RAYS`, `Reveal_<Rarity>`), its
    rarity bar, name and copies to shiny. A pack's cards fly from the reels to a row of three (`TRIO_*`) or a grid of
    five by two (`TEN_*`) and are named in turn (`TRIO_STEP`, `TEN_STEP`), NEW and BEST tags on them, each legendary
-   holding the middle first (`PACK_LEGENDARY_HOLD`); a summary counts the rarities and new items.
+   holding the middle first (`PACK_LEGENDARY_HOLD`); a summary counts the rarities and new items. A skin's card here,
+   like the odds list's, shows its snail live.
 7. **Buttons.** Open again (the same pack in the same currency; hidden for VIP's daily crate and hidden crates) and
    Continue, which brings the shop back.
 
@@ -162,6 +166,8 @@ reel. Closing the widget ends an opening at once.
 | `COLUMN_SIZE`, `COLUMN_GAP`, `COLUMN_Y` | 150 × 660, `12`, `540` | The ten-pack's columns |
 | `CARD_FILL`, `COLUMN_CARD_FILL`, `CARD_ASPECT`, `CARD_GAP` | `0.7`, `0.92`, `1.1169`, `0.08` | A card's size in its band or column, its shape, and the gap between cards |
 | `CARD_NAME_TEXT` | `0.1` | The tallest a reel card's name gets, as a share of the card's height: short names stay this size, long ones wrap and shrink |
+| `SKIN_PICTURES` | six image ids, by snail model | The pictures a rolling reel's cards show for the skins' snails (`art/skins` → Pictures); a snail missing here keeps its item picture there |
+| `SKIN_REDRAW_FRAMES` | `2` | Frames a card with a live snail holds still where it's seen before its snail is drawn again |
 | `LENS_WIDTH`, `LENS_ZOOM`, `LENS_DIM` | `1.5`, `1.06`, `0.45` | The one-crate reel's lens: width in cards, zoom, and the dim beside it |
 | `TICK_GAP`, `TICK_PITCH` | `0.042`, `0.975` to `1.035` | Fewest seconds between ticks, and their pitch spread |
 | `SKIP_SECONDS`, `SETTLE_DELAY`, `SETTLE_SECONDS` | `0.38`, `0.24`, `0.38` | A skip, and the glide onto the card's centre |
@@ -223,3 +229,8 @@ crate's baked texture (`Inner` is Neon, coloured at runtime), anchored, with no 
 and its pivot in the middle of its floor. Stage3D and Showcase put the models in a WorldModel they make in their
 viewport (`S_Viewport`, `U_Crate`), beside its Camera: a part moved straight in a ViewportFrame redraws every mesh in
 it. Stage3D turns the walls on their bottom edges and the hatches on the side walls' top edges (`HINGES` in the handler: the models' measurements, which change only with new models).
+
+The skins' snails are the Cosmetics skins' models in `Assets/Skins` (`I.Dirs.Assets.Skins`), named by each skin row's
+`Model`; a skin whose model isn't there (FBI Agent, Prisoner, VIP, Wizard) keeps its item picture. `PREFAB | Card` and
+`PREFAB | OddsItem` each have an `S_Model` ViewportFrame over the picture's place, lit like the cards, which
+`SkinModels` fills; a reel card leaves it hidden and shows the picture in `S_Icon`.

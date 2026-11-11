@@ -263,6 +263,12 @@ end in liquid.
   it, about 25 ms a frame for ten crates, while the same crates moving in a WorldModel cost under 1 ms, and moving
   only the camera is nearly free. Code makes the WorldModel beside the viewport's Camera (Crates' stage and pedestal);
   a still model may sit in the ViewportFrame itself.
+- **Rolling reels show the snails as pictures** (the owner's pick, 2026-11-11, measured on the crate reels): a model
+  costs Roblox 3 to 4 ms the first time its ViewportFrame draws it (again after the viewport is hidden and shown), and
+  a viewport that changed while it moved or was hidden isn't drawn until it changes again where it's seen. So a card
+  that holds still shows a skin's snail live, posed (Crates' `SkinModels`, which draws a card's snail again once the
+  card settles in sight), and a card that rolls shows the snail's picture, rendered in the same pose, framing and light
+  (`art/skins` → Pictures) and uploaded only with the owner's approval. A new skin with a snail gets its picture too.
 - **The pad goes through the Console module** (the owner's pick, 2026-11-10: "use 0_Console module for all gamepad
   related keybinds"): its `ACTIONS` setting is the one scheme (the module's README → Scheme), modules bind or read pad
   buttons only through `I.Console` (`Bind`, `IsAction`, `IsHeld`), never `Enum.KeyCode.Button*` of their own, and

@@ -9,6 +9,10 @@ local _localName = "Crates"
 --- @type Crates_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local SkinModels = require(script.Parent:FindFirstChild("SkinModels")) --- @type Crates_Client_SkinModels
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local elems = {} --- @type { [string]: Instance }
@@ -50,6 +54,17 @@ function Module.Start()
 	prefabs["Band"] = elems["Reels"]:FindFirstChild("PREFAB | Band") --- @type Frame
 	prefabs["Column"] = elems["Reels"]:FindFirstChild("PREFAB | Column") --- @type Frame
 	prefabs["RaritySection"] = moduleGui:FindFirstChild("PREFAB | RaritySection", true) --- @type Frame
+
+	--[[ Pictures ]]
+
+	-- The snails' pictures load now, so the first reel shows them as it rolls
+	local pictures = {} --- @type { string }
+	for _model: string, picture: string in pairs(_settings.SKIN_PICTURES) do
+		table.insert(pictures, picture)
+	end
+	task.spawn(function()
+		I.S.ContentProvider:PreloadAsync(pictures)
+	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -297,16 +312,22 @@ end
 
 --[[
 	Writes an item on a card: its picture and name, the outline and glow in its rarity's colour; a gold card instead
-	shows the star, "???" and gold. A card with no name centres its picture (the card's Look_NoName* attributes).
+	shows the star, "???" and gold. A skin with a snail shows the snail, posed, in place of its picture, in the card's
+	S_Model viewport; a reel card (inReel) shows the snail's picture instead (SKIN_PICTURES), as a rolling reel can't
+	draw that many snails. A card with no name centres its picture (the card's Look_NoName* attributes).
 ]]
-function Module.FillCard(card: Frame, itemId: string, gold: boolean, showName: boolean)
+function Module.FillCard(card: Frame, itemId: string, gold: boolean, showName: boolean, inReel: boolean?)
 	--[[ Data ]]
 
 	local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData
+	local snail: string? = if gold then nil else SkinModels.GetModelName(itemId)
+	local picture: string? = if snail and inReel then _settings.SKIN_PICTURES[snail] else nil
+	local live: boolean = snail ~= nil and not inReel
 
 	--[[ Elements ]]
 
 	local icon: ImageLabel = card:FindFirstChild("S_Icon", true)
+	local model: ViewportFrame = card:FindFirstChild("S_Model", true)
 	local star: ImageLabel = card:FindFirstChild("S_Star", true)
 	local name: TextLabel = card:FindFirstChild("S_Name", true)
 	local homeIcon: ImageLabel = prefabs["Card"]:FindFirstChild("S_Icon", true)
@@ -317,8 +338,9 @@ function Module.FillCard(card: Frame, itemId: string, gold: boolean, showName: b
 	local color: Color3 = Module.GetRarityColor(if gold then "Legendary" else item.Rarity)
 	card:FindFirstChild("S_Stroke", true).ImageColor3 = color
 	card:FindFirstChild("S_Glow", true).ImageColor3 = color
-	icon.Image = item.IconId
-	icon.Visible = not gold
+	icon.Image = picture or item.IconId
+	icon.Visible = not gold and not live
+	model.Visible = live
 	star.Visible = gold
 	name.Text = if gold then "???" else item.Name
 	name.Visible = showName
@@ -327,7 +349,16 @@ function Module.FillCard(card: Frame, itemId: string, gold: boolean, showName: b
 
 	icon.Position = if showName then homeIcon.Position else prefabs["Card"]:GetAttribute("Look_NoNameIconPosition")
 	icon.Size = if showName then homeIcon.Size else prefabs["Card"]:GetAttribute("Look_NoNameIconSize")
+	model.Position = icon.Position
+	model.Size = icon.Size
 	star.Position = if showName then homeStar.Position else prefabs["Card"]:GetAttribute("Look_NoNameStarPosition")
+
+	--[[ Snail ]]
+
+	SkinModels.Release(card)
+	if live then
+		SkinModels.Put(card, itemId)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -336,10 +367,10 @@ end
 
 --[[
 	Returns a new card for an item, in a parent, at a size. A card sized in pixels caps its name's text at a share of
-	its height, so short names don't outgrow long ones.
+	its height, so short names don't outgrow long ones. A reel card (inReel) shows a skin's snail as a picture.
 ]]
 --- @return Frame
-function Module.MakeCard(parent: Instance, itemId: string, gold: boolean, showName: boolean, size: UDim2)
+function Module.MakeCard(parent: Instance, itemId: string, gold: boolean, showName: boolean, size: UDim2, inReel: boolean?)
 	--[[ Cloning ]]
 
 	local card: Frame = prefabs["Card"]:Clone()
@@ -353,7 +384,7 @@ function Module.MakeCard(parent: Instance, itemId: string, gold: boolean, showNa
 
 	--[[ Applying ]]
 
-	Module.FillCard(card, itemId, gold, showName)
+	Module.FillCard(card, itemId, gold, showName, inReel)
 	if size.Y.Offset > 0 then
 		nameSize.MaxTextSize = math.max(1, math.floor(size.Y.Offset * _settings.CARD_NAME_TEXT))
 	end
@@ -441,13 +472,15 @@ function Module._buildReel(count: number, index: number, itemId: string, gold: b
 		frame:FindFirstChild("S_Dim", true).BackgroundTransparency = 1 - _settings.LENS_DIM
 		table.insert(strips, lens:FindFirstChild("S_LensStrip", true))
 	end
+
+	--[[ Filling ]]
+
 	local winCard: Frame
 	for cardIndex: number = 0, cards - 1 do
 		local cardId: string = if cardIndex == win then itemId else Module._getFiller(odds)
-		local cardGold: boolean = cardIndex == win and gold
 		local position: UDim2 = if vertical then UDim2.fromOffset((size.X - cardSize.X) / 2, cardIndex * pitch) else UDim2.fromOffset(cardIndex * pitch, (size.Y - cardSize.Y) / 2)
 		for _stripIndex: number, strip: Frame in ipairs(strips) do
-			local card: Frame = Module.MakeCard(strip, cardId, cardGold, not vertical, UDim2.fromOffset(cardSize.X, cardSize.Y))
+			local card: Frame = Module.MakeCard(strip, cardId, cardIndex == win and gold, not vertical, UDim2.fromOffset(cardSize.X, cardSize.Y), true)
 			card.Position = position
 			if cardIndex == win then
 				winCard = card

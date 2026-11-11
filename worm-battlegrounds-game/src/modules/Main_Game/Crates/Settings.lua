@@ -169,6 +169,26 @@ local _settings = {
 	-- The tallest a card's name gets, as a share of the card's height: short names stay this size, long ones wrap and shrink
 	CARD_NAME_TEXT = 0.1,
 
+	--[[
+		The pictures a rolling reel's cards show for the skins' snails, by snail model (art/skins → Pictures): each snail
+		posed and framed as a still card's live one. A snail missing here keeps its item picture on reel cards
+	]]
+	--- @type { [string]: string }
+	SKIN_PICTURES = {
+		Classic = "rbxassetid://86349344725414",
+		Cowboy = "rbxassetid://81535697083664",
+		Devil = "rbxassetid://129536958641848",
+		Knight = "rbxassetid://86133641830063",
+		Ninja = "rbxassetid://91308817099254",
+		Skeleton = "rbxassetid://103558601021448",
+	},
+
+	--[[
+		Frames a card with a live snail holds still where it's seen before its snail is drawn again (Roblox doesn't draw
+		a viewport that changed while it moved or was hidden)
+	]]
+	SKIN_REDRAW_FRAMES = 2,
+
 	-- The one-crate reel's lens over the line: its width in cards, and how much it enlarges
 	LENS_WIDTH = 1.5,
 	LENS_ZOOM = 1.06,
