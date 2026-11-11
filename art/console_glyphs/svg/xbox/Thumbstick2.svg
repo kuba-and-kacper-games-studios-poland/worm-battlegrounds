@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>Xbox Thumbstick2</title>
+<g opacity="0.45"><circle cx="64" cy="70" r="47" fill="#000000"/></g>
+<g><circle cx="64" cy="64" r="47" fill="#14121c"/></g>
+<g><circle cx="64" cy="64" r="40" fill="#25273a"/></g>
+<g><circle cx="64" cy="61" r="37" fill="#3b3e52"/></g>
+<g opacity="0.22"><ellipse cx="64" cy="49.6" rx="24" ry="12.8" fill="#ffffff"/></g>
+<g><circle cx="64" cy="61" r="28" fill="#2f3245"/></g>
+<g opacity="0.35"><polyline points="54.2,78 54.2,50 65.4,50 65.4,50 67.02,50.18 68.56,50.72 69.94,51.59 71.09,52.74 71.96,54.12 72.5,55.66 72.68,57.28 72.5,58.9 71.96,60.44 71.09,61.82 69.94,62.97 68.56,63.84 67.02,64.38 65.4,64.56 54.2,64.56" fill="none" stroke="#000000" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/><polyline points="63.16,64.56 73.8,78" fill="none" stroke="#000000" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="54.2,75 54.2,47 65.4,47 65.4,47 67.02,47.18 68.56,47.72 69.94,48.59 71.09,49.74 71.96,51.12 72.5,52.66 72.68,54.28 72.5,55.9 71.96,57.44 71.09,58.82 69.94,59.97 68.56,60.84 67.02,61.38 65.4,61.56 54.2,61.56" fill="none" stroke="#14121c" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/><polyline points="63.16,61.56 73.8,75" fill="none" stroke="#14121c" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="54.2,75 54.2,47 65.4,47 65.4,47 67.02,47.18 68.56,47.72 69.94,48.59 71.09,49.74 71.96,51.12 72.5,52.66 72.68,54.28 72.5,55.9 71.96,57.44 71.09,58.82 69.94,59.97 68.56,60.84 67.02,61.38 65.4,61.56 54.2,61.56" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linecap="round" stroke-linejoin="round"/><polyline points="63.16,61.56 73.8,75" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>PlayStation ButtonL2</title>
+<g opacity="0.45"><rect x="13" y="13" width="102" height="106" rx="37" fill="#000000"/></g>
+<g><rect x="13" y="7" width="102" height="106" rx="37" fill="#14121c"/></g>
+<g><rect x="20" y="14" width="88" height="92" rx="30" fill="#25273a"/></g>
+<g><rect x="20" y="14" width="88" height="86" rx="30" fill="#3b3e52"/></g>
+<g opacity="0.22"><rect x="32.32" y="23.2" width="63.36" height="27.6" rx="13.8" fill="#ffffff"/></g>
+<g opacity="0.35"><polyline points="37.36,41 37.36,77 58.96,77" fill="none" stroke="#000000" stroke-width="18.64" stroke-linecap="round" stroke-linejoin="round"/><polyline points="68.33,49 69.21,46.75 70.57,44.76 72.35,43.11 74.44,41.9 76.75,41.19 79.16,41.01 81.56,41.37 83.81,42.25 85.8,43.61 87.45,45.39 88.66,47.48 89.37,49.79 89.55,52.2 89.19,54.6 66.88,77 90.64,77" fill="none" stroke="#000000" stroke-width="18.64" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="37.36,38 37.36,74 58.96,74" fill="none" stroke="#14121c" stroke-width="18.64" stroke-linecap="round" stroke-linejoin="round"/><polyline points="68.33,46 69.21,43.75 70.57,41.76 72.35,40.11 74.44,38.9 76.75,38.19 79.16,38.01 81.56,38.37 83.81,39.25 85.8,40.61 87.45,42.39 88.66,44.48 89.37,46.79 89.55,49.2 89.19,51.6 66.88,74 90.64,74" fill="none" stroke="#14121c" stroke-width="18.64" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="37.36,38 37.36,74 58.96,74" fill="none" stroke="#ffffff" stroke-width="8.64" stroke-linecap="round" stroke-linejoin="round"/><polyline points="68.33,46 69.21,43.75 70.57,41.76 72.35,40.11 74.44,38.9 76.75,38.19 79.16,38.01 81.56,38.37 83.81,39.25 85.8,40.61 87.45,42.39 88.66,44.48 89.37,46.79 89.55,49.2 89.19,51.6 66.88,74 90.64,74" fill="none" stroke="#ffffff" stroke-width="8.64" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>

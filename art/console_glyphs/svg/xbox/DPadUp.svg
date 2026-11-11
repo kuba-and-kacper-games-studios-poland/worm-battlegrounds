@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>Xbox DPadUp</title>
+<g opacity="0.45"><rect x="7" y="43" width="114" height="50" rx="16" fill="#000000"/><rect x="39" y="11" width="50" height="112" rx="16" fill="#000000"/></g>
+<g><rect x="7" y="37" width="114" height="50" rx="16" fill="#14121c"/><rect x="39" y="5" width="50" height="112" rx="16" fill="#14121c"/></g>
+<g><rect x="14" y="44" width="100" height="36" rx="9" fill="#25273a"/><rect x="46" y="12" width="36" height="98" rx="9" fill="#25273a"/></g>
+<g><rect x="14" y="44" width="100" height="30" rx="9" fill="#3b3e52"/><rect x="46" y="12" width="36" height="92" rx="9" fill="#3b3e52"/></g>
+<g opacity="0.22"><rect x="28" y="47.6" width="72" height="10.8" rx="5.4" fill="#ffffff"/><rect x="51.04" y="21.8" width="25.92" height="29.4" rx="12.96" fill="#ffffff"/></g>
+<g><rect x="46" y="12" width="36" height="50" rx="9" fill="#f2f2f7"/></g>
+<g><polygon points="64,20 74,34 54,34" fill="#22222e"/></g>
+</svg>

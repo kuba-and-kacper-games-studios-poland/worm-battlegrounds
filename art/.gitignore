@@ -1,0 +1,4 @@
+# Build outputs: each kit's README says its scripts make them and the repo doesn't keep them
+out/
+__pycache__/
+console_glyphs/preview.html

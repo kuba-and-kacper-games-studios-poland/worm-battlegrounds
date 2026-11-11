@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>PlayStation Options</title>
+<g opacity="0.45"><rect x="33" y="7" width="62" height="118" rx="31" fill="#000000"/></g>
+<g><rect x="33" y="1" width="62" height="118" rx="31" fill="#14121c"/></g>
+<g><rect x="40" y="8" width="48" height="104" rx="24" fill="#25273a"/></g>
+<g><rect x="40" y="8" width="48" height="98" rx="24" fill="#3b3e52"/></g>
+<g opacity="0.22"><rect x="46.72" y="18.4" width="34.56" height="31.2" rx="15.6" fill="#ffffff"/></g>
+<g opacity="0.35"><polyline points="54,47 74,47" fill="none" stroke="#000000" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="54,60 74,60" fill="none" stroke="#000000" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="54,73 74,73" fill="none" stroke="#000000" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="54,44 74,44" fill="none" stroke="#14121c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="54,57 74,57" fill="none" stroke="#14121c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="54,70 74,70" fill="none" stroke="#14121c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="54,44 74,44" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="54,57 74,57" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="54,70 74,70" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>

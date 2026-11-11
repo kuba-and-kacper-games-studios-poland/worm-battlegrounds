@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>Xbox ButtonA</title>
+<g opacity="0.45"><circle cx="64" cy="66" r="54" fill="#000000"/></g>
+<g><circle cx="64" cy="60" r="54" fill="#14121c"/></g>
+<g><circle cx="64" cy="60" r="47" fill="#22801f"/></g>
+<g><circle cx="64" cy="57" r="44" fill="#3dbe3b"/></g>
+<g opacity="0.22"><ellipse cx="64" cy="43.08" rx="28.2" ry="15.04" fill="#ffffff"/></g>
+<g opacity="0.35"><polyline points="44.22,83 64,37 83.78,83" fill="none" stroke="#000000" stroke-width="21.04" stroke-linecap="round" stroke-linejoin="round"/><polyline points="53.42,67.36 74.58,67.36" fill="none" stroke="#000000" stroke-width="21.04" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="44.22,80 64,34 83.78,80" fill="none" stroke="#14121c" stroke-width="21.04" stroke-linecap="round" stroke-linejoin="round"/><polyline points="53.42,64.36 74.58,64.36" fill="none" stroke="#14121c" stroke-width="21.04" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="44.22,80 64,34 83.78,80" fill="none" stroke="#ffffff" stroke-width="11.04" stroke-linecap="round" stroke-linejoin="round"/><polyline points="53.42,64.36 74.58,64.36" fill="none" stroke="#ffffff" stroke-width="11.04" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>

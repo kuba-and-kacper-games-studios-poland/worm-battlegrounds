@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>PlayStation L3</title>
+<g opacity="0.45"><circle cx="64" cy="76" r="47" fill="#000000"/></g>
+<g><circle cx="64" cy="70" r="47" fill="#14121c"/></g>
+<g><circle cx="64" cy="70" r="40" fill="#25273a"/></g>
+<g><circle cx="64" cy="67" r="37" fill="#3b3e52"/></g>
+<g opacity="0.22"><ellipse cx="64" cy="55.6" rx="24" ry="12.8" fill="#ffffff"/></g>
+<g><circle cx="64" cy="67" r="28" fill="#2f3245"/></g>
+<g opacity="0.35"><polyline points="46.72,58 46.72,82 61.12,82" fill="none" stroke="#000000" stroke-width="15.76" stroke-linecap="round" stroke-linejoin="round"/><polyline points="67.74,62.11 68.67,60.41 70.08,59.08 71.84,58.25 73.76,58 75.66,58.35 77.37,59.27 78.71,60.66 79.56,62.4 79.84,64.32 79.52,66.23 78.62,67.95 77.24,69.31 75.51,70.18 73.6,70.48 73.6,70 75.37,70.27 76.98,71.04 78.29,72.26 79.19,73.81 79.58,75.55 79.45,77.34 78.8,79 77.68,80.4 76.2,81.41 74.49,81.93 72.71,81.93 71,81.41 69.52,80.4 68.4,79" fill="none" stroke="#000000" stroke-width="15.76" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="46.72,55 46.72,79 61.12,79" fill="none" stroke="#14121c" stroke-width="15.76" stroke-linecap="round" stroke-linejoin="round"/><polyline points="67.74,59.11 68.67,57.41 70.08,56.08 71.84,55.25 73.76,55 75.66,55.35 77.37,56.27 78.71,57.66 79.56,59.4 79.84,61.32 79.52,63.23 78.62,64.95 77.24,66.31 75.51,67.18 73.6,67.48 73.6,67 75.37,67.27 76.98,68.04 78.29,69.26 79.19,70.81 79.58,72.55 79.45,74.34 78.8,76 77.68,77.4 76.2,78.41 74.49,78.93 72.71,78.93 71,78.41 69.52,77.4 68.4,76" fill="none" stroke="#14121c" stroke-width="15.76" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="46.72,55 46.72,79 61.12,79" fill="none" stroke="#ffffff" stroke-width="5.76" stroke-linecap="round" stroke-linejoin="round"/><polyline points="67.74,59.11 68.67,57.41 70.08,56.08 71.84,55.25 73.76,55 75.66,55.35 77.37,56.27 78.71,57.66 79.56,59.4 79.84,61.32 79.52,63.23 78.62,64.95 77.24,66.31 75.51,67.18 73.6,67.48 73.6,67 75.37,67.27 76.98,68.04 78.29,69.26 79.19,70.81 79.58,72.55 79.45,74.34 78.8,76 77.68,77.4 76.2,78.41 74.49,78.93 72.71,78.93 71,78.41 69.52,77.4 68.4,76" fill="none" stroke="#ffffff" stroke-width="5.76" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g opacity="0.35"><polygon points="45,10 83,10 64,32" fill="#000000" stroke="#000000" stroke-width="10" stroke-linejoin="round"/></g>
+<g><polygon points="45,7 83,7 64,29" fill="#14121c" stroke="#14121c" stroke-width="10" stroke-linejoin="round"/></g>
+<g><polygon points="45,7 83,7 64,29" fill="#ffffff"/></g>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>Xbox RS click</title>
+<g opacity="0.45"><circle cx="64" cy="76" r="47" fill="#000000"/></g>
+<g><circle cx="64" cy="70" r="47" fill="#14121c"/></g>
+<g><circle cx="64" cy="70" r="40" fill="#25273a"/></g>
+<g><circle cx="64" cy="67" r="37" fill="#3b3e52"/></g>
+<g opacity="0.22"><ellipse cx="64" cy="55.6" rx="24" ry="12.8" fill="#ffffff"/></g>
+<g><circle cx="64" cy="67" r="28" fill="#2f3245"/></g>
+<g opacity="0.35"><polyline points="54.2,84 54.2,56 65.4,56 65.4,56 67.02,56.18 68.56,56.72 69.94,57.59 71.09,58.74 71.96,60.12 72.5,61.66 72.68,63.28 72.5,64.9 71.96,66.44 71.09,67.82 69.94,68.97 68.56,69.84 67.02,70.38 65.4,70.56 54.2,70.56" fill="none" stroke="#000000" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/><polyline points="63.16,70.56 73.8,84" fill="none" stroke="#000000" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="54.2,81 54.2,53 65.4,53 65.4,53 67.02,53.18 68.56,53.72 69.94,54.59 71.09,55.74 71.96,57.12 72.5,58.66 72.68,60.28 72.5,61.9 71.96,63.44 71.09,64.82 69.94,65.97 68.56,66.84 67.02,67.38 65.4,67.56 54.2,67.56" fill="none" stroke="#14121c" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/><polyline points="63.16,67.56 73.8,81" fill="none" stroke="#14121c" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="54.2,81 54.2,53 65.4,53 65.4,53 67.02,53.18 68.56,53.72 69.94,54.59 71.09,55.74 71.96,57.12 72.5,58.66 72.68,60.28 72.5,61.9 71.96,63.44 71.09,64.82 69.94,65.97 68.56,66.84 67.02,67.38 65.4,67.56 54.2,67.56" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linecap="round" stroke-linejoin="round"/><polyline points="63.16,67.56 73.8,81" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g opacity="0.35"><polygon points="45,10 83,10 64,32" fill="#000000" stroke="#000000" stroke-width="10" stroke-linejoin="round"/></g>
+<g><polygon points="45,7 83,7 64,29" fill="#14121c" stroke="#14121c" stroke-width="10" stroke-linejoin="round"/></g>
+<g><polygon points="45,7 83,7 64,29" fill="#ffffff"/></g>
+</svg>

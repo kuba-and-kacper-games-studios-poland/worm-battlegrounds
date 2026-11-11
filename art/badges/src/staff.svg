@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Roblox staff: a red tilted square with a white square inside -->
+  <g transform="rotate(15 12 12)">
+    <rect x="4.5" y="4.5" width="15" height="15" rx="1.8" fill="#19192A" stroke="#19192A" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="4.5" y="4.5" width="15" height="15" rx="1.8" fill="#E2231A"/>
+    <path d="M6.6 6.1 H17.4" stroke="#FF6A5E" stroke-width="1.2" stroke-linecap="round"/>
+    <rect x="9.4" y="9.4" width="5.2" height="5.2" rx="0.6" fill="#FFFFFF" stroke="#19192A" stroke-width="1.4" paint-order="stroke fill"/>
+  </g>
+</svg>

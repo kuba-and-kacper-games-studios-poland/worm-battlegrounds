@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>Xbox Menu</title>
+<g opacity="0.45"><circle cx="64" cy="68" r="47" fill="#000000"/></g>
+<g><circle cx="64" cy="62" r="47" fill="#14121c"/></g>
+<g><circle cx="64" cy="62" r="40" fill="#25273a"/></g>
+<g><circle cx="64" cy="59" r="37" fill="#3b3e52"/></g>
+<g opacity="0.22"><ellipse cx="64" cy="47.6" rx="24" ry="12.8" fill="#ffffff"/></g>
+<g opacity="0.35"><polyline points="46,51 82,51" fill="none" stroke="#000000" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="46,64 82,64" fill="none" stroke="#000000" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="46,77 82,77" fill="none" stroke="#000000" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="46,48 82,48" fill="none" stroke="#14121c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="46,61 82,61" fill="none" stroke="#14121c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polyline points="46,74 82,74" fill="none" stroke="#14121c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="46,48 82,48" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="46,61 82,61" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="46,74 82,74" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>

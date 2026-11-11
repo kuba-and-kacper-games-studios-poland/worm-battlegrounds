@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Game admin: a red shield with a white check -->
+  <defs>
+    <path id="shield" d="M12 2.4 L19.6 5.2 V11.2 C19.6 16.1 16.4 19.8 12 21.6 C7.6 19.8 4.4 16.1 4.4 11.2 V5.2 Z"/>
+  </defs>
+  <use href="#shield" fill="#19192A" stroke="#19192A" stroke-width="3" stroke-linejoin="round"/>
+  <use href="#shield" fill="#E5383B"/>
+  <path d="M6.6 6.6 L12 4.6 L17.4 6.6" fill="none" stroke="#FF8478" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 11.8 L11 14.8 L16.2 8.8" fill="none" stroke="#19192A" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 11.8 L11 14.8 L16.2 8.8" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

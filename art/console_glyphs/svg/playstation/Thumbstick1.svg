@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>PlayStation Thumbstick1</title>
+<g opacity="0.45"><circle cx="64" cy="70" r="47" fill="#000000"/></g>
+<g><circle cx="64" cy="64" r="47" fill="#14121c"/></g>
+<g><circle cx="64" cy="64" r="40" fill="#25273a"/></g>
+<g><circle cx="64" cy="61" r="37" fill="#3b3e52"/></g>
+<g opacity="0.22"><ellipse cx="64" cy="49.6" rx="24" ry="12.8" fill="#ffffff"/></g>
+<g><circle cx="64" cy="61" r="28" fill="#2f3245"/></g>
+<g opacity="0.35"><polyline points="55.6,50 55.6,78 72.4,78" fill="none" stroke="#000000" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="55.6,47 55.6,75 72.4,75" fill="none" stroke="#14121c" stroke-width="16.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g><polyline points="55.6,47 55.6,75 72.4,75" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>
