@@ -1,7 +1,7 @@
 ---
 title: "A snail's shell breaks below 50 health"
 date: 2026-11-06
-status: open
+status: dropped
 kind: added
 pages: ["The game", "Match screen", "Match modules"]
 files:
@@ -28,3 +28,5 @@ as a ghost. It's only a look: a broken shell changes no damage or movement.
 
 **For the wiki.** The game (the snail): the shell breaks under 50 health and grows back with healing. Match screen:
 a hurt snail has no shell. Match modules: Snails' client has a `Shell` handler.
+
+**Dropped.** Removed on 2026-11-12 at the owner's ask: the shell always stays on the snail (2026-11-12-shell-break-removed).
