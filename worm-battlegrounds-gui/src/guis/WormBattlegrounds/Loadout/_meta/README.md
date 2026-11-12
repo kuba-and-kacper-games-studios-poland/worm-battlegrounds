@@ -2,7 +2,7 @@
 
 The lobby's **LOADOUT** at the right: two rows of three numbered cards, the Bazooka then slots 1 to 5 (an item's
 picture, name and copies, a + on an empty slot, the lock and price on the next slot to open), and under it the
-**EMOTES** row (the smiley, the owned emotes, + for the emote shop).
+**EMOTES** row (the owned emotes, + for the emote shop).
 
 **Look.** Ported 1:1 from the studio's `LobbyInventory` gui (its `Right` frame, 2026-11-09) as `Primitive` nodes,
 laid out in screen fractions with aspect-ratio constraints (no `S_ScreenScale`). The design's slot looks are kept as
@@ -25,8 +25,7 @@ its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`)
 | `U_Loadout` | Frame | The panel (the design's `Right`) |
 | `U_Slots` | Frame | Both rows; the tutorial's arrow points at its top |
 | `U_TopRow`, `U_BottomRow` | Frame (horizontal lists) | Loadout clones the basic weapon and slots 1, 2 into the top row, slots 3 to 5 into the bottom one |
-| `U_Emotes` | ScrollingFrame (horizontal) | The emote row: `Emote` cards between `S_Smiley` and `S_Shop` |
-| `U_Emotes` › `S_Smiley` | ImageButton | Folds or opens the row |
+| `U_Emotes` | ScrollingFrame (horizontal) | The emote row: an `Emote` card per owned emote, then `S_Shop` |
 | `U_Emotes` › `S_Shop` | ImageButton (+) | Opens `EmoteShop` (its tags) |
 
 ## Prefabs
@@ -64,7 +63,7 @@ turns it on outside matches (and off while a full-screen widget is open). It kee
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
 | Pick a slot (opens `LoadoutPicker`, or asks to open a locked slot) | Click | Tap | Select and A | Loadout (`I.Interact.OnPress`) |
-| Play an emote, fold the row | Click | Tap | Select and A | Cosmetics |
+| Play an emote | Click | Tap | Select and A | Cosmetics |
 | Open the emote shop | Click + | Tap + | Select and A | `S_Shop` tags (WidgetManager `Toggle`) |
 
 ### Looks

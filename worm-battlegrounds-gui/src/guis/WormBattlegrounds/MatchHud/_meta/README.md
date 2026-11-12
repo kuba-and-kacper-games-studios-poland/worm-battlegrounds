@@ -35,10 +35,10 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_EmoteButton` › `Button` › `PadHint` | ImageLabel, `Console_Hint` (`Emotes`) | X on the EMOTES button |
 | `U_Slots` | Frame (horizontal list) | Holds one `BarSlot` per slot key (6) |
 | `U_Stamina` | Frame, over the loadout bar | On the player's turn |
-| `U_Stamina` › `S_Bar` | ImageLabel with a UIGradient | How far the snail can still walk: the gradient cuts the bar at the share times MatchHud's `BAR_FILL` (1: the gui maker's bar picture, 2026-11-11, fills its whole width; sized 0.9319 × 0.4312, as the track) |
+| `U_Stamina` › `S_Bar`, `S_BarMask` | ImageLabels (`Fit`) with a UIGradient each | How far the snail can still walk: the bar and its texture, cut by their gradients at the share times MatchHud's `BAR_FILL` (1: the studio's complete PowerSlider, 2026-11-12, fills its whole width; sized 0.9319 × 0.4312, as the track) |
 | `U_Stamina` › `S_Text` | TextLabel | "Stamina 70%" |
 | `U_Power` | Frame, bottom right | The power slider, while the player aims |
-| `U_Power` › `S_Bar` | ImageLabel with a UIGradient | The power: the gradient cuts the bar at the share times `BAR_FILL`, like the stamina bar |
+| `U_Power` › `S_Bar`, `S_BarMask` | ImageLabels (`Fit`) with a UIGradient each | The power: the gradients cut the bar and its texture at the share times `BAR_FILL`, like the stamina bar (the studio's PowerSlider, node for node) |
 | `U_Power` › `S_Handle` › `S_Amount` | ImageButton (not interactable) › TextLabel | The handle rides the bar's edge; "75%" |
 | `U_Power` › `S_Info` | TextLabel | Over the slider: the angle, "45°", or a homing missile's hint |
 | `U_Fire` | ImageButton (FIRE, the gui maker's painted button, 2026-11-11), bottom right | Touch screens, on the player's turn: held, charges the aim shown; let go, fires |
@@ -46,7 +46,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_KillFeed` | Cells (no scroll, `Fixed`), kept | Top right, under the team panel: one `FeedLine` per knockout |
 | `U_EmoteWheel` | Frame, kept, hidden | One `WheelEmote` per owned emote, placed on a circle. Has its own `S_ScreenScale` |
 | `U_Drop` | Box (`Hud`), kept, hidden | The drop phase: "Pick where to land" and `S_Timer` |
-| `U_KnockedOut` | Box (`Panel`), kept, hidden | `S_Spectate`, `S_Leave` |
+| `U_KnockedOut` | Frame, the studio's KnockedOut (2026-11-12), hidden | YOU WERE KNOCKED OUT! over `S_Spectate` (yellow, A) and `S_Leave` (red, B), ImageButtons with `Console_Hint` badges |
 | `U_Waiting` | Box (`Hud`), kept, hidden | "Waiting for players" and `S_Count` |
 | `U_TurnCallout` | Frame, hidden, see-through, across the screen (Position 0.5, 0.34; 1 × 0.14 of the screen; ZIndex 10) | The turn banner, shown as each turn starts (the player's own and anyone else's) |
 | `U_TurnCallout` › `S_Band` | Frame ((14, 14, 22) at 0.2 transparency, a UIGradient fading its left and right edges) | Opened and closed by its height (`Size` 1 × 0 to 1 × 1) |
@@ -71,7 +71,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `PREFAB \| TeamPlayer` | nested in `Team` › `S_Players`, hidden | `Background` › `Main`, `S_Avatar` (square, under the outlines), `Stroke2`, `Stroke` |
 | `PREFAB \| FeedLine` | `U_KillFeed` | A Label: "Bax knocked out Ninja with the Black hole grenade", names in team colours (rich text) |
 | `PREFAB \| WheelEmote` | `U_EmoteWheel` | An Item (`S_Icon`, `S_Name`, `S_Info`, `Button`), anchored at its centre |
-| `PREFAB \| PowerDot` | `U_Aim` | A round Frame (`UICorner` 0.5): one circle of the power cone, which Aim clones `POWER_DOTS` times and sizes, colours and places |
+| `PREFAB \| PowerDot` | `U_Aim` | A round white Frame (`UICorner` 0.5, no outline) with a `UIGradient`: one circle of the power cone, which Aim clones `POWER_DOTS` times and sizes, colours (the gradient, along the aim) and places |
 
 ## Driven by
 
@@ -125,6 +125,6 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 | Current snail | `TurnEntry` › `Background` | `Main` takes `Look_CurrentMain` and `Look_CurrentMainColor` (orange), `Stroke` `Look_CurrentStrokeColor`, `S_Mask` shown; others `Look_Main`, `Look_MainColor` and their team colour on `Stroke` |
 | Side | `TeamPlayer` › `Background` | `Main`, `Stroke2`, `Stroke` take `Look_Left*` or `Look_Right*` (mirrored slants); `Stroke` tinted the team colour |
 | Aiming snail | `S_Crosshair` › `S_RingLine` (`Color`), `S_ArmA`, `S_ArmB` (`BackgroundColor3`) | The snail's `Color`: its team's, or its own in a free-for-all |
-| Power | `PowerDot` clones | Dark red (170, 0, 0) to pale yellow (248, 223, 108), first to last; each grows from nothing to its size as the power passes it |
+| Power | `PowerDot` clones | Yellow (255, 226, 92) through orange (255, 148, 38) to red (240, 62, 46), first to last, blended into one: each circle's `UIGradient` runs the cone's colours from its back edge to its front, turned along the aim; each grows from nothing to its size as the power passes it |
 | Bar fill | `U_Stamina` › `S_Bar`, `U_Power` › `S_Bar` | Their `UIGradient.Transparency` is opaque up to the share times `BAR_FILL`, clear after it |
 | Rarity, hover (kept blocks) | Item cards and buttons from the theme | The theme's `Item` and `Button` looks |

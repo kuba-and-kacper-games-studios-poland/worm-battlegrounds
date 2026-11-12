@@ -4,33 +4,17 @@
 
 local _localName: string = "CustomLobbyPreview"
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Services
-
-local Workspace: Workspace = game:GetService("Workspace")
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 --[[ Examples ]]
 
--- The 6 maps and the player counts they take
+-- The maps in rotation and the player counts they take
 --- @type { { string } }
 local MAPS = {
-	{ "Fluffy Fallout", "2 · 4 · 6" },
-	{ "Lava Lagoon", "2 · 4" },
-	{ "Brick Bay", "4 · 6" },
-	{ "Frosty Fort", "2 · 4 · 6" },
-	{ "Toxic Tunnels", "2 · 4" },
-	{ "HUGE Island", "8" },
+	{ "Picnic Plains", "2 / 4 / 6" },
+	{ "Desert", "2 / 4 / 6" },
+	{ "Rockslide Ridge", "2 / 4 / 6" },
 }
-
---[[ Screen ]]
-
--- The screen size the guis are laid out for, the Mobile boost and the PC floor, as ScreenScale's Settings
-local DESIGN_HEIGHT: number = 1080
-local DESIGN_WIDTH: number = 1920
-local SMALL_SCREEN: number = 500
-local MOBILE_BOOST: number = 1.3
-local MIN_SCALE: number = 0.6
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -71,14 +55,10 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Shows the create step or the room, with the maps, the members and the players who can be invited.
+	Shows the create step or the room, with the maps (the first picked), the members and the players who can be invited.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
-	--[[ Local Variables ]]
-
-	local maps = {} --- @type { { [string]: any } }
-
 	--[[ Steps ]]
 
 	preview.View:Get("U_Create").Instance.Visible = not preview.Values.S_Room
@@ -86,55 +66,25 @@ function Module.Apply(preview)
 
 	--[[ Maps ]]
 
-	--- @param map { string }
-	for _index: number, map in ipairs(MAPS) do
-		table.insert(maps, { Text = map[1], Subtext = map[2] })
+	local choices = preview.Fill("PREFAB | MapChoice", #MAPS) --- @type { UmeGui_Subview }
+
+	--- @param choice UmeGui_Subview
+	for index: number, choice in ipairs(choices) do
+		local button: ImageButton = choice.Root.Instance
+		local picked: boolean = index == 1
+		button.LayoutOrder = index
+		choice:Get("S_Name").Instance.Text = MAPS[index][1]
+		choice:Get("S_Name").Instance.TextColor3 = button:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
+		choice:Get("S_Info").Instance.Text = `{MAPS[index][2]} players`
+		button.Background.Stroke.ImageColor3 = button:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+		button.Background.Stroke.Image = button:GetAttribute(if picked then "Look_SelectedStroke" else "Look_Stroke")
+		button.Background.Stroke2.Image = button:GetAttribute(if picked then "Look_SelectedStroke2" else "Look_Stroke2")
 	end
-	preview.Fill("PREFAB | MapChoice", maps)
 
 	--[[ Room ]]
 
 	preview.Fill("PREFAB | Member", preview.Values.S_Members)
 	preview.Fill("PREFAB | Invitable", preview.Values.S_Invitable)
-
-	--[[ Screen ]]
-
-	Module._applyScreenScale(preview)
-end
-
---%%%%%%%%%%%%%%%%%%%% Apply Screen Scale
-
---[[
-	Scales every panel to the previewed screen as the game's modules do: its height over the design height (or its
-	width over the design width on a narrower screen), bigger on short Mobile screens and never under the floor on
-	others, times each panel's device scale.
-]]
---- @param preview UmeGui_Preview
-function Module._applyScreenScale(preview)
-	--[[ Local Variables ]]
-
-	local height: number = Workspace.CurrentCamera.ViewportSize.Y
-	local width: number = Workspace.CurrentCamera.ViewportSize.X
-
-	-- A screen narrower than the layout scales by its width, so side-by-side panels still fit
-	local scale: number = math.min(height / DESIGN_HEIGHT, width / DESIGN_WIDTH)
-
-	-- Boost short touch screens so the buttons stay big enough to tap; anything else never shrinks below the floor
-	if preview.Device == "Mobile" and height < SMALL_SCREEN then
-		scale *= MOBILE_BOOST
-	elseif preview.Device ~= "Mobile" then
-		scale = math.max(scale, MIN_SCALE)
-	end
-
-	--[[ Applying ]]
-
-	for _index: number, descendant: Instance in ipairs(preview.View.Root:GetDescendants()) do
-		if descendant:IsA("UIScale") and descendant.Name == "S_ScreenScale" then
-			-- Times the panel's scale for the previewed device (its Utils_PlatformScale tag), as ScreenScale does
-			local deviceScale: number = descendant.Parent:GetAttribute(`Utils_{preview.Device}Scale`) or 0
-			descendant.Scale = scale * (if deviceScale == 0 then 1 else deviceScale)
-		end
-	end
 end
 
 return Module
