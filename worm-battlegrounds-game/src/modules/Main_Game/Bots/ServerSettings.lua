@@ -18,6 +18,18 @@ local _settings = {
 		"Biscuit",
 		"Rascal",
 		"Studs",
+		"Fleaper",
+		"Shide",
+		"MB",
+		"gaspro",
+		"RedBicycle12",
+		"Tommy",
+		"Travis",
+		"REKTWASAKI",
+		"Lats",
+		"George",
+		"ozyboii",
+		"GloriousMorning",
 	},
 
 	-- The difficulty a bot plays a dropped player's snail at, with that player's own loadout

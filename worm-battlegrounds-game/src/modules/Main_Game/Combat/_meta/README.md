@@ -3,8 +3,9 @@
 Shooting. The active snail's client picks an item, aims and fires; the server checks it's their turn and they can use
 it, then runs the weapon's behaviour (rockets, bouncers, crawlers, homing missiles, rollers, hitscan guns, melee),
 carves craters with Arena, damages and knocks back snails, and tells Match when the shot is fired and when everything
-has settled. Utilities heal or change how the snail moves. Uses and cooldowns are counted per match, and an item with a
-`Cooldown` starts the match on it, so strong items wait that many of the player's own turns first. Every client
+has settled. Utilities heal or change how the snail moves. Uses and cooldowns are counted per match, and a weapon with a
+`Cooldown` starts the match on it, so strong weapons wait that many of the player's own turns first; a utility's
+cooldown starts when it's used. Every client
 puts the active snail's weapon in its hands during its turn, on the camera's side, turned to its aim, and draws each
 shot in flight as its weapon's model, `PROJECTILE_DRAW_SCALE` times its size.
 
@@ -16,10 +17,11 @@ gravity) when a hit is softer than `REST_SPEED`, homing and the roller's drive a
 `Tumble` option: it leaves the hand turning with its sideways speed, `AIR_SPIN`, until the ground rolls it), and water
 or lava (any liquid, a pond too): a shot flies on through them, slowed (`SINK_ENTRY_KEEP` as it splashes in, then
 `SINK_GRAVITY` and `SINK_KEEP`), bursts on what it touches under them or when its fuse runs out, and is gone without a
-blast after sinking `SINK_SECONDS` without touching anything (one resting on the ground under them waits for its fuse). The black hole roller still bursts as it rolls into liquid. Shots fly in
+blast after sinking `SINK_SECONDS` without touching anything. The black hole roller still bursts as it rolls into liquid. Shots fly in
 slow motion, `PROJECTILE_TIME_SCALE` of real speed along the same paths, so players can follow them; a thrown bomb's
 `Fuse` counts its own slowed flight time (it bursts at the same point of its path), a placed one's (Dynamite) real
-seconds. A shot leaves `MUZZLE_GAP` past the snail's ball, or short of the terrain or snail in the way when that's
+seconds. A thrown bomb with a fuse (the Grenade) bursts as soon as it comes to rest on the ground, before its fuse
+runs out; a placed one waits for its fuse. A shot leaves `MUZZLE_GAP` past the snail's ball, or short of the terrain or snail in the way when that's
 closer (`GetShotStart`, a raycast), so one aimed into the ground starts on it, never inside it. The server is the
 authority: it launches each shot
 (`Combat_Shot`), sends its state every `STATE_INTERVAL` (`Combat_ShotState`) and ends it (`Combat_ShotEnd`), and its
@@ -32,8 +34,10 @@ liquid; a variety grenade's four worms dig
 down through the terrain as server parts and drown in water or lava; clients glide both after their parts. A weapon with a
 `Retreat` (Dynamite) is placed at the snail's feet and leaves its player moving it, with full stamina, for that many
 seconds (`I.SnailControl.Retreat`) before the fuse blows it. Blasts play the studio's explosion effect for their size (`I.Vfx`) and throw chunks of the
-ground they hit, which bounce on the terrain and lie there a moment; they shake the camera and vibrate phones and pads
-by their size and how close they are to the view, and a hit on the player's own snail vibrates too. A blow of
+ground they hit, which bounce on the terrain and lie there a moment; they shake the camera (a sharp jolt, `SHAKE_KICK`,
+then a rumble, `SHAKE_MAGNITUDE`) and vibrate phones and pads by their size and how close they are to the view. A hit
+on a snail adds its own shake by its damage (full at `HIT_SHAKE_DAMAGE`, plus `KNOCKOUT_SHAKE` on a knockout), a gunshot
+kicks the view a little (`GUN_SHAKE`), and a hit on the player's own snail vibrates too. A blow of
 `HITSTOP_DAMAGE` or more stops the world for a beat on every screen (`HITSTOP_SECONDS`): the particles in
 `Workspace.Ume.Combat` freeze, the thrown chunks of ground hang in the air and the camera holds (`I.MatchCamera.Freeze`);
 a knockout blow stops it for `HITSTOP_KNOCKOUT`, the camera punches in on the snail (`I.MatchCamera.PunchIn`) and
@@ -70,10 +74,10 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `Scripts/Server/Behaviors/*.lua` | One file per `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee), and `Snail.lua`, the variety grenade's worms |
 | `Global.lua` | Launch velocity and wind, shared with the aim dots, the aim guide and bots |
 | `Client.lua` | Starts the client handlers; `I.Combat` on the client (`SetAim`, `GetAimGuides`) |
-| `Scripts/Client/Effects.lua` | Blasts (the `BLAST_VFX` effect for the blast's size, scaled by its radius, and chunks of the ground that bounce on the terrain in the `Chip` collision group, then fade), tracers (a gun's `MUZZLE_VFX` flash where it fires, `Flash_Bullet` and `Explosion_Gun` where each bullet lands; One Punch plays `Punch` at the snail it hits), the blast sound (`Explosion_Big` from `BIG_BLAST_SOUND_RADIUS`, else `Explosion_Small`), the camera shake and the haptics (`Combat_BlastBig`, `Combat_BlastSmall`, `Combat_Hurt` in `src/global_data/Haptic/Preset.lua`), and the hit stop (`_onHit`, `_hitStop`: particles' `TimeScale` 0 and `Debris` chunks anchored, then put back with their speed) |
+| `Scripts/Client/Effects.lua` | Blasts (the `BLAST_VFX` effect for the blast's size, scaled by its radius, and chunks of the ground that bounce on the terrain in the `Chip` collision group, then fade), tracers (a gun's `MUZZLE_VFX` flash where it fires, `Flash_Bullet` and `Explosion_Gun` where each bullet lands; One Punch plays `Punch` at the snail it hits), the blast sound (`Explosion_Big` from `BIG_BLAST_SOUND_RADIUS`, else `Explosion_Small`), the camera shake (`_shake`: a jolt, then a rumble; for blasts, hits on snails and gunshots) and the haptics (`Combat_BlastBig`, `Combat_BlastSmall`, `Combat_Hurt` in `src/global_data/Haptic/Preset.lua`), and the hit stop (`_onHit`, `_hitStop`: particles' `TimeScale` 0 and `Debris` chunks anchored, then put back with their speed) |
 | `Scripts/Client/Flight.lua` | Shots in flight drawn as their weapon's model (`GetProjectileModel`) over the hidden placeholder part: rockets and missiles along their flight, thrown and rolled weapons turning with the part, the spider bomb upright facing its crawl, the Variety grenade's worms (`Projectiles/Worm`) head first along their tunnel, swaying (`WORM_SWAY`). Models are drawn `PROJECTILE_DRAW_SCALE` times their size (a placed Dynamite at its own); models of parts the server moves glide after them (`CRAWL_GLIDE`). Bomblets and weapons without a model keep the placeholder. A weapon in `PROJECTILE_TRAILS` draws its trail (a Vfx effect) on an invisible carrier part that follows the shot without turning (its attachments along Z, so the ribbon keeps its width), its exhaust's emitters streaming (a missile's smoke puffs and thruster), and a rocket's carrier rides `TRAIL_TAIL` behind it; all left to fade where the shot ends |
 | `Scripts/Client/Shots.lua` | Each simulated shot's copy on this client: a local placeholder part in `Workspace.Ume.Combat`, `PROJECTILE_DRAW_SCALE` times its size and marked `Simulated` (Flight draws on it, the camera follows it), stepped to the server's clock and corrected by its states; a bounce on the way plays `Shot_Bounce`, and a lobbed shot whistles as it comes down (`_whistle`: `Shot_Whistle` from its part, volume 0.5, kept in the shot's `Whistle` and played once, `Whistled`) |
-| `Scripts/Client/Held.lua` | The active snail's held weapon: a copy of its model in `Workspace.Ume.Combat`, in the snail's hands in the weapon's pose (`I.SnailRig.Hold`), pitched to the aim this screen draws (MatchHud's crosshair, at once) or else to the snail's replicated aim. On its player's screen a snail standing still turns to face its aim. When the shot is away, a gun with a `HoldPose` plays its shot (`I.SnailRig.Shoot`, at least `Pellets` × `BurstInterval`) before it goes |
+| `Scripts/Client/Held.lua` | The active snail's held weapon: a copy of its model in `Workspace.Ume.Combat`, in the snail's hands in the weapon's pose (`I.SnailRig.Hold`), pitched to the aim this screen draws (MatchHud's crosshair, at once) or else to the snail's replicated aim. On its player's screen a snail standing still turns to face its aim. When the shot is away, a gun with a `HoldPose` plays its shot (`I.SnailRig.Shoot`, at least `Pellets` × `BurstInterval`) before it goes. Once a shot is away (`Match_PhaseChanged` to `Flight`) the active snail's emote ends (`I.SnailRig.StopEmote`) |
 | `Scripts/Client/Aimbot.lua` | Draws the aim guide the server sends (dots and a label in `Workspace.Ume.Combat.Aimbot`) and keeps it for `GetAimGuides` |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `combat` and `aimbot` commands, and the `Combat_ItemIds` dictionary (every weapon and utility id, from both of `I.G_Arsenal.GetAll()`'s tables) |
 | `Settings.lua` | `Combat_Settings` |
@@ -150,8 +154,8 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 **Receive: RemoteEvents**
 
 - `Combat_Explosion`: drawn, shaken and felt by `Effects`
-- `Combat_Hit`: a hit of `HITSTOP_DAMAGE` or more, or a knockout, stops the world for a beat (`Effects`); a hit on the player's own snail vibrates
-- `Combat_Tracer`: drawn by `Effects`
+- `Combat_Hit`: shakes the camera by the damage; a hit of `HITSTOP_DAMAGE` or more, or a knockout, stops the world for a beat (`Effects`); a hit on the player's own snail vibrates
+- `Combat_Tracer`: drawn by `Effects`, and a gun's kicks the camera
 - `Combat_AimbotGuide`: drawn by `Aimbot`
 - `Combat_Shot`, `Combat_ShotState` (unreliable), `Combat_ShotEnd`: simulated, corrected and removed by `Shots`
 
@@ -198,7 +202,9 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `MUZZLE_VFX` | `{ Uzi = "Flash_SMG", Minigun = "Flash_SMG", Shotgun = "Flash_Sniper" }` | The flash a gun plays where its shot leaves |
 | `PUNCH_VFX_SCALE` | `0.5` | One Punch's `Punch` effect's size |
 | `FEEL_FULL_RADIUS`, `FEEL_RANGE` | `10`, `90` | A blast this big is felt at full strength; it's felt less the farther from the middle of the view, and not past `FEEL_RANGE` studs |
-| `SHAKE_MAGNITUDE`, `SHAKE_SETTLE` | `4`, `0.45` | A full-strength blast's camera shake, and how long it takes to settle |
+| `SHAKE_KICK`, `SHAKE_KICK_SETTLE` | `10`, `0.18` | A full-strength blow's jolt (CameraShake's Magnitude, roughness 35), and how long it takes to fade, in seconds |
+| `SHAKE_MAGNITUDE`, `SHAKE_SETTLE` | `6.5`, `0.7` | The rumble after the jolt (roughness 12), and how long it takes to settle |
+| `HIT_SHAKE_DAMAGE`, `KNOCKOUT_SHAKE`, `GUN_SHAKE` | `60`, `0.8`, `0.15` | A hit on a snail shakes at full strength for this much damage, plus the second on a knockout; each gunshot kicks the view at the third (all less away from the middle of the view, as blasts) |
 | `HAPTIC_BIG`, `HAPTIC_SMALL` | `0.6`, `0.15` | The strengths from which a blast plays `Combat_BlastBig` or `Combat_BlastSmall` |
 | `HITSTOP_DAMAGE`, `HITSTOP_SECONDS`, `HITSTOP_KNOCKOUT` | `30`, `0.07`, `0.16` | A hit of this much damage or more stops the blast's effects and the camera for this many seconds on every screen; a knockout blow for the last, with the camera's punch-in |
 | `DEBRIS_MAX`, `DEBRIS_SPEED` | `16`, `{ 25, 50 }` | The most chunks of ground a blast throws, and their speed |

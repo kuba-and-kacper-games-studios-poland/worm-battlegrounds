@@ -66,6 +66,8 @@ studio's `Particles_1` and `Particles_2` folders (2026-11-09), the trails from t
 | `Trail_Smoke` | Trails_New: smoke (BeamWavey fog, made a little grey and subtler), plus an `Exhaust` attachment: `Smoke` (soft grey puffs) and `Thruster` (a tiny orange flame), both off | Combat: the Bazooka's and Homing missile's shots |
 | `Trail_BlackHole` | Trails_New: blackhole (BeamNoise cloud, BeamChromatic Thick) | Combat: the Black hole grenade's shot |
 | `Trail_Variety` | Trails_New: verity (BeamGlow strays) | Combat: the Variety grenade's shot |
+| `Aura_Speed` | An `Aura` attachment: `Spark` and `Bolt` (Glint's spec, cyan and the bottle's yellow), `Streak` (Wind_Streak's, pale cyan), all off (2026-11-12) | Snails: around a snail under the Speed potion, streaming while it lasts |
+| `Aura_LowGravity` | An `Aura` attachment: `Bubble` (Splash_Water's Bubble 2) and `Motes` (Ambient_Motes'), violet, drifting up slowly, both off (2026-11-12) | Snails: around a snail under the Low gravity potion, streaming while it lasts |
 
 The Spear's and the Bat's trails are on their Arsenal models instead (Arsenal's README → In the place).
 

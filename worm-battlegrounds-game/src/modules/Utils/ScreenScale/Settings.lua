@@ -7,13 +7,8 @@ local _settings = {
 	--- @type { string }
 	GUIS = {
 		"MatchHud",
-		"Results",
-		"MatchBoard",
-		"CustomLobby",
-		"PartyInvite",
 		"PartyInvited",
 		"CrateOpen",
-		"Shop",
 		"TutorialHint",
 	},
 

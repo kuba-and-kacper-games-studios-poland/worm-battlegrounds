@@ -1,5 +1,6 @@
 --[[
 	Created By: 	HungryN00B
+	Edited By: 	Nari
 ]]
 
 --- @type Ume
@@ -150,7 +151,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Fade
 
 --[[
-	Fades a snail's skin parts on this screen, never showing a part more than it already was (a broken shell stays gone).
+	Fades a snail's skin parts on this screen, never showing a part more than it already was.
 ]]
 --- @param parts { [BasePart]: number }
 function Module._setFade(parts, amount: number)

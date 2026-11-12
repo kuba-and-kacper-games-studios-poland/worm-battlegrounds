@@ -1,5 +1,6 @@
 --[[
 	Created By: 	HungryN00B
+	Edited By: 	Nari
 ]]
 
 --- @type Ume
@@ -525,12 +526,9 @@ function Module._getAnchor(userId: number)
 
 	--[[ Local Variables ]]
 
-	local box: CFrame
-	local size: Vector3
-	box, size = model:GetBoundingBox()
-
-	-- The snail's top over its RootPart, where the bubbles' bottom edge goes
-	local top: number = box.Position.Y + size.Y / 2 - model.PrimaryPart.Position.Y
+	-- The top of its Body (eyestalks included) over its RootPart, where the bubbles' bottom edge goes; the model's box would reach the shell's rest place, high above its back
+	local body: BasePart = model:FindFirstChild("Body", true)
+	local top: number = body.Position.Y + body.Size.Y / 2 - model.PrimaryPart.Position.Y
 
 	--[[ Returning ]]
 

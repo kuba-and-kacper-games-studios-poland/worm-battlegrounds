@@ -60,7 +60,7 @@ No remotes: the messages come through TextChatService, which filters them for ea
 | `POP_FROM`, `POP_TWEENINFO` | `0.6`, 0.2 s back out | A new bubble pops in from 0.6 times its size, from its tail |
 | `FADE_TWEENINFO` | 0.35 s quad in | How a bubble whose time is up fades out |
 | `TAG_GAP` | `6` | In a match, design px between the snail's tag and the lowest bubble |
-| `STAGE_GAP` | `0.6` | On the lobby's stage, studs between the top of the snail and the lowest bubble |
+| `STAGE_GAP` | `0.6` | On the lobby's stage, studs between the top of the snail's `Body` (its eyestalks) and the lowest bubble |
 
 ## In the place
 

@@ -136,7 +136,10 @@ function Module.Spawn(participant, position: Vector3)
 		Parent = root,
 	})
 
-	-- SnailControl's effects: a parachute caps the fall speed, and Lift holds up part of the weight (low gravity)
+	--[[
+		SnailControl's effects: a parachute caps the fall speed. Lift always holds up the share of the weight snails
+		don't feel (GRAVITY_SCALE), and more under the Low gravity potion
+	]]
 	I.Create("LinearVelocity")({
 		Name = "Chute",
 		Attachment0 = center,
@@ -152,8 +155,7 @@ function Module.Spawn(participant, position: Vector3)
 		Attachment0 = center,
 		RelativeTo = Enum.ActuatorRelativeTo.World,
 		ApplyAtCenterOfMass = true,
-		Force = Vector3.zero,
-		Enabled = false,
+		Force = Vector3.yAxis * root:GetMass() * I.S.Workspace.Gravity * (1 - _settings.GRAVITY_SCALE),
 		Parent = root,
 	})
 
@@ -230,6 +232,11 @@ function Module.SetOwner(participantId: string, player: Player?)
 
 	-- Check if the snail is alive
 	if not model or not model:GetAttribute("Alive") then
+		return
+	end
+
+	-- Check if it's on the ground, not flying a throw (an anchored ball has no owner)
+	if model.PrimaryPart.Anchored then
 		return
 	end
 

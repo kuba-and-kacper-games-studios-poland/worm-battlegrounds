@@ -16,7 +16,7 @@ that snail), stays there whatever the mouse does, and the next left click fires 
 right click cancels the aim as before.
 The aim is drawn W:A's way on the gui's aim layer, `U_Aim`, under the rest of the HUD, in pixels over the snail every
 frame: the power's cone, `POWER_DOTS` circles (clones of `PREFAB | PowerDot`, each later one drawn over the one before)
-from `POWER_START` out along the aim, dark red to pale yellow, each growing in from nothing as the power passes it; then
+from `POWER_START` out along the aim, yellow through orange to red, blended into one (each circle's `UIGradient` runs the cone's colours from its back edge to its front, turned along the aim every frame), each growing in from nothing as the power passes it; then
 `POWER_GAP` of room and the crosshair, `S_Crosshair` (a ring with an X, outlined), spinning, in the aiming snail's
 `Color` (its team's, or its own in a free-for-all). Lengths are units, a stud at MatchCamera's `DISTANCE`, so the aim
 looks the same at any zoom; zoomed in, the cone starts past the snail's grown ball instead. The held weapon turns with
@@ -63,10 +63,10 @@ the match's buttons). Every pad button is the Console module's scheme (`I.Consol
 | `Scripts/Client/Teams.lua` | The team panels (`U_TeamsLeft`, `U_TeamsRight`), from the drop on: the participants grouped by `Team`, the player's own first on the left, the others in turn right and left; each team's avatars (headshots for players, `BOT_AVATAR` for bots; `OUT_AVATAR_COLOR` once out) outlined in its colour, the side's own pictures (`Look_Left*` / `Look_Right*`), and its name ("Your team", "Red team" from Match's `TEAMS`; in a free-for-all "You" or the snail's name). A side with more players than fit shrinks them (`TEAM_PLAYER_WIDTH`). `SetAvatar` is shared with the turn list, the turn callout and the results |
 | `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
 | `Scripts/Client/LoadoutBar.lua` | The loadout bar and slot keys: one `BarSlot` per item (icon, name, uses, key), "+" slots up to `SLOT_KEYS`, the selected one in the slot's `Look_SelectedStrokeColor`, a cooling one darkened (`Look_CooldownIconColor`) under its turns left; utilities are used as soon as they're picked on the player's turn. The pad's LB and RB (Console's `WeaponPrevious`, `WeaponNext`) step through the slots, resting on a utility (outlined, its `S_UseHint` shown) until Y (`UseUtility`) uses it. A weapon with no icon picture shows its 3D model in its icon instead (`I.G_Arsenal.GetModel`, in a ViewportFrame `S_Model`) |
-| `Scripts/Client/Aim.lua` | The crosshair and charging (mouse, touch, pad), the power circles, firing (the mouse, RT or `U_Fire` let go, or a full charge; with the `Combat_Fire` haptic tick), homing targets, detonating; another snail's crosshair and power (a player's or a bot's) while it aims; on the player's turn the power slider (`U_Power`: the bar cut at the power, the handle at its edge with "75%", the angle "45°" over it, or with a homing missile `TARGET_HINTS`), and FIRE on touch screens with the held weapon's icon. FIRE needs a homing missile's target |
+| `Scripts/Client/Aim.lua` | The crosshair and charging (mouse, touch, pad), the power circles, firing (the mouse, RT or `U_Fire` let go, or a full charge; with the `Combat_Fire` haptic tick; firing ends the player's snail's emote on this screen at once, `I.SnailRig.StopEmote`), homing targets, detonating; another snail's crosshair and power (a player's or a bot's) while it aims; on the player's turn the power slider (`U_Power`: the bar cut at the power, the handle at its edge with "75%", the angle "45°" over it, or with a homing missile `TARGET_HINTS`), and FIRE on touch screens with the held weapon's icon. FIRE needs a homing missile's target |
 | `Scripts/Client/KillFeed.lua` | Knockout lines; a line too long for the feed at its design size (`TextService:GetTextBoundsAsync`) gets two lines' height instead of shrinking |
 | `Scripts/Client/TouchControls.lua` | Walk and jump buttons on touch screens, on the player's turn; the pad's controls strip (`U_PadControls`, Console only) then too |
-| `Scripts/Client/Results.lua` | The Results screen (each card's name with the player's badges after it, `I.PlayerBadges.Show`), rematch votes; `Match_Win` for first place, `Match_Lose` otherwise |
+| `Scripts/Client/Results.lua` | The Results screen (the studio's MatchOver: each card's place in its medal colour from the prefab's `Look_<Place>*` attributes, name with the player's badges after it, `I.PlayerBadges.Show`, and username), rematch votes; `Match_Win` for first place, `Match_Lose` otherwise |
 | `Scripts/Client/TopBar.lua` | The Leave and Music top bar buttons |
 | `Settings.lua` | `MatchHud_Settings` |
 
@@ -81,6 +81,7 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | Key | Default | What |
 | --- | --- | --- |
 | `GUI_NAME`, `RESULTS_GUI_NAME` | `"MatchHud"`, `"Results"` | The guis |
+| `RESULTS_FIT_PLACINGS` | `4` | The Results placing cards that fit across at the design's width; with more players each card narrows to share it |
 | `HIDDEN_IN_MATCH` | `{ "Currency" }` | Guis the framework keeps on (`UserInterface_PreventHiding`) that are hidden while the player is in a match; the currency bar sits where the team panel goes |
 | `TIMER_WARN_FROM`, `TIMER_WARN_COLOR` | `8`, `(255, 170, 40)` | On the player's own turn the timer turns this orange from this many seconds left |
 | `TICK_SOUND_FROM`, `TIMER_DANGER_COLOR` | `5`, `(255, 70, 50)` | From this many seconds left of the player's own turn the timer turns this red, ticks aloud each second (`Turn_Tick`, pitch rising to 1.3) and `U_Tension` shows |
@@ -104,10 +105,10 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | `FEED_LINES`, `FEED_SECONDS` | `4`, `6` | Kill feed length and how long a line stays |
 | `AIM_SEND_INTERVAL` | `0.1` | How often the aim is sent to others during the player's turn |
 | `AIM_SHOW_GRACE`, `AIM_SMOOTHING` | `0.4`, `15` | Another snail's crosshair and power show while its aim keeps arriving (none for this long hides them), eased toward each update |
-| `POWER_DOTS`, `POWER_COLORS`, `POWER_DOT_SIZE` | `14`, (170, 0, 0) to (248, 223, 108), `{ 0.9, 2.3 }` | The power cone's circles: how many, their colours and sizes in units (a stud at MatchCamera's `DISTANCE`), first to last |
+| `POWER_DOTS`, `POWER_COLORS`, `POWER_DOT_SIZE` | `14`, (255, 226, 92), (255, 148, 38), (240, 62, 46), `{ 0.9, 2.3 }` | The power cone's circles: how many, their colours (spread evenly, first to last) and sizes in units (a stud at MatchCamera's `DISTANCE`), first to last |
 | `POWER_START`, `POWER_LENGTH`, `POWER_GAP` | `2.3`, `7`, `0.3` | In units: from the snail's middle to the first circle's (further zoomed in, past the snail's ball), from the first circle's middle to the last's, and the room after the last circle before the crosshair |
 | `CROSSHAIR_SIZE`, `CROSSHAIR_SPIN` | `3.4`, `60` | The crosshair's size in units (the X's reach) and its spin in degrees a second |
-| `BAR_FILL` | `1` | The share of the power and stamina bars' picture its fill covers (the rest is its empty end), so a full bar cuts its gradient there and the power handle stops there |
+| `BAR_FILL` | `1` | The share of the power and stamina bars' picture its fill covers (the rest is its empty end), so a full bar cuts its gradients (the bar's and its texture's, `S_BarMask`) there and the power handle stops there |
 | `TARGET_COLOR` | red | The homing target marker |
 | `TARGET_HINTS` | `Pick`, `Shoot` | The slider's text with a homing missile: before its target is picked, then until the aim starts |
 | `STICK_DEADZONE` | `0.3` | How far the right stick leans to aim |

@@ -335,7 +335,7 @@ end
 
 --[[
 	Returns how high a snail's jump carries it, in studs: higher under the Low gravity potion, whose Lift holds up part of
-	its weight.
+	its weight (every snail's Lift holds up some: Snails' GRAVITY_SCALE).
 ]]
 --- @return number
 function Module._getJumpHeight(model: Model)
@@ -343,7 +343,7 @@ function Module._getJumpHeight(model: Model)
 
 	local root: BasePart = model.PrimaryPart
 	local lift: VectorForce = root:FindFirstChild("Lift")
-	local gravity: number = I.S.Workspace.Gravity - (if lift.Enabled then lift.Force.Y / root.AssemblyMass else 0)
+	local gravity: number = I.S.Workspace.Gravity - lift.Force.Y / root.AssemblyMass
 
 	--[[ Returning ]]
 

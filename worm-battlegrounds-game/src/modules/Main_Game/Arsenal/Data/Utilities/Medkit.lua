@@ -14,7 +14,10 @@ local _data = {
 
 	--[[ Limits ]]
 
-	Uses = 1,
+	Uses = 2,
+
+	-- Once every 6 of the player's own turns, longer than the Bandage's for its bigger heal
+	Cooldown = 5,
 }
 
 return _data

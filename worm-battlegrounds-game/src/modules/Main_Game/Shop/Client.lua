@@ -51,8 +51,8 @@ function Module._getElements()
 	--[[ General ]]
 
 	local moduleGui: ScreenGui = I.UserInterface.UI[_settings.GUI_NAME]
-	elems["Packs"] = moduleGui:FindFirstChild("U_Packs", true) --- @type ScrollingFrame
-	elems["Passes"] = moduleGui:FindFirstChild("U_Passes", true) --- @type ScrollingFrame
+	elems["Packs"] = moduleGui:FindFirstChild("U_Packs", true) --- @type Frame
+	elems["Passes"] = moduleGui:FindFirstChild("U_Passes", true) --- @type Frame
 
 	--[[ Prefab ]]
 
@@ -111,7 +111,7 @@ function Module._onOpened(widgetName: string)
 		card:FindFirstChild("S_Info", true).Text = `{pack.Diamonds} diamonds`
 		card.Parent = elems["Packs"]
 		Module._showPrice(card:FindFirstChild("S_Price", true), pack.Product, Enum.InfoType.Product)
-		I.Interact.OnPress(card:FindFirstChild("Button"), function()
+		I.Interact.OnPress(card:FindFirstChild("S_Buy", true), function()
 			I.Network.Fire("Marketplace_PromptProductPurchase", pack.Product)
 		end)
 	end
@@ -122,17 +122,26 @@ function Module._onOpened(widgetName: string)
 	for index: number, pass in ipairs(_settings.PASSES) do
 		local owned: boolean = I.G_Marketplace.PlayerOwnsGamePass(I.S.Players.LocalPlayer, pass.GamePass)
 		local card: Frame = prefabs["Pass"]:Clone()
-		local buy: Frame = card:FindFirstChild("S_Buy", true)
+		local buy: ImageButton = card:FindFirstChild("S_Buy", true)
+		local background: Frame = buy:FindFirstChild("Background")
+		local look: string = if owned then "Owned" else ""
 		card.Name = pass.GamePass
 		card.LayoutOrder = index
 		card.Visible = true
 		card:FindFirstChild("S_Name", true).Text = pass.Name
 		card:FindFirstChild("S_Benefits", true).Text = pass.Benefits
-		buy:FindFirstChild("ButtonText", true).Text = if owned then "OWNED" else "BUY"
-		buy:FindFirstChild("Face", true).Image = buy:FindFirstChild("Face", true):GetAttribute(if owned then "Kit_DisabledImage" else "Kit_Image")
+		background:FindFirstChild("Main").ImageColor3 = buy:GetAttribute(`Look_{look}MainColor`)
+		background:FindFirstChild("Stroke").ImageColor3 = buy:GetAttribute(`Look_{look}StrokeColor`)
+		buy:FindFirstChild("S_RobuxIcon", true).Visible = not owned
 		card.Parent = elems["Passes"]
-		Module._showPrice(card:FindFirstChild("S_Price", true), pass.GamePass, Enum.InfoType.GamePass)
-		I.Interact.OnPress(buy:FindFirstChild("Button"), function()
+
+		-- An owned pass says so where its price goes
+		if owned then
+			buy:FindFirstChild("S_Price", true).Text = "Owned"
+		else
+			Module._showPrice(buy:FindFirstChild("S_Price", true), pass.GamePass, Enum.InfoType.GamePass)
+		end
+		I.Interact.OnPress(buy, function()
 			if not I.G_Marketplace.PlayerOwnsGamePass(I.S.Players.LocalPlayer, pass.GamePass) then
 				I.Network.Fire("Marketplace_PromptGamePassPurchase", pass.GamePass)
 			end

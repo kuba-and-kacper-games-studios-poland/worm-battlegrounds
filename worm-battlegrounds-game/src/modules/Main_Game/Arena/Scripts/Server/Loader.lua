@@ -82,7 +82,8 @@ end
 
 --[[
 	Caches every map template under SAssets.Arenas that has Terrain, Markers and Markers.Bounds, and readies it once:
-	markers hidden and never colliding or blocking queries, terrain anchored in the Terrain collision group.
+	moved so its Bounds stand at X 0 on the plane, markers hidden and never colliding or blocking queries, terrain
+	anchored in the Terrain collision group.
 ]]
 function Module._cacheTemplates()
 	--[[ Data ]]
@@ -115,6 +116,11 @@ function Module._cacheTemplates()
 			warn(`[{_localName}::{script.Name}]: Map ({template.Name}) Bounds sit at Z {planeZ}, not 0 - moved back onto the plane! -`, template)
 			template:PivotTo(template:GetPivot() - Vector3.zAxis * planeZ)
 		end
+
+		--[[ Placing ]]
+
+		-- Every map plays at X 0, by the spawn: until a snail drops, streaming sends its player only what's near their avatar
+		template:PivotTo(template:GetPivot() - Vector3.xAxis * markers:FindFirstChild("Bounds"):GetPivot().Position.X)
 
 		--[[ Applying ]]
 

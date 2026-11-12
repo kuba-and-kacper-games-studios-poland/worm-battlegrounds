@@ -21,6 +21,7 @@ local combatFolder: Instance
 --[[ View ]]
 
 local focus: Vector3? = nil
+local focusVelocity: Vector3 = Vector3.zero
 local pan: Vector3 = Vector3.zero
 local followed: PVInstance? = nil
 
@@ -47,6 +48,25 @@ local ledShot: PVInstance? = nil
 local ledFrom: Vector3 = Vector3.zero
 local ledVelocity: Vector3 = Vector3.zero
 
+-- The height the view had when the shot it follows took off: the shot rides up the screen before the view rises with it
+local shotFloor: number = 0
+
+-- The view's goal last frame: a glide to the next snail zooms out by how far it still has to go
+local lastGoal: Vector3 = Vector3.zero
+
+-- A blast's push in: the share of the zoom, and until when it eases back (os.clock)
+local kick: number = 0
+local kickUntil: number = 0
+
+--[[ Hand ]]
+
+-- Where the player moved the view by hand, which it stays on instead of following until MANUAL_HOLD after their last move (os.clock)
+local manualPoint: Vector3? = nil
+local manualUntil: number = 0
+
+-- Until when a new turn's glide to its snail ignores the player's hand (os.clock): it ends once the view gets there
+local turnGlideUntil: number = 0
+
 --[[ Zoom ]]
 
 -- How far from the plane the player wants the camera, and how far it is now (easing toward it)
@@ -59,8 +79,9 @@ local dragging: boolean = false
 local lastMouse: Vector2 = Vector2.zero
 local windowFocused: boolean = true
 local stickPan: Vector2 = Vector2.zero
-local lastTouchPan: Vector2 = Vector2.zero
-local pinchStart: number = _settings.DISTANCE
+
+-- The fingers on the arena (not on a gui), with where each was last
+local touches = {} --- @type { [InputObject]: Vector2 }
 
 -- Which way the D-pad zooms while held: -1 in, 1 out, 0 not
 local padZoom: number = 0
@@ -120,9 +141,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Connections
 
 --[[
-	Wires the pan inputs (dragging with the right mouse button, two fingers on touch, LT with the right stick, and
-	whether the window has focus for the edge pan) and the zoom inputs (the mouse wheel, a pinch, the D-pad held up or
-	down). The pad's buttons are the Console module's (Aim, CameraPan, ZoomIn, ZoomOut).
+	Wires the pan inputs (dragging with the right mouse button, a finger on touch, LT with the right stick, and whether
+	the window has focus for the edge pan) and the zoom inputs (the mouse wheel, two fingers pinching, the D-pad held up
+	or down). The pad's buttons are the Console module's (Aim, CameraPan, ZoomIn, ZoomOut).
 ]]
 function Module._createConnections()
 	--[[ Window ]]
@@ -134,19 +155,23 @@ function Module._createConnections()
 		windowFocused = false
 	end)
 
-	--[[ Mouse ]]
+	--[[ Presses ]]
 
 	-- Roblox's own camera script claims the right button, so its presses arrive as processed: take them anyway
-	I.S.UserInputService.InputBegan:Connect(function(input: InputObject)
+	I.S.UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
 		if input.UserInputType == Enum.UserInputType.MouseButton2 then
 			dragging = true
 			lastMouse = Vector2.new(input.Position.X, input.Position.Y)
+		elseif input.UserInputType == Enum.UserInputType.Touch and not processed then
+			touches[input] = Vector2.new(input.Position.X, input.Position.Y)
 		end
 	end)
 
 	I.S.UserInputService.InputEnded:Connect(function(input: InputObject)
 		if input.UserInputType == Enum.UserInputType.MouseButton2 then
 			dragging = false
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			touches[input] = nil
 		elseif I.Console.IsAction("Aim", input.KeyCode) then
 			stickPan = Vector2.zero
 		end
@@ -164,33 +189,11 @@ function Module._createConnections()
 			local mouse: Vector2 = Vector2.new(input.Position.X, input.Position.Y)
 			Module._panBy(mouse - lastMouse)
 			lastMouse = mouse
+		elseif touches[input] then
+			Module._onTouchMoved(input)
 		elseif I.Console.IsAction("Aim", input.KeyCode) then
 			stickPan = Vector2.new(input.Position.X, input.Position.Y)
 		end
-	end)
-
-	--[[ Touch ]]
-
-	I.S.UserInputService.TouchPan:Connect(function(touches: { Vector2 }, translation: Vector2, _velocity: Vector2, state: Enum.UserInputState)
-		if #touches < 2 then
-			return
-		end
-		if state == Enum.UserInputState.Begin then
-			lastTouchPan = Vector2.zero
-		end
-		Module._panBy(translation - lastTouchPan)
-		lastTouchPan = translation
-	end)
-
-	-- Spreading two fingers zooms in, pinching them zooms out
-	I.S.UserInputService.TouchPinch:Connect(function(_touches: { Vector2 }, scale: number, _velocity: number, state: Enum.UserInputState, processed: boolean)
-		if processed or scale <= 0 then
-			return
-		end
-		if state == Enum.UserInputState.Begin then
-			pinchStart = zoomGoal
-		end
-		Module._zoomTo(pinchStart / scale)
 	end)
 
 	--[[ Pad ]]
@@ -232,8 +235,9 @@ end
 --[[
 	Points the camera along -Z at what it follows (a blast it stays on, or a snail a blow sent flying, else the target,
 	else the arena's middle), plus the player's pan, kept inside the arena's bounds, gliding when it moves on to a new
-	snail. Nothing changes until a map is loaded, or while the player is in the Studio map's lobby, which gets Roblox's
-	camera back.
+	snail; where the player moved it by hand instead, while they hold the pan and until MANUAL_HOLD after their last
+	move or the next turn. Nothing changes until a
+	map is loaded, or while the player is in the Studio map's lobby, which gets Roblox's camera back.
 ]]
 function Module._update(deltaTime: number)
 	--[[ Checks ]]
@@ -243,6 +247,7 @@ function Module._update(deltaTime: number)
 		if focus then
 			focus = nil
 			blastHeld = false
+			manualPoint = nil
 			I.S.Workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
 		end
 		return
@@ -264,6 +269,7 @@ function Module._update(deltaTime: number)
 
 	-- A hit stop holds the view where it is
 	if focus and os.clock() < frozenUntil then
+		focusVelocity = Vector3.zero
 		camera.CFrame = CFrame.lookAt(focus + Vector3.zAxis * zoom, focus)
 		return
 	end
@@ -290,21 +296,49 @@ function Module._update(deltaTime: number)
 		followed = target
 		pan = Vector3.zero
 		travelUntil = if target and target:IsA("Model") then os.clock() + _settings.TRAVEL_MAX else 0
+
+		-- A new shot keeps the height the view had at its take-off, until it rides up to the screen's top
+		if target and target:IsA("BasePart") and focus then
+			shotFloor = focus.Y
+		end
 	end
 
 	-- LT with the right stick pans (the Console module's CameraPan and Aim), and so does the mouse at the screen's left or right edge
 	if stickPan.Magnitude >= _settings.STICK_DEADZONE and I.Console.IsHeld("CameraPan") then
-		pan += Vector3.new(stickPan.X, stickPan.Y, 0) * _settings.STICK_PAN_SPEED * deltaTime
+		Module._addPan(Vector3.new(stickPan.X, stickPan.Y, 0) * _settings.STICK_PAN_SPEED * deltaTime)
 	end
-	pan += Vector3.xAxis * Module._getEdgePan(camera) * _settings.EDGE_PAN_SPEED * deltaTime
+	-- A mouse left at the edge once the view can't go further that way isn't a move, or it would hold the view there forever
+	local edge: number = Module._getEdgePan(camera)
+	local stuck: boolean = focus ~= nil and math.abs(Module._getClamped(focus + Vector3.xAxis * edge, bounds, camera, _settings.CEILING_EXTRA).X - Module._getClamped(focus, bounds, camera, _settings.CEILING_EXTRA).X) < 0.5
+	if edge ~= 0 and not stuck then
+		Module._addPan(Vector3.xAxis * edge * _settings.EDGE_PAN_SPEED * deltaTime)
+	end
+
+	-- The player's own turn, before the shot, follows their snail: a hand move then is the leashed pan
+	if manualPoint and Module._isAiming() then
+		manualPoint = nil
+	end
 
 	-- A held D-pad up or down zooms in or out
 	if padZoom ~= 0 then
 		Module._zoomTo(zoomGoal * (1 + padZoom * _settings.PAD_ZOOM_RATE * deltaTime))
 	end
 
-	-- Ease the zoom first, so the bounds clamp the view at its new size; a knockout's punch-in closes in
-	local wantedZoom: number = if punching then zoomGoal * _settings.PUNCH_ZOOM else zoomGoal
+	-- A shot in flight the view follows, not one the player moved it away from
+	local shot: boolean = target ~= nil and target:IsA("BasePart") and not holding and not (manualPoint and os.clock() < manualUntil)
+
+	-- The zoom breathes with the action: out so a high shot and the map under it fit, out a little on the glide to the next snail, in a moment at a blast
+	local breath: number = 1
+	if target and shot then
+		local fit: number = (target:GetPivot().Position.Y - shotFloor) / _settings.SHOT_TOP / math.tan(math.rad(camera.FieldOfView / 2))
+		breath = math.clamp(fit / zoomGoal, 1, _settings.SHOT_ZOOM_OUT)
+	elseif focus and os.clock() < travelUntil then
+		breath = 1 + _settings.TRAVEL_ZOOM_OUT * math.min((lastGoal - focus).Magnitude / _settings.TRAVEL_ZOOM_DISTANCE, 1)
+	end
+	breath *= 1 - kick * math.clamp((kickUntil - os.clock()) / _settings.BLAST_KICK_SECONDS, 0, 1)
+
+	-- Ease the zoom first, so the bounds clamp the view at its new size; a knockout's punch-in closes in, and breathing out stops at ZOOM_MAX
+	local wantedZoom: number = if punching then zoomGoal * _settings.PUNCH_ZOOM else math.min(zoomGoal * breath, math.max(zoomGoal, _settings.ZOOM_MAX))
 	zoom += (wantedZoom - zoom) * (1 - math.exp(-_settings.ZOOM_SPEED * deltaTime))
 
 	-- A flying shot is led a little along its flight, so where it lands comes into view sooner
@@ -324,37 +358,72 @@ function Module._update(deltaTime: number)
 		ledShot = nil
 	end
 
-	local center: Vector3 = if punching then punchPoint elseif holding then blastPoint elseif target then target:GetPivot().Position + lead else bounds.Position
+	-- A shot, or a snail a blow sent flying, moves the view only once it leaves the middle of the screen, so bounces don't shake it
+	local center: Vector3 = if punching
+		then punchPoint
+		elseif chased then Module._getDeadZoned(blastPoint, camera)
+		elseif holding then blastPoint
+		elseif target and target:IsA("BasePart") then Module._getDeadZoned(target.Position + lead, camera)
+		elseif target then target:GetPivot().Position
+		else bounds.Position
+
+	-- A shot rides up to SHOT_TOP of the half screen over the middle before the view rises with it, so the map stays in view under it
+	if target and shot then
+		center = Vector3.new(center.X, math.min(center.Y, math.max(shotFloor, target:GetPivot().Position.Y - Module._getHalfHeight() * _settings.SHOT_TOP)), center.Z)
+	end
+
 	-- The view may rise CEILING_EXTRA over the map's top, so a snail up there is centred; a shot in flight is followed up any height
-	local ceiling: number = if target and target:IsA("BasePart") and not holding then math.huge else _settings.CEILING_EXTRA
+	local ceiling: number = if shot then math.huge else _settings.CEILING_EXTRA
 
 	-- Where the view sits with no pan: the pan is only what the player moved from there, never the bounds' own push
 	local base: Vector3 = Module._getClamped(center, bounds, camera, ceiling)
 
-	-- On the player's own turn their snail stays in view: the pan eases back while it moves, and never leaves it off screen
-	if not holding and target and target:IsA("Model") and I.Match.IsMyTurn() then
-		local leashHeight: number = Module._getHalfHeight() * _settings.LEASH
-		local leashWidth: number = leashHeight * camera.ViewportSize.X / camera.ViewportSize.Y
-		if target.PrimaryPart.AssemblyLinearVelocity.Magnitude >= _settings.RECENTER_MOVE_SPEED then
-			pan *= math.exp(-_settings.RECENTER_SPEED * deltaTime)
-		end
-		local offset: Vector3 = base + pan - center
-		local leashed: Vector3 = Vector3.new(math.clamp(offset.X, -leashWidth, leashWidth), math.clamp(offset.Y, -leashHeight, leashHeight), 0)
-		pan = Vector3.new(center.X + leashed.X - base.X, center.Y + leashed.Y - base.Y, 0)
+	-- On the player's own turn the pan goes anywhere in the arena, and eases back to their snail while it moves
+	if not holding and target and target:IsA("Model") and I.Match.IsMyTurn() and target.PrimaryPart.AssemblyLinearVelocity.Magnitude >= _settings.RECENTER_MOVE_SPEED then
+		pan *= math.exp(-_settings.RECENTER_SPEED * deltaTime)
 	end
 
 	local goal: Vector3 = Module._getClamped(base + pan, bounds, camera, ceiling)
 	pan = Vector3.new(goal.X - base.X, goal.Y - base.Y, 0)
 
+	-- A view moved by hand stays while the player holds the pan, and MANUAL_HOLD after their last move; then it glides back
+	if manualPoint and (dragging or next(touches) ~= nil or I.Console.IsHeld("CameraPan")) then
+		manualUntil = math.max(manualUntil, os.clock() + _settings.MANUAL_HOLD)
+	end
+	local manual: boolean = false
+	if manualPoint and os.clock() < manualUntil then
+		goal = Module._getClamped(manualPoint, bounds, camera, _settings.CEILING_EXTRA)
+		manualPoint = goal
+		manual = true
+	elseif manualPoint then
+		manualPoint = nil
+		pan = Vector3.zero
+		travelUntil = os.clock() + _settings.TRAVEL_MAX
+	end
+
 	-- Taking the camera sets the FOV buff's base, so an open widget's FOV change still adds to it
 	if not focus then
 		I.Buff.Set("FOV", "Standard", _settings.FOV)
 	end
-	local speed: number = if os.clock() < travelUntil then _settings.TRAVEL_SPEED else _settings.FOLLOW_SPEED
-	focus = if focus then focus:Lerp(goal, 1 - math.exp(-speed * deltaTime)) else goal
+	local speed: number = if manual then _settings.MANUAL_SPEED elseif os.clock() < travelUntil then _settings.TRAVEL_SPEED elseif shot then _settings.SHOT_FOLLOW_SPEED else _settings.FOLLOW_SPEED
+
+	-- A damped spring eases each move in and out, never faster than MAX_SPEED (scaled with the zoom); a hand move and a shot it must keep up with aren't held back
+	local maxSpeed: number = if manual or shot then math.huge else _settings.MAX_SPEED * zoom / _settings.DISTANCE
+	if focus then
+		focus, focusVelocity = Module._getDamped(focus, goal, focusVelocity, 1 / speed, maxSpeed, deltaTime)
+	else
+		focus = goal
+		focusVelocity = Vector3.zero
+	end
 	if focus and (focus - goal).Magnitude < _settings.TRAVEL_DONE then
 		travelUntil = 0
+
+		-- The hand is free again once the view reached the snail whose turn it is
+		if target and target:IsA("Model") and target:GetAttribute("Active") then
+			turnGlideUntil = 0
+		end
 	end
+	lastGoal = goal
 
 	--[[ Applying ]]
 
@@ -366,7 +435,8 @@ end
 
 --[[
 	Keeps the camera on a blast until the next turn starts, and for at least BLAST_HOLD seconds (BIG_BLAST_HOLD for a big
-	one), when it follows shots, so the player sees what the shot did and the camera moves once, to the next snail.
+	one), when it follows shots, so the player sees what the shot did and the camera moves once, to the next snail. The
+	view pushes in a moment at the blast (BLAST_KICK, BIG_BLAST_KICK).
 ]]
 function Module._onExplosion(position: Vector3, radius: number, _itemId: string, _shiny: boolean)
 	--[[ Checks ]]
@@ -378,7 +448,10 @@ function Module._onExplosion(position: Vector3, radius: number, _itemId: string,
 
 	--[[ Holding ]]
 
-	Module._hold(position, if radius >= _settings.BIG_BLAST_RADIUS then _settings.BIG_BLAST_HOLD else _settings.BLAST_HOLD)
+	local big: boolean = radius >= _settings.BIG_BLAST_RADIUS
+	Module._hold(position, if big then _settings.BIG_BLAST_HOLD else _settings.BLAST_HOLD)
+	kick = if big then _settings.BIG_BLAST_KICK else _settings.BLAST_KICK
+	kickUntil = os.clock() + _settings.BLAST_KICK_SECONDS
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Tracer
@@ -412,12 +485,18 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Turn Started
 
 --[[
-	A new turn lets the camera go from the last blast once its hold is over, on to the snail whose turn it is.
+	Every turn, the first too, starts on the snail whose turn it is: the camera leaves the last blast and wherever the
+	player moved it by hand, and glides over, ignoring their hand until it gets there.
 ]]
 function Module._onTurnStarted(_activeId: string)
 	--[[ Saving ]]
 
 	blastHeld = false
+	blastUntil = 0
+	manualPoint = nil
+	pan = Vector3.zero
+	travelUntil = os.clock() + _settings.TRAVEL_MAX
+	turnGlideUntil = travelUntil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Hold
@@ -480,9 +559,74 @@ function Module._panBy(pixels: Vector2)
 	local camera: Camera = I.S.Workspace.CurrentCamera
 	local studsPerPixel: number = 2 * Module._getHalfHeight() / camera.ViewportSize.Y
 
+	--[[ Moving ]]
+
+	Module._addPan(Vector3.new(-pixels.X, pixels.Y, 0) * studsPerPixel)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Add Pan
+
+--[[
+	Moves the view by hand some studs: on the player's own turn before the shot, the pan from their snail; else the
+	view leaves what it follows and stays where the player puts it, until MANUAL_HOLD after their last move. Nothing
+	moves while a new turn's glide takes the view to its snail.
+]]
+function Module._addPan(move: Vector3)
+	--[[ Checks ]]
+
+	-- Check if the camera is in a match yet, and not gliding to a new turn's snail
+	if not focus or os.clock() < turnGlideUntil then
+		return
+	end
+
 	--[[ Saving ]]
 
-	pan += Vector3.new(-pixels.X, pixels.Y, 0) * studsPerPixel
+	if Module._isAiming() then
+		pan += move
+		return
+	end
+	manualPoint = (manualPoint or focus) + move
+	manualUntil = os.clock() + _settings.MANUAL_HOLD
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Touch Moved
+
+--[[
+	A finger on the arena moved: one finger drags the view (unless it points the aim on the player's turn), two drag it
+	by their middle and zoom as they spread or pinch.
+]]
+function Module._onTouchMoved(input: InputObject)
+	--[[ Local Variables ]]
+
+	local last: Vector2 = touches[input]
+	local position: Vector2 = Vector2.new(input.Position.X, input.Position.Y)
+	local other: Vector2? = nil
+	local count: number = 0
+	for touch: InputObject, at: Vector2 in pairs(touches) do
+		count += 1
+		if touch ~= input then
+			other = at
+		end
+	end
+	touches[input] = position
+
+	--[[ Moving ]]
+
+	-- One finger drags, unless it points the aim
+	if count == 1 then
+		if not Module._isAiming() then
+			Module._panBy(position - last)
+		end
+		return
+	end
+
+	-- Two fingers drag by their middle, which moves half as far as one of them, and zoom by how their distance changed
+	Module._panBy((position - last) / 2)
+	local before: number = (last - other).Magnitude
+	local after: number = (position - other).Magnitude
+	if before > 0 and after > 0 then
+		Module._zoomTo(zoomGoal * before / after)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -507,6 +651,13 @@ function Module._getEdgePan(camera: Camera)
 
 	local mouse: Vector2 = I.S.UserInputService:GetMouseLocation()
 	local margin: number = _settings.EDGE_PAN_MARGIN * camera.ViewportSize.Y
+
+	--[[ Checks ]]
+
+	-- Check if the mouse is inside the window (it reads -1, -1 once it leaves)
+	if mouse.X < 0 or mouse.Y < 0 or mouse.X > camera.ViewportSize.X or mouse.Y > camera.ViewportSize.Y then
+		return 0
+	end
 
 	--[[ Returning ]]
 
@@ -558,15 +709,15 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Flying Snail
 
 --[[
-	Returns a snail moving faster than CHASE_SPEED (a blow sent it flying, or it fell): the one the camera already
-	chases while it still does, else the fastest; nil when none does.
+	Returns a snail in play moving faster than CHASE_SPEED (a blow sent it flying, or it fell): the one the camera
+	already chases while it still does, else the fastest; nil when none does.
 ]]
 --- @return Model?
 function Module._getFlyingSnail()
 	--[[ Checks ]]
 
-	-- Keep the snail it chases while that one still flies
-	if chased and chased.Parent == snailsFolder and chased.PrimaryPart and chased.PrimaryPart.AssemblyLinearVelocity.Magnitude >= _settings.CHASE_SPEED then
+	-- Keep the snail it chases while that one still flies (a knocked-out snail's anchored ball keeps its last speed: never chased)
+	if chased and chased.Parent == snailsFolder and chased:GetAttribute("Alive") and chased.PrimaryPart and chased.PrimaryPart.AssemblyLinearVelocity.Magnitude >= _settings.CHASE_SPEED then
 		return chased
 	end
 
@@ -575,7 +726,7 @@ function Module._getFlyingSnail()
 	local fastest: Model? = nil
 	local fastestSpeed: number = _settings.CHASE_SPEED
 	for _index: number, model: Instance in ipairs(snailsFolder:GetChildren()) do
-		if model:IsA("Model") and model.PrimaryPart and model.PrimaryPart.AssemblyLinearVelocity.Magnitude >= fastestSpeed then
+		if model:IsA("Model") and model:GetAttribute("Alive") and model.PrimaryPart and model.PrimaryPart.AssemblyLinearVelocity.Magnitude >= fastestSpeed then
 			fastest = model
 			fastestSpeed = model.PrimaryPart.AssemblyLinearVelocity.Magnitude
 		end
@@ -628,6 +779,70 @@ end
 --- @return number
 function Module._getHalfHeight()
 	return zoom * math.tan(math.rad(I.S.Workspace.CurrentCamera.FieldOfView / 2))
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Damped
+
+--[[
+	Returns a point moved one frame toward a goal on a critically damped spring that settles in about `smoothTime`
+	seconds, never faster than `maxSpeed` studs a second, and its new velocity (Unity's SmoothDamp).
+]]
+--- @return Vector3
+--- @return Vector3
+function Module._getDamped(current: Vector3, goal: Vector3, velocity: Vector3, smoothTime: number, maxSpeed: number, deltaTime: number)
+	--[[ Local Variables ]]
+
+	local omega: number = 2 / math.max(smoothTime, 0.0001)
+	local x: number = omega * deltaTime
+	local decay: number = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x)
+	local change: Vector3 = current - goal
+
+	-- The spring pulls at most as hard as reaching maxSpeed would
+	local maxChange: number = maxSpeed * smoothTime
+	if change.Magnitude > maxChange then
+		change = change.Unit * maxChange
+	end
+	local pull: Vector3 = (velocity + omega * change) * deltaTime
+
+	--[[ Returning ]]
+
+	return current - change + (change + pull) * decay, (velocity - omega * pull) * decay
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Dead Zoned
+
+--[[
+	Returns where the view should center to keep a point inside the middle of the screen (DEAD_ZONE of the view's half
+	size around where it looks now): where it looks while the point is inside, else moved just enough to bring it back.
+]]
+--- @return Vector3
+function Module._getDeadZoned(point: Vector3, camera: Camera)
+	--[[ Checks ]]
+
+	-- Check if the camera looks somewhere yet
+	if not focus then
+		return point
+	end
+
+	--[[ Local Variables ]]
+
+	local halfHeight: number = Module._getHalfHeight() * _settings.DEAD_ZONE
+	local halfWidth: number = halfHeight * camera.ViewportSize.X / camera.ViewportSize.Y
+	local offset: Vector3 = point - focus
+
+	--[[ Returning ]]
+
+	return focus + Vector3.new(offset.X - math.clamp(offset.X, -halfWidth, halfWidth), offset.Y - math.clamp(offset.Y, -halfHeight, halfHeight), 0)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Aiming
+
+--[[
+	Returns whether it's the player's own turn before their shot, when the camera stays with their snail.
+]]
+--- @return boolean
+function Module._isAiming()
+	return I.Match.IsMyTurn() and I.Match.GetPhase() == "Turn"
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

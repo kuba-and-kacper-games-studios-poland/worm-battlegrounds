@@ -1,5 +1,6 @@
 --[[
 	Created By: 	HungryN00B
+	Edited By: 	Nari
 ]]
 
 --- @type Ume
@@ -121,7 +122,7 @@ end
 
 --[[
 	Shows the mood's particles: the lobby's in front of the stage, a map's and its wind over its bounds once the map
-	has loaded.
+	has loaded (waiting for bounds that come after their markers).
 ]]
 function Module._refreshArea()
 	--[[ Data ]]
@@ -146,6 +147,17 @@ function Module._refreshArea()
 	local bounds: BasePart? = if found and found:IsA("BasePart") then found else nil
 	Ambient.ShowMap(profile, bounds)
 	Wind.Show(bounds, profile.WindColor, profile.WindSound)
+
+	--[[ Waiting ]]
+
+	-- The bounds can arrive after their markers (which only refresh this when they're added): look again once they're here
+	if markers and not found then
+		task.spawn(function()
+			if markers:WaitForChild("Bounds", 10) then
+				Module._refreshArea()
+			end
+		end)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Sudden Death

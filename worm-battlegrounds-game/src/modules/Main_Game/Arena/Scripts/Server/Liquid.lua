@@ -63,6 +63,9 @@ local blockParts = {} --- @type { Part }
 -- Each liquid's colour on this map: its marker's Arena_LiquidColor, else LIQUID_COLORS
 local colors = {} --- @type { [string]: Color3 }
 
+-- The liquids this map draws in Neon, so they glow: their marker's Arena_LiquidNeon
+local neon = {} --- @type { [string]: boolean }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
 
 --%%%%%%%%%%%%%%%%%%%% Is Free
@@ -182,8 +185,10 @@ function Module.Build()
 	blockParts = {}
 	reactive = false
 	colors = table.clone(_settings.LIQUID_COLORS)
+	neon = {}
 	for _index: number, marker: BasePart in ipairs(markers) do
 		colors[marker:GetAttribute("Arena_Liquid")] = marker:GetAttribute("Arena_LiquidColor") or colors[marker:GetAttribute("Arena_Liquid")]
+		neon[marker:GetAttribute("Arena_Liquid")] = marker:GetAttribute("Arena_LiquidNeon") or neon[marker:GetAttribute("Arena_Liquid")]
 	end
 	awake = false
 
@@ -689,8 +694,10 @@ end
 
 --[[
 	Redraws the liquid as merged stud parts when it changed. A run of one kind in a row merges with the same run in
-	the rows above into one rectangle, so still liquid is a few big blocks with no inner faces. A part is written
-	only when its size, place or look differs, so still areas send nothing to clients.
+	the rows above into one rectangle, so still liquid is a few big blocks with no inner faces. The sea is drawn
+	SEA_EDGE_WIDTH past the map's sides, up to its level: its blocks at the sides reach out, and a block outside tops it
+	up where land stands at a side. A part is written only when its size, place or look differs, so still areas send
+	nothing to clients.
 ]]
 function Module._render()
 	--[[ Checks ]]
@@ -707,6 +714,10 @@ function Module._render()
 
 	-- The rectangles the row below left open, by their run's start, end and kind (cols stay under 8192)
 	local open = {} --- @type { [number]: Arena_LiquidRect }
+
+	-- The sea standing on the floor in the map's first and last columns, in rows: it reaches past the map's sides
+	local leftRun: number = Module._getFloorRun(0)
+	local rightRun: number = Module._getFloorRun(cols - 1)
 
 	--[[ Merging ]]
 
@@ -739,14 +750,30 @@ function Module._render()
 		open = stillOpen
 	end
 
+	--[[ Edges ]]
+
+	-- Where land stands on a side of the map under the sea's level, the sea past that side is topped up to its level
+	local seaRows: number = math.round((seaLevel - origin.Y) / CELL)
+	local edgeCells: number = _settings.SEA_EDGE_WIDTH / CELL
+	if seaRows > leftRun then
+		table.insert(rects, { Start = -edgeCells, Length = edgeCells, Row = leftRun, Height = seaRows - leftRun, Kind = Module._getKindId(mapKind or "Water") })
+	end
+	if seaRows > rightRun then
+		table.insert(rects, { Start = cols, Length = edgeCells, Row = rightRun, Height = seaRows - rightRun, Kind = Module._getKindId(mapKind or "Water") })
+	end
+
 	--[[ Drawing ]]
 
 	--- @param rect Arena_LiquidRect
 	for index: number, rect in ipairs(rects) do
 		local part: Part = blockParts[index] or Module._createBlock()
 		local name: string = _settings.LIQUID_KINDS[rect.Kind]
-		local size: Vector3 = Vector3.new(rect.Length * CELL, rect.Height * CELL, depth)
-		local cframe: CFrame = CFrame.new(origin + Vector3.new((rect.Start + rect.Length / 2) * CELL, (rect.Row + rect.Height / 2) * CELL, 0))
+
+		-- The sea at the map's sides is drawn SEA_EDGE_WIDTH past them, so the camera never shows where it ends
+		local left: number = if rect.Start == 0 and rect.Row + rect.Height <= leftRun then _settings.SEA_EDGE_WIDTH else 0
+		local right: number = if rect.Start + rect.Length == cols and rect.Row + rect.Height <= rightRun then _settings.SEA_EDGE_WIDTH else 0
+		local size: Vector3 = Vector3.new(rect.Length * CELL + left + right, rect.Height * CELL, depth)
+		local cframe: CFrame = CFrame.new(origin + Vector3.new((rect.Start + rect.Length / 2) * CELL + (right - left) / 2, (rect.Row + rect.Height / 2) * CELL, 0))
 		blockParts[index] = part
 		if part.Size ~= size then
 			part.Size = size
@@ -757,6 +784,7 @@ function Module._render()
 		if part.Color ~= colors[name] then
 			part.Color = colors[name]
 			part.Transparency = _settings.LIQUID_TRANSPARENCY[name]
+			part.Material = if neon[name] then Enum.Material.Neon else Enum.Material.SmoothPlastic
 		end
 
 		-- Its kind, for clients' effects (Atmosphere's splashes, bubbles and glints)
@@ -947,6 +975,25 @@ function Module._getBody(parent, run: number)
 	--[[ Returning ]]
 
 	return current
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Floor Run
+
+--[[
+	Returns how many rows of liquid stand unbroken on the grid's floor in a column: the sea there.
+]]
+--- @return number
+function Module._getFloorRun(cx: number)
+	--[[ Counting ]]
+
+	local run: number = 0
+	while run < rows and buffer.readu8(liquid, run * cols + cx) > 0 do
+		run += 1
+	end
+
+	--[[ Returning ]]
+
+	return run
 end
 
 --%%%%%%%%%%%%%%%%%%%% Probe Solid

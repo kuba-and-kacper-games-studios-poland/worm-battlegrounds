@@ -18,6 +18,8 @@
 --- @field Motion string
 --- @field Pose string?
 --- @field Joint Weld?
+--- @field Weapon Model?
+--- @field WeaponHidden boolean
 --- @field Aim number?
 --- @field ShootUntil number?
 ---
@@ -27,6 +29,10 @@
 --- @field EmoteStart number?
 --- @field EmoteUntil number?
 --- @field EmoteBones { [Bone]: SnailRig_EmoteTransform }
+--- @field EmoteTrack AnimationTrack?
+--- @field FaceUntil number?
+--- @field FaceWeight number
+--- @field FaceJoints { [Bone | Motor6D]: SnailRig_EmoteTransform }
 ---
 --- # Walk #
 ---

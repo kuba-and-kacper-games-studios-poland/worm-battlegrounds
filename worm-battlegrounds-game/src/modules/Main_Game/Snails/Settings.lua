@@ -31,34 +31,13 @@ local _settings = {
 	WALK_ANIMATION_SPEED = 1.5,
 
 	--[[
-		A snail hides in its shell the moment it's hit, or when thrown (faster than HIDE_SPEED, not under its player's
-		control), and comes out once slower than SHOW_SPEED, HIDE_SECONDS after the hit or after it last flew that fast
+		A snail hides in its shell the moment it's hit, or when thrown (faster than HIDE_SPEED, and not the active snail
+		jumping or falling on its own), and comes out HIDE_SECONDS after the hit or after it last flew that fast, once
+		slower than SHOW_SPEED or, when it's the active snail, the moment it walks
 	]]
 	HIDE_SPEED = 25,
 	SHOW_SPEED = 2,
 	HIDE_SECONDS = 1,
-
-	--%%%%%%%%%%%%%%%%%%%% Shell
-
-	-- A snail's shell breaks once its health drops below this, and shows again when healing brings it back up
-	SHELL_BREAK_HEALTH = 50,
-
-	-- The skin part that breaks
-	SHELL_PART = "Shell",
-
-	-- The break: this many chips in the shell's colours, sized and thrown within these ranges, fade after this long
-	SHELL_CHIPS = 12,
-
-	--- @type { number }
-	SHELL_CHIP_SIZE = { 0.3, 0.6 },
-
-	--- @type { number }
-	SHELL_CHIP_SPEED = { 14, 26 },
-
-	SHELL_CHIP_LIFETIME = 1.5,
-
-	--- @type { Color3 }
-	SHELL_CHIP_COLORS = { Color3.fromRGB(232, 210, 160), Color3.fromRGB(214, 180, 120), Color3.fromRGB(176, 108, 52) },
 
 	--%%%%%%%%%%%%%%%%%%%% Ghosts
 
@@ -169,6 +148,42 @@ local _settings = {
 
 	-- The healing crosses are drawn this many times their made size, so they read from the match camera's distance
 	HEAL_VFX_SCALE = 2,
+
+	--%%%%%%%%%%%%%%%%%%%% Flight
+
+	--[[
+		The share of the Workspace's gravity snails feel, so they're light, as in Worms: the ball's Lift holds up the
+		rest while it walks, and a thrown snail flies the game's own simulation (Combat's Ballistics) with it
+	]]
+	GRAVITY_SCALE = 0.55,
+
+	--[[
+		A thrown snail bounces off what it hits harder than Combat's REST_SPEED with this share of its speed into it,
+		and lands once it rests on the ground: it's handed back to Roblox physics there, keeping FLIGHT_LAND_KEEP of
+		its speed to slide on
+	]]
+	FLIGHT_BOUNCE = 0.2,
+	FLIGHT_LAND_KEEP = 0.4,
+
+	-- The most a throw lasts before the snail is handed back to Roblox physics wherever it is, in seconds
+	FLIGHT_MAX_SECONDS = 8,
+
+	--%%%%%%%%%%%%%%%%%%%% Potions
+
+	-- The Vfx prefab whose particles stream around a snail while a potion's attribute is set on it
+	--- @type { [string]: string }
+	POTION_AURAS = { SpeedMultiplier = "Aura_Speed", LowGravity = "Aura_LowGravity" },
+
+	--[[
+		The vignette's colour on the player's own turn while their snail is under the Speed potion, the Low gravity
+		potion, or both
+	]]
+	POTION_VIGNETTE_SPEED = Color3.fromRGB(70, 200, 255),
+	POTION_VIGNETTE_LOW_GRAVITY = Color3.fromRGB(165, 95, 255),
+	POTION_VIGNETTE_BOTH = Color3.fromRGB(255, 95, 205),
+
+	-- How the vignette fades in, changes colour and fades out
+	POTION_VIGNETTE_TWEENINFO = TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
 }
 
 return _settings

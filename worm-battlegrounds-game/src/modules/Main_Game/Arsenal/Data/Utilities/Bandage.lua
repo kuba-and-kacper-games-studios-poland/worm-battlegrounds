@@ -15,6 +15,9 @@ local _data = {
 	--[[ Limits ]]
 
 	Uses = 2,
+
+	-- Once every 4 of the player's own turns
+	Cooldown = 3,
 }
 
 return _data

@@ -74,6 +74,9 @@ local EMOTE_BLEND_OUT: number = 0.25
 local FLIP_SECONDS: number = 0.9
 local FLIP_HEIGHT: number = 2.2
 
+-- While it emotes a snail turns to face the camera and back after, easing this share of the way each 1/60 s
+local FACE_TURN_EASE: number = 0.12
+
 --[[ Walk ]]
 
 -- The Walk animation plays this much faster than it was made, so its steps read
@@ -147,7 +150,7 @@ end
 
 --[[
 	Plays a skin's body motion: "Idle" or "Walk" (looped), or "Hidden", which snaps the snail into its shell (at
-	HIDE_PLAY_SPEED) and holds it there; leaving "Hidden" brings it back out.
+	HIDE_PLAY_SPEED) and holds it there; leaving "Hidden" brings it back out, and a walk cuts the shell's animations.
 ]]
 function SnailRig.SetMotion(skin: Model, motion: "Idle" | "Walk" | "Hidden")
 	--[[ Data ]]
@@ -170,6 +173,9 @@ function SnailRig.SetMotion(skin: Model, motion: "Idle" | "Walk" | "Hidden")
 	--[[ Hiding ]]
 
 	if motion == "Hidden" then
+		-- A hit wins over an emote: it stops, and the snail turns back from the camera
+		SnailRig._endEmote(rig)
+
 		SnailRig._stop(rig, "Idle", HIDE_FADE_TIME)
 		SnailRig._stop(rig, "Walk", HIDE_FADE_TIME)
 		local hide: AnimationTrack? = SnailRig._play(rig, "Hide", true, HIDE_FADE_TIME)
@@ -181,7 +187,11 @@ function SnailRig.SetMotion(skin: Model, motion: "Idle" | "Walk" | "Hidden")
 
 	--[[ Showing ]]
 
-	if leaving == "Hidden" then
+	-- A snail that walks off skips the way out, so the walk never plays over the shell
+	if motion == "Walk" then
+		SnailRig._stop(rig, "Hide")
+		SnailRig._stop(rig, "Show")
+	elseif leaving == "Hidden" then
 		SnailRig._stop(rig, "Hide", 0)
 		SnailRig._play(rig, "Show", false, 0)
 	end
@@ -199,8 +209,8 @@ end
 
 --[[
 	Holds an item in a skin's hands: plays its row's `HoldPose` (the Gun pose for an item without one), paused on its
-	first frame, and joins the weapon model to the skin's `Handle` at the model's `Grip` attachment. nil lets go of what
-	it held (the caller destroys the old model).
+	first frame, and joins the weapon model to the skin's `Handle` at the model's `Grip` attachment (hidden while the
+	snail emotes or is in its shell). nil lets go of what it held (the caller destroys the old model).
 ]]
 function SnailRig.Hold(skin: Model, itemId: string?, weapon: Model?)
 	--[[ Data ]]
@@ -226,6 +236,8 @@ function SnailRig.Hold(skin: Model, itemId: string?, weapon: Model?)
 	rig.Pose = nil
 	rig.Joint = nil
 	rig.ShootUntil = nil
+	rig.Weapon = weapon
+	rig.WeaponHidden = false
 
 	--[[ Checks ]]
 
@@ -322,16 +334,31 @@ end
 --%%%%%%%%%%%%%%%%%%%% Emote
 
 --[[
-	Plays an emote on a skin for a number of seconds: its animation from `Assets/Snails/Animations` (named after the
-	emote) once it exists, until then a stand-in motion of the body and hands made here, toward the camera.
+	Plays an emote on a skin for a number of seconds, the snail turned to face the camera (easing round and back) and
+	its held weapon hidden: its animation from `Assets/Snails/Animations` (named after the emote) once it exists, until
+	then a stand-in motion of the body and hands made here. Refused while the snail is hidden in its shell (hit or
+	thrown), which also ends one that plays. Returns whether it plays.
 ]]
+--- @return boolean
 function SnailRig.Emote(skin: Model, emoteId: string, seconds: number)
 	--[[ Data ]]
 
 	local rig = SnailRig._getRig(skin) --- @type SnailRig_Rig?
 	if not rig then
-		return
+		return false
 	end
+
+	--[[ Checks ]]
+
+	-- Check if the snail is hit or thrown
+	if rig.Motion == "Hidden" then
+		return false
+	end
+
+	--[[ Facing ]]
+
+	SnailRig._endEmote(rig)
+	rig.FaceUntil = os.clock() + seconds
 
 	--[[ Animation ]]
 
@@ -339,7 +366,8 @@ function SnailRig.Emote(skin: Model, emoteId: string, seconds: number)
 	if animationsFolder:FindFirstChild(emoteId) then
 		local track: AnimationTrack? = SnailRig._play(rig, emoteId, false)
 		if track then
-			return
+			rig.EmoteTrack = track
+			return true
 		end
 	end
 
@@ -349,6 +377,27 @@ function SnailRig.Emote(skin: Model, emoteId: string, seconds: number)
 	rig.Emote = (string.gsub(emoteId, "^Emote_", ""))
 	rig.EmoteStart = os.clock()
 	rig.EmoteUntil = rig.EmoteStart + seconds
+
+	--[[ Returning ]]
+
+	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Stop Emote
+
+--[[
+	Ends a skin's emote at once, when it plays one (its snail shot): the snail turns back and shows its weapon again.
+]]
+function SnailRig.StopEmote(skin: Model)
+	--[[ Data ]]
+
+	local rig = rigs[skin] --- @type SnailRig_Rig?
+
+	--[[ Stopping ]]
+
+	if rig then
+		SnailRig._endEmote(rig)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Pose
@@ -422,6 +471,15 @@ function SnailRig._step(deltaTime: number)
 
 	--- @param rig SnailRig_Rig
 	for _skin: Model, rig in pairs(rigs) do
+		-- Last frame's turn toward the camera comes off first, the last thing put on
+		--- @param applied SnailRig_EmoteTransform
+		for joint: Bone | Motor6D, applied in pairs(rig.FaceJoints) do
+			if joint.Transform == applied.Set then
+				joint.Transform = applied.Base
+			end
+		end
+		table.clear(rig.FaceJoints)
+
 		local hide: AnimationTrack? = rig.Tracks["Hide"]
 		if rig.Motion == "Hidden" and hide and hide.Length > 0 and hide.TimePosition >= hide.Length - HIDE_HOLD_MARGIN then
 			hide:AdjustSpeed(0)
@@ -435,15 +493,86 @@ function SnailRig._step(deltaTime: number)
 			end
 		end
 
-		-- Before the aim, which builds on where the walk put the hands and the weapon
+		-- The held weapon is put out of sight while the snail emotes, or hides in its shell and comes back out
+		local show: AnimationTrack? = rig.Tracks["Show"]
+		local shelled: boolean = rig.Motion == "Hidden" or (show ~= nil and show.IsPlaying)
+		local stowed: boolean = shelled or (rig.FaceUntil ~= nil and now < rig.FaceUntil)
+		if rig.Weapon and stowed ~= rig.WeaponHidden then
+			SnailRig._hideWeapon(rig, stowed)
+		end
+
+		-- Before the aim, which builds on where the walk put the hands and the weapon (in the shell, the hands stay in)
 		SnailRig._walk(rig, now, deltaTime)
-		if rig.Pose then
+		if rig.Pose and not shelled then
 			SnailRig._aimHands(rig, camera)
 		end
 		if rig.Emote then
 			SnailRig._emote(rig, now, camera)
 		end
+		SnailRig._face(rig, now, deltaTime, camera)
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Hide Weapon
+
+--[[
+	Hides or shows a rig's held weapon on this screen (its parts' and decals' LocalTransparencyModifier).
+]]
+--- @param rig SnailRig_Rig
+function SnailRig._hideWeapon(rig, hidden: boolean)
+	--[[ Applying ]]
+
+	rig.WeaponHidden = hidden
+	for _index: number, part: Instance in ipairs(rig.Weapon:GetDescendants()) do
+		if part:IsA("BasePart") or part:IsA("Decal") then
+			part.LocalTransparencyModifier = if hidden then 1 else 0
+		end
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Face Step
+
+--[[
+	Eases a skin round to face the camera while it emotes (not while it walks or hides) and back after, turning the
+	whole rig and the held weapon about the ball's upright axis, on top of everything else this frame.
+]]
+--- @param rig SnailRig_Rig
+function SnailRig._face(rig, now: number, deltaTime: number, camera: Vector3)
+	--[[ Easing ]]
+
+	local target: number = if rig.FaceUntil and now < rig.FaceUntil and rig.Motion ~= "Walk" then 1 else 0
+	rig.FaceWeight += (target - rig.FaceWeight) * (1 - (1 - FACE_TURN_EASE) ^ (deltaTime * 60))
+	if target == 0 and rig.FaceWeight < 0.001 then
+		rig.FaceWeight = 0
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local frame: CFrame = rig.Root.CFrame
+	local look: Vector3 = frame.LookVector * Vector3.new(1, 0, 1)
+	local flat: Vector3 = (camera - frame.Position) * Vector3.new(1, 0, 1)
+	if look.Magnitude < 0.01 or flat.Magnitude < 0.01 then
+		return
+	end
+	local yaw: number = math.atan2(look.Unit:Cross(flat.Unit).Y, look.Unit:Dot(flat.Unit))
+	local eased: number = rig.FaceWeight * rig.FaceWeight * (3 - 2 * rig.FaceWeight)
+	local pivot: Vector3 = frame.Position
+	local turn: CFrame = CFrame.new(pivot) * CFrame.Angles(0, yaw * eased, 0) * CFrame.new(-pivot)
+
+	--[[ Applying ]]
+
+	local body: Bone = rig.Body
+	local rest: CFrame = frame * body.CFrame
+	local bodyBase: CFrame = body.Transform
+	body.Transform = rest:Inverse() * turn * rest * bodyBase
+	rig.FaceJoints[body] = { Base = bodyBase, Set = body.Transform }
+
+	local motor: Motor6D = rig.Motor
+	local base: CFrame = motor.Part0.CFrame * motor.C0
+	local motorBase: CFrame = motor.Transform
+	motor.Transform = base:Inverse() * turn * base * motorBase
+	rig.FaceJoints[motor] = { Base = motorBase, Set = motor.Transform }
 end
 
 --%%%%%%%%%%%%%%%%%%%% Emote Step
@@ -789,7 +918,43 @@ function SnailRig._stop(rig, name: string, fadeTime: number?)
 	end
 end
 
+--%%%%%%%%%%%%%%%%%%%% End Emote
+
+--[[
+	Stops a rig's emote at once (its animation or stand-in) and lets the snail turn back from the camera, its weapon
+	shown again.
+]]
+--- @param rig SnailRig_Rig
+function SnailRig._endEmote(rig)
+	--[[ Stopping ]]
+
+	if rig.EmoteTrack then
+		rig.EmoteTrack:Stop(FADE_TIME)
+		rig.EmoteTrack = nil
+	end
+	if rig.Emote then
+		rig.EmoteUntil = os.clock()
+	end
+	rig.FaceUntil = nil
+end
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Can Emote
+
+--[[
+	Returns whether a skin may emote now: it's rigged and not hidden in its shell (hit or thrown).
+]]
+--- @return boolean
+function SnailRig.CanEmote(skin: Model)
+	--[[ Data ]]
+
+	local rig = SnailRig._getRig(skin) --- @type SnailRig_Rig?
+
+	--[[ Returning ]]
+
+	return rig ~= nil and rig.Motion ~= "Hidden"
+end
 
 --%%%%%%%%%%%%%%%%%%%% Get Rig
 
@@ -845,6 +1010,9 @@ function SnailRig._getRig(skin: Model)
 		Bones = bones,
 		Tracks = {},
 		EmoteBones = {},
+		FaceWeight = 0,
+		FaceJoints = {},
+		WeaponHidden = false,
 		WalkJoints = {},
 		WalkWeight = 0,
 		Motion = "",

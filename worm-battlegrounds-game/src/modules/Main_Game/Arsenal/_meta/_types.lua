@@ -93,4 +93,5 @@ local _arsenal_Snails = {}
 --- # Limits #
 ---
 --- @field Uses number
+--- @field Cooldown number?
 local _arsenal_UtilityData = {}

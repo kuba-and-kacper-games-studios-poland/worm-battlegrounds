@@ -50,8 +50,8 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	A thrown or placed bomb. One with a Fuse bounces around and explodes when it runs out (the Grenade, the Dynamite
-	placed at the feet); one that bursts on contact explodes on the first thing it touches (Cluster bomb, Variety
+	A thrown or placed bomb. One with a Fuse explodes when it runs out (the Dynamite placed at the feet), or when it
+	comes to rest if it was thrown (the Grenade); one that bursts on contact explodes on the first thing it touches (Cluster bomb, Variety
 	grenade); water or lava only slows it. Then a cluster bomb scatters its bomblets and a variety grenade lets out its
 	snails.
 ]]
@@ -69,18 +69,19 @@ function Module.Run(shot)
 	local burst: Vector3? = nil
 
 	-- A thrown bomb's fuse runs in its slowed flight time, a placed one's in real seconds
-	local fuse: number? = if row.Fuse and row.Aim ~= "Feet" then row.Fuse / _settings.PROJECTILE_TIME_SCALE else row.Fuse
+	local thrown: boolean = row.Aim ~= "Feet"
+	local fuse: number? = if row.Fuse and thrown then row.Fuse / _settings.PROJECTILE_TIME_SCALE else row.Fuse
 
 	--[[ Flying ]]
 
-	-- Water or lava only slows it: it bursts on what it touches under them, or when its fuse runs out
+	-- Water or lava only slows it: it bursts on what it touches under them, when its fuse runs out, or (thrown) as it comes to rest
 	for elapsed: number, hit: RaycastResult? in Projectiles.Fly(body) do
 		if Projectiles.IsGone(body, elapsed) then
 			break
 		elseif body.Stopped then
 			burst = if hit then hit.Position else body.Position
 			break
-		elseif fuse and elapsed >= fuse then
+		elseif fuse and (elapsed >= fuse or thrown and body.Grounded and body.Velocity.Magnitude < 1e-3) then
 			burst = body.Position
 			break
 		end

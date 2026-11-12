@@ -41,7 +41,7 @@ use, and the plane snails are held on, and tells others when a map is ready (`Ar
 | `Scripts/Server/Carver.lua` | A carve on the server: cuts every anchored terrain part the cutter reaches, bedrock included, all at once, then parents every piece (marked `Arena_Carve`, the carve's number) before it removes any part, so clients never see a gap |
 | `Scripts/Server/Debris.lua` | Contacts between parts, the support search from each carved piece (held up by bedrock whose bottom still reaches the floor; a cut ledge keeps only its biggest piece), numbering the ledges at load, and the falls: each loose group (lowest first) is swept straight down to where it lands, then moved there by gravity every frame and left anchored, or removed below the arena; the liquid looks again where a group landed and where it fell from |
 | `Scripts/Server/Props.lua` | The map's props (`Arena_Prop`: trees, bushes, rocks): after each blast, cuts the blast's stepped shape (Cutter's `Build`) through every part of the ones it reaches (CSG), throws each group of pieces no longer joined to the prop's base, drops the ones whose ground is gone, and fades what falls |
-| `Scripts/Server/Liquid.lua` | The liquid grid: filling it from the markers over several frames, probing which cells terrain fills, the 8 fps step (falling, spreading, then pressure across each connected body, then on a map with both water and lava the water touching lava turning to obsidian), marking the liquid joined to the sea (`IsSea(position)`, which `GetHazard` reads), drawing the liquid as merged rectangles |
+| `Scripts/Server/Liquid.lua` | The liquid grid: filling it from the markers over several frames, probing which cells terrain fills, the 8 fps step (falling, spreading, then pressure across each connected body, then on a map with both water and lava the water touching lava turning to obsidian), marking the liquid joined to the sea (`IsSea(position)`, which `GetHazard` reads), drawing the liquid as merged rectangles, the sea reaching `SEA_EDGE_WIDTH` past the map's sides |
 | `Scripts/Server/Obsidian.lua` | `Build`: the cells that turned to obsidian, merged like the liquid (each row's runs with the same run in the row below) into `Obsidian` parts in the map's `Terrain`: `OBSIDIAN_COLOR`, SmoothPlastic with `OBSIDIAN_VARIANT`, anchored, in the `Terrain` group |
 | `Scripts/Client/Carver.lua` | The hole on this screen: on `Arena_Carve` it cuts the terrain parts there itself (one carve at a time), hides each part (`LocalTransparencyModifier`) and shows its local pieces in `Predicted`; a server piece arriving from an earlier carve is cut again at once by the later ones; the local pieces go when the server removes their part, or after `PREDICT_TIMEOUT` when it never does |
 | `Scripts/Client/Falling.lua` | On `Arena_Fall`, moves the group down every frame by the same gravity on the server's clock, so it falls smoothly |
@@ -112,6 +112,7 @@ end
 | `LIQUID_PROBE_SCALE` | `0.5` | A cell is solid when terrain reaches into a box this share of its size around its center |
 | `LIQUID_BUILD_ROWS_PER_FRAME` | `8` | How many grid rows a map's load probes before it gives the server a frame |
 | `SEA_SLACK` | `1` | Liquid knocks snails out only in the sea (the liquid whose marker starts at the bounds' bottom, raised by sudden death), up to this many studs above its level as it ripples, and in liquid joined to it; a pond higher up on its own (Desert's oasis) is safe |
+| `SEA_EDGE_WIDTH` | `50` | How far the sea is drawn past the map's left and right sides, up to its level, so the camera never shows where it ends: the sea's blocks at the sides reach out, and a block outside tops it up where land stands at a side. Only drawn: the grid stops at the sides, and out there is out of bounds |
 | `SEA_MARK_STEPS` | `8` | Every this many liquid steps (and after a build and each `RaiseLiquid`) the liquid joined to the sea is marked again |
 | `OBSIDIAN_COLOR`, `OBSIDIAN_VARIANT` | `(38, 28, 52)`, `"2022 Stud"` | The obsidian parts lava makes of the water it touches: their colour and MaterialService variant (on SmoothPlastic, like the terrain) |
 | `LAND_SPOT_STEP`, `LAND_SPOT_GAP` | `2`, `16` | `GetLandSpots` looks for ground every 2 studs along the arena, on every storey, and keeps spots 16 studs apart while there's room |
@@ -135,24 +136,27 @@ any terrain, and a piece of it whose bottom still reaches the map's floor (the b
 up everything it touches, while a piece cut loose from the floor falls. Every map needs some. `Arena_Floats = true` marks floating terrain (ledges). At load each group of touching ledge parts gets its own number, `Arena_Ledge`; when a blast cuts a ledge apart, its biggest piece keeps floating and every other piece falls (and is plain ground where it lands). Carved pieces keep these attributes |
 | `<MapId>.Decor` | Parts never carved and touching nothing (no collision, queries or touches): the backdrop wall, trees, bushes. A Model or part with `Arena_Prop = true` stands on the terrain. A blast cuts its hole through a Model prop's parts and throws the pieces it frees from the base; a one-part prop (a mesh) it reaches is thrown whole; a prop falls when the ground under its base goes (under its pivot: a part-built prop's trunk, so a tree leaning over a drop stays up). What falls or flies fades out after `PROP_FADE_DELAY` |
 | `<MapId>.Markers.Bounds` | The play area: the liquid grid covers it (as deep as the ground, below), the cutter is its depth, debris below it is removed, and nothing starts in its top `START_TOP_GAP` |
-| `<MapId>.Markers.<any>` with `Arena_Liquid` | A box filled with that liquid at load (`"Water"` or `"Lava"`); the grid reaches up to the highest one. An optional `Arena_LiquidColor` (Color3) colours that liquid on this map instead of `LIQUID_COLORS` |
+| `<MapId>.Markers.<any>` with `Arena_Liquid` | A box filled with that liquid at load (`"Water"` or `"Lava"`); the grid reaches up to the highest one. An optional `Arena_LiquidColor` (Color3) colours that liquid on this map instead of `LIQUID_COLORS`, and `Arena_LiquidNeon` (true) draws it in Neon instead of the stud look, so it glows |
 
 The arena plays on the X–Y plane at Z = 0 (snails spawn and the drop picks there); terrain parts should share the
 bounds' depth on Z. The liquid is drawn as deep as the map's ground, measured at load: from the middle of its bedrock
 blocks' backs to the middle of their fronts (Loader's `GetGroundDepth`, the bounds' depth on a map without bedrock),
 so it never sticks out in front of the ground or behind it (Z −5 to 5 on Picnic Plains and Desert, −6.5 to 2 on
 Rockslide Ridge). The templates stand side by side along +X, one per slot 400 studs apart (MapLab's slots, so none
-overlaps another in Studio): `PicnicPlains` at X 0, `Desert` at 400, `RockslideRidge` at 800, each centred on its
-slot's X with its Bounds at Z = 0; a match plays wherever its template stands. A template whose Bounds aren't on
+overlaps another in Studio): `PicnicPlains` at X 0, `Desert` at 400, `RockslideRidge` at 800, `VolcanoIsle` at 1200, each centred on its
+slot's X with its Bounds at Z = 0. A match plays at X 0 whatever the slot: the Loader moves each template so its
+Bounds stand at X 0 when it caches it, by the spawn, since until a player's snail drops streaming sends them only
+what's within `StreamingTargetRadius` (1024) of their parked avatar (Volcano Isle, at 1200, didn't show before). A template whose Bounds aren't on
 Z = 0 (dragged off it in Studio) is moved back onto the plane at start, with a warning naming the map. Inside `Terrain` and `Decor`, folders only organize the map: everything reads their descendants, and carved pieces go
 to `Terrain` itself. `PicnicPlains` (the first map, built by the studio, cleaned and rebuilt with MapLab, the game home's map kit) is
 three islands at the waterline and four floating ledges over a 282-stud sea (`Terrain/Island_1`–`3`,
 `Ledge_1`–`4`, left to right, 537 parts on the 1-stud grid named `Grass`, `Dirt`, `DarkDirt`, `Stone`, `DarkStone`;
 `Decor/Backdrop`, `Trees`, `Bushes`, `Rocks`): each island's bedrock (Y 4 to 8, half in the sea, whose surface is at Y 6.5) is a `DarkStone` part with
 `Arena_Indestructible`, every ledge part has `Arena_Floats`, and its 18 trees, bushes and rocks are part-built
-`Arena_Prop` Models (parts named `Trunk`, `Leaves`, `Needles`, `Spot`, `Bush`, `Rock`). The template it replaced is
-kept in the place's `Workspace._Labs.MapLab._Iterations` (`PicnicPlains_arena_1`); the greybox before it in
-`ServerStorage.!dump`. `Desert` (made in MapLab) is two storeys over lava: one main island standing on the lava
+`Arena_Prop` Models (parts named `Trunk`, `Leaves`, `Needles`, `Spot`, `Bush`, `Rock`). The templates each map
+replaced are kept in the place's `Workspace._Labs.MapLab._Iterations` (`<MapId>_arena_<n>`); Picnic Plains'
+greybox in `ServerStorage.!dump`. Every map's backdrop eases down to its liquid at the ends instead of standing as a
+straight wall (2026-11-12). `Desert` (made in MapLab) is two storeys over lava: one main island standing on the lava
 (`Terrain/Island_1`, x 290 to 512, its `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`) with an oasis
 pool, and two long floating islands above it (`Ledge_1`, x 272 to 364, `Ledge_2`, x 394 to 522, every part with
 `Arena_Floats`); 461 parts named `Sand`, `DarkSand`, `Sandstone`, `DarkSandstone`, `Clay`, `DarkStone`. Markers:
@@ -160,10 +164,22 @@ pool, and two long floating islands above it (`Ledge_1`, x 272 to 364, `Ledge_2`
 Y 16 to 23), the only map with both liquids, so the oasis water the lava reaches turns to obsidian. Its 24 props are part-built `Arena_Prop` Models in `Decor/Cacti`, `Trees` (palms), `Bushes`, `Rocks`
 (parts named `Cactus`, `Flower`, `Trunk`, `Ring`, `Leaves`, `Coconut`, `Twig`, `Bush`, `Rock`).
 `RockslideRidge` (built by the owner in Studio, not in MapLab; x 655 to 945) is rock pillars over a yellow sea: eight islands standing on the floor (`Terrain/Island_1`–`8`, their 46
-floor parts from Y −2.5 with `Arena_Indestructible`) and eight floating ledges (`Ledge_1`–`8`, 138 parts with
-`Arena_Floats`), among them a long overhead ridge (Y 68 to 96) and a low bridge across the middle lake; 295 parts
-named `Stone`, `Rock`, `Dirt`, and 104 `Decor/Backdrop` parts behind them. Markers: `Sea` (`Water`, Y −4.5 to 14.5,
+floor parts from Y −2.5 with `Arena_Indestructible`) and eight floating ledges (`Ledge_1`–`8`, 167 parts with
+`Arena_Floats`), among them a long overhead ridge (`Ledge_1`, Y 70.6 to 96, its last 32 studs at each end thinning
+to a blunt tip in 2-stud columns) and a low bridge across the middle lake; 324 parts named `Stone`, `Rock`, `Dirt`,
+and 201 `Decor/Backdrop` parts behind them (pillars with rounded tops and scree slopes at their feet). Markers: `Sea` (`Water`, Y −4.5 to 14.5,
 `Arena_LiquidColor` 248, 217, 109) and `Bounds` (290 × 111 × 25).
+`VolcanoIsle` (made in MapLab; x 1059 to 1341) is a volcano over a sea of lava: three islands standing on it
+(`Terrain/Island_1`, the west islet, x 1067 to 1104; `Island_2`, the volcano's base, x 1124 to 1284; `Island_3`, the
+east islet, x 1303 to 1336; their `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`) and four floating
+ledges with `Arena_Floats`: a basalt shelf over each islet (`Ledge_1`, Y 51 to 62; `Ledge_4`, Y 54 to 66), a small rock
+between the west islet and the volcano (`Ledge_2`), and the volcano's cone (`Ledge_3`, x 1158 to 1244, Y 34 to 73,
+171 parts), which floats over a lava tube running right through the volcano from porch to porch (Y 26 to 36), through a
+magma chamber. A cave with one mouth sits at each of the volcano's feet and in each islet's face toward it. 479 parts
+named `Ash`, `Basalt`, `DarkBasalt`, `Scoria` (lining the passages), `Ember` (round the lava), `DarkStone`. Markers:
+`Sea` (Y −8 to 6.5, the sea, which knocks snails out and sudden death raises), `Crater` (x 1198 to 1210, Y 63 to 67) and
+`Chamber` (x 1197 to 1203, Y 27 to 28), all `Lava` with `Arena_LiquidColor` 255, 81, 58 and `Arena_LiquidNeon`. Its 17
+props are part-built `Arena_Prop` Models in `Decor/Trees` (dead trees), `Bushes`, `Rocks` (rocks and basalt columns).
 
 ## Commands
 

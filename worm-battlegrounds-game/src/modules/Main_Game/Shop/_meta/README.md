@@ -63,5 +63,7 @@ No remotes of its own: purchases use Marketplace's `Marketplace_PromptProductPur
 
 ## In the place
 
-Drives the `Shop` widget (`U_Packs` › `PREFAB | Pack`, `U_Passes` › `PREFAB | Pass`). Sets
+Drives the `Shop` widget (`U_Packs` › `PREFAB | Pack`: `S_Icon`, `S_Name`, `S_Info`, `S_Buy` › `S_Price`; `U_Passes` ›
+`PREFAB | Pass`: `S_Name`, `S_Benefits`, `S_Buy` › `S_RobuxIcon`, `S_Price`, coloured from the button's `Look_*` and
+`Look_Owned*` attributes, "Owned" once owned). Sets
 `TextChatService.OnIncomingMessage` on the client.

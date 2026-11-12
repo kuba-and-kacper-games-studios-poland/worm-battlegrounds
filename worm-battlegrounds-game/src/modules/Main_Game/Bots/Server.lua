@@ -253,7 +253,7 @@ function Module._walk(participantId: string, model: Model, plan, placing: boolea
 	--[[ Local Variables ]]
 
 	local origin: Vector3 = model.PrimaryPart.Position
-	local jump: number = I.Settings["SnailControl"].JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity)
+	local jump: number = I.Settings["SnailControl"].JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity * I.Settings["Snails"].GRAVITY_SCALE)
 	local climbTo: number? = if plan.Spot.Position.Y - origin.Y > jump then plan.Spot.Position.Y else nil
 	local keepGoing: () -> boolean = function()
 		return Module._isTurn(participantId)

@@ -103,9 +103,22 @@ local _settings = {
 	-- Blasts shake and vibrate less the farther they are from the middle of the view, and not at all past this, in studs
 	FEEL_RANGE = 90,
 
-	-- How hard a full-strength blast shakes the camera (CameraShake's Magnitude), and how long it takes to settle, in seconds
-	SHAKE_MAGNITUDE = 4,
-	SHAKE_SETTLE = 0.45,
+	--[[
+		A full-strength blow jolts the camera (SHAKE_KICK, CameraShake's Magnitude, gone in SHAKE_KICK_SETTLE seconds),
+		then rumbles it (SHAKE_MAGNITUDE, settling over SHAKE_SETTLE seconds)
+	]]
+	SHAKE_KICK = 10,
+	SHAKE_KICK_SETTLE = 0.18,
+	SHAKE_MAGNITUDE = 6.5,
+	SHAKE_SETTLE = 0.7,
+
+	--[[
+		A hit on a snail adds its own shake, at full strength for HIT_SHAKE_DAMAGE damage, plus KNOCKOUT_SHAKE when it
+		knocks the snail out; each gun shot kicks the camera at GUN_SHAKE strength
+	]]
+	HIT_SHAKE_DAMAGE = 60,
+	KNOCKOUT_SHAKE = 0.8,
+	GUN_SHAKE = 0.15,
 
 	--[[
 		A blast at least this strong vibrates a phone or pad (the Combat_BlastBig and Combat_BlastSmall haptic presets);

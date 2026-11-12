@@ -66,6 +66,26 @@ local powerSizes = {} --- @type { number }
 local powerShares = {} --- @type { number }
 local targetMarker: Part
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
+
+--%%%%%%%%%%%%%%%%%%%% Get Power Color
+
+--[[
+	Returns the power cone's colour a share of the way along it (0 at the first circle's middle, 1 at the last's),
+	between the two POWER_COLORS it falls between.
+]]
+local function getPowerColor(share: number): Color3
+	--[[ Local Variables ]]
+
+	local colors = _settings.POWER_COLORS --- @type { Color3 }
+	local at: number = math.clamp(share, 0, 1) * (#colors - 1)
+	local from: number = math.min(math.floor(at) + 1, #colors - 1)
+
+	--[[ Returning ]]
+
+	return colors[from]:Lerp(colors[from + 1], at - (from - 1))
+end
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -89,6 +109,7 @@ function Module.Start(gui: ScreenGui)
 
 	elems["Power"] = gui:FindFirstChild("U_Power", true) --- @type Frame
 	elems["PowerBar"] = elems["Power"]:FindFirstChild("S_Bar") --- @type ImageLabel
+	elems["PowerMask"] = elems["Power"]:FindFirstChild("S_BarMask") --- @type ImageLabel
 	elems["Handle"] = elems["Power"]:FindFirstChild("S_Handle") --- @type ImageButton
 	elems["Amount"] = elems["Handle"]:FindFirstChild("S_Amount") --- @type TextLabel
 	elems["Info"] = elems["Power"]:FindFirstChild("S_Info") --- @type TextLabel
@@ -128,8 +149,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Build Look
 
 --[[
-	Makes the power cone's circles from the gui's PREFAB | PowerDot (each later one drawn over the one before, coloured
-	dark red to pale yellow) and the homing target marker, hidden.
+	Makes the power cone's circles from the gui's PREFAB | PowerDot (each later one drawn over the one before, its
+	gradient running the cone's colours from its back edge to its front, so they blend into one) and the homing target
+	marker, hidden.
 ]]
 function Module._buildLook(combatFolder: Instance)
 	--[[ Power ]]
@@ -138,12 +160,16 @@ function Module._buildLook(combatFolder: Instance)
 		--[[ Local Variables ]]
 
 		local along: number = (index - 1) / math.max(_settings.POWER_DOTS - 1, 1)
+		local size: number = _settings.POWER_DOT_SIZE[1] + (_settings.POWER_DOT_SIZE[2] - _settings.POWER_DOT_SIZE[1]) * along
+
+		-- Its edges' shares of the way along the cone
+		local half: number = size / 2 / _settings.POWER_LENGTH
 
 		--[[ Cloning ]]
 
 		local dot: Frame = prefabs["PowerDot"]:Clone()
 		dot.Name = "PowerDot"
-		dot.BackgroundColor3 = _settings.POWER_COLORS[1]:Lerp(_settings.POWER_COLORS[2], along)
+		dot.UIGradient.Color = ColorSequence.new(getPowerColor(along - half), getPowerColor(along + half))
 		dot.ZIndex = index
 		dot.Visible = false
 		dot.Parent = elems["Aim"]
@@ -151,7 +177,7 @@ function Module._buildLook(combatFolder: Instance)
 		--[[ Saving ]]
 
 		powerDots[index] = dot
-		powerSizes[index] = _settings.POWER_DOT_SIZE[1] + (_settings.POWER_DOT_SIZE[2] - _settings.POWER_DOT_SIZE[1]) * along
+		powerSizes[index] = size
 		powerShares[index] = along
 	end
 
@@ -402,15 +428,17 @@ function Module._step()
 
 	--[[ Slider ]]
 
-	-- The bar's gradient cuts the picture at the power (its fill is BAR_FILL of its width), so it never squashes; the handle rides its edge
+	-- The bar's and its texture's gradients cut the pictures at the power (the fill is BAR_FILL of their width), so they never squash; the handle rides the edge
 	local bar: ImageLabel = elems["PowerBar"]
 	local edge: number = math.clamp(power, 0.001, 0.998) * _settings.BAR_FILL
-	bar.UIGradient.Transparency = NumberSequence.new({
+	local cut: NumberSequence = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0),
 		NumberSequenceKeypoint.new(edge, 0),
 		NumberSequenceKeypoint.new(edge + 0.001, 1),
 		NumberSequenceKeypoint.new(1, 1),
 	})
+	bar.UIGradient.Transparency = cut
+	elems["PowerMask"].UIGradient.Transparency = cut
 	elems["Handle"].Position = UDim2.fromScale(bar.Position.X.Scale + bar.Size.X.Scale * _settings.BAR_FILL * power, elems["Handle"].Position.Y.Scale)
 	elems["Amount"].Text = `{math.round(power * 100)}%`
 	elems["Info"].Text = `{math.round(math.deg(math.asin(math.sin(angle))))}°`
@@ -563,6 +591,7 @@ function Module._draw(model: Model, aimAngle: number, aimPower: number)
 	local reach: number = first + (_settings.POWER_LENGTH + _settings.POWER_DOT_SIZE[2] / 2 + _settings.POWER_GAP + _settings.CROSSHAIR_SIZE / 2) * unit
 	local crosshairAt: Vector2 = origin + direction * reach
 	local fill: number = aimPower * #powerDots
+	local gradientRotation: number = math.deg(math.atan2(direction.Y, direction.X))
 
 	--[[ Weapon ]]
 
@@ -592,6 +621,7 @@ function Module._draw(model: Model, aimAngle: number, aimPower: number)
 		local at: Vector2 = origin + direction * (first + _settings.POWER_LENGTH * unit * powerShares[index])
 		dot.Position = UDim2.fromOffset(at.X, at.Y)
 		dot.Size = UDim2.fromOffset(grown, grown)
+		dot.UIGradient.Rotation = gradientRotation
 		dot.Visible = grown > 0
 	end
 end
@@ -640,6 +670,11 @@ function Module._fire()
 	I.Network.Fire("Combat_Fire", itemId, shotAngle, shotPower, target)
 	I.Haptic.PlayOnce("Combat_Fire")
 	firedItem = itemId
+
+	-- Shooting ends an emote on this screen at once, before the server's word reaches every screen
+	if mine and mine:FindFirstChild("Skin") then
+		I.SnailRig.StopEmote(mine:FindFirstChild("Skin"))
+	end
 
 	--[[ Clearing ]]
 

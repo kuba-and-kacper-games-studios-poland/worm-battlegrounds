@@ -15,11 +15,6 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 local elems = {} --- @type { [string]: Instance }
 local prefabs = {} --- @type { [string]: Instance }
 
---[[ General ]]
-
--- Whether the lobby's emote row shows its emotes, or only the smiley and +
-local rowOpen: boolean = true
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
 
 --%%%%%%%%%%%%%%%%%%%% Get Button
@@ -55,7 +50,6 @@ function Module.Start()
 
 	local hud: ScreenGui = I.UserInterface.UI[_settings.MATCH_HUD_GUI_NAME]
 	elems["Row"] = I.UserInterface.UI[_settings.LOADOUT_GUI_NAME]:FindFirstChild("U_Emotes", true) --- @type ScrollingFrame
-	elems["Smiley"] = elems["Row"]:FindFirstChild("S_Smiley") --- @type ImageButton
 	elems["EmoteButton"] = hud:FindFirstChild("U_EmoteButton", true) --- @type GuiObject
 	elems["Wheel"] = hud:FindFirstChild("U_EmoteWheel", true) --- @type Frame
 	elems["Party"] = I.UserInterface.UI[_settings.PARTY_GUI_NAME]:FindFirstChild("U_Members", true) --- @type Frame
@@ -68,10 +62,6 @@ function Module.Start()
 
 	--[[ Connections ]]
 
-	I.Interact.OnPress(elems["Smiley"], function()
-		rowOpen = not rowOpen
-		Module._refresh()
-	end)
 	I.Interact.OnPress(getButton(elems["EmoteButton"]), function()
 		elems["Wheel"].Visible = not elems["Wheel"].Visible
 	end)
@@ -92,7 +82,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the owned emotes twice: in the lobby's emote row (while it's open), and around the match's emote wheel.
+	Draws the owned emotes twice: in the lobby's emote row (before its + for the emote shop), and around the match's
+	emote wheel.
 ]]
 function Module._refresh()
 	--[[ Clearing ]]
@@ -122,7 +113,7 @@ function Module._refresh()
 		local angle: number = math.rad(index / #owned * 360 - 90)
 		local rowEmote: GuiObject = Module._makeEmote(prefabs["Emote"], emoteId)
 		rowEmote.LayoutOrder = index
-		rowEmote.Visible = rowOpen
+		rowEmote.Visible = true
 		rowEmote.Parent = elems["Row"]
 		local wheelEmote: GuiObject = Module._makeEmote(prefabs["WheelEmote"], emoteId)
 		wheelEmote.Position = UDim2.fromScale(0.5 + math.cos(angle) * _settings.WHEEL_RADIUS, 0.5 + math.sin(angle) * _settings.WHEEL_RADIUS)
@@ -164,6 +155,12 @@ function Module._makeEmote(prefab: Instance, emoteId: string)
 
 	I.Interact.OnPress(getButton(card), function()
 		elems["Wheel"].Visible = false
+
+		-- A snail that's hit or thrown can't emote
+		local skin: Model? = Module._getSkin(I.S.Players.LocalPlayer.UserId, I.S.Players.LocalPlayer)
+		if skin and not I.SnailRig.CanEmote(skin) then
+			return
+		end
 		I.Network.Fire("Cosmetics_PlayEmote", emoteId)
 	end)
 
@@ -229,9 +226,10 @@ function Module._onEmotePlayed(userId: number, emoteId: string)
 
 	--[[ Animating ]]
 
+	-- Refused while the snail is hit or thrown on this screen: no bubble either
 	local skin: Model? = Module._getSkin(userId, player)
-	if skin then
-		I.SnailRig.Emote(skin, emoteId, _settings.EMOTE_SECONDS)
+	if skin and not I.SnailRig.Emote(skin, emoteId, _settings.EMOTE_SECONDS) then
+		return
 	end
 
 	--[[ Bubbles ]]

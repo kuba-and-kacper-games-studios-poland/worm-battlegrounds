@@ -306,7 +306,7 @@ end
 
 --[[
 	Returns whether a simulated shot is over without a blast: lost (IsLost), or sinking through liquid for SINK_SECONDS
-	(one resting on the ground under it waits for its fuse).
+	(one resting on the ground under it is left to its behavior).
 ]]
 --- @param body Combat_Body
 --- @return boolean

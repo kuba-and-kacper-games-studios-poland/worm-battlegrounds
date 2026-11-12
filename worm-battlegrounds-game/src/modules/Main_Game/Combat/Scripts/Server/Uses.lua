@@ -58,7 +58,7 @@ end
 
 --[[
 	**SERVER** |
-	Fills every participant's uses for a new match from their loadout (the Bazooka always), each item with a Cooldown
+	Fills every participant's uses for a new match from their loadout (the Bazooka always), each weapon with a Cooldown
 	already on it, so it waits that many of the player's own turns before its first use, and tells each player their
 	loadout and uses.
 ]]
@@ -77,8 +77,9 @@ function Module.Reset()
 			if row then
 				uses[participant.Id][itemId] = row.Uses
 
-				-- Strong items start on their cooldown, as if used just before the first turn (Take)
-				cooldowns[participant.Id][itemId] = if row.Cooldown and row.Cooldown > 0 then row.Cooldown + 1 else 0
+				-- Strong weapons start on their cooldown, as if used just before the first turn (Take); utilities are ready
+				local starts: boolean = I.G_Arsenal.IsWeapon(itemId) and row.Cooldown ~= nil and row.Cooldown > 0
+				cooldowns[participant.Id][itemId] = if starts then row.Cooldown + 1 else 0
 			end
 		end
 		Module._publish(participant)

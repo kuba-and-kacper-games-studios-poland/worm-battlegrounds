@@ -300,7 +300,7 @@ function Module.GetThrow(position: Vector3, velocity: Vector3, holes)
 
 	local snails = I.Settings["Snails"] --- @type Snails_Settings
 	local radius: number = snails.ROOT_SIZE / 2
-	local gravity: Vector3 = Vector3.new(0, -I.S.Workspace.Gravity, 0)
+	local gravity: Vector3 = Vector3.new(0, -I.S.Workspace.Gravity * snails.GRAVITY_SCALE, 0)
 	local at: Vector3 = position
 	local speed: Vector3 = velocity
 	local peak: number = position.Y
@@ -523,7 +523,8 @@ function Module._fly(start: Vector3, velocity: Vector3, options, row, left: Mode
 
 	local combat = I.Settings["Combat"] --- @type Combat_Settings
 	local body = I.G_Combat.NewBody(start, velocity, options) --- @type Combat_Body
-	local fuse: number? = if row and row.Fuse and row.Aim ~= "Feet" then row.Fuse / combat.PROJECTILE_TIME_SCALE elseif row then row.Fuse else nil
+	local thrown: boolean = row ~= nil and row.Aim ~= "Feet"
+	local fuse: number? = if row and row.Fuse and thrown then row.Fuse / combat.PROJECTILE_TIME_SCALE elseif row then row.Fuse else nil
 	world.Exclude = { I.Dirs.UmeWorkspace:FindFirstChild("Combat"), left }
 
 	--[[ Flying ]]
@@ -536,7 +537,7 @@ function Module._fly(start: Vector3, velocity: Vector3, options, row, left: Mode
 			return nil, body.Ignore
 		elseif body.Stopped then
 			return if hit then hit.Position else body.Position, body.Ignore
-		elseif fuse and elapsed >= fuse then
+		elseif fuse and (elapsed >= fuse or thrown and body.Grounded and body.Velocity.Magnitude < 1e-3) then
 			return body.Position, body.Ignore
 		elseif options.Target and body.Step >= (options.LockStep or 0) and (options.Target - body.Position).Magnitude <= combat.CONTACT_DISTANCE then
 			return body.Position, body.Ignore

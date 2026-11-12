@@ -6,15 +6,15 @@ local _settings = {
 	-- Walking speed along the plane, in studs per second
 	WALK_SPEED = 8,
 
-	-- A jump's upward speed, in studs per second: about 5 studs high at Roblox's default gravity
-	JUMP_SPEED = 44,
+	-- A jump's upward speed, in studs per second: about 5 studs high at a snail's light gravity (Snails' GRAVITY_SCALE)
+	JUMP_SPEED = 33,
 
 	-- Ledges up to STEP_HEIGHT studs are climbed by walking into them, with an upward push of STEP_SPEED
 	STEP_HEIGHT = 2,
 	STEP_SPEED = 16,
 
 	-- How far a snail may walk in one turn, in studs
-	STAMINA_STUDS = 20,
+	STAMINA_STUDS = 40,
 
 	-- How far the left stick must lean before the snail walks, from 0 to 1
 	STICK_DEADZONE = 0.3,

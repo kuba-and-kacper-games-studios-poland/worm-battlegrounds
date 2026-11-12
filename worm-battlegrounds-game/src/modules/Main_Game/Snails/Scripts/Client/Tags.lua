@@ -189,7 +189,8 @@ function Module._tickTimer()
 
 	local timer: TextLabel = timedTag:FindFirstChild("S_Timer", true)
 	local endsAt: number = I.Match.GetFolder():GetAttribute("TurnEndsAt") or 0
-	local seconds: number = math.max(math.ceil(endsAt - I.S.Workspace:GetServerTimeNow()), 0)
+	-- Clamped before rounding up: math.ceil of the last fraction of a second is -0
+	local seconds: number = math.ceil(math.max(endsAt - I.S.Workspace:GetServerTimeNow(), 0))
 
 	--[[ Applying ]]
 

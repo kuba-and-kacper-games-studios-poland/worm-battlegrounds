@@ -13,6 +13,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Bodies = require(script.Parent:FindFirstChild("Bodies")) --- @type Snails_Server_Bodies
+local Flight = require(script.Parent:FindFirstChild("Flight")) --- @type Snails_Server_Flight
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -115,8 +116,8 @@ end
 
 --[[
 	**SERVER** |
-	Throws a snail with an impulse, and remembers who did it for kill credit. The server must own the snail then:
-	SnailControl takes it back from its player before anything hits.
+	Throws a snail with an impulse (its mass times the speed it adds), on the game's own physics (Flight), and remembers
+	who did it for kill credit.
 ]]
 function Module.Knockback(participantId: string, impulse: Vector3, sourceId: string?, itemId: string?)
 	--[[ Data ]]
@@ -133,15 +134,15 @@ function Module.Knockback(participantId: string, impulse: Vector3, sourceId: str
 	--[[ Applying ]]
 
 	Module._setAttacker(participantId, sourceId, itemId)
-	model.PrimaryPart:ApplyImpulse(impulse)
+	Flight.Throw(model, impulse / model.PrimaryPart.AssemblyMass)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Kill
 
 --[[
 	**SERVER** |
-	Knocks a snail out: it becomes a ghost that touches nothing (each screen draws it floating up and fading away), and
-	Snails_Died is published with the cause ("Water", "Lava", "Bounds", a weapon's cause), the killer and the item, falling back on whoever last
+	Knocks a snail out: it becomes a ghost that touches nothing (each screen draws it floating up and fading away), its
+	player's screen streams the arena around their parked avatar again, and Snails_Died is published with the cause ("Water", "Lava", "Bounds", a weapon's cause), the killer and the item, falling back on whoever last
 	hurt or pushed it.
 ]]
 function Module.Kill(participantId: string, cause: string, sourceId: string?)
@@ -164,17 +165,28 @@ function Module.Kill(participantId: string, cause: string, sourceId: string?)
 
 	--[[ Saving ]]
 
-	-- Out before its health drops, so screens don't break its shell as it goes
+	-- Out before its health drops, so a screen that hears the health change already sees a ghost
 	model:SetAttribute("Alive", false)
 	model:SetAttribute("Ghost", true)
 	model:SetAttribute("Health", 0)
 
 	--[[ Ghost ]]
 
-	root:SetNetworkOwner(nil)
+	-- A ball flying a throw is anchored already, with no owner
+	if not root.Anchored then
+		root:SetNetworkOwner(nil)
+	end
 	root.Anchored = true
 	root.CollisionGroup = "Ghost"
 	root:FindFirstChild("Walk").Enabled = false
+
+	--[[ Streaming ]]
+
+	-- Its player watches on: the arena streams around their parked avatar again (by every map, at X 0), not the ghost's ball
+	local player: Player? = I.S.Players:GetPlayerByUserId(model:GetAttribute("UserId") or 0)
+	if player then
+		player.ReplicationFocus = nil
+	end
 
 	--[[ Publishing ]]
 

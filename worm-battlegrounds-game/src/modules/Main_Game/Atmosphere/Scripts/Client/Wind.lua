@@ -1,5 +1,6 @@
 --[[
 	Created By: 	HungryN00B
+	Edited By: 	Nari
 ]]
 
 --- @type Ume
@@ -247,7 +248,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Build
 
 --[[
-	Copies the trails' prefab into the world folder, sized and spread by the settings, and notes each emitter's rate at
+	Copies the trails' prefab into the world folder, sized, faded and spread by the settings, and notes each emitter's rate at
 	the strongest wind (WIND_RATE) and its own speed.
 ]]
 function Module._build()
@@ -267,12 +268,17 @@ function Module._build()
 			continue
 		end
 
-		-- Fewer and bigger than the prefab, leaving close to level, as the settings say
+		-- Fewer, bigger and fainter than the prefab, leaving close to level, as the settings say
 		local keypoints = {} --- @type { NumberSequenceKeypoint }
 		for _index2: number, keypoint: NumberSequenceKeypoint in ipairs(emitter.Size.Keypoints) do
 			table.insert(keypoints, NumberSequenceKeypoint.new(keypoint.Time, keypoint.Value * _settings.WIND_SIZE_SCALE, keypoint.Envelope * _settings.WIND_SIZE_SCALE))
 		end
 		emitter.Size = NumberSequence.new(keypoints)
+		local fades = {} --- @type { NumberSequenceKeypoint }
+		for _index2: number, keypoint: NumberSequenceKeypoint in ipairs(emitter.Transparency.Keypoints) do
+			table.insert(fades, NumberSequenceKeypoint.new(keypoint.Time, 1 - (1 - keypoint.Value) * _settings.WIND_OPACITY, keypoint.Envelope * _settings.WIND_OPACITY))
+		end
+		emitter.Transparency = NumberSequence.new(fades)
 		emitter.SpreadAngle = Vector2.new(_settings.WIND_SPREAD, _settings.WIND_SPREAD)
 		rates[emitter] = _settings.WIND_RATE
 		speeds[emitter] = emitter.Speed

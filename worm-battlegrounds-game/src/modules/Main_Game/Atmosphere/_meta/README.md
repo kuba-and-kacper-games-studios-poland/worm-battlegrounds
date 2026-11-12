@@ -2,7 +2,7 @@
 
 Each place's mood, drawn by every client on its own: the lobby's outside matches and each map's in a match (the
 `InMatch` Player attribute and the match folder's `MapId`). A mood is a lighting preset in the place (Lobby, Plains,
-Desert, Cave), its music, a few ambient particles that drift with the match's wind, small effects on its liquids'
+Desert, Cave, Volcano), its music, a few ambient particles that drift with the match's wind, small effects on its liquids'
 surfaces (sun glints, lava bubbles and embers, drips in a cave pool) and grit trickling from a cave's ceiling. In a
 match the wind shows on screen as faint white streaks blowing across the camera's view, just in front of the map: their way
 from the wind's sign, how many and how fast from its strength, breathing in gusts, none in still air. It's heard too:
@@ -31,7 +31,7 @@ network.
 | `Server.lua` | Creates `Workspace.Ume.Atmosphere`, where clients put their ambient particles |
 | `Client.lua` | The client entry: finds the world, Arena, Match, Lobby, Combat and Snails folders this map has, and starts the handlers |
 | `Settings.lua` | `Atmosphere_Settings`: the moods (`PROFILES`), sudden death, ambient, reactions and effects numbers |
-| `Scripts/Client/Mood.lua` | Picks the mood for where the player is, sets its lighting preset, music, particles, wind and the sudden-death layer |
+| `Scripts/Client/Mood.lua` | Picks the mood for where the player is, sets its lighting preset, music, particles, wind and the sudden-death layer; a map's particles and wind wait for its `Bounds` marker when it arrives after the markers |
 | `Scripts/Client/Wind.lua` | The wind's streaks: one `WIND_EFFECT` copy kept over the camera's view each frame (after MatchCamera, at the `Camera` render priority + 2), turned, sped up and thickened by the wind, breathing in gusts; and its sound: the map's `WindSound` loop eased to the wind's volume, and a `WIND_GUST_SOUND` whoosh at strong gusts' peaks |
 | `Scripts/Client/Ambient.lua` | The ambient areas (a mood's `Ambient_` prefabs streaming over the map's bounds, or in front of the lobby stage camera), their wind, the liquid surface effects and ceiling grit on spots in view, and the lobby stage's drifting clouds |
 | `Scripts/Client/Reactions.lua` | The arena's reactions: prop bursts on `Arena_Carve`, splashes where watched things drop through a liquid's surface, splashes and landing dust for `Arena_Fall` groups, steam and the hiss from new obsidian |
@@ -49,7 +49,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 
 | Key | Default | What |
 | --- | --- | --- |
-| `PROFILES` | `Lobby`, `PicnicPlains`, `Desert`, `RockslideRidge` | Each mood, by MapId (below) |
+| `PROFILES` | `Lobby`, `PicnicPlains`, `Desert`, `RockslideRidge`, `VolcanoIsle` | Each mood, by MapId (below) |
 | `LOBBY_PROFILE` | `"Lobby"` | The mood outside matches |
 | `LOBBY_MAP`, `MATCH_MAP` | `"Lobby"`, `"Match"` | The place loader's maps with no matches and with only a match; the Studio map has both and follows `InMatch` |
 | `MOOD_TWEENINFO` | 2 s Sine InOut | How the lighting moves from one mood to the next |
@@ -66,8 +66,9 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 | `CEILING_SHARE`, `CEILING_STEP` | `0.4`, `1` | Grit trickles from rock in the bounds' top 40 %, found by sampling every stud down |
 | `WIND_EFFECT` | `"Wind_Streak"` | The streaks' prefab (its look: texture, stretch, fade, base size and speed) |
 | `WIND_DEPTH` | `{ 1, 12 }` | The streaks fly this many studs in front of the map's front face, toward the camera |
-| `WIND_RATE` | `40` | Streaks a second at the strongest wind (Match's `WIND_MAX`), scaled down with the wind; the prefab's own rate is ignored |
+| `WIND_RATE` | `18` | Streaks a second at the strongest wind (Match's `WIND_MAX`), scaled down with the wind; the prefab's own rate is ignored |
 | `WIND_SIZE_SCALE`, `WIND_SPREAD` | `1`, `2` | Each streak is this many times the prefab's size, and leaves within this many degrees of level |
+| `WIND_OPACITY` | `0.6` | Each streak is this many times as opaque as the prefab's (its `Transparency` keypoints scaled toward clear) |
 | `WIND_SPEED_SHARE` | `{ 0.45, 1 }` | The streaks' speed as a share of the prefab's, in the weakest wind and the strongest |
 | `WIND_UPWIND_SHARE` | `0.5` | The streaks' area reaches this share of the view's width further upwind, so they blow in from the edge |
 | `WIND_GUST_SHARE`, `WIND_GUST_SECONDS` | `0.35`, `4` | The streaks' rate swings by this share over this many seconds |
@@ -92,15 +93,15 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 
 A `PROFILES` row:
 
-| Key | Lobby | PicnicPlains | Desert | RockslideRidge |
-| --- | --- | --- | --- | --- |
-| `Preset` | `Lobby` | `Plains` | `Desert` | `Cave` |
-| `Music`, `SuddenDeathMusic` | `BGM`, none | `Music_PicnicPlains`, `…_SuddenDeath` | `Music_Desert`, `…_SuddenDeath` | `Music_RockslideRidge`, `…_SuddenDeath` |
-| `WindColor` | none (no wind) | `255, 255, 255` | `255, 240, 214` | `228, 222, 212` |
-| `WindSound` | none | `Wind_OpenAir` | `Wind_Desert` | `Wind_Howl` |
-| `Ambient` (`Effect`, `Bottom`–`Top`, `RateScale`) | `Ambient_Motes` 0–1 | `Ambient_Pollen` 0.1–1, `Ambient_Leaf` 0.3–1 | `Ambient_Sand` 0.05–0.6 | `Ambient_CaveDust` 0–0.85 |
-| `Surface` (`Liquid`, `Effect`, `Every`, `Tint`) | none | Water `Glint` 0.15–0.4 s | Lava `Lava_Bubble` 0.6–1.6 s, Lava `Ember` 0.25–0.7 s, Water `Glint` 0.8–2 s | Water `Ripple` 1.5–4 s, tinted |
-| `Ceiling` (`Effect`, `Every`) | none | none | none | `Grit` 3–7 s |
+| Key | Lobby | PicnicPlains | Desert | RockslideRidge | VolcanoIsle |
+| --- | --- | --- | --- | --- | --- |
+| `Preset` | `Lobby` | `Plains` | `Desert` | `Cave` | `Volcano` |
+| `Music`, `SuddenDeathMusic` | `BGM`, none | `Music_PicnicPlains`, `…_SuddenDeath` | `Music_Desert`, `…_SuddenDeath` | `Music_RockslideRidge`, `…_SuddenDeath` | `Music_VolcanoIsle`, `…_SuddenDeath` (Desert's tracks for now) |
+| `WindColor` | none (no wind) | `255, 255, 255` | `255, 240, 214` | `228, 222, 212` | `235, 214, 200` |
+| `WindSound` | none | `Wind_OpenAir` | `Wind_Desert` | `Wind_Howl` | `Wind_OpenAir` |
+| `Ambient` (`Effect`, `Bottom`–`Top`, `RateScale`) | `Ambient_Motes` 0–1 | `Ambient_Pollen` 0.1–1, `Ambient_Leaf` 0.3–1 | `Ambient_Sand` 0.05–0.6 | `Ambient_CaveDust` 0–0.85 | `Ambient_CaveDust` 0.2–1, rate 0.6 (ash) |
+| `Surface` (`Liquid`, `Effect`, `Every`, `Tint`) | none | Water `Glint` 0.15–0.4 s | Lava `Lava_Bubble` 0.6–1.6 s, Lava `Ember` 0.25–0.7 s, Water `Glint` 0.8–2 s | Water `Ripple` 1.5–4 s, tinted | Lava `Lava_Bubble` 0.4–1.2 s, Lava `Ember` 0.2–0.6 s |
+| `Ceiling` (`Effect`, `Every`) | none | none | none | `Grit` 3–7 s | none |
 
 A map with no row warns once and keeps the mood showing.
 
@@ -113,6 +114,7 @@ A map with no row warns once and keeps the mood showing.
 | `Lighting.Presets.Plains` | Late morning: warm key light from the camera's side (latitude 70, 10.4), teal and lavender fill, soft blue haze, saturation 0.35 |
 | `Lighting.Presets.Desert` | Late afternoon: low golden sun (latitude 70, 15.7), warm sand bounce, warm hazy horizon (density 0.32, haze 1.4, glare 0.3), saturation 0.3 |
 | `Lighting.Presets.Cave` | Rockslide Ridge: dimmer light (brightness 2.3) with little sky fill (`EnvironmentDiffuseScale` 0.25, so the blue sky doesn't tint the rock), a dark warm-grey haze that closes in the sky (haze 2.4), no sun rays, bloom from 1.2 |
+| `Lighting.Presets.Volcano` | Volcano Isle: the Desert's, later and through smoke: warm sun from the camera's side (latitude 70, 16.4, brightness 2.7), reddish fill and sky shift, a thicker ember-tinted haze (density 0.36, haze 1.9, decay 140, 69, 51), saturation 0.28 |
 | `ReplicatedStorage_Assets/Vfx/PREFAB \| …` | The prefabs this module plays, made from the studio's existing emitters (their textures and flipbooks): `Leaves`, `Dust`, `Lava_Bubble`, `Ember`, `Steam`, `Glint`, `Ripple`, `Grit`, and the streams `Ambient_Motes`, `Ambient_Pollen`, `Ambient_Leaf`, `Ambient_Sand`, `Ambient_CaveDust` and `Wind_Streak` (no `EmitCount`; code sizes the part to the area and turns them on). It also plays `Splash_Water` and `Splash_Lava` |
 | `Workspace.Ume.Arena.Liquid` parts | Read for their `Arena_Liquid` attribute (`"Water"` or `"Lava"`), which Arena's liquid sets |
 | `Workspace.Ume.Lobby.Stage` | The lobby stage's camera marker (Lobby's `CAMERA_MARKER`) places the lobby's area; its `Clouds` parts drift while the lobby shows |

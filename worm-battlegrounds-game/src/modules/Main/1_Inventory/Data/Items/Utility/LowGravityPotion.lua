@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Low gravity potion",
-	IconId = "rbxassetid://121731184312632",
+	IconId = "rbxassetid://124337153270952",
 
 	--[[ Classification ]]
 

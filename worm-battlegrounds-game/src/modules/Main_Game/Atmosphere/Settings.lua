@@ -66,6 +66,20 @@ local _settings = {
 			},
 			Ceiling = { Effect = "Grit", Every = { 3, 7 } },
 		},
+		VolcanoIsle = {
+			Preset = "Volcano",
+			Music = "Music_VolcanoIsle",
+			SuddenDeathMusic = "Music_VolcanoIsle_SuddenDeath",
+			WindColor = Color3.fromRGB(235, 214, 200),
+			WindSound = "Wind_OpenAir",
+			Ambient = {
+				{ Effect = "Ambient_CaveDust", Bottom = 0.2, Top = 1, RateScale = 0.6 },
+			},
+			Surface = {
+				{ Liquid = "Lava", Effect = "Lava_Bubble", Every = { 0.4, 1.2 }, Tint = false },
+				{ Liquid = "Lava", Effect = "Ember", Every = { 0.2, 0.6 }, Tint = false },
+			},
+		},
 	},
 
 	-- The profile outside matches
@@ -129,15 +143,17 @@ local _settings = {
 	--[[
 		The wind shows as WIND_EFFECT's streaks blowing across the camera's view, between WIND_DEPTH studs in front of
 		the map's front face: WIND_RATE a second at the strongest wind (Match's WIND_MAX), fewer as it drops, none in
-		still air. Each is WIND_SIZE_SCALE times the prefab's size and leaves within WIND_SPREAD degrees of level
+		still air. Each is WIND_SIZE_SCALE times the prefab's size, WIND_OPACITY times as opaque, and leaves within
+		WIND_SPREAD degrees of level
 	]]
 	WIND_EFFECT = "Wind_Streak",
 
 	--- @type { number }
 	WIND_DEPTH = { 1, 12 },
 
-	WIND_RATE = 40,
+	WIND_RATE = 18,
 	WIND_SIZE_SCALE = 1,
+	WIND_OPACITY = 0.6,
 	WIND_SPREAD = 2,
 
 	-- The streaks' speed, as a share of the prefab's, in the weakest wind and the strongest

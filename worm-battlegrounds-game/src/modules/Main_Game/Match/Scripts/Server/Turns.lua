@@ -170,8 +170,17 @@ function Module.RunTurn()
 
 	--[[ Waiting ]]
 
-	-- The turn ends with a shot, the timer (or an admin skipping it), or the snail going out
-	while os.clock() < turnDeadline and not shotFired and model:GetAttribute("Alive") do
+	-- As in Worms, getting hurt ends the turn (a fall, a mine, a barrel), until the shot is away
+	local hurt: boolean = false
+	local health: number = model:GetAttribute("Health")
+	local hurtConnection: RBXScriptConnection = model:GetAttributeChangedSignal("Health"):Connect(function()
+		local now: number = model:GetAttribute("Health")
+		hurt = hurt or now < health
+		health = now
+	end)
+
+	-- The turn ends with a shot, the timer (or an admin skipping it), the snail getting hurt, or it going out
+	while os.clock() < turnDeadline and not shotFired and not hurt and model:GetAttribute("Alive") do
 		-- A player who drops during their turn hands it to a bot, with at least TAKEOVER_SECONDS left to play it
 		if not autopilot and not participant.Connected then
 			autopilot = true
@@ -182,6 +191,7 @@ function Module.RunTurn()
 		end
 		task.wait()
 	end
+	hurtConnection:Disconnect()
 
 	-- Firing took the snail back already, or left it running from its Dynamite until the shot is over
 	if shotFired then
@@ -196,7 +206,8 @@ function Module.RunTurn()
 	--[[ Settling ]]
 
 	setPhase("Settle")
-	Module._settle()
+	local soaked: boolean = Module._hurtUnderwater()
+	Module._settle(shotFired or hurt or soaked)
 
 	-- A snail knocked out here turns into its ghost before the next turn takes the camera away
 	if Module._resolveDeaths() > 0 then
@@ -273,28 +284,85 @@ end
 --%%%%%%%%%%%%%%%%%%%% Settle
 
 --[[
-	Waits until the snails, the falling debris and every projectile have been at rest for SETTLE_HOLD seconds, or
-	MAX_SETTLE seconds have passed.
+	Waits until the arena is calm (every snail at rest on the ground or in a liquid, no debris falling, no projectile,
+	no health changing) for SETTLE_HOLD seconds, or HIT_HOLD after a shot or a hit, so everyone sees what happened.
+	Something that stays unsettled while nothing happens (a snail stuck off the ground) moves on after STALL_SECONDS
+	without any movement or damage, and MAX_SETTLE moves on whatever happens.
 ]]
-function Module._settle()
+function Module._settle(hit: boolean)
 	--[[ Local Variables ]]
 
-	local deadline: number = os.clock() + _settings.MAX_SETTLE
+	local started: number = os.clock()
 	local calmSince: number? = nil
+	local activeAt: number = started
+	local healths = {} --- @type { [Model]: number }
+	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
+		healths[model] = model:GetAttribute("Health")
+	end
 
 	--[[ Waiting ]]
 
-	while os.clock() < deadline do
-		if I.Snails.IsSettled() and I.Arena.IsSettled() and I.Combat.IsIdle() then
-			calmSince = calmSince or os.clock()
-			if os.clock() - calmSince >= _settings.SETTLE_HOLD then
-				return
-			end
+	while os.clock() - started < _settings.MAX_SETTLE do
+		local now: number = os.clock()
+
+		-- A snail's health changing (a blow, a fall, a mine, fire) is something happening, and holds the turn for HIT_HOLD
+		local changed: boolean = false
+		for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
+			local health: number = model:GetAttribute("Health")
+			changed = changed or (healths[model] ~= nil and health ~= healths[model])
+			healths[model] = health
+		end
+		hit = hit or changed
+
+		-- Moving is something happening; a snail off the ground that doesn't move only keeps the turn from being calm
+		local moving: boolean = changed or not I.Snails.IsSettled() or not I.Arena.IsSettled() or not I.Combat.IsIdle()
+		if moving then
+			activeAt = now
+		end
+		if not moving and Module._areLanded() then
+			calmSince = calmSince or now
 		else
 			calmSince = nil
 		end
+
+		-- Calm long enough, or nothing has happened for STALL_SECONDS
+		if calmSince and now - calmSince >= (if hit then _settings.HIT_HOLD else _settings.SETTLE_HOLD) then
+			return
+		end
+		if now - activeAt >= _settings.STALL_SECONDS then
+			return
+		end
 		task.wait()
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Hurt Underwater
+
+--[[
+	At the end of every turn, hurts each snail in play whose head is under a liquid that doesn't knock it out (a pond,
+	like Desert's oasis) by UNDERWATER_DAMAGE, as Worms Armageddon's poison: it never takes a snail below 1 health. A
+	snail with only its body under is fine. Returns whether it hurt any.
+]]
+--- @return boolean
+function Module._hurtUnderwater()
+	--[[ Local Variables ]]
+
+	local hurtAny: boolean = false
+
+	--[[ Hurting ]]
+
+	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
+		local health: number = model:GetAttribute("Health")
+		local head: Vector3 = model.PrimaryPart.Position + Vector3.yAxis * _settings.UNDERWATER_HEAD_HEIGHT
+		if health > 1 and I.Arena.GetLiquid(head) then
+			I.Snails.Damage(model.Name, math.min(_settings.UNDERWATER_DAMAGE, health - 1))
+			hurtAny = true
+		end
+	end
+
+	--[[ Returning ]]
+
+	return hurtAny
 end
 
 --%%%%%%%%%%%%%%%%%%%% Resolve Deaths
@@ -393,6 +461,26 @@ function Module._getUpcoming()
 	--[[ Returning ]]
 
 	return upcoming
+end
+
+--%%%%%%%%%%%%%%%%%%%% Are Landed
+
+--[[
+	Returns whether every snail in play stands on something or sits in a liquid, none in the air.
+]]
+--- @return boolean
+function Module._areLanded()
+	--[[ Checking ]]
+
+	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
+		if not I.Snails.IsGrounded(model.Name) and not I.Arena.GetLiquid(model.PrimaryPart.Position) then
+			return false
+		end
+	end
+
+	--[[ Returning ]]
+
+	return true
 end
 
 --%%%%%%%%%%%%%%%%%%%% Can Play

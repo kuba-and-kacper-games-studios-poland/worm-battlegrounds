@@ -106,6 +106,12 @@ local _settings = {
 	]]
 	SEA_SLACK = 1,
 
+	--[[
+		How far the sea's blocks at the map's sides are drawn past them, in studs, so the camera never shows where it
+		ends; only drawn: the liquid's grid stops at the map's sides, and out there is out of bounds
+	]]
+	SEA_EDGE_WIDTH = 50,
+
 	-- The liquid kinds, in the order of their ids in the grid (a map's liquid marker names one)
 	--- @type { string }
 	LIQUID_KINDS = { "Water", "Lava" },

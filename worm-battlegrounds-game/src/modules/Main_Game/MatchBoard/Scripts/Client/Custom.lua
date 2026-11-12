@@ -56,27 +56,28 @@ function Module.Start()
 
 	moduleGui = I.UserInterface.UI[_settings.CUSTOM_GUI_NAME]
 	elems["Create"] = moduleGui:FindFirstChild("U_Create", true) --- @type Frame
-	elems["Maps"] = moduleGui:FindFirstChild("U_Maps", true) --- @type Frame
+	elems["Maps"] = moduleGui:FindFirstChild("U_Maps", true) --- @type ScrollingFrame
 	elems["Room"] = moduleGui:FindFirstChild("U_Room", true) --- @type Frame
 	elems["Info"] = elems["Room"]:FindFirstChild("S_Info", true) --- @type TextLabel
-	elems["Members"] = moduleGui:FindFirstChild("U_Members", true) --- @type Frame
-	elems["Invitable"] = moduleGui:FindFirstChild("U_Invitable", true) --- @type Frame
-	prefabs["MapChoice"] = elems["Maps"]:FindFirstChild("PREFAB | MapChoice") --- @type Frame
+	elems["Members"] = moduleGui:FindFirstChild("U_Members", true) --- @type ScrollingFrame
+	elems["Invitable"] = moduleGui:FindFirstChild("U_Invitable", true) --- @type ScrollingFrame
+	prefabs["MapChoice"] = elems["Maps"]:FindFirstChild("PREFAB | MapChoice") --- @type ImageButton
 	prefabs["Member"] = elems["Members"]:FindFirstChild("PREFAB | Member") --- @type Frame
 	prefabs["Invitable"] = elems["Invitable"]:FindFirstChild("PREFAB | Invitable") --- @type Frame
 
 	--[[ Maps ]]
 
 	for index: number, mapId: string in ipairs(_settings.MAP_POOL) do
-		local choice: Frame = prefabs["MapChoice"]:Clone()
+		local choice: ImageButton = prefabs["MapChoice"]:Clone()
 		local mapRow = _settings.MAPS[mapId] --- @type MatchBoard_MapRow
 		choice.Name = mapId
 		choice.LayoutOrder = index
 		choice.Visible = true
 		choice:FindFirstChild("S_Icon", true).Image = mapRow.Thumbnail
 		choice:FindFirstChild("S_Name", true).Text = mapRow.Name
+		choice:FindFirstChild("S_Info", true).Text = `{table.concat(mapRow.Sizes, " / ")} players`
 		choice.Parent = elems["Maps"]
-		I.Interact.OnPress(choice:FindFirstChild("Button"), function()
+		I.Interact.OnPress(choice, function()
 			pickedMap = mapId
 			Module._refreshChoices()
 		end)
@@ -231,8 +232,8 @@ function Module._refreshRoom()
 	local owner: boolean = room:GetAttribute("Owner") == I.S.Players.LocalPlayer.UserId
 	local difficulty: string = room:GetAttribute("Difficulty")
 	local bots: string = if difficulty == "None" then "No bots" else `{difficulty} bots`
-	elems["Info"].Text = `{room:GetAttribute("Mode")} • {if mapRow then mapRow.Name else ""} • {#members} / {room:GetAttribute("Size")} players • {bots}`
-	Module._getButton("S_Start").Parent.Visible = owner
+	elems["Info"].Text = `{room:GetAttribute("Mode")}  |  {room:GetAttribute("Size")} players  |  {if mapRow then mapRow.Name else ""}  |  {bots}`
+	Module._getButton("S_Start").Visible = owner
 
 	--[[ Members ]]
 
@@ -243,6 +244,7 @@ function Module._refreshRoom()
 		entry.LayoutOrder = index
 		entry.Visible = true
 		entry:FindFirstChild("S_Name", true).Text = if player then player.DisplayName else "?"
+		entry:FindFirstChild("S_Username", true).Text = if player then `@{player.Name}` else ""
 		entry:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={userId}&w=150&h=150`
 		entry.Parent = elems["Members"]
 	end
@@ -261,9 +263,10 @@ function Module._refreshRoom()
 		entry.LayoutOrder = index
 		entry.Visible = true
 		entry:FindFirstChild("S_Name", true).Text = player.DisplayName
+		entry:FindFirstChild("S_Username", true).Text = `@{player.Name}`
 		entry:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={player.UserId}&w=150&h=150`
 		entry.Parent = elems["Invitable"]
-		I.Interact.OnPress(entry:FindFirstChild("S_Invite", true):FindFirstChild("Button"), function()
+		I.Interact.OnPress(entry:FindFirstChild("S_Invite", true), function()
 			I.Network.Fire("MatchBoard_InviteCustom", player)
 		end)
 	end
@@ -292,24 +295,25 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Picked
 
 --[[
-	Marks a button or map choice as picked, or not: a button wears its selected skin (the gui kit's button records
-	both skins), a map's slot its picked fill.
+	Marks a button or map choice as picked, or not, in the design's looks it keeps (its Look_* attributes): a white
+	outline and text when picked, grey when not.
 ]]
-function Module._setPicked(holder: Instance, picked: boolean)
+function Module._setPicked(button: ImageButton, picked: boolean)
 	--[[ Elements ]]
 
-	local background: Frame = holder:FindFirstChild("Background", true)
-	-- A map's slot has no skin, so no Face
-	local face: ImageLabel? = background:FindFirstChild("Face", true)
-	local body: Frame = background:FindFirstChild("Body", true)
+	local background: Frame = button:FindFirstChild("Background")
+	local stroke: ImageLabel = background:FindFirstChild("Stroke")
+	local label: TextLabel = button:FindFirstChild("Name1") or button:FindFirstChild("S_Name")
 
 	--[[ Applying ]]
 
-	if face and face:GetAttribute("Kit_Image") then
-		face.Image = face:GetAttribute(if picked then "Kit_SelectedImage" else "Kit_Image")
-	else
-		body.BackgroundColor3 = if picked then _settings.SELECTED_COLOR else _settings.TILE_COLOR
-		body.BackgroundTransparency = if picked then _settings.SELECTED_TRANSPARENCY else _settings.TILE_TRANSPARENCY
+	stroke.ImageColor3 = button:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+	label.TextColor3 = button:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
+
+	-- Buttons of one size share the picked and unpicked outline pictures; the bots' row keeps each button's own
+	if button:GetAttribute("Look_Stroke") then
+		stroke.Image = button:GetAttribute(if picked then "Look_SelectedStroke" else "Look_Stroke")
+		background:FindFirstChild("Stroke2").Image = button:GetAttribute(if picked then "Look_SelectedStroke2" else "Look_Stroke2")
 	end
 end
 
@@ -339,11 +343,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Button
 
 --[[
-	Returns the button inside a named holder in the window.
+	Returns a named button in the window.
 ]]
 --- @return ImageButton
-function Module._getButton(holderName: string)
-	return moduleGui:FindFirstChild(holderName, true):FindFirstChild("Button")
+function Module._getButton(buttonName: string)
+	return moduleGui:FindFirstChild(buttonName, true)
 end
 
 return Module

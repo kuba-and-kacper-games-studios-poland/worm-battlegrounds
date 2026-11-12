@@ -19,17 +19,29 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Turns
 
 	-- How long a turn lasts, in seconds
-	TURN_SECONDS = 15,
+	TURN_SECONDS = 25,
 
 	-- The most a shot may stay in flight before the turn moves on anyway, in seconds
 	MAX_FLIGHT = 20,
 
 	--[[
-		After a shot, the match waits until snails, debris and projectiles have been at rest for SETTLE_HOLD seconds,
-		or MAX_SETTLE seconds have passed
+		After a turn, the match waits until every snail is at rest on the ground (or in a liquid), with no debris falling,
+		no projectile and no health changing, for SETTLE_HOLD seconds, or HIT_HOLD after a shot or anyone getting hurt.
+		Nothing moving or getting hurt for STALL_SECONDS moves on anyway (a snail stuck off the ground), and so does
+		MAX_SETTLE seconds of settling
 	]]
 	SETTLE_HOLD = 0.3,
-	MAX_SETTLE = 6,
+	HIT_HOLD = 3,
+	STALL_SECONDS = 5,
+	MAX_SETTLE = 20,
+
+	--[[
+		At the end of every turn, each snail whose head is under a liquid that doesn't knock it out (a pond) loses
+		UNDERWATER_DAMAGE health, never going below 1, as Worms Armageddon's poison. Its head's top is
+		UNDERWATER_HEAD_HEIGHT studs over its ball's centre (where Classic's eyestalks start)
+	]]
+	UNDERWATER_DAMAGE = 5,
+	UNDERWATER_HEAD_HEIGHT = 1.6,
 
 	-- The wind each turn is a whole number from -WIND_MAX to WIND_MAX
 	WIND_MAX = 10,

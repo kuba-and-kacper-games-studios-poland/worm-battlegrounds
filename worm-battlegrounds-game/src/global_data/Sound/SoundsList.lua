@@ -20,6 +20,10 @@ local data = {
 	["Music_RockslideRidge"] = { 83665320995374 },
 	["Music_RockslideRidge_SuddenDeath"] = { 105098553957434 },
 
+	-- shortcut: Desert's tracks until the sound kit (art/sfx) makes Volcano Isle's own and the owner approves them
+	["Music_VolcanoIsle"] = { 71795470444674 },
+	["Music_VolcanoIsle_SuddenDeath"] = { 73282690663044 },
+
 	--%%%%%%%%%%%%%%%%%%%% GUI (Roblox's classic 2009 sounds, and the studio's own)
 
 	["Button_Hover"] = { 12221976 },
@@ -115,7 +119,6 @@ local data = {
 	["Snail_Land"] = { 71082125667012 },
 	["Snail_Jetpack"] = { 135875715949879 },
 	["Snail_Hurt"] = { 12222058 },
-	["Snail_ShellBreak"] = { 12222005 },
 	["Snail_KnockedOut"] = { 79348298352567 },
 	["Snail_Splash"] = { 130526667411981 },
 	["Snail_Burn"] = { 136097066776614 },

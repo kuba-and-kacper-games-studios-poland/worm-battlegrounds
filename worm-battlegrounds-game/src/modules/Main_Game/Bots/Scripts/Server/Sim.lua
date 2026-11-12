@@ -165,8 +165,9 @@ function Module._seat(seat, spot: Vector3, folder: Folder)
 		local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
 		seat.Uses[itemId] = row.Uses
 
-		-- As in a match (Combat's Uses.Reset), strong items start on their cooldown
-		seat.Cooldowns[itemId] = if row.Cooldown and row.Cooldown > 0 then row.Cooldown + 1 else 0
+		-- As in a match (Combat's Uses.Reset), strong weapons start on their cooldown
+		local starts: boolean = I.G_Arsenal.IsWeapon(itemId) and row.Cooldown ~= nil and row.Cooldown > 0
+		seat.Cooldowns[itemId] = if starts then row.Cooldown + 1 else 0
 	end
 
 	--[[ Building ]]

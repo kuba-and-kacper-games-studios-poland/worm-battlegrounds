@@ -27,6 +27,12 @@ local boardFolder: Folder
 -- Each public row's card on the board, by row id
 local lines = {} --- @type { [string]: Frame }
 
+--[[ Play ]]
+
+-- Whether the play screen (the lobby rows and buttons) shows or is slid away, and where each of its parts rests
+local playShown: boolean = true
+local playHomes = {} --- @type { [GuiObject]: UDim2 }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -54,14 +60,21 @@ function Module.Start()
 	elems["Custom"] = elems["Play"]:FindFirstChild("S_Custom", true) --- @type ImageButton
 	elems["Rows"] = elems["Play"]:FindFirstChild("U_Rows", true) --- @type ScrollingFrame
 	elems["WaitingRoom"] = moduleGui:FindFirstChild("U_WaitingRoom") --- @type Frame
-	elems["Match"] = elems["WaitingRoom"]:FindFirstChild("S_Match", true) --- @type TextLabel
 	elems["Countdown"] = elems["WaitingRoom"]:FindFirstChild("S_Countdown", true) --- @type TextLabel
-	elems["Count"] = elems["WaitingRoom"]:FindFirstChild("S_Count", true) --- @type TextLabel
-	elems["Players"] = elems["WaitingRoom"]:FindFirstChild("U_Players", true) --- @type Frame
-	elems["Vote"] = elems["WaitingRoom"]:FindFirstChild("S_Vote", true):FindFirstChild("Button") --- @type ImageButton
-	elems["Leave"] = elems["WaitingRoom"]:FindFirstChild("S_Leave", true):FindFirstChild("Button") --- @type ImageButton
+	elems["Info"] = elems["WaitingRoom"]:FindFirstChild("S_Info", true) --- @type TextLabel
+	elems["Players"] = elems["WaitingRoom"]:FindFirstChild("U_Players", true) --- @type ScrollingFrame
+	elems["Vote"] = elems["WaitingRoom"]:FindFirstChild("S_Vote", true) --- @type ImageButton
+	elems["Leave"] = elems["WaitingRoom"]:FindFirstChild("S_Leave", true) --- @type ImageButton
 	prefabs["Row"] = elems["Rows"]:FindFirstChild("PREFAB | Row") --- @type Frame
 	prefabs["PlayerName"] = elems["Players"]:FindFirstChild("PREFAB | PlayerName") --- @type Frame
+
+	--[[ Saving ]]
+
+	for _index: number, part: Instance in ipairs(elems["Play"]:GetChildren()) do
+		if part:IsA("GuiObject") then
+			playHomes[part] = part.Position
+		end
+	end
 
 	--[[ Setup ]]
 
@@ -179,7 +192,7 @@ end
 --[[
 	Draws the board: Solo vs bots (Play with party in a party), each public row's mode, map, players and Join (Join
 	teams for team modes), or the waiting room of the row the player is in, with everyone in it and the votes. The setup
-	panel shows in the board's place. A party member's Join, Play and Custom are greyed out (their leader picks), but
+	panel shows in the board's place, which slides away for it. A party member's Join, Play and Custom are greyed out (their leader picks), but
 	Custom opens their leader's lobby once they're in it.
 ]]
 function Module._refresh()
@@ -231,7 +244,7 @@ function Module._refresh()
 		Setup.Close()
 		return
 	end
-	elems["Play"].Visible = not waiting and not Setup.IsOpen()
+	Module._slidePlay(not waiting and not Setup.IsOpen())
 	elems["WaitingRoom"].Visible = waiting
 
 	-- On a pad the waiting room holds the selection while it shows
@@ -248,9 +261,8 @@ function Module._refresh()
 	end
 	local mapRow = _settings.MAPS[mine:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
 	local players = Module._getPlayers(mine) --- @type { number }
-	elems["Match"].Text = `{_settings.MATCH_NAMES[mine:GetAttribute("Mode")] or mine:GetAttribute("Mode")} • {if mapRow then mapRow.Name else ""}`
-	elems["Count"].Text = `{#players} / {mine:GetAttribute("Size")} players`
-	elems["Vote"]:FindFirstChild("ButtonText", true).Text = `Vote to start  {mine:GetAttribute("Votes")} / {mine:GetAttribute("VotesNeeded")}`
+	elems["Info"].Text = `{_settings.MODE_NAMES[mine:GetAttribute("Mode")] or mine:GetAttribute("Mode")}  |  {if mapRow then mapRow.Name else ""}  |  {#players} / {mine:GetAttribute("Size")} players`
+	elems["Vote"]:FindFirstChild("S_Text").Text = `Vote to start {mine:GetAttribute("Votes")}/{mine:GetAttribute("VotesNeeded")}`
 	for _index: number, child: Instance in ipairs(elems["Players"]:GetChildren()) do
 		if child:IsA("Frame") and child ~= prefabs["PlayerName"] then
 			child:Destroy()
@@ -263,8 +275,46 @@ function Module._refresh()
 		entry.LayoutOrder = index
 		entry.Visible = true
 		entry:FindFirstChild("S_Name", true).Text = if player then player.DisplayName else "?"
+		entry:FindFirstChild("S_Username", true).Text = if player then `@{player.Name}` else ""
 		entry:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={userId}&w=150&h=150`
 		entry.Parent = elems["Players"]
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Slide Play
+
+--[[
+	Slides the play screen's parts (the lobby rows, SOLO VS BOTS and CUSTOM) down off the screen when the setup panel or
+	the waiting room takes its place, and back up after; once they're gone it's hidden, so nothing in it takes a press.
+]]
+function Module._slidePlay(shown: boolean)
+	--[[ Checks ]]
+
+	-- Check if it changes
+	if shown == playShown then
+		return
+	end
+
+	--[[ Sliding ]]
+
+	playShown = shown
+	elems["Play"].Visible = true
+	for part: GuiObject, home: UDim2 in pairs(playHomes) do
+		local away: UDim2 = UDim2.new(home.X.Scale, home.X.Offset, 1 + part.AnchorPoint.Y * part.Size.Y.Scale + _settings.PLAY_SLIDE_MARGIN, 0)
+		local Slide_TweenGoal = { Position = if shown then home else away }
+		local Slide_Tween: Tween = I.S.TweenService:Create(part, if shown then _settings.PLAY_IN_TWEENINFO else _settings.PLAY_OUT_TWEENINFO, Slide_TweenGoal)
+		Slide_Tween:Play()
+	end
+
+	--[[ Hiding ]]
+
+	-- A show before the slide ends keeps it
+	if not shown then
+		task.delay(_settings.PLAY_OUT_TWEENINFO.Time, function()
+			if not playShown then
+				elems["Play"].Visible = false
+			end
+		end)
 	end
 end
 
@@ -392,7 +442,7 @@ function Module._getTime(config: Instance, now: number)
 	--[[ Local Variables ]]
 
 	local endsAt: number = config:GetAttribute("EndsAt") or 0
-	local left: number = if endsAt > 0 then math.max(math.ceil(endsAt - now), 0) else _settings.ROW_SECONDS
+	local left: number = if endsAt > 0 then math.ceil(math.max(endsAt - now, 0)) else _settings.ROW_SECONDS
 
 	--[[ Returning ]]
 

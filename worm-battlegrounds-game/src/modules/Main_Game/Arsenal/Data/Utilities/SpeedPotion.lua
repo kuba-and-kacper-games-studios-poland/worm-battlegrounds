@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Speed potion",
-	Icon = "rbxassetid://129368162518915",
+	Icon = "rbxassetid://106475672506690",
 
 	--[[ Effect ]]
 

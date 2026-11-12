@@ -9,7 +9,7 @@ local _settings = {
 
 	-- The widgets that cover the whole screen: the lobby's guis hide while one is open
 	--- @type { string }
-	FULL_SCREEN_WIDGETS = { "Skins", "Crates" },
+	FULL_SCREEN_WIDGETS = { "Skins", "Crates", "Shop" },
 
 	-- The widgets that stand in one lobby panel's place, by widget: those panels hide while one is open
 	--- @type { [string]: { string } }

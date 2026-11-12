@@ -72,5 +72,5 @@ while in a party) without its own remote.
 
 Drives the `Party` column: `U_Members` › `PREFAB | Member` (named by user id: `S_Avatar`, `S_Name` (the display name), `S_Username` (`@` and the user name), `S_Level`,
 `S_Crown`, `S_Kick`) and `PREFAB | Invite` (the + cards), and `U_Party` › `S_Leave`.
-Fills `PartyInvite` (`U_Players` › `PREFAB | Invitable`: `S_Avatar`, `S_Name`, `S_Invite`; `S_Empty`;
-`S_InviteFriends`) and `PartyInvited` (`S_Avatar`, `S_Text`, `S_Accept`, `S_Decline`).
+Fills `PartyInvite` (`U_Players` › `PREFAB | Invitable`: `S_Avatar`, `S_Name`, `S_Username`, `S_Invite` with its `S_Text`,
+greyed from its `Look_Sent*` attributes once sent; `S_Empty`; `S_InviteFriends`) and `PartyInvited` (`S_Avatar`, `S_Text`, `S_Accept`, `S_Decline`).

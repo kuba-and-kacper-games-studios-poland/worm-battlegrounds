@@ -42,7 +42,7 @@ player left stops at the next turn. One match plays at a time.
 | `Server.lua` | The match folders, remotes, Topics, the `I` table; starts the handlers |
 | `Scripts/Server/Phases.lua` | The main loop: waiting, drop, landing, turns, the end, rematches |
 | `Scripts/Server/Roster.lua` | Metadata, participants (players and bots), teams, the participant entries. `AssignTeam(participant)` puts a player on their Roblox team in a team match, making the team only when `Teams` has none of that name, at the start and when they come back |
-| `Scripts/Server/Turns.lua` | Turn order, the timer, wind, rounds, sudden death; a bot plays a dropped player's turns (`Autopilot`); after the knockouts at a turn's end it waits Snails' `GHOST_TIME` when any snail went out |
+| `Scripts/Server/Turns.lua` | Turn order, the timer (a turn also ends when its snail is hurt before its shot is away, as in Worms), wind, rounds, sudden death; a bot plays a dropped player's turns (`Autopilot`); at every turn's end each snail with its head under a pond's liquid loses `UNDERWATER_DAMAGE`, never below 1; the settle (below); after the knockouts at a turn's end it waits Snails' `GHOST_TIME` when any snail went out |
 | `Scripts/Server/Placement.lua` | Knockout order and the final places |
 | `Scripts/Server/Stats.lua` | Damage, knockouts, rounds and best shot per participant |
 | `Scripts/Server/Connection.lua` | Leaving, dropping out, rejoining (control from the snail's next turn, its team and `ReplicationFocus` back), sending players to the lobby, the `InMatch` attribute |
@@ -126,7 +126,9 @@ player left stops at the next turn. One match plays at a time.
 | --- | --- | --- |
 | `WAIT_FOR_PLAYERS` | `20` | Seconds to wait for the roster (each player in the server with their data loaded) before starting |
 | `DROP_SECONDS`, `MAX_LANDING`, `DROP_STICK_SPEED`, `DROP_HEIGHT` | `10`, `12`, `40`, `20` | The drop phase, and how high over its land a snail nobody placed starts its parachute |
-| `TURN_SECONDS`, `MAX_FLIGHT`, `SETTLE_HOLD`, `MAX_SETTLE` | `15`, `20`, `0.3`, `6` | Turn timing: a turn's seconds, the longest a shot flies, and after a shot how long snails, debris and shots stay at rest before the next turn, at most `MAX_SETTLE` seconds |
+| `TURN_SECONDS`, `MAX_FLIGHT` | `25`, `20` | A turn's seconds, and the longest a shot flies |
+| `SETTLE_HOLD`, `HIT_HOLD`, `STALL_SECONDS`, `MAX_SETTLE` | `0.3`, `3`, `5`, `20` | The settle after a turn: the next turn waits until every snail is at rest on the ground (or in a liquid), no debris falls, no shot flies and no health changes, for `SETTLE_HOLD` seconds, or `HIT_HOLD` after a shot or a hit; nothing moving or getting hurt for `STALL_SECONDS` moves on anyway (a snail stuck off the ground), and `MAX_SETTLE` seconds of settling always does |
+| `UNDERWATER_DAMAGE`, `UNDERWATER_HEAD_HEIGHT` | `5`, `1.6` | At the end of every turn, damage to each snail whose head is under a liquid that doesn't knock it out (a pond, Desert's oasis), never taking it below 1 health, like Worms Armageddon's poison; the head's top is this many studs over the ball's centre (where Classic's eyestalks start), so a snail with only its body under is fine |
 | `WIND_MAX` | `10` | Strongest wind |
 | `SUDDEN_DEATH_ROUND`, `SUDDEN_DEATH_RISE` | `11`, `4` | The round sudden death starts at (after 10 rounds), and how many half-stud rows the liquid rises at the start of every turn from then |
 | `REJOIN_SECONDS`, `TAKEOVER_SECONDS` | `900`, `12` | How long the lobby offers a dropped player to go back to their match (a bot plays their snail meanwhile); the least time a bot gets of a turn its player dropped during |

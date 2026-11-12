@@ -46,9 +46,9 @@ function Module.Start()
 	--[[ Elements ]]
 
 	inviteGui = I.UserInterface.UI[_settings.INVITE_GUI_NAME]
-	elems["Players"] = inviteGui:FindFirstChild("U_Players", true) --- @type Frame
+	elems["Players"] = inviteGui:FindFirstChild("U_Players", true) --- @type ScrollingFrame
 	elems["Empty"] = inviteGui:FindFirstChild("S_Empty", true) --- @type TextLabel
-	elems["InviteFriends"] = inviteGui:FindFirstChild("S_InviteFriends", true):FindFirstChild("Button") --- @type ImageButton
+	elems["InviteFriends"] = inviteGui:FindFirstChild("S_InviteFriends", true) --- @type ImageButton
 	prefabs["Invitable"] = elems["Players"]:FindFirstChild("PREFAB | Invitable") --- @type Frame
 
 	local invitedGui: ScreenGui = I.UserInterface.UI[_settings.INVITED_GUI_NAME]
@@ -99,8 +99,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh List
 
 --[[
-	While the invite box shows, lists everyone else in this server who isn't in a party, each with Invite (Sent, in the
-	kit's grey, once pressed); with nobody to invite it says so.
+	While the invite box shows, lists everyone else in this server who isn't in a party, each with Invite (Sent, greyed
+	from its Look_Sent* attributes, once pressed); with nobody to invite it says so.
 ]]
 function Module._refreshList()
 	--[[ Checks ]]
@@ -128,17 +128,20 @@ function Module._refreshList()
 		count += 1
 
 		local entry: Frame = prefabs["Invitable"]:Clone()
-		local invite: Frame = entry:FindFirstChild("S_Invite", true)
-		local face: ImageLabel = invite:FindFirstChild("Face", true)
+		local invite: ImageButton = entry:FindFirstChild("S_Invite", true)
+		local inviteText: TextLabel = invite:FindFirstChild("S_Text")
+		local look: string = if sent[player.UserId] then "Sent" else ""
 		entry.Name = tostring(player.UserId)
 		entry.LayoutOrder = count
 		entry.Visible = true
 		entry:FindFirstChild("S_Name", true).Text = player.DisplayName
+		entry:FindFirstChild("S_Username", true).Text = `@{player.Name}`
 		entry:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={player.UserId}&w=150&h=150`
-		invite:FindFirstChild("ButtonText", true).Text = if sent[player.UserId] then "Sent" else "Invite"
-		face.Image = face:GetAttribute(if sent[player.UserId] then "Kit_DisabledImage" else "Kit_Image")
+		inviteText.Text = if sent[player.UserId] then "Sent" else "Invite"
+		inviteText.TextColor3 = invite:GetAttribute(`Look_{look}TextColor`)
+		invite:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = invite:GetAttribute(`Look_{look}StrokeColor`)
 		entry.Parent = elems["Players"]
-		I.Interact.OnPress(invite:FindFirstChild("Button"), function()
+		I.Interact.OnPress(invite, function()
 			if sent[player.UserId] then
 				return
 			end

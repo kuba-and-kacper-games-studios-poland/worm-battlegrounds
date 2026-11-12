@@ -45,16 +45,17 @@ function Module.Start(moduleGui: ScreenGui, changed: () -> ())
 	onChanged = changed
 	elems["Setup"] = moduleGui:FindFirstChild("U_Setup") --- @type Frame
 	elems["Title"] = elems["Setup"]:FindFirstChild("S_Title", true) --- @type TextLabel
-	elems["Description"] = elems["Setup"]:FindFirstChild("S_Description", true) --- @type TextLabel
+	elems["RewardText"] = elems["Setup"]:FindFirstChild("S_RewardText", true) --- @type TextLabel
+	elems["RewardAmount"] = elems["Setup"]:FindFirstChild("S_RewardAmount", true) --- @type Frame
 	elems["Reward"] = elems["Setup"]:FindFirstChild("S_Reward", true) --- @type TextLabel
-	elems["Back"] = elems["Setup"]:FindFirstChild("S_Back", true):FindFirstChild("Button") --- @type ImageButton
-	elems["Start"] = elems["Setup"]:FindFirstChild("S_Start", true):FindFirstChild("Button") --- @type ImageButton
+	elems["Back"] = elems["Setup"]:FindFirstChild("S_Back", true) --- @type ImageButton
+	elems["Start"] = elems["Setup"]:FindFirstChild("S_Start", true) --- @type ImageButton
 
 	--[[ Connections ]]
 
 	for _index: number, difficulty: string in ipairs(Module._getChoices()) do
-		elems[difficulty] = elems["Setup"]:FindFirstChild(`S_{difficulty}`, true) --- @type Frame
-		I.Interact.OnPress(elems[difficulty]:FindFirstChild("Button"), function()
+		elems[difficulty] = elems["Setup"]:FindFirstChild(`S_{difficulty}`, true) --- @type ImageButton
+		I.Interact.OnPress(elems[difficulty], function()
 			picked = difficulty
 			Module._refresh()
 		end)
@@ -109,22 +110,23 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Writes the title, shows No bots only for a party, gives the picked choice the kit's selected skin, and says what it
-	means and what it pays.
+	Writes the title, shows No bots only for a party, outlines the picked choice in the design's white, and says what
+	a win pays: a solo match's coins, or how a party match pays.
 ]]
 function Module._refresh()
 	--[[ Texts ]]
 
 	elems["Title"].Text = if party then "Play with party" else "Play solo"
-	elems["Description"].Text = _settings.DIFFICULTY_TEXT[picked]
-	elems["Reward"].Text = _settings.REWARD_TEXT[if not party then "Solo" elseif picked == "None" then "PartyNoBots" else "Party"]
+	elems["RewardText"].Text = _settings.REWARD_TEXT[if not party then "Solo" elseif picked == "None" then "PartyNoBots" else "Party"]
+	elems["RewardAmount"].Visible = not party
+	elems["Reward"].Text = tostring(_settings.SOLO_WIN_COINS[picked] or 0)
 
 	--[[ Choices ]]
 
 	elems["None"].Visible = party
 	for _index: number, difficulty: string in ipairs(Module._getChoices()) do
-		local face: ImageLabel = elems[difficulty]:FindFirstChild("Face", true)
-		face.Image = face:GetAttribute(if difficulty == picked then "Kit_SelectedImage" else "Kit_Image")
+		local button: ImageButton = elems[difficulty]
+		button:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = button:GetAttribute(if difficulty == picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
 	end
 end
 

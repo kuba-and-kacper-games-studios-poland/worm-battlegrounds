@@ -89,7 +89,7 @@ the tutorial crate uses `Crate_Starter`). The models are `art/crates`' (its READ
 
 | Crate | Prices (1, 3, 10) | Odds | Look |
 | --- | --- | --- | --- |
-| `Weapon` | 100, 300, 900 coins | Uzi, Baseball Bat, Dynamite, Spartan Spear 14.75 % each; Cluster Bomb, Spider Bomb, Minigun 10 %; Homing Missile, One Punch 5 %; Variety Grenade, Black Hole Grenade 0.5 % | Amber glow, embers |
+| `Weapon` | 100, 300, 900 coins | Uzi, Golf Club, Dynamite, Spartan Spear 14.75 % each; Cluster Bomb, Spider Bomb, Minigun 10 %; Homing Missile, One Punch 5 %; Variety Grenade, Black Hole Grenade 0.5 % | Amber glow, embers |
 | `Premium` | 250, 750, 2,250 diamonds | Cluster, Spider, Minigun 26 % each; Homing, One Punch 10 %; Variety, Black Hole 1 % | Cyan glow, gold accent, glints, premium |
 | `Utility` | 100, 300, 900 coins or 200, 600, 1,800 diamonds | Coins: Parachute, Bandage 27.5 %; Jetpack, Speed 15 %; Medkit 10 %; Low Gravity 5 %. Diamonds: 15, 15, 20, 20, 20, 10 | Mint glow, bubbles |
 | `Skin` | 100, 300, 900 coins or 50, 150, 450 diamonds | Soldier, Pirate, Cowboy 20 % each; Ninja, Knight, Clown 10 %; Devil 7 %; Robot 2 %; Skeleton 1 % | Pink glow, sparkles |

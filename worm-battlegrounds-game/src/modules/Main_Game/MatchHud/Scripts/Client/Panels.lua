@@ -44,8 +44,8 @@ function Module.Start(gui: ScreenGui)
 	elems["Drop"] = gui:FindFirstChild("U_Drop") --- @type Frame
 	elems["DropTimer"] = elems["Drop"]:FindFirstChild("S_Timer", true) --- @type TextLabel
 	elems["KnockedOut"] = gui:FindFirstChild("U_KnockedOut") --- @type Frame
-	elems["Spectate"] = elems["KnockedOut"]:FindFirstChild("S_Spectate", true):FindFirstChild("Button") --- @type ImageButton
-	elems["Leave"] = elems["KnockedOut"]:FindFirstChild("S_Leave", true):FindFirstChild("Button") --- @type ImageButton
+	elems["Spectate"] = elems["KnockedOut"]:FindFirstChild("S_Spectate", true) --- @type ImageButton
+	elems["Leave"] = elems["KnockedOut"]:FindFirstChild("S_Leave", true) --- @type ImageButton
 	elems["LoadoutBar"] = gui:FindFirstChild("U_LoadoutBar") --- @type Frame
 	elems["EmoteButton"] = gui:FindFirstChild("U_EmoteButton") --- @type Frame
 
@@ -142,7 +142,8 @@ function Module._tick()
 
 	--[[ Applying ]]
 
-	elems["DropTimer"].Text = tostring(math.max(math.ceil(endsAt - I.S.Workspace:GetServerTimeNow()), 0))
+	-- Clamped before rounding up: math.ceil of the last fraction of a second is -0
+	elems["DropTimer"].Text = tostring(math.ceil(math.max(endsAt - I.S.Workspace:GetServerTimeNow(), 0)))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Spectate

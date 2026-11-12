@@ -75,7 +75,7 @@ function Module._onExplosion(position: Vector3, radius: number, _itemId: string,
 	--[[ Local Variables ]]
 
 	local size: number = math.max(radius, 1)
-	local strength: number = Module._getStrength(position, radius)
+	local strength: number = Module._getStrength(position, radius / _settings.FEEL_FULL_RADIUS)
 
 	--[[ Drawing ]]
 
@@ -105,7 +105,7 @@ end
 
 --[[
 	Draws a shot's lines from the muzzle to where each bullet (or swing) landed, as neon beams that fade: a gun flashes
-	at its muzzle and each bullet bursts where it landed; One Punch blasts along its swing.
+	at its muzzle, kicks the camera, and each bullet bursts where it landed; One Punch blasts along its swing.
 ]]
 --- @param hits { Vector3 }
 function Module._onTracer(itemId: string, from: Vector3, hits)
@@ -117,6 +117,7 @@ function Module._onTracer(itemId: string, from: Vector3, hits)
 
 	if muzzleVfx then
 		I.Vfx.Play(muzzleVfx, CFrame.new(from), effectsFolder)
+		Module._shake(Module._getStrength(from, _settings.GUN_SHAKE))
 	end
 	if itemId == "OnePunch" and hits[1] then
 		I.Vfx.Play("Punch", CFrame.lookAt(hits[1], hits[1] * 2 - from), effectsFolder, _settings.PUNCH_VFX_SCALE)
@@ -160,13 +161,18 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Hit
 
 --[[
-	Stops the world for a beat on a big blow (longer on a knockout, with the camera punching in on the snail and the
-	knockout's ding), and vibrates a phone or pad when the local player's own snail is hurt.
+	Shakes the camera by how hard the blow was (harder on a knockout), stops the world for a beat on a big one (longer on
+	a knockout, with the camera punching in on the snail and the knockout's ding), and vibrates a phone or pad when the
+	local player's own snail is hurt.
 ]]
 function Module._onHit(participantId: string, damage: number, position: Vector3, knockout: boolean?)
 	--[[ Data ]]
 
 	local mine: Model? = I.Snails.GetMine()
+
+	--[[ Shaking ]]
+
+	Module._shake(Module._getStrength(position, damage / _settings.HIT_SHAKE_DAMAGE + if knockout then _settings.KNOCKOUT_SHAKE else 0))
 
 	--[[ Hit Stop ]]
 
@@ -306,12 +312,12 @@ end
 --%%%%%%%%%%%%%%%%%%%% Shake
 
 --[[
-	Shakes the camera along the arena's plane, with a little roll, harder the stronger the blast.
+	Jolts the camera along the arena's plane, then rumbles it there with a little roll, harder the stronger the blow.
 ]]
 function Module._shake(strength: number)
 	--[[ Checks ]]
 
-	-- Skip blasts too far or too small to feel
+	-- Skip blows too far or too small to feel
 	if strength <= 0 then
 		return
 	end
@@ -319,8 +325,14 @@ function Module._shake(strength: number)
 	--[[ Shaking ]]
 
 	shaker:PlayOnce({
+		Magnitude = _settings.SHAKE_KICK * strength,
+		Roughness = 35,
+		PositionInfluence = Vector3.new(0.5, 0.5, 0),
+		RotationInfluence = Vector3.new(0, 0, 0.6),
+	}, 0.03, 0.01, _settings.SHAKE_KICK_SETTLE)
+	shaker:PlayOnce({
 		Magnitude = _settings.SHAKE_MAGNITUDE * strength,
-		Roughness = 14,
+		Roughness = 12,
 		PositionInfluence = Vector3.new(0.5, 0.5, 0),
 		RotationInfluence = Vector3.new(0, 0, 0.6),
 	}, 0.05, 0.02, _settings.SHAKE_SETTLE)
@@ -331,11 +343,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Strength
 
 --[[
-	How hard a blast is felt: its size against FEEL_FULL_RADIUS, less the farther it is from the middle of the view.
-	0 outside a match or past FEEL_RANGE.
+	How hard a blow of this amount (1 is full strength) is felt here: less the farther it is from the middle of the
+	view. 0 outside a match or past FEEL_RANGE.
 ]]
 --- @return number
-function Module._getStrength(position: Vector3, radius: number)
+function Module._getStrength(position: Vector3, amount: number)
 	--[[ Checks ]]
 
 	-- Check if the player is in the match
@@ -351,7 +363,7 @@ function Module._getStrength(position: Vector3, radius: number)
 
 	--[[ Returning ]]
 
-	return radius / _settings.FEEL_FULL_RADIUS * falloff
+	return amount * falloff
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Blast Vfx

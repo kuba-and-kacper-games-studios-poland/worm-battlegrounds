@@ -124,7 +124,7 @@ A run needs the Studio map with no match playing: it loads each map into the are
 | Key | Default | What |
 | --- | --- | --- |
 | `BOT_NAMES` | a list of names | Picked without repeats in a match |
-| `LOADOUTS` | Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Baseball Bat, Jetpack, Medkit · Nightmare: Hard's and a Grenade | What each difficulty takes into a match (others use Easy's) |
+| `LOADOUTS` | Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Golf Club, Jetpack, Medkit · Nightmare: Hard's and a Grenade | What each difficulty takes into a match (others use Easy's) |
 | `SKILLS` | Easy, Medium, Hard, Nightmare (below) | Each difficulty's skill (`Bots_Skill`); others use Easy's |
 | `TAKEOVER_DIFFICULTY` | `"Medium"` | The difficulty a bot plays a dropped player's snail at, with that player's own loadout |
 | `THINK_TIME` | `{ 0.8, 1.5 }` | Seconds a bot thinks (and plans) before it moves and takes aim |

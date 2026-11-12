@@ -107,3 +107,13 @@ local _snails_EffectState = {}
 --- @field SawTurn boolean
 --- @field Hidden boolean
 local _snails_TagTurn = {}
+
+--%%%%%%%%%%%%%%%%%%%% Flight
+
+--- @class Snails_FlightState
+---
+--- # Simulation #
+---
+--- @field Body Combat_Body
+--- @field World Combat_World
+local _snails_FlightState = {}

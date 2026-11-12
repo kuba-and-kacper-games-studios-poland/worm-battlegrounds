@@ -212,7 +212,7 @@ function Module.GetRunway(position: Vector3, side: number, max: number)
 	--[[ Local Variables ]]
 
 	local control = I.Settings["SnailControl"] --- @type SnailControl_Settings
-	local jump: number = control.JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity)
+	local jump: number = control.JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity * I.Settings["Snails"].GRAVITY_SCALE)
 	local height: number = position.Y
 
 	--[[ Walking ]]

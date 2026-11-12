@@ -77,14 +77,14 @@ Bound at `Enum.ContextActionPriority.High` while `CanMove` is on, and sunk: the 
 | Key | Default | What |
 | --- | --- | --- |
 | `WALK_SPEED` | `8` | Walking speed, in studs per second |
-| `JUMP_SPEED` | `44` | A jump's upward speed: about 5 studs high at default gravity |
+| `JUMP_SPEED` | `33` | A jump's upward speed: about 5 studs high at a snail's light gravity (Snails' `GRAVITY_SCALE`) |
 | `STEP_HEIGHT`, `STEP_SPEED` | `2`, `16` | Ledges up to this height are climbed by walking into them, with this upward push |
-| `STAMINA_STUDS` | `20` | How far a snail may walk in a turn |
+| `STAMINA_STUDS` | `40` | How far a snail may walk in a turn |
 | `STICK_DEADZONE` | `0.3` | How far the left stick must lean |
 | `PARACHUTE_FALL_SPEED` | `6` | An open parachute's fall speed |
 | `JETPACK_FUEL`, `JETPACK_SPEED` | `3`, `16` | Seconds of flight, and the upward speed |
 | `SPEED_MULTIPLIER` | `1.5` | Walk speed and stamina with the speed potion |
-| `LOW_GRAVITY_SCALE` | `0.4` | Gravity's share with the low gravity potion |
+| `LOW_GRAVITY_SCALE` | `0.4` | With the low gravity potion, the share of a snail's own light gravity (Snails' `GRAVITY_SCALE`) left: the ball's `Lift` holds up the rest, and goes back to the snail's usual lift when the turn's effects end |
 | `SHINY_BOOST` | Jetpack 1.2, Speed 1.1, LowGravity 0.9, Parachute 0.8 | What a shiny copy multiplies its effect's number by |
 
 ### Server settings (`ServerSettings.lua`)

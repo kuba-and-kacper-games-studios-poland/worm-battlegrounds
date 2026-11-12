@@ -60,6 +60,7 @@ function Module.Start()
 		Module._watchSnail(model)
 	end
 	I.Topic.Subscribe("Match_PhaseChanged", Module._refresh)
+	I.Topic.Subscribe("Match_PhaseChanged", Module._onPhaseChanged)
 	Module._refresh()
 end
 
@@ -78,6 +79,31 @@ function Module._watchSnail(model: Instance)
 			Module._refresh()
 		end
 	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Phase Changed
+
+--[[
+	Ends the active snail's emote once its shot is away (the match enters its Flight).
+]]
+function Module._onPhaseChanged(phase: string)
+	--[[ Checks ]]
+
+	-- Check if a shot is away
+	if phase ~= "Flight" then
+		return
+	end
+
+	--[[ Data ]]
+
+	local snail: Instance? = snailsFolder:FindFirstChild(I.Match.GetActive() or "")
+	local skin: Instance? = snail and snail:FindFirstChild("Skin")
+
+	--[[ Stopping ]]
+
+	if skin then
+		I.SnailRig.StopEmote(skin)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh

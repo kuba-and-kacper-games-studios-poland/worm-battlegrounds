@@ -7,6 +7,9 @@ local _settings = {
 	GUI_NAME = "MatchHud",
 	RESULTS_GUI_NAME = "Results",
 
+	-- The results' placing cards that fit across at the design's width; more players' cards share it
+	RESULTS_FIT_PLACINGS = 4,
+
 	--[[
 		Guis the framework keeps on (`UserInterface_PreventHiding`) that the match screen hides while the player is in
 		a match: the currency bar sits where the turn banner and timer go
@@ -128,14 +131,14 @@ local _settings = {
 		The aim, Worms Armageddon's, drawn on the HUD's aim layer (U_Aim) in units: a stud at MatchCamera's starting
 		distance (DISTANCE), so it looks the same at any zoom. The power's cone: POWER_DOTS circles from POWER_START
 		units out from the snail's middle (further when zoomed in, clear of its ball), POWER_LENGTH units from the first
-		circle's middle to the last's, growing from the first size to the last and from dark red to pale yellow, each
-		growing in as the power passes it. Then POWER_GAP units of room, then the crosshair (the gui's ring and X, in the
+		circle's middle to the last's, growing from the first size to the last and through POWER_COLORS (each circle's
+		gradient runs them along the aim, so the circles blend into one), each growing in as the power passes it. Then POWER_GAP units of room, then the crosshair (the gui's ring and X, in the
 		aiming snail's colour), CROSSHAIR_SIZE units across, spinning CROSSHAIR_SPIN degrees a second
 	]]
 	POWER_DOTS = 14,
 
 	--- @type { Color3 }
-	POWER_COLORS = { Color3.fromRGB(170, 0, 0), Color3.fromRGB(248, 223, 108) },
+	POWER_COLORS = { Color3.fromRGB(255, 226, 92), Color3.fromRGB(255, 148, 38), Color3.fromRGB(240, 62, 46) },
 
 	--- @type { number }
 	POWER_DOT_SIZE = { 0.9, 2.3 },
@@ -149,7 +152,7 @@ local _settings = {
 
 	--[[
 		The share of the power slider's and stamina bar's picture that its fill covers (the rest clear), which code cuts
-		the fill at; the gui maker's bar picture (2026-11-11) fills its whole width
+		the bar and its texture at; the studio's complete PowerSlider (2026-11-12) fills its whole width
 	]]
 	BAR_FILL = 1,
 

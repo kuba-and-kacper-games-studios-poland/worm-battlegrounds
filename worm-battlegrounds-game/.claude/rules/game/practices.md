@@ -39,14 +39,23 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   SmoothPlastic with `2022 Stud`, sorted into islands, ledges and backdrop, with its own markers.
 - **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), their
   play plane (Bounds) at Z = 0, side by side along +X in 400-stud slots (MapLab's: X = (slot − 1) × 400) so none
-  overlaps another, and cached by the Arena module at start. The drop picker, aims and shots read the plane as Z = 0,
+  overlaps another, and cached by the Arena module at start. **Every map plays at X 0**, by the spawn: the Loader
+  moves each template's Bounds there when it caches it (the owner, 2026-11-12: Volcano Isle, at X 1200, didn't show
+  until the snails dropped, since streaming sends a player only what's within `StreamingTargetRadius` (1024) of
+  their avatar, parked at the spawn, until their snail is their `ReplicationFocus`). A knockout hands the focus back
+  to the parked avatar (Snails' `Health.Kill`): the ghost's ball ended up far below the arena, and with it as the focus
+  a player watching on lost the whole map and the camera its bounds (2026-11-12). The drop picker, aims and shots read the plane as Z = 0,
   so a template dragged off it in Studio is put back on it at start, with a warning (Arena's Loader). Nothing starts
   in the bounds' top 20 studs (Arena's `START_TOP_GAP`), so a map's roof is never a spawn, and the liquid is drawn as
   deep as the map's bedrock, measured at load, never the bounds' depth: a map needs neither set by hand. Weapon models are authored in
   `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/` and cached by Arsenal (its README → In the place).
 - **Liquids are a stop-motion stud simulation:** water and lava live in a grid of half-stud cells stepped at 8 fps
   and drawn as merged rectangles in `2022 Small Stud`, so they hop like a brick film. They are the only thing in the
-  arena on a grid, and the cells stay fine (never one-stud or bigger blocks).
+  arena on a grid, and the cells stay fine (never one-stud or bigger blocks). The sea is drawn 50 studs past the
+  map's sides, up to its level (Arena's `SEA_EDGE_WIDTH`, the owner, 2026-11-12: "not seen as cut out"), so the
+  camera never shows where it ends; only drawn, since the grid stops at the sides and out there is out of bounds.
+  A map may draw a liquid in Neon instead of the stud look, so it glows (its marker's `Arena_LiquidNeon`): Volcano
+  Isle's lava, sea and pools, in 255, 81, 58 (the owner, 2026-11-12: "make lava part neon so it slightly glows").
 - **Only the sea knocks snails out** (the owner's pick, 2026-11-08): the liquid whose marker starts at the bounds'
   bottom, raised by sudden death (Arena's `GetHazard`, `SEA_SLACK`), and since 2026-11-10 any liquid of its kind
   joined to it, so a pond the rising sea reaches becomes the sea (Arena's `Liquid.IsSea`, `SEA_MARK_STEPS`). A pond on
@@ -75,7 +84,9 @@ end in liquid.
   animations are published to The Snail Studio's group (2026-11-10; the ids are on the place's Animation instances
   under `Assets/Snails/Animations`), so live servers play them once the place with those ids is published. A hit
   snail ducks into its shell at once (Snails' `Motion` hears `Combat_Hit`), the hide sped up by SnailRig's
-  `HIDE_PLAY_SPEED`.
+  `HIDE_PLAY_SPEED`. **A walking snail is never in its shell** (the owner, 2026-11-12, after bots walked hidden):
+  the active snail's own jumps and falls don't hide it (Motion reads `Active`, since bots never get `CanMove`), it
+  comes out the moment it walks, and the walk stops the shell's `Hide` and `Show` animations.
 - **Every skin is a snail on Classic's skeleton** (2026-11-11, the artist's nine): the same bone names and frames,
   scaled 0.45, a skinned `Body` (accessories and Classic's hands in it) and `Shell`, Classic's `Handle`, so Classic's
   animations and SnailRig play on it unchanged (`art/skins`: the rigging, and why the shell is moved back by the
@@ -95,7 +106,8 @@ end in liquid.
   `CancelAim` drop a charge. On touch a finger on the arena only points; FIRE shoots. The camera doesn't edge-pan
   while the button is held. The aim draws W:A's way, on the MatchHud gui's aim layer (`U_Aim`, under the rest of the
   HUD) in screen pixels, never as billboards in the world (overlapping billboards at one depth swap their draw order
-  and flicker): a cone of circles, dark red to pale yellow, straight along the aim from a fixed start, each growing in
+  and flicker): a cone of circles, yellow through orange to red, blended into one seamless shape (each circle's
+  gradient runs the cone's colours along the aim, no outlines: the owner's pick, 2026-11-12), straight along the aim from a fixed start, each growing in
   as the power passes it, then a gap and the crosshair (a ring with an X, spinning, in the aiming snail's `Color`: its
   team's, or its own in a free-for-all). Every length is in units, a stud at MatchCamera's starting distance, so the
   aim looks the same at any zoom (zoomed in, the cone starts past the snail's grown ball). The screen that draws an aim
@@ -106,7 +118,10 @@ end in liquid.
 - **Blasts are felt, not only seen:** Combat's client `Effects` shakes the camera with ume's CameraShake, on top of
   MatchCamera (which updates at the `Camera` render priority, one step before the shaker), and vibrates phones and
   pads through the Haptic module's `Combat_*` presets (`src/global_data/Haptic/Preset.lua`). How hard comes from the
-  blast's size and its distance from the middle of the view, and nothing is felt outside a match. The player's own
+  blast's size and its distance from the middle of the view, and nothing is felt outside a match. **Every blow
+  punches** (the owner, 2026-11-12: "add screen shake on explosions and stuff like that to add more punch"): a shake
+  is a sharp jolt then a rumble (`SHAKE_KICK`, `SHAKE_MAGNITUDE`), a hit on a snail adds its own by the damage, more
+  on a knockout (`HIT_SHAKE_DAMAGE`, `KNOCKOUT_SHAKE`), and a gunshot kicks the view (`GUN_SHAKE`). The player's own
   shot ticks and a hit on their own snail thumps. The chunks of ground a blast throws are physics parts in Arena's
   `Chip` collision group: they bounce on the terrain, never on snails or shots, and fade after `DEBRIS_LIFETIME`.
 - **Big blows stop the world for a beat** (the owner's pick, 2026-11-10): a hit of Combat's `HITSTOP_DAMAGE` or more
@@ -114,12 +129,10 @@ end in liquid.
   `I.MatchCamera.Freeze`), longer for a knockout, when the camera also punches in on the snail
   (`I.MatchCamera.PunchIn`). It's drawn by each client from `Combat_Hit`'s `knockout`; the simulation and the server
   never stop. Bigger hits pop bigger, warmer damage numbers (Snails' `POP_TIERS`).
-- **A snail's shell breaks below 50 health:** each screen hides the skin's `Shell` part (its
-  `LocalTransparencyModifier`) while `Health` is under the
-  Snails module's `SHELL_BREAK_HEALTH`, and throws chips in its colours as it breaks; healing back up shows it again.
-  It's driven by the `Health` attribute alone, with no remote. A skin without a `Shell` part never breaks.
+- **The shell always stays on the snail** (the owner, 2026-11-12, removing the break below 50 health from
+  2026-11-06): no screen hides a skin's `Shell` part while the snail is in play.
 - **A knocked-out snail's ghost is drawn by each screen** (2026-11-10): the server only sets `Alive` false and
-  `Ghost` true (before `Health` drops to 0, so the shell doesn't break as it goes) and anchors the ball; every client
+  `Ghost` true (before `Health` drops to 0, so a screen that hears the health change already sees a ghost) and anchors the ball; every client
   floats it up glowing and fades it out (Snails' `Ghost` handler), and Match waits `GHOST_TIME` so it's seen before
   the next turn.
 - **Effects are the studio's particle prefabs, played by the Vfx library** (2026-11-09): each effect is a part named
@@ -132,7 +145,7 @@ end in liquid.
   jetpack its jet (Snails' `Trail_Jet`); a trail's attachments stand along Z, toward the camera, so it keeps its width.
 - **Each place has its own mood, subtle and in the game's colours** (the owner's pick, 2026-11-10: "subtle, high
   quality, minimalistic but visible… worms type of colors, but in a professional way"): the Atmosphere module sets
-  the lobby's or the map's lighting preset (`Lobby`, `Plains`, `Desert`, `Cave`, in `Lighting.Presets`), a few
+  the lobby's or the map's lighting preset (`Lobby`, `Plains`, `Desert`, `Cave`, `Volcano`, in `Lighting.Presets`), a few
   ambient particles that drift with the match's wind, effects on liquid surfaces and a cave's ceiling, and reactions
   to what happens (leaves from blasted trees, splashes, landing dust, steam), all on each client and from Vfx prefabs
   made from the studio's existing emitters. A new map gets a `PROFILES` row (Atmosphere's Settings), and a preset
@@ -145,7 +158,22 @@ end in liquid.
   to where a gun's bullets or a swing landed, follows a snail a blow sent flying or that fell, and holds on what
   happened until the next turn starts, then glides (never snaps) to the next snail (MatchCamera's `TRAVEL_*`,
   `CHASE_*`, `BLAST_HOLD`). The player's pan is only what they moved; the arena's edges limit the view but never
-  build up into the pan.
+  build up into the pan. **It moves calmly** (the owner, 2026-11-12: "too rapid… doesn't track the grenade"): every
+  move eases in and out on a damped spring capped at `MAX_SPEED`, and a shot, or a snail a blow threw, moves the view
+  only once it leaves the middle of the screen (`DEAD_ZONE`); only shots and hand moves go faster than the cap. **The
+  player's hand wins** outside their own turn before the shot: a drag, a finger, the stick or the screen's edge leaves
+  what the camera follows, and it stays where they put it while they hold the pan and until 5 s after their last move
+  (`MANUAL_HOLD`), then glides back. **Every turn starts on its snail** (the owner, 2026-11-12: "always at the start of
+  turn move the camera towards the one that is playing"): a new turn, the first too, ends the blast's hold and the
+  hand's, and the camera glides to the snail whose turn it is, **forced** (the owner: "move the camera even if player
+  is moving it by himself"): the hand moves nothing until the view gets there (at most `TRAVEL_MAX`). **High shots
+  ride near the screen's top** and **the zoom breathes** (the owner, 2026-11-12: "so also the map is visible… zoom
+  in/out to add more dynamic feeling"): a shot climbs to `SHOT_TOP` of the half screen before the view rises, from
+  its take-off height, the view zooming out to fit it and the map under it (`SHOT_ZOOM_OUT`), a little on each glide
+  to the next snail (`TRAVEL_ZOOM_*`), and in for a moment at a blast (`BLAST_KICK`). On their own turn before the shot the pan reaches anywhere in the arena at any zoom, and eases back to their
+  snail while it moves (the owner, 2026-11-12: zoomed in, the view couldn't go down to the map's bottom; it had been
+  kept within 70 % of half a screen of the snail). **On touch** one finger drags the view (on the player's own turn before the shot it points the aim instead) and
+  two fingers drag and pinch-zoom, read from raw touches, not Roblox's `TouchPan` and `TouchPinch`.
 - **Shots fly by the game's own simulation, not Roblox physics:** Combat's `Ballistics` (Scripts/Helpers) steps every
   flying shot the same on the server and every client, on the server's clock, with Worms' arcade rules (bounces that
   lose speed along the ground, resting and rolling off ledges, shots slowed through liquid). A shot starts on the
@@ -157,9 +185,11 @@ end in liquid.
   `PROJECTILE_TIME_SCALE` (0.5, half speed) along the same paths, so eyes can follow a shot. A thrown bomb's `Fuse`
   counts its own slowed flight time, so it bursts where it did at full speed; a placed one's (Dynamite) stays in real
   seconds. Anything that steps a shot (bots' predictions too) counts flight in the shot's own time.
-- **Strong items start on their cooldown** (2026-11-08): an item with a `Cooldown` waits that many of the player's
+- **Strong weapons start on their cooldown** (2026-11-08): a weapon with a `Cooldown` waits that many of the player's
   own turns before its first use too (Combat's `Uses.Reset`, mirrored in the bots' `Sim`), so nobody opens a match
-  with the strongest weapons. Admin `give` and `refill` clear it, for testing.
+  with the strongest weapons. Admin `give` and `refill` clear it, for testing. **Heals wait between uses** (the owner,
+  2026-11-12): a utility's `Cooldown` starts at its first use, so it's ready on the first turn; the Bandage (40)
+  waits 3 turns, once every 4 of the player's turns, and the Medkit (100) 5, once every 6, with 2 uses a match.
 - **Server-moved shots glide on clients:** the spider bomb's crawl and the variety grenade's worms move as server
   parts after landing; clients draw their models gliding after them (Combat's `CRAWL_GLIDE`), and the spider bomb walks
   up 1-stud steps rather than jumping them. Their throws fly on `Ballistics` like every other shot. Flying shots are
@@ -184,6 +214,38 @@ end in liquid.
   weapon, a map object, a hazard), happens only when the owner asks.
 - **A walking snail has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
+- **Snails are light, and a thrown snail flies the game's own physics** (the owner, 2026-11-12: "more like worms…
+  fly further, higher… fall slower… not use the roblox physics"): snails feel Snails' `GRAVITY_SCALE` (0.55) of
+  gravity (the ball's `Lift` holds up the rest; `JUMP_SPEED` keeps a jump about 5 studs high). A knock throws the
+  snail on a Combat Ballistics body, never an impulse on Roblox physics: the server anchors the ball and steps the
+  flight, writing its speed on the anchored ball, and every client draws the same flight from the snail's `Flight*`
+  attributes before each frame (Snails' `Flight`), so no remote. It bounces softly (`FLIGHT_BOUNCE` 0.2, lowered from 0.3 on 2026-11-12: the owner, "decrease the bouncing") and lands back on
+  Roblox physics once it rests on the ground. Walking stays Roblox physics on the owner's client. Anything that hands
+  a ball to a player or takes it back checks it isn't anchored first.
+- **Thrown bombs burst when they stop** (the owner, 2026-11-12): a thrown bomb with a fuse (the Grenade) goes off as
+  soon as it comes to rest on the ground, or when its fuse runs out first; placed Dynamite still waits for its fuse.
+- **The next turn waits for the arena to settle** (the owner, 2026-11-12): after a shot or anyone getting hurt, 3 s
+  of calm before the next snail (Match's `HIT_HOLD`), so everyone sees what happened; calm means every snail at rest
+  on the ground or in a liquid (none in the air), no debris falling, no shot and no health changing. Something that
+  never settles moves on after 5 s of nothing moving or getting hurt (`STALL_SECONDS`: a snail stuck off the ground, a
+  mine that never goes off), and 20 s of settling always does (`MAX_SETTLE`). A new hazard (mines, fire) keeps the
+  turn waiting by hurting or moving snails, or by joining the calm check in Match's `Turns._settle`.
+- **Ponds hurt like Worms' poison** (the owner, 2026-11-12): at the end of every turn, whoever's it was, each snail
+  with its head under a liquid that doesn't knock it out (Desert's oasis) loses 5 health (Match's `UNDERWATER_DAMAGE`,
+  the head's top `UNDERWATER_HEAD_HEIGHT` over the ball), never going below 1: a pond weakens a snail, and something
+  else has to finish it. Only its body under, its head above the surface, does nothing.
+- **Getting hurt ends your turn, as in Worms** (the owner, 2026-11-12): while a snail's turn is on and its shot isn't
+  away, any loss of health (a fall, a mine, a barrel, leftover fire) ends the turn at once, like its timer running
+  out (Match's `Turns`, watching the snail's `Health`). Damage after the shot belongs to the shot's flight.
+- **An emote turns the snail to face the camera, and a hit or a shot wins** (the owner, 2026-11-12): while it emotes,
+  the snail eases round to face this screen's camera and back after (SnailRig's `FACE_TURN_EASE`, the whole rig
+  turned about the ball's upright axis on each client), its held weapon hidden. A snail hidden in its shell (hit or
+  thrown) can't emote, and a hit ends an emote at once; the player's screen doesn't send one then, and a screen that
+  refuses it shows no bubble. Shooting ends it at once too: on the shooter's screen at the press, on every screen when
+  the match enters its Flight (Combat's client `Held`).
+- **Potions show on the snail, and on the player's screen on their turn** (the owner, 2026-11-12): a snail under the
+  Speed or Low gravity potion streams its `Aura_*` Vfx prefab (cyan sparks, violet bubbles), and on the player's own
+  turn the `PotionVignette` gui tints the screen's edges cyan, violet, or pink for both (Snails' `POTION_*`).
 
 ## Guis
 
@@ -224,12 +286,16 @@ end in liquid.
   `Skins` are the studio's `HUD`, `LobbyInventory`, `Gacha` and `Customise` designs (and since 2026-11-11 `Currency` and
   `EmoteShop`, the gui maker's) converted node for node into
   `Primitive` nodes (their pictures, fonts and screen-fraction layout), with U_/S_ Ids, prefabs for lists, button tags
-  and WidgetManager's widget shape added. They override the rule above and the GUI kit's look rules (yellow leads
-  the eye, kit picked states) for these guis: a picked or locked look is copied from the design into `Look_*`
-  attributes on the prefab or button, which code swaps. Blocks the designs lack (the drop, knocked-out and waiting
-  dialogs, the kill feed, the emote wheel, the match setup and waiting room) stay theme controls in the same table
-  (`Theme = "WormBattlegroundsBrawl"`). They lay themselves out by screen fractions with aspect-ratio constraints, so
-  they need no `S_ScreenScale` and aren't in ScreenScale's `GUIS` (MatchHud and MatchBoard stay, for their kept
+  and WidgetManager's widget shape added. Since 2026-11-12 the studio's `New_Guis` designs are ported the same way:
+  `PlaySolo` and `MatchWaiting` (MatchBoard's setup, at the bottom centre, and waiting room, beside Party), `KnockedOut`
+  (MatchHud's `U_KnockedOut`), `MatchOver` (`Results`), `InvitePlayers` (`PartyInvite`), `CustomLobby` and
+  `CustomLobbyPlayers` (`CustomLobby`'s two steps), `Shop`, and `Loading` (`TeleportGui`); the HUD's power and
+  stamina bars are the studio's `PowerSlider` (the same pictures, the bar `Fit`, its mask cut with it). They override
+  the rule above and the GUI kit's look rules (yellow leads the eye, kit picked states) for these guis: a picked or
+  locked look is copied from the design into `Look_*` attributes on the prefab or button, which code swaps. Blocks
+  the designs lack (MatchHud's drop and waiting dialogs, the kill feed, the emote wheel) stay theme controls in the
+  same table (`Theme = "WormBattlegroundsBrawl"`). They lay themselves out by screen fractions with aspect-ratio
+  constraints, so they need no `S_ScreenScale` and aren't in ScreenScale's `GUIS` (MatchHud stays, for its kept
   blocks). A block added to these screens since is built from the design's own pictures and fonts as `Primitive`
   nodes, never as a theme control (the turn callout and the tension band, 2026-11-10: the owner, on the GUI kit's
   Hazard plate, "this is old style, the new style is MatchBoard or MatchHud").
@@ -345,6 +411,9 @@ end in liquid.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
   the game starts: nothing in play stands on it (avatars are parked anchored, the lobby's stage has its own ground).
+- **Item ids are saved, so a renamed item keeps its id:** the Baseball bat became the Golf club on 2026-11-12 (its
+  name, model, icon), and its id stays `BaseballBat` in the Inventory and Arsenal rows, so saved inventories and
+  loadouts still find it.
 - **Placeholders until the owner provides the real thing:** developer products and game passes keep `Id = 0`; weapon
   projectiles and effects are made in code, and skins without a snail of their own (FBI Agent, Prisoner, VIP, Wizard)
   fall back to the Classic snail. Each such spot has a `shortcut:` comment or a README line saying it's a placeholder.
@@ -394,15 +463,17 @@ end in liquid.
   written short by the slot (`Currency_ShortFrom`: "18.62k"), so a count never wraps.
 - **The lobby is a party stage, as Fortnite's** (the owner's pick, 2026-11-09, replacing the bot match behind the
   guis): each client clones the stage prefab (`ReplicatedStorage_Assets/Lobby/PREFAB | Stage`, built by hand where it
-  stands, beyond the baseplate) and holds the camera on its `Camera` marker, low and close; the player's snail
+  stands, beyond the baseplate; since 2026-11-12 the studio's meadow, `Spawn_New`, its four platforms the pods; its parts are SmoothPlastic, since this place's `2022 Stud` variants are) and holds the camera on its `Camera` marker, low and close; the player's snail
   stands on the front pod (`Pod_1`) in their equipped skin, and their party in this server on the pods around it in
   theirs (Lobby's `Stage` handler, from the `PartyId` and `EquippedSkin` Player attributes). Each client stands its
   own snails, so everyone is in front on their own screen; the pods are parts in the prefab, so the layout is moved
   in Studio. The
   screen is the studio's `LobbyInventory` (2026-11-09): Party, the Loadout slots, the STYLE / WEAPONS / SKINS menu,
   ACTIVE LOBBIES (a scrolling row of cards, one per public mode) and SOLO VS BOTS (**Play with party** in a party) with
-  CUSTOM; no logo and no welcome line. The solo or party setup and the waiting room take the board's place, hanging
-  from the bottom left beside Party so the stage's front pod stays in sight; custom
+  CUSTOM; no logo and no welcome line. The solo or party setup and the waiting room take the board's place, whose lobby
+  rows and buttons slide down off the screen for them and back after (MatchBoard's `PLAY_*` settings, the owner's
+  pick, 2026-11-12): the setup at the bottom centre (the owner's pick, 2026-11-12), the waiting room hanging from the
+  bottom left beside Party; custom
   lobbies open in a window. Crates and Skins are full-screen widgets: while either is open the lobby's guis hide
   (Lobby's `FULL_SCREEN_WIDGETS` and `LOBBY_GUIS`).
 - **Matchmaking fills with bots:** every public mode has a row on the board at all times, and its timer always runs

@@ -795,7 +795,7 @@ end
 ]]
 --- @return number
 function Module._getJump()
-	return I.Settings["SnailControl"].JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity)
+	return I.Settings["SnailControl"].JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity * I.Settings["Snails"].GRAVITY_SCALE)
 end
 
 return Module

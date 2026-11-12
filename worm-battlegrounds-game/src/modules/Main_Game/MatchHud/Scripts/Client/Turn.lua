@@ -66,6 +66,7 @@ function Module.Start(gui: ScreenGui)
 	elems["Wind"] = elems["Turn"]:FindFirstChild("S_Wind", true) --- @type TextLabel
 	elems["Stamina"] = gui:FindFirstChild("U_Stamina") --- @type Frame
 	elems["StaminaBar"] = elems["Stamina"]:FindFirstChild("S_Bar") --- @type ImageLabel
+	elems["StaminaMask"] = elems["Stamina"]:FindFirstChild("S_BarMask") --- @type ImageLabel
 	elems["StaminaText"] = elems["Stamina"]:FindFirstChild("S_Text") --- @type TextLabel
 	elems["TurnList"] = gui:FindFirstChild("U_TurnList", true) --- @type Frame
 	prefabs["TurnEntry"] = elems["TurnList"]:FindFirstChild("PREFAB | TurnEntry") --- @type Frame
@@ -430,14 +431,16 @@ function Module._tick(deltaTime: number?)
 	end
 	local share: number = math.clamp((mine:GetAttribute("Stamina") or 0) / I.Settings["SnailControl"].STAMINA_STUDS, 0, 1)
 
-	-- The bar's gradient cuts the picture at the share (its fill is BAR_FILL of its width), so it never squashes
+	-- The bar's and its texture's gradients cut the pictures at the share (the fill is BAR_FILL of their width), so they never squash
 	local edge: number = math.clamp(share, 0.001, 0.998) * _settings.BAR_FILL
-	elems["StaminaBar"].UIGradient.Transparency = NumberSequence.new({
+	local cut: NumberSequence = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0),
 		NumberSequenceKeypoint.new(edge, 0),
 		NumberSequenceKeypoint.new(edge + 0.001, 1),
 		NumberSequenceKeypoint.new(1, 1),
 	})
+	elems["StaminaBar"].UIGradient.Transparency = cut
+	elems["StaminaMask"].UIGradient.Transparency = cut
 	elems["StaminaText"].Text = string.format(_settings.STAMINA_FORMAT, math.round(share * 100))
 end
 

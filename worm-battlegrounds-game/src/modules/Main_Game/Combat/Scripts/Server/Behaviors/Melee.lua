@@ -34,7 +34,7 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	A swing (Baseball bat, One Punch): the nearest snail within MELEE_BOX in front of the snail, toward the aimed side,
+	A swing (Golf club, One Punch): the nearest snail within MELEE_BOX in front of the snail, toward the aimed side,
 	takes DamageMax and is launched along that side, tilted up by the row's Lift (steeper for the punch).
 ]]
 --- @param shot Combat_Shot

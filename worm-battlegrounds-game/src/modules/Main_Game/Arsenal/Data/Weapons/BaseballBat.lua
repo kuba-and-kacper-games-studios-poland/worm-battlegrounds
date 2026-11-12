@@ -3,8 +3,8 @@ local _data = {
 
 	--[[ General ]]
 
-	Name = "Baseball bat",
-	Icon = "",
+	Name = "Golf club",
+	Icon = "rbxassetid://74452433921921",
 
 	--[[ Behavior ]]
 
