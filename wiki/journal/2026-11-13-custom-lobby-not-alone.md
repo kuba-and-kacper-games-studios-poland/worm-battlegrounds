@@ -1,5 +1,5 @@
 ---
-title: "A custom lobby can't start with only its owner in it, bots or not"
+title: "A custom lobby without bots can't start with only its owner: Start says so in a message window"
 date: 2026-11-13
 status: open
 kind: changed
@@ -10,18 +10,19 @@ files:
   - worm-battlegrounds-game/src/modules/Main_Game/MatchBoard/Scripts/Server/Custom.lua
 ---
 
-**What changed.** A custom lobby's owner could start it alone when it had bots (Easy to Nightmare); without bots the
-server refused with a small notification, "Invite at least one more player, or add bots." Now it always needs 2 or more
-players: pressing Start with only the owner in it shows a message window (`I.WidgetManager.ShowMessage`) saying "You
-can't start a custom lobby by yourself. Invite at least one more player!" (MatchBoard's `CUSTOM_ALONE_MESSAGE`), and
-the server's `MatchBoard_StartCustom` refuses it too, with the same text as a notification. Playing alone is Solo vs
-bots. Nightmare bots, offered only in a custom lobby's Bots row, now need at least two players.
+**What changed.** A custom lobby with only its owner in it and Bots set to Off already couldn't start, but the only
+sign was a small notification ("Invite at least one more player, or add bots."). Now pressing Start there shows a
+message window (`I.WidgetManager.ShowMessage`): "You can't start a custom lobby by yourself. Invite a player or turn
+bots on!" (MatchBoard's `CUSTOM_ALONE_MESSAGE`), and nothing is sent; the server's `MatchBoard_StartCustom` still
+refuses it too, with the same text as a notification. With bots (Easy to Nightmare) the owner still starts it alone.
+
+For a while on the same day it refused any lone start, bots or not; the owner then asked for alone-with-bots back, so
+that rule never shipped.
 
 **Where.** The client's `Custom._onStart` (MatchBoard), the server's `Custom.Start`; `CUSTOM_ALONE_MESSAGE` in
 MatchBoard's Settings. The Teams check (a party with no rival and no bots) is unchanged.
 
-**How to check.** Make a custom lobby alone, with any Bots choice, and press Start: the message shows and nothing
-starts. With a second player in it, Start sends everyone to the match.
+**How to check.** Make a custom lobby alone with Bots Off and press Start: the message shows and nothing starts. Turn
+bots on, or have a second player join, and Start sends everyone to the match.
 
-**For the wiki.** Match modes & maps (Custom): it needs two players; Solo vs bots is the way to play alone. Nightmare
-is offered only there, so it needs a friend too.
+**For the wiki.** Match modes & maps (Custom): without bots it needs two players, and Start says so.
