@@ -328,8 +328,9 @@ end
 	within its stamina (up ledges its jump clears, with the way open), past that the ground its jetpack reaches (straight
 	up to its cruise height under any ceiling, along it while nothing is in the way, then down), the spots beside each
 	target it could swing or place Dynamite from, and with its skill's AirShots, spots in the air on its flight's way.
-	All but where it stands and those beside targets are kept only as far as its skill's Spots (and AirShots), the ones
-	its genome likes best.
+	With a potion, its walk goes further (Speed) or up higher ledges (Low gravity), and the spots only the potion
+	reaches name it (Potion). All but where it stands and those beside targets are kept only as far as its skill's
+	Spots (and AirShots), the ones its genome likes best.
 ]]
 --- @param view Bots_View
 --- @param genome Bots_Genome
@@ -342,6 +343,12 @@ function Module._getSpots(view, genome, skill, targets, stay: boolean)
 	local origin: Vector3 = view.Self.Position
 	local jump: number = Move.GetJump()
 	local reach: number = math.floor(view.Stamina)
+	local potion: string?
+	local effect: string?
+	potion, effect = Module._getPotion(view)
+	local fullJump: number = if effect == "LowGravity" then Move.GetJump(true) else jump
+	local fullReach: number = if effect == "Speed" then math.floor(view.Stamina * I.Settings["SnailControl"].SPEED_MULTIPLIER) else reach
+	local radius: number = I.Settings["Snails"].ROOT_SIZE / 2
 	local canFly: boolean = view.Uses["Jetpack"] ~= nil
 	local cruise: number = Move.GetCruise(origin)
 	local here = Module._getSpot(view, origin, 0, false, jump, nil) --- @type Bots_Spot
@@ -379,14 +386,17 @@ function Module._getSpots(view, genome, skill, targets, stay: boolean)
 		local last: Vector3 = origin
 		local onFoot: boolean = true
 		local inFlight: boolean = canFly and cruise > origin.Y
-		for step: number = 1, reach do
+		local boosted: boolean = false
+		for step: number = 1, fullReach do
 			local x: number = origin.X + side * step
 			local ground: Vector3? = nil
 			local fly: boolean = false
 			inFlight = inFlight and Move.CanFly(x - side, x, cruise)
 			if onFoot then
-				ground = Move.GetGround(x, last.Y, jump)
+				ground = Move.GetGround(x, last.Y, fullJump)
 				if ground and Move.CanStep(last, ground) then
+					-- A ledge higher than its own jump reaches: the Low gravity potion's from here on
+					boosted = boosted or ground.Y - radius - last.Y > jump
 					last = ground
 				else
 					ground = nil
@@ -405,10 +415,12 @@ function Module._getSpots(view, genome, skill, targets, stay: boolean)
 			if ground and (marked or closeX[math.round(x)]) then
 				local spot = Module._getSpot(view, ground, step, fly, jump, nil) --- @type Bots_Spot
 				spot.Cruise = if fly then cruise else nil
+				spot.Potion = if step > reach or boosted and not fly then potion else nil
 				table.insert(if closeX[math.round(x)] then close else open, spot)
 			end
 			local hover = if wantsAir and landing and marked then Module._getAirSpot(view, landing, step, cruise, jump) else nil --- @type Bots_Spot?
 			if hover then
+				hover.Potion = if step > reach then potion else nil
 				table.insert(air, hover)
 			end
 			Module.Breathe()
@@ -486,6 +498,7 @@ function Module._getSpot(view, position: Vector3, walk: number, fly: boolean, ju
 		Fly = fly,
 		Air = ground ~= nil,
 		Cruise = nil,
+		Potion = nil,
 		Edge = Module._getEdge(standing, jump),
 		Footing = Module._getFooting(standing),
 		Low = if sea > -math.huge then math.clamp(1 - (standing.Y - sea) / _settings.LOW_RANGE, 0, 1) * (0.25 + 0.75 * urgency) else 0,
@@ -583,9 +596,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Place
 
 --[[
-	Returns how much a genome likes standing on a spot, for the spot alone: the getting there, the map's dangers there
-	(the edge, its footing, low ground, a pond's damage over POND_TURNS turns) as much as its skill's MapSense minds
-	them, the height, cover from above, being seen, crowded and threatened.
+	Returns how much a genome likes standing on a spot, for the spot alone: the getting there (a potion it drinks for
+	it costs as a limited weapon's use does: Ammo), the map's dangers there (the edge, its footing, low ground, a pond's
+	damage over POND_TURNS turns) as much as its skill's MapSense minds them, the height, cover from above, being seen,
+	crowded and threatened.
 ]]
 --- @param spot Bots_Spot
 --- @param genome Bots_Genome
@@ -596,12 +610,14 @@ function Module._getPlace(spot, genome, view, skill)
 	--[[ Local Variables ]]
 
 	local walk: number = spot.Walk / math.max(view.Stamina, 1)
+	local potion: number = if spot.Potion then genome.Ammo / math.max(view.Uses[spot.Potion] or 1, 1) else 0
 	local pond: number = spot.Pond * I.Settings["Match"].UNDERWATER_DAMAGE * _settings.POND_TURNS / 100
 	local danger: number = genome.Edge * spot.Edge + genome.Footing * spot.Footing + genome.Low * spot.Low + genome.SelfDamage * pond
 
 	--[[ Returning ]]
 
 	return -genome.Walk * walk
+		- potion
 		- genome.Jetpack * (if spot.Fly then 1 else 0)
 		- skill.MapSense * danger
 		+ genome.Height * spot.Height
@@ -609,6 +625,30 @@ function Module._getPlace(spot, genome, view, skill)
 		- genome.Exposure * spot.Exposure
 		- genome.Crowd * spot.Crowd
 		- genome.Threat * spot.Threat
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Potion
+
+--[[
+	Returns the movement potion a bot can drink this turn (a utility whose Effect is Speed or LowGravity), and that
+	effect; nil and nil without one.
+]]
+--- @param view Bots_View
+--- @return string?
+--- @return string?
+function Module._getPotion(view)
+	--[[ Searching ]]
+
+	for itemId: string, _uses: number in pairs(view.Uses) do
+		local row = if I.G_Arsenal.IsUtility(itemId) then I.G_Arsenal.Get(itemId) else nil --- @type Arsenal_UtilityData?
+		if row and (row.Effect == "Speed" or row.Effect == "LowGravity") then
+			return itemId, row.Effect
+		end
+	end
+
+	--[[ Returning ]]
+
+	return nil, nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Rough

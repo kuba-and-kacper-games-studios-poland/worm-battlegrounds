@@ -29,8 +29,10 @@ fuses, contact bursts, pierces and detonations decide the blast. Each client sim
 catching up to the server's clock and easing out from the launch spot, draws it between steps at any frame rate, and,
 when the server's state at a step differs from its own, goes back to that step, steps again to now and eases the jump
 out. The spider bomb is thrown on the simulation too, then crawls as a server part (`Projectiles.Spawn`), walking up
-and down the stud grid's 1-stud steps (`CRAWL_STEP_UP`) and climbing taller walls, and bursts if it crawls into
-liquid; a variety grenade's four worms dig
+and down the stud grid's 1-stud steps (`CRAWL_STEP_UP`) and climbing taller walls (never past a ceiling, never up
+an overhang it fits under), and bursts if it crawls into liquid. It finds its way by terrain alone
+(`Projectiles.CastTerrain`): snails are neither walls nor ground to it, so it crawls through the shooter and
+teammates instead of climbing them into the air; a variety grenade's four worms dig
 down through the terrain as server parts and drown in water or lava; clients glide both after their parts. A weapon with a
 `Retreat` (Dynamite) is placed at the snail's feet and leaves its player moving it, with full stamina, for that many
 seconds (`I.SnailControl.Retreat`) before the fuse blows it. Blasts play the studio's explosion effect for their size (`I.Vfx`) and throw chunks of the
@@ -69,7 +71,7 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `Scripts/Server/Aimbot.lua` | The aim guide, while the server has the player's `Aimbot` attribute on: on their turn, for each enemy snail, the arc (from `GetArcs` at `AIMBOT_POWERS`, the one whose path lands nearest it), a gun's straight line, or a homing shot's launch, solved again every `AIMBOT_REFRESH` seconds once something moved and sent to that player (`Combat_AimbotGuide`) |
 | `Scripts/Server/Uses.lua` | Uses and cooldowns per participant, the `Combat` Replicator folder |
 | `Scripts/Helpers/Ballistics.lua` | `Combat_Ballistics`, the shot simulation both sides run: `New`, `Step`, `Load`, `GetState`, `GetCFrame`, `GetSnail`, `MakePart` (the placeholder ball) |
-| `Scripts/Server/Projectiles.lua` | Simulated shots (`Launch`, `Fly`, `Land`, `GetOptions`, `GetStart`, `IsGone`), crawling shots' parts (`Spawn`), raycasts, lost shots |
+| `Scripts/Server/Projectiles.lua` | Simulated shots (`Launch`, `Fly`, `Land`, `GetOptions`, `GetStart`, `IsGone`), crawling shots' parts (`Spawn`), raycasts (`Cast`, and `CastTerrain` for crawlers), a crawler's step (`GetCrawlStep`), lost shots |
 | `Scripts/Server/Blast.lua` | Explosions: tells clients first (`Combat_Explosion`, so the blast shows before the crater's cut), then craters, damage, knockback (never on the shooter's teammates; always on the shooter); each hit tells clients with whether it knocked the snail out (`Combat_Hit`) |
 | `Scripts/Server/Behaviors/*.lua` | One file per `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee), and `Snail.lua`, the variety grenade's worms |
 | `Global.lua` | Launch velocity and wind, shared with the aim dots, the aim guide and bots |
@@ -103,6 +105,7 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `GetArcs(origin, aimAt, itemId, windAcceleration, powers)` | `{ Vector2 }` | The angles (X) and powers (Y) whose arcs pass through `aimAt` in open air: a low and a high arc for each share of power in `powers` that reaches it, corrected for the muzzle. Bots and the aim guide use it |
 | `PredictArc(origin, velocity, windAcceleration, seconds, step?)` | `{ Vector3 }` | Points along the flight |
 | `GetShotStart(origin, direction, shooter)` | `Vector3` | Where a shot leaves a snail's ball (`origin`) along `direction`: `MUZZLE_GAP` past the ball, or short of the terrain or snail in the way (a raycast that ignores `shooter`), so a shot aimed into the ground starts on it. `Fire` and the bots' predictions use it |
+| `GetCrawlStep(position, side, distance)` | `Vector3` | Where a crawling spider bomb goes next, one step of `distance` toward `side` (-1, 1, or 0 to stay): up a wall, along the ground or falling, by terrain alone. The spider bomb's crawl and the bots' predictions use it |
 
 ### Client: `I.Combat`
 

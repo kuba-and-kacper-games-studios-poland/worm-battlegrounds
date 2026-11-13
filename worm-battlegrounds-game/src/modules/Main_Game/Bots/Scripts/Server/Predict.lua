@@ -63,8 +63,9 @@ end
 --[[
 	Returns what a weapon fired from a snail's middle would do, as Combat's behaviors do it: the blasts it sets off and
 	the snails it strikes directly (bullets, a swing, a piercing spear), with the same simulation (I.G_Combat's
-	bodies), wind acceleration and fuses. `random` scatters bullets and bomblets as a real shot does; without it they
-	spread evenly, so a plan is the same every time. Nil for a weapon whose shot it can't foresee (crawlers, rollers).
+	bodies), wind acceleration and fuses. A spider bomb crawls to the nearest enemy (Combat's GetCrawlStep) before it
+	bursts; a black hole pulls snails in (Pulls) before it does. `random` scatters bullets and bomblets as a real shot
+	does; without it they spread evenly, so a plan is the same every time. Nil for a weapon whose shot it can't foresee.
 ]]
 --- @param snails { Bots_Snail }
 --- @return Bots_Shot?
@@ -129,19 +130,20 @@ function Module.GetShot(origin: Vector3, itemId: string, angle: number, power: n
 
 	--[[ Checks ]]
 
-	-- Check if it's a shot the simulation alone decides
-	if row.Kind ~= "Rocket" and row.Kind ~= "Bouncer" and row.Kind ~= "Homing" then
+	-- Check if it's a shot the simulation decides
+	if row.Kind ~= "Rocket" and row.Kind ~= "Bouncer" and row.Kind ~= "Homing" and row.Kind ~= "Crawler" and row.Kind ~= "Roller" then
 		return nil
 	end
 
 	--[[ Flying ]]
 
+	-- A spider bomb flies without wind, as Combat's Crawler launches it
 	--- @type Combat_ShotOptions
 	local options = {
 		Radius = combat.PROJECTILE_SIZE / 2,
 		Shooter = if row.Aim == "Feet" then nil else shooter,
 		GraceSteps = math.round(combat.SHOOTER_GRACE / combat.PROJECTILE_STEP),
-		Wind = I.G_Combat.GetWindAcceleration(itemId, wind),
+		Wind = if row.Kind == "Crawler" then nil else I.G_Combat.GetWindAcceleration(itemId, wind),
 		Pierce = row.Pierce,
 		Bounce = if row.Kind == "Bouncer" and not row.BurstOnContact then row.Elasticity or 0.5 else nil,
 		Target = if row.Kind == "Homing" then target else nil,
@@ -171,6 +173,21 @@ function Module.GetShot(origin: Vector3, itemId: string, angle: number, power: n
 	shot.Landed = burst
 	if row.Pierce then
 		return shot
+	end
+
+	-- A spider bomb that touched the ground crawls on to burst by the nearest enemy, or is lost on the way
+	local team: number? = Module._getTeam(shooter, snails)
+	if row.Kind == "Crawler" and not Module._isOnSnail(burst, snails) then
+		burst = Module._crawl(burst + Vector3.yAxis * combat.PROJECTILE_SIZE / 2, row, team, snails)
+		if not burst then
+			return shot
+		end
+		shot.Landed = burst
+	end
+
+	-- An open black hole pulls every snail in its reach but the shooter's teammates, then bursts
+	if row.Kind == "Roller" then
+		shot.Pulls = Module._getPulls(burst, row, team, shooter, snails)
 	end
 	table.insert(shot.Blasts, {
 		Center = burst,
@@ -212,9 +229,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Effects
 
 --[[
-	Returns what a shot does to each snail it reaches, as Combat's blasts and hits do it: the damage (blasts fall off
-	from the center to the edge), then where the knockback throws it, or where it drops when the craters take the
-	ground under it, and whether that, or the damage, knocks it out.
+	Returns what a shot does to each snail it reaches, as Combat's blasts and hits do it: where a black hole pulls it
+	first, the damage (blasts fall off from the center to the edge), then where the knockback throws it, or where it
+	drops when the craters take the ground under it, and whether that, or the damage, knocks it out.
 ]]
 --- @param shot Bots_Shot
 --- @param snails { Bots_Snail }
@@ -227,6 +244,22 @@ function Module.GetEffects(shot, snails)
 	local damages = {} --- @type { [string]: number }
 	local pushes = {} --- @type { [string]: Vector3 }
 	local effects = {} --- @type { [string]: Bots_Effect }
+	local positions = {} --- @type { [string]: Vector3 }
+	local gone = {} --- @type { [string]: boolean }
+
+	--[[ Pulling ]]
+
+	-- A black hole throws snails toward it before it bursts, so its blast finds them where they land
+	--- @param snail Bots_Snail
+	for _index: number, snail in ipairs(snails) do
+		positions[snail.Id] = snail.Position
+		local pull: Vector3? = if shot.Pulls then shot.Pulls[snail.Id] else nil
+		if pull then
+			local fall: number
+			positions[snail.Id], gone[snail.Id], fall = Module.GetThrow(snail.Position, pull, {})
+			damages[snail.Id] = fall
+		end
+	end
 
 	--[[ Hurting ]]
 
@@ -235,9 +268,9 @@ function Module.GetEffects(shot, snails)
 		local knockSpeed: number = I.G_Arsenal.GetKnockback(blast.Knockback)
 		--- @param snail Bots_Snail
 		for _snailIndex: number, snail in ipairs(snails) do
-			local offset: Vector3 = snail.Position - blast.Center
+			local offset: Vector3 = positions[snail.Id] - blast.Center
 			local distance: number = math.max(offset.Magnitude - rootRadius, 0)
-			if distance <= blast.Radius then
+			if distance <= blast.Radius and not gone[snail.Id] then
 				local share: number = if blast.Radius > 0 then distance / blast.Radius else 0
 				local away: Vector3 = if offset.Magnitude > 0.05 then offset.Unit else Vector3.yAxis
 				damages[snail.Id] = (damages[snail.Id] or 0) + math.floor(blast.DamageMax + (blast.DamageEdge - blast.DamageMax) * share + 0.5)
@@ -264,13 +297,14 @@ function Module.GetEffects(shot, snails)
 	end
 	--- @param snail Bots_Snail
 	for _index: number, snail in ipairs(snails) do
-		local landed: Vector3? = nil
-		local out: boolean = false
+		local at: Vector3 = positions[snail.Id]
+		local landed: Vector3? = if at ~= snail.Position then at else nil
+		local out: boolean = gone[snail.Id] == true
 		local fall: number = 0
-		if pushes[snail.Id] then
-			landed, out, fall = Module.GetThrow(snail.Position, pushes[snail.Id], holes)
-		elseif Module._isUndermined(snail.Position, holes) then
-			landed, out, fall = Module.GetDrop(snail.Position, holes)
+		if not out and pushes[snail.Id] then
+			landed, out, fall = Module.GetThrow(at, pushes[snail.Id], holes)
+		elseif not out and Module._isUndermined(at, holes) then
+			landed, out, fall = Module.GetDrop(at, holes)
 		end
 		local damage: number = (damages[snail.Id] or 0) + fall
 		if landed and (damage > 0 or out or (landed - snail.Position).Magnitude > 0.5) then
@@ -497,6 +531,135 @@ function Module._isInHole(point: Vector3, holes)
 	--- @param hole Bots_Blast
 	for _index: number, hole in ipairs(holes) do
 		if (point - hole.Center).Magnitude < hole.Radius + 0.5 then
+			return true
+		end
+	end
+
+	--[[ Returning ]]
+
+	return false
+end
+
+--%%%%%%%%%%%%%%%%%%%% Crawl
+
+--[[
+	Returns where a landed spider bomb bursts, crawling as Combat's Crawler does (GetCrawlStep, CRAWL_PREDICT_STEP at a
+	time) toward the nearest snail not on the shooter's team for its row's CrawlTime: within CONTACT_DISTANCE of it,
+	in liquid, or where its time runs out. Nil when it crawls out of the arena, or there's no enemy to crawl to.
+]]
+--- @param row Arsenal_WeaponData
+--- @param snails { Bots_Snail }
+--- @return Vector3?
+function Module._crawl(from: Vector3, row, team: number?, snails)
+	--[[ Local Variables ]]
+
+	local combat = I.Settings["Combat"] --- @type Combat_Settings
+	local distance: number = (row.CrawlSpeed or 10) * _settings.CRAWL_PREDICT_STEP
+	local position: Vector3 = from
+
+	--[[ Crawling ]]
+
+	for _step: number = 1, math.ceil((row.CrawlTime or 5) / _settings.CRAWL_PREDICT_STEP) do
+		local target: Vector3? = nil
+		--- @param snail Bots_Snail
+		for _index: number, snail in ipairs(snails) do
+			if snail.Team ~= team and (not target or (snail.Position - position).Magnitude < (target - position).Magnitude) then
+				target = snail.Position
+			end
+		end
+		if not target then
+			return nil
+		end
+		local offset: Vector3 = target - position
+		if offset.Magnitude <= combat.CONTACT_DISTANCE or I.Arena.GetLiquid(position) then
+			break
+		end
+
+		-- Right under or over its target it waits instead of turning back and forth
+		local side: number = if math.abs(offset.X) < combat.CRAWL_STOP then 0 else math.sign(offset.X)
+		position = I.Combat.GetCrawlStep(position, side, distance)
+		if I.Arena.GetHazard(position) == "Bounds" then
+			return nil
+		end
+	end
+
+	--[[ Returning ]]
+
+	return position
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Pulls
+
+--[[
+	Returns the speed an open black hole at a center throws each snail in its row's PullRadius with, as Combat's Roller
+	pulls: toward it and a little up, harder the closer it is, the shooter's teammates aside (the shooter isn't).
+]]
+--- @param row Arsenal_WeaponData
+--- @param snails { Bots_Snail }
+--- @return { [string]: Vector3 }
+function Module._getPulls(center: Vector3, row, team: number?, shooter: Model, snails)
+	--[[ Local Variables ]]
+
+	local combat = I.Settings["Combat"] --- @type Combat_Settings
+	local radius: number = row.PullRadius or row.BlastRadius * 1.5
+	local pulls = {} --- @type { [string]: Vector3 }
+
+	--[[ Pulling ]]
+
+	--- @param snail Bots_Snail
+	for _index: number, snail in ipairs(snails) do
+		local offset: Vector3 = center - snail.Position
+		local teammate: boolean = snail.Team == team and snail.Model ~= shooter
+		if offset.Magnitude <= radius and offset.Magnitude >= 0.5 and not teammate then
+			local speed: number = combat.BLACK_HOLE_PULL_SPEED * (1 - 0.5 * offset.Magnitude / radius)
+			pulls[snail.Id] = (offset.Unit + Vector3.yAxis * combat.UPWARD_BIAS * 0.5).Unit * speed
+		end
+	end
+
+	--[[ Returning ]]
+
+	return pulls
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Team
+
+--[[
+	Returns the team of the snail that fires a shot, from the snails in play.
+]]
+--- @param snails { Bots_Snail }
+--- @return number?
+function Module._getTeam(shooter: Model, snails)
+	--[[ Searching ]]
+
+	--- @param snail Bots_Snail
+	for _index: number, snail in ipairs(snails) do
+		if snail.Model == shooter then
+			return snail.Team
+		end
+	end
+
+	--[[ Returning ]]
+
+	return nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is On Snail
+
+--[[
+	Returns whether a shot that stopped at a point stopped on a snail's ball rather than the ground.
+]]
+--- @param snails { Bots_Snail }
+--- @return boolean
+function Module._isOnSnail(point: Vector3, snails)
+	--[[ Local Variables ]]
+
+	local reach: number = (I.Settings["Snails"].ROOT_SIZE + I.Settings["Combat"].PROJECTILE_SIZE) / 2 + 0.25
+
+	--[[ Searching ]]
+
+	--- @param snail Bots_Snail
+	for _index: number, snail in ipairs(snails) do
+		if (snail.Position - point).Magnitude <= reach then
 			return true
 		end
 	end

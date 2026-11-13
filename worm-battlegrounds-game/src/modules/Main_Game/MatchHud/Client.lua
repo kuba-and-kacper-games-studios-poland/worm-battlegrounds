@@ -56,6 +56,8 @@ function Module.Start()
 	moduleGui = I.UserInterface.UI[_settings.GUI_NAME]
 	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshShown)
 	Module._refreshShown()
+	I.Topic.Subscribe("Platform_Changed", Module._refreshInsets)
+	Module._refreshInsets()
 
 	Turn.Start(moduleGui)
 	Teams.Start(moduleGui)
@@ -87,6 +89,18 @@ function Module._refreshShown()
 	for _index: number, guiName: string in ipairs(_settings.HIDDEN_IN_MATCH) do
 		I.UserInterface.UI[guiName].Enabled = not inMatch
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Refresh Insets
+
+--[[
+	Lays the HUD out below Roblox's top bar on phones and tablets, where the bar's buttons covered the team panels and
+	the turn and wind; elsewhere it fills the device's safe area.
+]]
+function Module._refreshInsets()
+	--[[ Applying ]]
+
+	moduleGui.ScreenInsets = if I.Platform.Current == "Mobile" then Enum.ScreenInsets.CoreUISafeInsets else Enum.ScreenInsets.DeviceSafeInsets
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

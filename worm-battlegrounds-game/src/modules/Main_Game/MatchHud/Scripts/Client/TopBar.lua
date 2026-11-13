@@ -11,11 +11,8 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
--- The music volume to go back to when the player unmutes
-local musicBefore: number = 0
-
--- The top bar buttons, shown only while the player is in the match (the Studio map's lobby shares the server)
-local buttons = {} --- @type { TopBar_Button }
+-- The Leave game button, shown only while the player is in the match (the Studio map's lobby shares the server)
+local leaveButton = nil --- @type TopBar_Button
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -38,21 +35,14 @@ local Module = {}
 function Module.Start()
 	--[[ Leave Game ]]
 
-	local leaveButton = I.TopBar.AddButton("Left") --- @type TopBar_Button
-	leaveButton:SetLayoutOrder(2)
-	leaveButton:SetText(_settings.LEAVE_TEXT)
+	-- After Settings and the music button (TopBar_Controller's)
+	leaveButton = I.TopBar.AddButton("Left")
+	leaveButton:SetLayoutOrder(3)
+	leaveButton:SetIcon(_settings.LEAVE_ICON)
 	leaveButton:SetCallback(Module._askLeave)
-
-	--[[ Mute Music ]]
-
-	local musicButton = I.TopBar.AddButton("Left") --- @type TopBar_Button
-	musicButton:SetLayoutOrder(3)
-	musicButton:SetText(_settings.MUSIC_TEXT)
-	musicButton:SetCallback(Module._toggleMusic)
 
 	--[[ Connections ]]
 
-	buttons = { leaveButton, musicButton }
 	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshShown)
 	Module._refreshShown()
 end
@@ -62,15 +52,12 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Shown
 
 --[[
-	Shows the buttons while the player is in the match, and hides them in the Studio map's lobby.
+	Shows Leave game while the player is in the match, and hides it in the Studio map's lobby.
 ]]
 function Module._refreshShown()
 	--[[ Applying ]]
 
-	--- @param button TopBar_Button
-	for _index: number, button in ipairs(buttons) do
-		button.Instance.Visible = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
-	end
+	leaveButton.Instance.Visible = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
 end
 
 --%%%%%%%%%%%%%%%%%%%% Ask Leave
@@ -93,26 +80,6 @@ function Module._leave()
 	--[[ Sending ]]
 
 	I.Network.Fire("Match_Leave")
-end
-
---%%%%%%%%%%%%%%%%%%%% Toggle Music
-
---[[
-	Turns the music off, or back to the volume it had.
-]]
-function Module._toggleMusic()
-	--[[ Local Variables ]]
-
-	local volume: number = I.PlayerSettings.Get("Music")
-
-	--[[ Saving ]]
-
-	if volume > 0 then
-		musicBefore = volume
-		I.PlayerSettings.Set("Music", 0)
-	else
-		I.PlayerSettings.Set("Music", if musicBefore > 0 then musicBefore else 50)
-	end
 end
 
 return Module

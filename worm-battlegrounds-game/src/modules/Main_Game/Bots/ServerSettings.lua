@@ -39,10 +39,17 @@ local _settings = {
 	--- @type { [string]: { string } }
 	LOADOUTS = {
 		Easy = { "Grenade", "Shotgun", "Jetpack" },
-		Medium = { "Grenade", "Shotgun", "Dynamite", "Jetpack", "Bandage" },
-		Hard = { "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "Jetpack", "Medkit" },
-		Nightmare = { "Grenade", "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "Jetpack", "Medkit" },
+		Medium = { "Grenade", "Shotgun", "Dynamite", "SpiderBomb", "Jetpack", "Bandage" },
+		Hard = { "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "Jetpack", "Medkit" },
+		Nightmare = { "Grenade", "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "BlackHoleGrenade", "Jetpack", "Medkit" },
 	},
+
+	--[[
+		Every bot (the tutorial's aside) also rolls one of these, at even odds, onto its loadout: none (""), or a potion
+		it drinks only when the spot it wants is past its walk (Speed) or up a ledge its jump can't reach (Low gravity)
+	]]
+	--- @type { string }
+	POTIONS = { "", "SpeedPotion", "LowGravityPotion" },
 
 	--%%%%%%%%%%%%%%%%%%%% Skill
 
@@ -109,6 +116,9 @@ local _settings = {
 
 	-- A finalist's full simulation stops after this many seconds of the shot's own (slowed) flight time
 	PREDICT_SECONDS = 6.4,
+
+	-- A spider bomb's crawl is foreseen a step of this many seconds at a time
+	CRAWL_PREDICT_STEP = 1 / 20,
 
 	-- A plan gives the server a frame after this many seconds of thinking in a row, so a turn never stalls it
 	THINK_SLICE = 0.008,

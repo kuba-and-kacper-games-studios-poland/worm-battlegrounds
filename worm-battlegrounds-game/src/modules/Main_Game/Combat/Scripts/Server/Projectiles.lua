@@ -33,6 +33,9 @@ local world = {} --- @type Combat_World
 local params: RaycastParams = RaycastParams.new()
 local shooterParams: RaycastParams = RaycastParams.new()
 
+-- Casts that hit only terrain, for a crawler finding its way (snails are neither walls nor ground to it): what snails stand on
+local terrainParams: RaycastParams = RaycastParams.new()
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -66,6 +69,10 @@ function Module.Init()
 	params.FilterDescendantsInstances = { combatFolder }
 	shooterParams.CollisionGroup = "Projectile"
 	shooterParams.FilterType = Enum.RaycastFilterType.Exclude
+	terrainParams.CollisionGroup = "Snail"
+	terrainParams.RespectCanCollide = true
+	terrainParams.FilterType = Enum.RaycastFilterType.Exclude
+	terrainParams.FilterDescendantsInstances = { combatFolder }
 
 	world.Params = RaycastParams.new()
 	world.Params.CollisionGroup = "Projectile"
@@ -291,6 +298,76 @@ function Module.Cast(from: Vector3, to: Vector3, shooter: Model?)
 		return I.S.Workspace:Raycast(from, direction, shooterParams)
 	end
 	return I.S.Workspace:Raycast(from, direction, params)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Cast Terrain
+
+--[[
+	Returns the terrain a crawler touches moving from one point to another, seeing through snails and projectiles.
+]]
+--- @return RaycastResult?
+function Module.CastTerrain(from: Vector3, to: Vector3)
+	--[[ Local Variables ]]
+
+	local direction: Vector3 = to - from
+
+	--[[ Checks ]]
+
+	-- Check if it moved at all
+	if direction.Magnitude < 1e-3 then
+		return nil
+	end
+
+	--[[ Returning ]]
+
+	return I.S.Workspace:Raycast(from, direction, terrainParams)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Crawl Step
+
+--[[
+	Returns where a crawler (the spider bomb) goes next, one step of a distance toward a side (0 stays): up a wall in
+	front of it taller than CRAWL_STEP_UP (never past a ceiling, never up an overhang it fits under), else along the
+	ground, easing up onto a ledge and down off one rather than jumping the stud grid's steps, else falling. Only
+	terrain counts (CastTerrain). The bots' predictions step it the same way.
+]]
+--- @return Vector3
+function Module.GetCrawlStep(position: Vector3, side: number, distance: number)
+	--[[ Local Variables ]]
+
+	local radius: number = _settings.PROJECTILE_SIZE / 2
+	local reach: Vector3 = Vector3.xAxis * side * (radius + distance)
+	local high: Vector3 = position + Vector3.yAxis * _settings.CRAWL_STEP_UP
+
+	--[[ Climbing ]]
+
+	-- A wall in front of it and above a step's height: climb it, unless a ceiling stops it
+	if side ~= 0 and Module.CastTerrain(position, position + reach) and Module.CastTerrain(high, high + reach) then
+		if Module.CastTerrain(position, position + Vector3.yAxis * (radius + distance)) then
+			return position
+		end
+		return position + Vector3.yAxis * distance
+	end
+
+	--[[ Walking ]]
+
+	local ahead: Vector3 = position + Vector3.xAxis * side * distance
+	local ground: RaycastResult? = Module.CastTerrain(ahead + Vector3.yAxis * _settings.CRAWL_STEP_UP, ahead - Vector3.yAxis * (radius + _settings.CRAWL_STEP_DOWN))
+
+	-- Nothing under it: fall
+	if not ground then
+		return ahead - Vector3.yAxis * distance * 2
+	end
+
+	-- A step up: rise in place first, then move on once level with it
+	local rise: number = ground.Position.Y + radius - position.Y
+	if rise > distance then
+		return position + Vector3.yAxis * distance
+	end
+
+	--[[ Returning ]]
+
+	return Vector3.new(ahead.X, position.Y + math.max(rise, -distance * 2), ahead.Z)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Active

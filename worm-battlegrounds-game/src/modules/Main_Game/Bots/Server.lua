@@ -98,8 +98,9 @@ end
 
 --[[
 	**SERVER** |
-	Returns a new bot participant for a match: an unused name, its difficulty's loadout and the default skin. The
-	match gives it its team and colour. The first bot of a match (number 1) starts the names and the bots' memory over.
+	Returns a new bot participant for a match: an unused name, its difficulty's loadout with the potion it rolled
+	(POTIONS: maybe none), and the default skin. The match gives it its team and colour. The first bot of a match
+	(number 1) starts the names and the bots' memory over.
 ]]
 --- @return Match_Participant
 function Module.CreateParticipant(difficulty: string, number: number)
@@ -110,6 +111,11 @@ function Module.CreateParticipant(difficulty: string, number: number)
 		rangings = {}
 	end
 	local name: string = Module._getName()
+	local loadout = table.clone(_settings.LOADOUTS[difficulty] or _settings.LOADOUTS.Easy) --- @type { string }
+	local potion: string = _settings.POTIONS[random:NextInteger(1, #_settings.POTIONS)]
+	if potion ~= "" and difficulty ~= "Tutorial" then
+		table.insert(loadout, potion)
+	end
 
 	--[[ Returning ]]
 
@@ -121,7 +127,7 @@ function Module.CreateParticipant(difficulty: string, number: number)
 		Color = Color3.new(),
 		IsBot = true,
 		Difficulty = difficulty,
-		Loadout = table.clone(_settings.LOADOUTS[difficulty] or _settings.LOADOUTS.Easy),
+		Loadout = loadout,
 		MaxHealth = _settings.HEALTH[difficulty],
 		Connected = true,
 		Out = false,
@@ -133,9 +139,10 @@ end
 --[[
 	**SERVER** |
 	Plays a bot's turn as a player would (or a dropped player's, at TAKEOVER_DIFFICULTY). While it thinks (THINK_TIME) its brain plans the turn with its difficulty's
-	trained genome (ServerData/Brains) and skill (SKILLS): it heals when hurt, walks or flies its jetpack to the spot it
-	picked, plans again from where it ended up if the walk fell short, and fires with its hand's error, which narrows
-	as it keeps shooting at the same target. Gives up quietly when the turn ends meanwhile.
+	trained genome (ServerData/Brains) and skill (SKILLS): it heals when hurt, drinks a potion when its spot needs one,
+	walks or flies its jetpack to the spot it picked, plans again from where it ended up if the walk fell short, and
+	fires with its hand's error, which narrows as it keeps shooting at the same target. Gives up quietly when the turn
+	ends meanwhile.
 ]]
 function Module.TakeTurn(participantId: string)
 	--[[ Data ]]
@@ -190,6 +197,11 @@ function Module.TakeTurn(participantId: string)
 
 	local row = I.G_Arsenal.Get(plan.ItemId) --- @type Arsenal_WeaponData
 	local flying: boolean = false
+
+	-- A spot past its walk or up a ledge its jump can't reach: the potion that gets it there first
+	if plan.Spot.Potion and I.Combat.UseUtility(participantId, plan.Spot.Potion) then
+		task.wait(_settings.ACTION_PAUSE)
+	end
 	if plan.Spot.Walk > 0 or plan.Spot.Air then
 		flying = Module._walk(participantId, model, plan, row.Retreat ~= nil)
 	end

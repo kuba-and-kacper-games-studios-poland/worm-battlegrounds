@@ -23,9 +23,9 @@ looks the same at any zoom; zoomed in, the cone starts past the snail's grown ba
 the aim on this screen at once (Combat's `SetAim`). A turn that runs out drops a
 charge without firing. Every player sees the active snail's crosshair and power. Number keys 1 to 6 pick a slot; on a pad LB and RB step through the
 slots (a weapon is picked at once; a utility only gets the pad's cursor, its slot outlined with a Y hint, and Y uses
-it), and X opens the emote wheel (`U_EmoteButton`'s key). It adds **Leave game** and
-**Mute music** to the top bar. The HUD and those buttons show while the player is in the match (the `InMatch` Player
-attribute); on the Studio map, going back to the lobby hides them and closes Results.
+it), and X opens the emote wheel (`U_EmoteButton`'s key). It adds **Leave game** to the top bar,
+an icon (`LEAVE_ICON`) after TopBar_Controller's music button. The HUD and that button show while the player is in the
+match (the `InMatch` Player attribute); on the Studio map, going back to the lobby hides them and closes Results.
 
 Each turn is announced on one banner, `U_TurnCallout`: a dark band across the screen with the snail's avatar (its
 headshot, or `BOT_AVATAR` (the default snail's headshot) for a bot, through `Teams.SetAvatar`), whose turn it is and a line under it. On the
@@ -58,7 +58,7 @@ the match's buttons). Every pad button is the Console module's scheme (`I.Consol
 
 | File | What it controls |
 | --- | --- |
-| `Client.lua` | Turns the gui on while the player is in a match (and the `HIDDEN_IN_MATCH` guis off), and starts the handlers |
+| `Client.lua` | Turns the gui on while the player is in a match (and the `HIDDEN_IN_MATCH` guis off), lays it out below Roblox's top bar on Mobile (its `ScreenInsets` `CoreUISafeInsets`, `DeviceSafeInsets` elsewhere, following `Platform_Changed`), and starts the handlers |
 | `Scripts/Client/Turn.lua` | Banner ("Your turn!" in the gui's colour, or on other snails' turns "Bax's turn" in that snail's `Color`, from its `DisplayName`), the wait under it on other snails' turns ("You're next!" / "You play in N turns", from Match's `TurnOrder`; hidden once the player's snail is out), timer ("0:30", blank while a shot flies and settles), wind (`&gt;` / `&lt;` and "+3" / "-3"), the turn list (the active snail in the current look, then the next ones from `TurnOrder`, up to `TURN_LIST_ENTRIES`, avatar and name, the player's badges after it (`I.PlayerBadges.Show`), outlined in their team colour), stamina (`U_Stamina`: its bar cut at the share by its `UIGradient`, `STAMINA_FORMAT`); the turn callout (`_onTurnStarted` fills `U_TurnCallout`'s avatar, title, line, gradient and accent colours; `_popCallout(scale)` opens the band, slides and settles the content, and closes it, a newer one taking over from an older one) and the "You're next!" flash; the last seconds' timer colours, ticks and `U_Tension` pulse (`_tick`); sounds: `Turn_Yours` and `Turn_Whoosh` when the player's turn starts, `Turn_Start` on others', `Turn_Next` (volume 0.5) when the player is next, `Turn_Tick` in the player's last `TICK_SOUND_FROM` seconds, `Turn_TimeUp` when the player's turn runs out without a shot, `Match_SuddenDeath` when sudden death starts, `Match_WaterRise` as each sudden-death turn starts (the sea rises) |
 | `Scripts/Client/Teams.lua` | The team panels (`U_TeamsLeft`, `U_TeamsRight`), from the drop on: the participants grouped by `Team`, the player's own first on the left, the others in turn right and left; each team's avatars (headshots for players, `BOT_AVATAR` for bots; `OUT_AVATAR_COLOR` once out) outlined in its colour, the side's own pictures (`Look_Left*` / `Look_Right*`), and its name ("Your team", "Red team" from Match's `TEAMS`; in a free-for-all "You" or the snail's name). A side with more players than fit shrinks them (`TEAM_PLAYER_WIDTH`). `SetAvatar` is shared with the turn list, the turn callout and the results |
 | `Scripts/Client/Panels.lua` | The waiting, drop and knocked-out blocks; which bars show |
@@ -100,7 +100,7 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | `TEAM_PLAYER_WIDTH` | `0.235` | A player's share of a team panel's width |
 | `OUT_AVATAR_COLOR` | `(70, 70, 70)` | A knocked-out snail's avatar tint in the team panels |
 | `BOT_AVATAR` | `rbxassetid://75705415395334` | A bot's avatar in the team panels, the turn list, the turn callout and the results: the default snail's voxel headshot (`art/bots`), uploaded to The Snail Studio group |
-| `LEAVE_TEXT`, `MUSIC_TEXT`, `LEAVE_QUESTION` | | The top bar buttons and the leave confirmation |
+| `LEAVE_ICON`, `LEAVE_QUESTION` | | The Leave game button's icon (the repo's `art/topbar` `TopBar_Leave`, uploaded to The Snail Studio group) and its confirmation |
 | `SLOT_KEYS` | One … Seven | Keys that pick boxes 1 to 7 (the Bazooka first, then loadout slots 1 to 6); also how many boxes the bar shows |
 | `MODEL_FOV`, `MODEL_VIEW_DIRECTION`, `MODEL_PADDING` | `30`, `0.3, 0.25, 1`, `1.15` | A slot's weapon model: the camera's field of view, the direction it looks from (the muzzle points right), and the room around the model's longest side |
 | `FEED_LINES`, `FEED_SECONDS` | `4`, `6` | Kill feed length and how long a line stays |

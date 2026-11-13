@@ -237,7 +237,9 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   carving, debris or liquid). Difficulty is skill
   (`SKILLS`: the hand's error, the wind read, how far it looks, how much it minds the map), never deliberate misses.
   Nightmare is a secret difficulty, offered only in a custom lobby's Bots row (the owner's pick, 2026-11-08). Retraining, and teaching the bots something the game adds (a
-  weapon, a map object, a hazard), happens only when the owner asks.
+  weapon, a map object, a hazard), happens only when the owner asks. **Bots' loadouts** (the owner, 2026-11-13): the
+  spider bomb from Medium up, the black hole grenade on Nightmare alone, and every bot rolls none, a Speed potion or a
+  Low gravity potion at even odds (Bots' `LOADOUTS`, `POTIONS`), drunk only when the spot it wants needs it.
 - **A walking snail has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 - **Snails are light, and a thrown snail flies the game's own physics** (the owner, 2026-11-12: "more like worms…
@@ -497,6 +499,11 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   currency at the top right), so a per-device size
   (`Utils_PlatformSize`) never needs a per-device position. On phones and tablets a panel too big for the screen gets a Mobile size, its list scrolling, and a Mobile scale under 1 only when
   its content needs the room; a heading that costs a phone too much hides there (`Utils_HideOnPlatform`).
+  **The match HUD sits below Roblox's top bar on phones and tablets** (the owner, 2026-11-13: the bar covered the
+  left team panel and the turn and wind): MatchHud sets its ScreenGui's `ScreenInsets` to `CoreUISafeInsets` on
+  Mobile, `DeviceSafeInsets` elsewhere, so the whole screen lays out under the bar, never a per-device position.
+- **The top bar's buttons are icons** (the owner, 2026-11-13): the Settings gear, the music button (notes, crossed out
+  while muted) in the lobby and in matches, then Leave game in matches, white glyphs from the repo's `art/topbar` kit.
 - **Counts stay on one line:** a currency count gets the width of its longest text, and amounts from 10,000 up are
   written short by the slot (`Currency_ShortFrom`: "18.62k"), so a count never wraps.
 - **The lobby is a party stage, as Fortnite's** (the owner's pick, 2026-11-09, replacing the bot match behind the

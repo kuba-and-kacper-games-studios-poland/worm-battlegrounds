@@ -1,6 +1,6 @@
 # TopBar_Controller
 
-The game's buttons in Roblox's top bar. It adds two buttons on the left of the TopBar module's bar: a gear (the System theme's `gear` icon, `rbxassetid://123765846716976`) opens and closes the `Settings` widget through WidgetManager, and, outside a match, the music button (**Mute music**, **Play music** while muted; text like the match's own beside Leave game, MatchHud's top bar) mutes the music by setting the saved `Music` volume to 0, and brings it back to the volume it had, or its default. It follows the volume when the Settings window changes it, and hides while the player is in a match (the `InMatch` Player attribute).
+The game's buttons in Roblox's top bar. It adds two buttons on the left of the TopBar module's bar: a gear (the System theme's `gear` icon, `rbxassetid://123765846716976`) opens and closes the `Settings` widget through WidgetManager, and the music button mutes the music by setting the saved `Music` volume to 0, and brings it back to the volume it had, or its default. The music button shows notes while the music plays (`rbxassetid://101278000628566`) and crossed-out notes while it's muted (`rbxassetid://117397305535105`), the repo's `art/topbar` icons uploaded to The Snail Studio group; it follows the volume when the Settings window changes it, and shows in the lobby and in matches, where MatchHud adds Leave game after it.
 
 | | |
 | --- | --- |

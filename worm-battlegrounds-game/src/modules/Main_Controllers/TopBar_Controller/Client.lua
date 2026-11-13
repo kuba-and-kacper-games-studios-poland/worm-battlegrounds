@@ -8,9 +8,13 @@ local _localName = "TopBar_Controller"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
--- The lobby's music button, and the music volume before it muted it
+-- The music button, and the music volume before it muted it
 local musicButton = nil --- @type TopBar_Button
 local unmutedVolume: number? = nil
+
+-- The music button's icons while the music plays and while it's muted (art/topbar's TopBar_Music, TopBar_MusicOff)
+local MUSIC_ICON: string = "rbxassetid://101278000628566"
+local MUSIC_OFF_ICON: string = "rbxassetid://117397305535105"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -48,11 +52,10 @@ function Module.Start()
 
 	--[[ Music ]]
 
-	-- The lobby's; a match has its own beside Leave game (MatchHud's top bar)
+	-- In the lobby and in matches; a match adds Leave game after it (MatchHud's top bar)
 	musicButton = I.TopBar.AddButton("Left")
 	musicButton:SetLayoutOrder(2)
 	musicButton:SetCallback(Module._toggleMusic)
-	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshMusicButton)
 	Module._refreshMusicButton()
 	I.OnLoaded(I.Priority.Default, function()
 		I.Replicator.GetFolder("Settings"):GetAttributeChangedSignal("Music"):Connect(Module._refreshMusicButton)
@@ -85,13 +88,12 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Music Button
 
 --[[
-	Shows the music button outside a match, reading Mute music while it plays and Play music while it's muted.
+	Shows the music button's notes while the music plays, and the crossed-out notes while it's muted.
 ]]
 function Module._refreshMusicButton()
 	--[[ Applying ]]
 
-	musicButton.Instance.Visible = I.S.Players.LocalPlayer:GetAttribute("InMatch") ~= true
-	musicButton:SetText(if I.PlayerSettings.Get("Music") > 0 then "Mute music" else "Play music")
+	musicButton:SetIcon(if I.PlayerSettings.Get("Music") > 0 then MUSIC_ICON else MUSIC_OFF_ICON)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ###

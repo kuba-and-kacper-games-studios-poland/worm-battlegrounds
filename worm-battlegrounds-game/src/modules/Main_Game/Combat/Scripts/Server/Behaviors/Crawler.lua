@@ -90,7 +90,7 @@ function Module.Run(shot)
 
 		-- Right under or over its target it waits instead of turning back and forth
 		local side: number = if math.abs(offset.X) < _settings.CRAWL_STOP then 0 else math.sign(offset.X)
-		position = Module._getNextStep(position, side, (row.CrawlSpeed or 10) * deltaTime)
+		position = Projectiles.GetCrawlStep(position, side, (row.CrawlSpeed or 10) * deltaTime)
 		part.Position = position
 		if Projectiles.IsLost(position, os.clock() - started) then
 			part:Destroy()
@@ -151,48 +151,6 @@ function Module._getTarget(shot, position: Vector3)
 	--[[ Returning ]]
 
 	return best
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Next Step
-
---[[
-	Returns where a crawler goes next, one step of a distance toward a side (0 stays): up a wall taller than
-	CRAWL_STEP_UP in front, else along the ground, easing up onto a ledge and down off one rather than jumping the
-	stud grid's steps, else falling.
-]]
---- @return Vector3
-function Module._getNextStep(position: Vector3, side: number, distance: number)
-	--[[ Local Variables ]]
-
-	local radius: number = _settings.PROJECTILE_SIZE / 2
-	local high: Vector3 = position + Vector3.yAxis * _settings.CRAWL_STEP_UP
-
-	--[[ Climbing ]]
-
-	-- A wall in front, taller than a step: climb it
-	if side ~= 0 and Projectiles.Cast(high, high + Vector3.xAxis * side * (radius + distance)) then
-		return position + Vector3.yAxis * distance
-	end
-
-	--[[ Walking ]]
-
-	local ahead: Vector3 = position + Vector3.xAxis * side * distance
-	local ground: RaycastResult? = Projectiles.Cast(ahead + Vector3.yAxis * _settings.CRAWL_STEP_UP, ahead - Vector3.yAxis * (radius + _settings.CRAWL_STEP_DOWN))
-
-	-- Nothing under it: fall
-	if not ground or Ballistics.GetSnail(ground) then
-		return ahead - Vector3.yAxis * distance * 2
-	end
-
-	-- A step up: rise in place first, then move on once level with it
-	local rise: number = ground.Position.Y + radius - position.Y
-	if rise > distance then
-		return position + Vector3.yAxis * distance
-	end
-
-	--[[ Returning ]]
-
-	return Vector3.new(ahead.X, position.Y + math.max(rise, -distance * 2), ahead.Z)
 end
 
 return Module

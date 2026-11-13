@@ -49,7 +49,7 @@ held); a press that only charges never fires by itself.
 | Move the camera | Hold LT, right stick | Hold L2, right stick | `CameraPan` | MatchCamera |
 | Zoom in, out | D-pad ↑, ↓ (held) | D-pad ↑, ↓ | `ZoomIn`, `ZoomOut` | MatchCamera |
 | Pick the landing spot, drop | Left stick, A | Left stick, Cross | `Move`, `PlaceDrop` | Match (DropPicker) |
-| HUD buttons (Leave game, Mute music, slots) | View, then the selection | Touchpad | `Navigate` | Console |
+| HUD buttons (Leave game, the music button, slots) | View, then the selection | Touchpad | `Navigate` | Console |
 | Pause, settings, leave the game | Menu (Roblox's) | Options (Roblox's) | | Roblox |
 
 The turn order is always on the screen (`MatchHud`'s turn list), so no button opens a scoreboard. MatchHud's Aim reads

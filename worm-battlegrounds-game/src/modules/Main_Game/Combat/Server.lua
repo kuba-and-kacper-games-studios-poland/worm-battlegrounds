@@ -96,6 +96,7 @@ function Module.Init()
 		GetArcs = Arcs.GetArcs,
 		PredictArc = Arcs.PredictArc,
 		GetShotStart = Projectiles.GetStart,
+		GetCrawlStep = Projectiles.GetCrawlStep,
 	}
 end
 

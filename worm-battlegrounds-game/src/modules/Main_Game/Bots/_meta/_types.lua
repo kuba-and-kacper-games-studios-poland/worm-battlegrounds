@@ -100,6 +100,7 @@ local _bots_View = {}
 --- @field Fly boolean
 --- @field Air boolean
 --- @field Cruise number?
+--- @field Potion string?
 ---
 --- # Features #
 ---
@@ -166,6 +167,10 @@ local _bots_Strike = {}
 --- @field Landed Vector3
 --- @field Blasts { Bots_Blast }
 --- @field Strikes { Bots_Strike }
+---
+--- # Black hole #
+---
+--- @field Pulls { [string]: Vector3 }?
 local _bots_Shot = {}
 
 --- @class Bots_Effect

@@ -69,6 +69,7 @@ function Module.WalkTo(model: Model, targetX: number, seconds: number, climbTo: 
 	local stuckSince: number = os.clock()
 	local wallJumps: number = 0
 	local rising: boolean = climbTo ~= nil and riseFirst == true
+	local jump: number = Module.GetJump(model:GetAttribute("LowGravity") == true)
 
 	--[[ Walking ]]
 
@@ -103,7 +104,7 @@ function Module.WalkTo(model: Model, targetX: number, seconds: number, climbTo: 
 		end
 
 		-- A wall: walk up a ledge, jump one its jump clears, fly over the rest; with no fuel, give up on a cliff
-		local wall: string? = if rising then nil else Module._getWall(position, side)
+		local wall: string? = if rising then nil else Module._getWall(position, side, jump)
 		if wall == "Ledge" then
 			root.AssemblyLinearVelocity = Vector3.new(velocity.X, math.max(velocity.Y, control.STEP_SPEED), 0)
 		elseif wall and grounded and fuel <= 0 and (wall == "Cliff" or wallJumps >= _settings.WALL_JUMPS) then
@@ -291,11 +292,18 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Jump
 
 --[[
-	Returns how high a snail's jump carries it, in studs.
+	Returns how high a snail's jump carries it, in studs: higher under the Low gravity potion (SnailControl's
+	LOW_GRAVITY_SCALE of its weight).
 ]]
 --- @return number
-function Module.GetJump()
-	return I.Settings["SnailControl"].JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity * I.Settings["Snails"].GRAVITY_SCALE)
+function Module.GetJump(lowGravity: boolean?)
+	--[[ Local Variables ]]
+
+	local scale: number = I.Settings["Snails"].GRAVITY_SCALE * (if lowGravity then I.Settings["SnailControl"].LOW_GRAVITY_SCALE else 1)
+
+	--[[ Returning ]]
+
+	return I.Settings["SnailControl"].JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity * scale)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Cruise
@@ -431,11 +439,11 @@ end
 
 --[[
 	Returns what stands right in front of a snail's ball toward a side: "Ledge" (no higher than SnailControl's
-	STEP_HEIGHT, walked up), "Wall" (higher, but a jump clears it), "Cliff" (higher than a jump), or nil. Slopes don't
-	count: walking carries the snail up them.
+	STEP_HEIGHT, walked up), "Wall" (higher, but its `jump` clears it), "Cliff" (higher than its jump), or nil. Slopes
+	don't count: walking carries the snail up them.
 ]]
 --- @return string?
-function Module._getWall(position: Vector3, side: number)
+function Module._getWall(position: Vector3, side: number, jump: number)
 	--[[ Local Variables ]]
 
 	local radius: number = I.Settings["Snails"].ROOT_SIZE / 2
@@ -456,7 +464,7 @@ function Module._getWall(position: Vector3, side: number)
 
 	--[[ Returning ]]
 
-	local high: RaycastResult? = I.S.Workspace:Raycast(position + Vector3.yAxis * (Module.GetJump() - radius - 0.1), reach, groundParams)
+	local high: RaycastResult? = I.S.Workspace:Raycast(position + Vector3.yAxis * (jump - radius - 0.1), reach, groundParams)
 	return if high then "Cliff" else "Wall"
 end
 

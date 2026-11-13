@@ -91,9 +91,8 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Top Bar
 
-	-- The match's top bar buttons (text until their icons exist), and the question Leave game asks first
-	LEAVE_TEXT = "Leave game",
-	MUSIC_TEXT = "Mute music",
+	-- The match's Leave game button in the top bar (art/topbar's TopBar_Leave), and the question it asks first
+	LEAVE_ICON = "rbxassetid://107990939394341",
 	LEAVE_QUESTION = "Leave the match? Your snail will be knocked out.",
 
 	--%%%%%%%%%%%%%%%%%%%% Loadout Bar

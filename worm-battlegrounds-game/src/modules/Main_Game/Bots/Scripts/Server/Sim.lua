@@ -197,7 +197,7 @@ end
 
 --[[
 	Plays one seat's turn: its cooldowns count down, it heals and plans with its brain, goes to its spot (a jetpack use
-	when it flies), fires with its hand's error into the real wind, runs from placed Dynamite, and the shot's effects
+	when it flies, a potion's when the spot needs one), fires with its hand's error into the real wind, runs from placed Dynamite, and the shot's effects
 	land: damage with credit, knockouts and throws, craters. Then everyone settles on what ground is left. Counts what
 	it did in `stats`, and prints it with `log`.
 ]]
@@ -234,6 +234,9 @@ function Module._playTurn(seat, seats, turn: number, round: number, random: Rand
 	if plan.Spot.Fly and seat.Uses["Jetpack"] and seat.Uses["Jetpack"] ~= 0 then
 		Module._take(seat, "Jetpack")
 		stats.Jetpacks += 1
+	end
+	if plan.Spot.Potion then
+		Module._take(seat, plan.Spot.Potion)
 	end
 	stats.Moves += if plan.Spot.Walk > 0 then 1 else 0
 	stats.Air += if plan.Spot.Air then 1 else 0

@@ -10,7 +10,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | Theme | `WormBattlegroundsBrawl` (for the kept blocks; the design's frames are `Primitive` nodes) |
 | Modes | Night only |
 | Devices | Desktop, Mobile (shows `U_Touch` and `U_Fire`), Console (shows the pad hints: LB / RB, X on EMOTES, Y on a utility slot, `U_PadControls`) |
-| Export | A ScreenGui named `MatchHud`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` |
+| Export | A ScreenGui named `MatchHud`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` (the MatchHud module switches it to `CoreUISafeInsets` on Mobile, below Roblox's top bar) |
 
 ## Elements
 

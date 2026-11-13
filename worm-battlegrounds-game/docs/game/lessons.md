@@ -1615,3 +1615,27 @@ Nightmare that shoots while flying.
   better genomes, Easy tied and Nightmare's champion lost, so those two keep their shipped weights.
 
 Rules: Bots think with a trained brain.
+
+## The spider bomb's snail ladder, icon buttons, a HUD under the top bar, new bot loadouts (2026-11-13)
+
+The owner: the spider bomb "sometimes gets bugged mid-air"; "change header leave game and mute music to be an custom
+svg icon"; on phones "the roblox core gui, the topbar one is covering the players in match on the left side and
+turn/wind"; and bots should carry the spider bomb, the black hole grenade (Nightmare only) and the potions ("optional
+and only one per bot").
+
+- **A crawler must not see snails.** The crawl found walls and ground with the projectiles' cast, which hits snails.
+  A snail in the way (4.1 studs tall, over a 2.6-stud ball) was a wall to climb, but not ground to stand on, so the
+  spider climbed it, dropped, climbed again and hovered beside it until its time ran out. The crawl now casts like
+  snails stand (the `Snail` group with `RespectCanCollide`), which also matches the PC gym, whose stand-in snails
+  live elsewhere. It climbs only a wall in front of its own body and stops under a ceiling. The step lives in
+  `Projectiles.GetCrawlStep` so the bots foresee the crawl with the same code.
+- **Icons beat text in the top bar.** The text buttons grew wide enough to reach the turn timer. One music button
+  (notes, crossed out while muted) now serves the lobby and matches; the match adds Leave game after it.
+- **Inset the HUD, don't move its blocks.** `CoreUISafeInsets` on Mobile lays the whole HUD out under Roblox's top bar
+  (58 px in Studio), so no block needs a per-device position and nothing overlaps what used to sit below it.
+- **Potions as part of a spot.** A bot's potion isn't a separate decision: a spot only the potion reaches carries it,
+  costs the genome's `Ammo`, and the bot drinks it before walking there. No new genome key until training says one
+  is worth it.
+
+Rules: Panels hang from a screen edge (the HUD under the top bar), The top bar's buttons are icons, Bots think with a
+trained brain (their loadouts).

@@ -14,7 +14,10 @@ reading of the wind, how far it looks: `SKILLS`).
 2. **Spots.** Where it stands, the ground every `MOVE_STEP` studs its walk reaches within its stamina (step by step:
    up a ledge its jump reaches, never into a wall it can't get over or under a ceiling it can't fit under), past that
    the ground its jetpack reaches (up to `CLIMB_MAX` higher, over gaps, at a height clear of walls and ceilings), and
-   the spots beside each target it could swing or place Dynamite from. With its skill's `AirShots`, it also weighs
+   the spots beside each target it could swing or place Dynamite from. With a potion (`POTIONS`), its walk also goes
+   past its stamina by SnailControl's `SPEED_MULTIPLIER` (Speed), or up ledges as high as a jump under
+   `LOW_GRAVITY_SCALE` of its weight (Low gravity): a spot only the potion reaches costs it as a limited weapon's use
+   (the genome's `Ammo`), and it drinks the potion before it walks there. With its skill's `AirShots`, it also weighs
    spots in the air, hovering on its jetpack (at least `AIR_MIN` studs up, no higher than a safe fall), to shoot from
    mid-flight. Each spot knows how near a deadly drop is (`Edge`), how badly a
    blast at its feet would drop it (`Footing`: through thin ground or a floating ledge into the sea), how low it is
@@ -34,6 +37,8 @@ reading of the wind, how far it looks: `SKILLS`).
 5. **Simulation.** The `Finalists` nearest misses are simulated in full (`Scripts/Server/Predict.lua`): the shot flies
    by Combat's own simulation (`I.G_Combat.StepBody`) from where Combat would start it (`I.Combat.GetShotStart`),
    with bounces, fuses, bomblets, bullets, swings and flight on through water or lava as Combat's behaviors do them;
+   a spider bomb crawls on from where it lands to the nearest enemy by Combat's own step (`I.Combat.GetCrawlStep`,
+   `CRAWL_PREDICT_STEP` at a time), and a black hole pulls the snails in its reach to where they land before it bursts;
    its blasts hurt and throw snails as Combat's do; thrown snails are followed to where they land
    (into the sea knocks them out, a long drop costs fall damage), and snails whose ground the craters cut away drop
    through them. Each plan's score is the genome's weighing of what it does (damage and knockouts to enemies, harm to
@@ -93,7 +98,7 @@ checks that both play alike. The code folder's `train-bots` skill is the procedu
 | `Scripts/Server/Brain.lua` | The planner: spots and what it knows of them, targets, aim points, rough shots, the full simulations and scores, the choice; heals and drop spots |
 | `Scripts/Server/Aim.lua` | Where an arc first touches, the hand's error, and the self-check of Combat's arc solver (`GetArcs`) |
 | `Scripts/Server/Predict.lua` | What a shot would do: its flight, blasts and strikes, where thrown snails land, the ground along a column and drops through craters |
-| `Scripts/Server/Move.lua` | Moving a bot's snail: walking to an X, ledges, walls and ceilings, jumps, the jetpack and hovering, stamina, safe ground and runways |
+| `Scripts/Server/Move.lua` | Moving a bot's snail: walking to an X, ledges, walls and ceilings, jumps (higher under the Low gravity potion), the jetpack and hovering, stamina, safe ground and runways |
 | `Scripts/Server/Sim.lua` | One headless self-play match for the gym |
 | `Scripts/Server/Gym.lua` | Training runs: the trigger, generations, breeding, the exam, the report; the parity probe's trigger |
 | `Scripts/Server/Parity.lua` | The parity probe: on every map, the same stand spots, shots, plans and carves, as lines of text, for Studio's and the PC gym's to be compared (`bot-gym/README.md` → Parity) |
@@ -106,7 +111,7 @@ checks that both play alike. The code folder's `train-bots` skill is the procedu
 
 | Function | Returns | What it does |
 | --- | --- | --- |
-| `CreateParticipant(difficulty: string, number: number)` | `Match_Participant` | A new bot (`Id` `B_<number>`) with an unused name, its difficulty's loadout and `MaxHealth` (`HEALTH`'s, or nil for Snails' `MAX_HEALTH`). Number 1 starts the names and the bots' memory over |
+| `CreateParticipant(difficulty: string, number: number)` | `Match_Participant` | A new bot (`Id` `B_<number>`) with an unused name, its difficulty's loadout plus the potion it rolled (`POTIONS`, maybe none; never the tutorial bot) and `MaxHealth` (`HEALTH`'s, or nil for Snails' `MAX_HEALTH`). Number 1 starts the names and the bots' memory over |
 | `TakeTurn(participantId: string)` | | Plays a bot's turn, or a dropped player's (a participant with no `Difficulty` plays at `TAKEOVER_DIFFICULTY`); with no plan it still fires the Bazooka toward the nearest enemy; gives up quietly when the turn ends meanwhile |
 | `GetStart(difficulty: string, spots: { Vector3 }, taken: { Vector3 })` | `Vector3` | The land spot a bot parachutes onto: the one its genome likes best (away from deadly edges and thin ground, high, apart from the spots taken) |
 
@@ -140,7 +145,8 @@ A run or a probe needs the Studio map with no match playing: it loads each map i
 | Key | Default | What |
 | --- | --- | --- |
 | `BOT_NAMES` | a list of names | Picked without repeats in a match |
-| `LOADOUTS` | Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Golf Club, Jetpack, Medkit · Nightmare: Hard's and a Grenade | What each difficulty takes into a match (others use Easy's) |
+| `LOADOUTS` | Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Spider bomb, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Golf Club, Spider bomb, Jetpack, Medkit · Nightmare: Hard's, a Grenade and the Black hole grenade | What each difficulty takes into a match (others use Easy's) |
+| `POTIONS` | `{ "", "SpeedPotion", "LowGravityPotion" }` | One rolled at even odds onto every bot's loadout (`""`: none), the tutorial bot's aside |
 | `SKILLS` | Easy, Medium, Hard, Nightmare (below) | Each difficulty's skill (`Bots_Skill`); others use Easy's |
 | `TAKEOVER_DIFFICULTY` | `"Medium"` | The difficulty a bot plays a dropped player's snail at, with that player's own loadout |
 | `THINK_TIME` | `{ 0.8, 1.5 }` | Seconds a bot thinks (and plans) before it moves and takes aim |
@@ -151,6 +157,7 @@ A run or a probe needs the Studio map with no match playing: it loads each map i
 | `POWER_STEPS` | 0.4 to 1 by 0.1 | The powers arcs are solved for (a low and a high arc each), for plans and for a shot fired with no plan |
 | `ARC_SECONDS`, `ARC_STEP` | `4`, `1 / 20` | How far ahead a rough arc is checked against the terrain |
 | `PREDICT_SECONDS` | `6.4` | A full simulation's longest flight, in the shot's own (slowed) time |
+| `CRAWL_PREDICT_STEP` | `1 / 20` | The step, in seconds, a spider bomb's crawl is foreseen in |
 | `THINK_SLICE` | `0.008` | Seconds of planning before it gives the server a frame |
 | `MOVE_STEP`, `CLIMB_MAX` | `4`, `14` | How far apart the spots it weighs are, and how high its jetpack takes it |
 | `MELEE_GAP`, `DYNAMITE_GAP`, `CLOSE_HEIGHT` | `3`, `2`, `3` | Where it stands to swing or place Dynamite, and how level with the target |
@@ -204,7 +211,10 @@ What each weight in `ServerData/Brains.lua` makes a bot value (positive) or avoi
   and the bot plans again), and a thrown snail lands where Predict's throw says (no rolling or bouncing). A floating
   ledge's smaller piece falling after a cut isn't foreseen, only ground cut away under a snail.
 - The brain foresees the Bazooka, Spartan spear, Grenade, Cluster bomb, Variety grenade's blast, Dynamite, guns,
-  swings and the homing missile. It skips weapons whose shot it can't foresee (the spider bomb, the black hole
-  grenade): no loadout gives them to bots.
+  swings, the homing missile, the spider bomb and the black hole grenade. A black hole opens where it first touches:
+  bots never open one in the air with a second press. A spider bomb's crawl is foreseen with the snails where they
+  stand, the black hole's pull with Predict's throw (no rolling or bouncing).
+- The genomes were trained before the spider bomb, the black hole and the potions were in loadouts: they weigh them
+  only through the weights they already have (damage, knockouts, `Ammo`) until a new run.
 - New things in the game (weapons, map objects such as explosive barrels, hazards, utilities) need the brain and the
   predictor taught about them, then a new training run. That's done only when the owner asks for it.
