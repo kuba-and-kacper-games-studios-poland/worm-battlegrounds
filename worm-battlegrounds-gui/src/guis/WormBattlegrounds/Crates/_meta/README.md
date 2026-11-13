@@ -1,7 +1,7 @@
 # Crates
 
 The **GACHA** screen: a full-screen window over the lobby, where crates are bought and opened. The title and one tab
-per crate across the top left (Weapons, Premium, Utility, Skins; only the tutorial's free crate while it waits), the
+per crate across the top left (Weapons, Utility, Skins; only the tutorial's free crate while it waits), the
 balance of the currencies the selected crate takes and a red BACK at the top right, the crate's odds down the left (a
 section per rarity, rarest first, each a grid of item cards with their chance), the crate on a pedestal in the middle
 in its own light, and the x1, x3 and x10 buy buttons with their prices at the bottom, QUICK OPEN beside them. The odds

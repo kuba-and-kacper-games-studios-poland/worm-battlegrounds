@@ -1,7 +1,7 @@
 # MatchBoard
 
 The lobby's way into matches, along the bottom: **ACTIVE LOBBIES**, a scrolling row of public matches, one lobby card
-per mode (map picture, mode, "3/6 players", map name, timer, **Join** or **Join teams**), and at the right the yellow
+per mode (map picture, mode, "3/6 players", map name, timer, **Join**), and at the right the yellow
 **SOLO VS BOTS** (**Play with party** in a party) with a blue **CUSTOM** over it. In the board's place it shows the
 setup for a solo or party match (the bots' difficulty, what a win pays, **Start**) or, after joining a public match,
 the waiting room: the countdown, the mode, map and players, **Vote to start** and **Leave**.
@@ -48,7 +48,7 @@ buttons (SOLO VS BOTS, JOIN) carry `TextCase_Upper`.
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | Row` | `U_Rows` | A lobby card (the gui maker's layout, 2026-11-11: a small map picture at the left, the texts beside it, the player count orange): `S_MapIcon` (the map's picture; the design's until the map has a `Thumbnail`), `S_Mode`, `S_Players` ("3/6 players"), `S_Map` (the map's name), `S_Timer`, `S_Join` (ImageButton; its `Name1` reads Join or Join teams, or "Host picks" greyed out for a party member) |
+| `PREFAB | Row` | `U_Rows` | A lobby card (the gui maker's layout, 2026-11-11: a small map picture at the left, the texts beside it, the player count orange): `S_MapIcon` (the map's picture, `Fit` so it's never stretched; the design's until the map has a `Thumbnail`), `S_Mode`, `S_Players` ("3/6 players"), `S_Map` (the map's name), `S_Timer` (beside the studio's stopwatch picture, with a white `Hand` frame drawn over its dial, since the picture's own hand is black), `S_Join` (ImageButton; its `Name1` reads Join, or "Host picks" greyed out for a party member) |
 | `PREFAB \| PlayerName` | `U_Players` | `S_Avatar`, `S_Name`, `S_Username` |
 
 ## Driven by

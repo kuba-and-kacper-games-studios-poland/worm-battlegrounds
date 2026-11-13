@@ -697,27 +697,6 @@ local _gui = {
 					},
 				},
 			},
-			-- The tutorial's arrow layer: Tutorial moves S_Arrow over what the player should press
-			{
-				Primitive = "Frame",
-				Id = "U_Pointer",
-				Props = {
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					BackgroundTransparency = 1,
-					Position = UDim2.fromScale(0.5, 0.5),
-					Size = UDim2.fromScale(1, 1),
-					ZIndex = 10,
-				},
-				Children = {
-					{
-						Control = "Picture",
-						Id = "S_Arrow",
-						Image = "chevron-small-down",
-						Style = "Glyph",
-						Visible = false,
-					},
-				},
-			},
 		},
 	},
 }

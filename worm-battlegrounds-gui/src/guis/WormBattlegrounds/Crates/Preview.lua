@@ -15,7 +15,7 @@ local Workspace: Workspace = game:GetService("Workspace")
 
 -- The crate tabs, the first selected
 --- @type { string }
-local TABS = { "Weapons", "Premium", "Utility", "Skins" }
+local TABS = { "Weapons", "Utility", "Skins" }
 
 -- The weapon crate's odds by rarity, rarest first: item name and chance
 --- @type { { any } }

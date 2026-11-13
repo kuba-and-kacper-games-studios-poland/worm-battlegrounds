@@ -2392,6 +2392,7 @@ local _gui = {
 						Size = UDim2.fromScale(0.1833, 0.7155),
 						ZIndex = 2,
 						Image = "rbxassetid://74309174128470",
+						ScaleType = Enum.ScaleType.Fit,
 					},
 					Attributes = { _ImageName = "1050_43__LobbyInventory__MapIcon_image" },
 				},
@@ -2538,6 +2539,22 @@ local _gui = {
 										Image = "rbxassetid://119838940397311",
 									},
 									Attributes = { _ImageName = "1117_79__LobbyInventory__TimerIcon_image" },
+									Children = {
+										-- The picture's hand is black inside the dial, unseen on the dark card: a white one over it
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Hand",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.51, 0.5),
+												Rotation = 15,
+												Size = UDim2.fromScale(0.06, 0.19),
+											},
+											Children = { { Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } } },
+										},
+									},
 								},
 							},
 						},

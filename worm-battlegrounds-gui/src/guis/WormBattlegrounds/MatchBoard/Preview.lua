@@ -76,7 +76,7 @@ function Module.Apply(preview)
 		row.Root.Instance.LayoutOrder = index
 		row:Get("S_Mode").Instance.Text = MODES[index]
 		row:Get("S_Players").Instance.Text = `{index}/{index * 2 + 2} players`
-		row:Get("S_Join").Instance:FindFirstChild("Name1").Text = if index == 1 then "Join" else "Join teams"
+		row:Get("S_Join").Instance:FindFirstChild("Name1").Text = "Join"
 	end
 
 	--[[ Setup ]]

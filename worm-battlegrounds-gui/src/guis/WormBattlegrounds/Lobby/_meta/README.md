@@ -27,8 +27,6 @@ arrow layer is the kit's (`WormBattlegroundsBrawl`), kept from before the port.
 | `U_Menu` › `S_Skins` | ImageButton | The same, `Crates_CrateId` `"Skin"` |
 | `U_Menu` › `S_Badge` | Frame, hidden | The badge on WEAPONS; Crates shows it |
 | `U_Menu` › `S_Count` | TextLabel | The badge's text: FREE, a count |
-| `U_Pointer` | Frame, full screen | The tutorial's layer |
-| `U_Pointer` › `S_Arrow` | Picture (`Glyph`) | Tutorial shows it and moves it over what the player should press |
 
 ## Driven by
 

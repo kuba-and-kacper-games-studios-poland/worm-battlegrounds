@@ -19,7 +19,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_Turn` | Frame (top middle) | Shown while turns run |
 | `U_Turn` › `S_Timer` | TextLabel | The turn's time, "0:30"; blank while a shot flies and settles |
 | `U_Turn` › `S_Banner` | TextLabel (`TextCase_Upper`) | "Your turn!" in its own colour, or "Bax's turn" in that snail's team colour |
-| `U_Turn` › `S_Wait` | TextLabel (`TextCase_Upper`), hidden | Under the banner on other snails' turns: "You're next!" or "Your turn in 3 turns" |
+| `U_Turn` › `S_Wait` | TextLabel (`TextCase_Upper`), hidden | Under the banner on other snails' turns: "You're next!" or "You play in 3 turns" |
 | `U_Turn` › `S_WindArrow` | TextLabel | `&gt;` or `&lt;`, the way the wind blows; hidden in still air |
 | `U_Turn` › `S_Wind` | TextLabel | The wind with its side, "+3" or "-3" ("0" in still air) |
 | `U_TeamsLeft`, `U_TeamsRight` | Frame (horizontal list), top corners | Hold one `Team` per team: the player's first on the left, then right, left… |
@@ -57,7 +57,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `S_Avatar` › `S_AvatarStroke` | UIStroke (`Border`, `ScaledSize` 0.06, orange) | `Color` = the accent, as the lines |
 | `S_Content` › `S_Title` | TextLabel (`TextCase_Upper`, the timer's font Heavy Italic, white under its gradient, a dark (20, 14, 10) `ScaledSize` UIStroke) | "Your turn!" or "Bax's turn" |
 | `S_Title` › `S_TitleGradient` | UIGradient (top to bottom) | `Color` = MatchHud's `CALLOUT_MINE_GRADIENT` (gold) or `CALLOUT_OTHER_GRADIENT` (white) |
-| `S_Content` › `S_Sub` | TextLabel (`TextCase_Upper`, Bold Italic, (225, 225, 235), the same dark UIStroke) | "Aim and fire!", "You're next!" or "Your turn in 3 turns" |
+| `S_Content` › `S_Sub` | TextLabel (`TextCase_Upper`, Bold Italic, (225, 225, 235), the same dark UIStroke) | "Aim and fire!", "You're next!" or "You play in 3 turns" |
 | `U_Tension` | Frame, hidden, the whole screen (0.99 × 0.985) | Shown in the last `TICK_SOUND_FROM` seconds of the player's own turn |
 | `U_Tension` › `S_Glow` | UIStroke (red (240, 60, 30), 14 px, `Border`, a UIGradient clearer at the middle of each side) | Its `Transparency` pulses (1 in the gui) |
 
@@ -96,7 +96,7 @@ The game's `MatchHud` module: it turns the ScreenGui on while the player is in a
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchHud`, `Enabled` off. Its module turns it on while the player is in a match. The kept blocks' `S_ScreenScale` UIScales are set by the game's ScreenScale module (`MatchHud` is in its `GUIS` list), laid out for a 1920 × 1080 screen, times the device scale their `Utils_PlatformScale` tag keeps; the design's frames need nothing. Capitals texts carry `TextCase_Upper`, so what code writes there shows in capitals. Last exported to StarterGui on 2026-11-10 (`UmeGui.Export`, with the turn callout banner and the tension band; exported twice that day, first with the earlier two callouts); the export from before that day is kept in `ServerStorage.!dump` as `MatchHud_before_2026-11-10`.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchHud`, `Enabled` off. Its module turns it on while the player is in a match. The kept blocks' `S_ScreenScale` UIScales are set by the game's ScreenScale module (`MatchHud` is in its `GUIS` list), laid out for a 1920 × 1080 screen, times the device scale their `Utils_PlatformScale` tag keeps; the design's frames need nothing. Capitals texts carry `TextCase_Upper`, so what code writes there shows in capitals. Last exported to StarterGui on 2026-11-13 (`UmeGui.Export`, with "You play in N turns"); the exports before are kept in `ServerStorage.!dump` as `MatchHud_before_2026-11-10` and `MatchHud_before_2026-11-13`.
 
 ### Input
 
