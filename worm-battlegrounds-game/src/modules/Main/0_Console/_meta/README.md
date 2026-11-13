@@ -62,8 +62,8 @@ planned with the hold-to-charge rework of its aim.
 | --- | --- | --- | --- | --- |
 | Move the selection | Left stick, D-pad | Left stick, D-pad | | Roblox |
 | Press the selected button | A | Cross | `Confirm` (Gui) | Roblox; A dialogs' A buttons |
-| Back, close | B | Circle | `Back` (Gui) | Close buttons (`Utils_ButtonKey`), the setup's Back; with a selection, Selection backs out |
-| Decline (a dialog) | X | Square | `Decline` (Gui) | `PartyInvited`'s No thanks |
+| Back, close | B | Circle | `Back` (Gui) | Close buttons (`Utils_ButtonKey`), the setup's Back, dialogs' red answers (the confirmation's DECLINE, `PartyInvited`'s NO THANKS); with a selection, Selection backs out |
+| Decline (a dialog) | X | Square | `Decline` (Gui) | Nothing since 2026-11-13, when `PartyInvited`'s NO THANKS moved to B |
 | Previous, next tab | LB, RB | L1, R1 | `TabPrevious`, `TabNext` | Crates (while its widget is open) |
 | Solo vs bots (Play with party) | A (the selection rests on it) | Cross | | MatchBoard (`SetHome`) |
 | Custom lobby | X | Square | `Custom` (Gui) | `MatchBoard`'s `S_Custom` |

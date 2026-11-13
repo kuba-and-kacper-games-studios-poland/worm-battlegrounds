@@ -190,7 +190,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   seconds. Anything that steps a shot (bots' predictions too) counts flight in the shot's own time.
 - **Strong weapons start on their cooldown** (2026-11-08): a weapon with a `Cooldown` waits that many of the player's
   own turns before its first use too (Combat's `Uses.Reset`, mirrored in the bots' `Sim`), so nobody opens a match
-  with the strongest weapons. Admin `give` and `refill` clear it, for testing. **Heals wait between uses** (the owner,
+  with the strongest weapons. One Punch waits 5 (the owner, 2026-11-13: "only accessible after 5 turns"), usable from
+  the player's 6th turn. Admin `give` and `refill` clear it, for testing. **Heals wait between uses** (the owner,
   2026-11-12): a utility's `Cooldown` starts at its first use, so it's ready on the first turn; the Bandage (40)
   waits 3 turns, once every 4 of the player's turns, and the Medkit (100) 5, once every 6, with 2 uses a match.
 - **Server-moved shots glide on clients:** the spider bomb's crawl moves as a server part after landing; clients draw their models gliding after them (Combat's `CRAWL_GLIDE`), and the spider bomb walks
@@ -335,7 +336,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   dark panel (fill 25, 25, 35, a dark outer line and the grey 130 line inside, `UIStroke`s scaled by
   `Utils_UIStroke`), white Londrina text, and the design's buttons at about their own size, tinted. A design picture
   made for a small card is never stretched into a big panel: its outline and corners grow with it. The confirmation
-  (`WidgetManager_Confirmation`, the game's copy of System's) is the pattern.
+  (`WidgetManager_Confirmation`, the game's copy of System's) is the pattern; the party invite popup (`PartyInvited`)
+  follows it since 2026-11-13 (the owner: "it's using the old ui version").
 - **The tutorial points with a spotlight** (the testers, 2026-11-13: "the screen is blacked out around where you
   need to click and like a lighter square with rounded corners"): the `TutorialHint` gui darkens everything but a
   rounded hole over what to press next (a gui button, the bot, the spot to land on), blocks presses outside it, and

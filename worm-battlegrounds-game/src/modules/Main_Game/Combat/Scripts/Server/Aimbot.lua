@@ -151,6 +151,47 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
+--%%%%%%%%%%%%%%%%%%%% Get Shot
+
+--[[
+	Returns the aim guide's shot from a participant's snail at an enemy snail with a weapon: the first that hits, else
+	the first found; nil when no enemy is in play or the weapon isn't aimed.
+]]
+--- @return Combat_AimGuide?
+function Module.GetShot(participantId: string, itemId: string)
+	--[[ Data ]]
+
+	local snail: Model? = I.Snails.Get(participantId)
+
+	--[[ Checks ]]
+
+	-- Check if the snail is in play
+	if not snail or not snail.PrimaryPart then
+		return nil
+	end
+
+	--[[ Local Variables ]]
+
+	local origin: Vector3 = snail.PrimaryPart.Position
+	local wind: number = I.G_Combat.GetWindAcceleration(itemId, I.Match.GetWind())
+	local first = nil --- @type Combat_AimGuide?
+
+	--[[ Solving ]]
+
+	arcParams.FilterDescendantsInstances = { snail, effectsFolder }
+	for _index: number, target: Model in ipairs(Module._getTargets(snail)) do
+		local guide = Module._getGuide(origin, target, itemId, wind) --- @type Combat_AimGuide?
+		if guide and guide.Hit then
+			return guide
+		end
+		first = first or guide
+	end
+
+	--[[ Returning ]]
+
+	return first
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Targets
 
 --[[

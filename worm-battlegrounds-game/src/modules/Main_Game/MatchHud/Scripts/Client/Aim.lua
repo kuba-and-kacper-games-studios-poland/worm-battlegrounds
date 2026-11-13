@@ -389,7 +389,8 @@ end
 --[[
 	Every frame of the player's turn: fills a held press's power from none to full over Combat's CHARGE_SECONDS and
 	fires it at full, draws the crosshair and the power circles, shows the power on the slider and the angle over it
-	(with a homing missile, "Click on a target", then "Shoot!" until it charges), the FIRE button on touch screens with
+	(with a homing missile, "Click on a target", then "Shoot!" until it charges, its crosshair on the mouse or finger
+	until a click places the target, then on the target), the FIRE button on touch screens with
 	the held weapon's icon, and sends the aim to the other players every AIM_SEND_INTERVAL.
 ]]
 function Module._step()
@@ -432,7 +433,12 @@ function Module._step()
 
 	--[[ Drawing ]]
 
-	Module._draw(mine, angle, power)
+	-- A homing missile's crosshair is its target: it follows the mouse or finger until a click places it, then stays there
+	local crosshairAt: Vector3? = nil
+	if I.G_Arsenal.Get(itemId).Aim == "Target" then
+		crosshairAt = target or (if pointer then Module._getPlanePoint(pointer) else nil)
+	end
+	Module._draw(mine, angle, power, crosshairAt)
 
 	--[[ Slider ]]
 
@@ -565,10 +571,11 @@ end
 --[[
 	Draws a snail's aim on the HUD's aim layer, in pixels over the snail: the power's cone of circles along the aim from
 	POWER_START (clear of the snail's ball), each growing in as the power fills, then the crosshair past its end,
-	spinning, in the snail's colour. Lengths are units, a stud at the match camera's starting distance, so the aim is
-	the same on the screen at any zoom. The held weapon turns with the aim at once.
+	spinning, in the snail's colour, or on `crosshairAt` when given (a homing missile's target). Lengths are units, a
+	stud at the match camera's starting distance, so the aim is the same on the screen at any zoom. The held weapon
+	turns with the aim at once.
 ]]
-function Module._draw(model: Model, aimAngle: number, aimPower: number)
+function Module._draw(model: Model, aimAngle: number, aimPower: number, crosshairAt: Vector3?)
 	--[[ Checks ]]
 
 	-- Check if the snail is still in play
@@ -597,8 +604,12 @@ function Module._draw(model: Model, aimAngle: number, aimPower: number)
 	-- Zoomed in, the cone starts past the snail's grown ball; the crosshair sits past the cone's end
 	local first: number = math.max(_settings.POWER_START * unit, (I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP) * stud)
 	local reach: number = first + (_settings.POWER_LENGTH + _settings.POWER_DOT_SIZE[2] / 2 + _settings.POWER_GAP + _settings.CROSSHAIR_SIZE / 2) * unit
-	local crosshairAt: Vector2 = origin + direction * reach
+	local crosshair: Vector2 = origin + direction * reach
 	local fill: number = aimPower * #powerDots
+	if crosshairAt then
+		local screenTarget: Vector3 = camera:WorldToScreenPoint(crosshairAt)
+		crosshair = Vector2.new(screenTarget.X, screenTarget.Y) - elems["Aim"].AbsolutePosition
+	end
 	local gradientRotation: number = math.deg(math.atan2(direction.Y, direction.X))
 
 	--[[ Weapon ]]
@@ -608,7 +619,7 @@ function Module._draw(model: Model, aimAngle: number, aimPower: number)
 
 	--[[ Crosshair ]]
 
-	elems["Crosshair"].Position = UDim2.fromOffset(crosshairAt.X, crosshairAt.Y)
+	elems["Crosshair"].Position = UDim2.fromOffset(crosshair.X, crosshair.Y)
 	elems["Crosshair"].Size = UDim2.fromOffset(_settings.CROSSHAIR_SIZE * unit, _settings.CROSSHAIR_SIZE * unit)
 	elems["Crosshair"].Rotation = os.clock() * _settings.CROSSHAIR_SPIN % 360
 	elems["Crosshair"].Visible = true

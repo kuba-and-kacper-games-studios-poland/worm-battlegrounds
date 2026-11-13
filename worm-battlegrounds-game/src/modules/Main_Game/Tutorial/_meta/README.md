@@ -1,7 +1,7 @@
 # Tutorial
 
 The first-time flow, guided by a spotlight. A new player's first join sends them to the tutorial match (the Lobby
-module launches it): a 1v1 against the tutorial bot, which can't shoot and falls to any hit (Bots' `HEALTH`). The
+module launches it): a 1v1 against the tutorial bot, which can't shoot and falls to any hit (Bots' `HEALTH`); the player's shots can't miss it (Combat steers them onto it). The
 guide blacks out the screen around what to press next and shows a hint beside it, worded for the player's device:
 the lit spot to land on (the drop starts the player and the bot close together, Match's `TUTORIAL_*`), then the bot
 to shoot (on touch, the bot, then FIRE), the bot's turn, a retry after a miss, and Return on the results (Rematch is

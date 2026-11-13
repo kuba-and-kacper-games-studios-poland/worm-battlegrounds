@@ -92,8 +92,9 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 - A skin's model is `Assets.Skins.<Model>` (in the place, `ReplicatedStorage.Ume.Assets.PlaceLoader.Default.Skins`):
   `Classic` and, since 2026-11-11, the artist's `Clown`, `Skeleton`, `Devil`, `Robot`, `Knight`, `Cowboy`, `Ninja`,
   `Pirate` and `Soldier`, each rigged onto Classic's skeleton so Classic's animations play on it (`art/skins`). Skin
-  previews, the lobby's stage and matches clone it, falling back to the Snails module's `DEFAULT_SKIN` model for a skin
-  with no model of its own (FBI Agent, Prisoner, VIP, Wizard).
+  previews, the lobby's stage and matches clone it, falling back to the default skin's model for a skin with no model
+  of its own (FBI Agent, Prisoner, VIP, Wizard): the previews and the stage through this module's `DEFAULT_SKIN` row,
+  since the lobby runs without the match-only Snails module; matches through Snails' `DEFAULT_SKIN`.
 - A skin model at rest has its shell floating above its back and its hands held out (Classic's rig): its animations
   put them in place, so the Skins widget's previews hold each clone in its idle pose (`I.SnailRig.Pose`).
 - Emote animations and voice lines aren't made yet: each emote plays a stand-in motion made in code

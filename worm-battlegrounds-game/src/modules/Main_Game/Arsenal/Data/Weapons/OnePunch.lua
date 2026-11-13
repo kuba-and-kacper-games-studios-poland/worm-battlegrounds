@@ -22,7 +22,7 @@ local _data = {
 	--[[ Limits ]]
 
 	Uses = 1,
-	Cooldown = 0,
+	Cooldown = 5,
 
 	--[[ Extras ]]
 

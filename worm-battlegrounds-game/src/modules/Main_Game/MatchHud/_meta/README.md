@@ -9,7 +9,7 @@ the right stick on a pad), and holding the mouse button, RT or **FIRE** (touch) 
 none to full in Combat's `CHARGE_SECONDS`. Letting go fires, and a full charge fires by itself. Guns, melee weapons and
 weapons placed at the feet fire on the press. On touch a finger on the arena points the aim (and stays pointed after
 it lifts; a second finger stops it, for the camera's pan), and only FIRE shoots. Right click, Esc and the pad's
-`CancelAim` (B) drop a charge. A homing missile's first click or tap picks its target.
+`CancelAim` (B) drop a charge. A homing missile's crosshair is its target: it follows the mouse or finger anywhere on the arena (no power cone) until the first click or tap places it, then stays there while the shot charges.
 With an admin's aim guide on (Combat's `aimbot` command), a right click locks on: the aim eases over `AIMBOT_EASE`
 seconds onto the guide whose target is nearest the mouse (Combat's `GetAimGuides`; a homing missile's target becomes
 that snail), stays there whatever the mouse does, and the next left click fires it; Esc cancels. Without a guide,

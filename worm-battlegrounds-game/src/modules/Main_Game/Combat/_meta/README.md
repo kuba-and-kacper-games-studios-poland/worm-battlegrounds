@@ -66,9 +66,9 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Remotes, Topics, the `I` table; starts the handlers |
-| `Scripts/Server/Fire.lua` | Selecting, aiming, firing, utilities. A player's fire, utility and detonate need `I.Match.IsActivePlayer` (never while a bot plays their dropped snail's turn: `I.Match.IsAutopilot`), and selecting is refused while one does |
+| `Scripts/Server/Fire.lua` | Selecting, aiming, firing, utilities. A player's fire, utility and detonate need `I.Match.IsActivePlayer` (never while a bot plays their dropped snail's turn: `I.Match.IsAutopilot`), and selecting is refused while one does. In the tutorial match a player's shot flies the aim guide's path onto the bot (`Aimbot.GetShot`), whatever their aim and charge, so it can't miss |
 | `Scripts/Server/Arcs.lua` | The exact arc solver (`GetArcs`) and arc prediction (`PredictArc`), for bots and the aim guide |
-| `Scripts/Server/Aimbot.lua` | The aim guide, while the server has the player's `Aimbot` attribute on: on their turn, for each enemy snail, the arc (from `GetArcs` at `AIMBOT_POWERS`, the one whose path lands nearest it), a gun's straight line, or a homing shot's launch, solved again every `AIMBOT_REFRESH` seconds once something moved and sent to that player (`Combat_AimbotGuide`) |
+| `Scripts/Server/Aimbot.lua` | The aim guide, while the server has the player's `Aimbot` attribute on: on their turn, for each enemy snail, the arc (from `GetArcs` at `AIMBOT_POWERS`, the one whose path lands nearest it), a gun's straight line, or a homing shot's launch, solved again every `AIMBOT_REFRESH` seconds once something moved and sent to that player (`Combat_AimbotGuide`); `GetShot` solves one shot at an enemy for `Fire`'s tutorial shots |
 | `Scripts/Server/Uses.lua` | Uses and cooldowns per participant, the `Combat` Replicator folder |
 | `Scripts/Helpers/Ballistics.lua` | `Combat_Ballistics`, the shot simulation both sides run: `New`, `Step`, `Load`, `GetState`, `GetCFrame`, `GetSnail`, `MakePart` (the placeholder ball) |
 | `Scripts/Server/Projectiles.lua` | Simulated shots (`Launch`, `Fly`, `Land`, `GetOptions`, `GetStart`, `IsGone`), crawling shots' parts (`Spawn`), raycasts (`Cast`, and `CastTerrain` for crawlers), a crawler's step (`GetCrawlStep`), lost shots |

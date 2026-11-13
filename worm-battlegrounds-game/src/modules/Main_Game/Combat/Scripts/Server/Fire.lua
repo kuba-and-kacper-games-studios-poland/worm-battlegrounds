@@ -14,6 +14,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 local Uses = require(script.Parent:FindFirstChild("Uses")) --- @type Combat_Server_Uses
 local Projectiles = require(script.Parent:FindFirstChild("Projectiles")) --- @type Combat_Server_Projectiles
+local Aimbot = require(script.Parent:FindFirstChild("Aimbot")) --- @type Combat_Server_Aimbot
 local Rocket = require(script.Parent:FindFirstChild("Behaviors"):FindFirstChild("Rocket")) --- @type Combat_Rocket
 local Bouncer = require(script.Parent:FindFirstChild("Behaviors"):FindFirstChild("Bouncer")) --- @type Combat_Bouncer
 local Crawler = require(script.Parent:FindFirstChild("Behaviors"):FindFirstChild("Crawler")) --- @type Combat_Crawler
@@ -67,9 +68,20 @@ function Module._onFire(player: Player, itemId: string, angle: number, power: nu
 		return
 	end
 
+	--[[ Tutorial ]]
+
+	-- In the tutorial match the shot can't miss: it flies the aim guide's path onto the bot, whatever the aim
+	local participantId: string = `P_{player.UserId}`
+	local guide = if I.Match.GetMetadata().Kind == "Tutorial" then Aimbot.GetShot(participantId, itemId) else nil --- @type Combat_AimGuide?
+	if guide then
+		angle = guide.Angle
+		power = guide.Power or power
+		target = guide.Target
+	end
+
 	--[[ Firing ]]
 
-	Module.Fire(`P_{player.UserId}`, itemId, angle, power, target)
+	Module.Fire(participantId, itemId, angle, power, target)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Use Utility

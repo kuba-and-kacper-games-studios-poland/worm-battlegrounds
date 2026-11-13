@@ -55,8 +55,8 @@ function Module.Start()
 	local invitedGui: ScreenGui = I.UserInterface.UI[_settings.INVITED_GUI_NAME]
 	elems["From"] = invitedGui:FindFirstChild("S_Text", true) --- @type TextLabel
 	elems["FromAvatar"] = invitedGui:FindFirstChild("S_Avatar", true) --- @type ImageLabel
-	elems["Accept"] = invitedGui:FindFirstChild("S_Accept", true):FindFirstChild("Button") --- @type ImageButton
-	elems["Decline"] = invitedGui:FindFirstChild("S_Decline", true):FindFirstChild("Button") --- @type ImageButton
+	elems["Accept"] = invitedGui:FindFirstChild("S_Accept", true) --- @type ImageButton
+	elems["Decline"] = invitedGui:FindFirstChild("S_Decline", true) --- @type ImageButton
 
 	--[[ Connections ]]
 

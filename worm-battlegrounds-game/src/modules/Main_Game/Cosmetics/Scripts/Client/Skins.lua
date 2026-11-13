@@ -194,7 +194,8 @@ function Module._preview(viewport: ViewportFrame, modelName: string)
 	--[[ Data ]]
 
 	local skins: Instance? = I.Dirs.Assets:FindFirstChild("Skins")
-	local source: Instance? = skins and (skins:FindFirstChild(modelName) or skins:FindFirstChild(I.Settings["Snails"].DEFAULT_SKIN))
+	local fallback: string = I.G_Cosmetics.GetSkin(_settings.DEFAULT_SKIN).Model
+	local source: Instance? = skins and (skins:FindFirstChild(modelName) or skins:FindFirstChild(fallback))
 	if not source or not source:IsA("Model") then
 		return
 	end

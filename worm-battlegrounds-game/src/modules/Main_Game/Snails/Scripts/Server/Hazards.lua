@@ -72,13 +72,14 @@ end
 
 --[[
 	Knocks one snail out when it's in a hazard, or passed through one since last frame; otherwise follows its fall
-	and charges 1 health per stud above SAFE_FALL_HEIGHT when it lands, MAX_FALL_DAMAGE at most.
+	from where it last rose and charges 1 health per stud above SAFE_FALL_HEIGHT when it lands, MAX_FALL_DAMAGE at most.
 ]]
 function Module._checkSnail(model: Model)
 	--[[ Local Variables ]]
 
 	local position: Vector3 = model.PrimaryPart.Position
-	local hazard: string? = Module._getHazardOnPath(lastPositions[model] or position, position)
+	local previous: Vector3 = lastPositions[model] or position
+	local hazard: string? = Module._getHazardOnPath(previous, position)
 	lastPositions[model] = position
 
 	--[[ Hazards ]]
@@ -96,8 +97,9 @@ function Module._checkSnail(model: Model)
 		return
 	end
 
+	-- Rising starts the fall over (a jump's top, or where a jetpack last held it up), so only the last drop counts
 	if not Module.IsGrounded(position) then
-		peaks[model] = math.max(peaks[model] or position.Y, position.Y)
+		peaks[model] = if position.Y > previous.Y then position.Y else math.max(peaks[model] or position.Y, position.Y)
 		return
 	end
 
