@@ -3,8 +3,13 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Shots
 
-	-- Each point of wind pushes wind-affected shots this hard along X, in studs per second squared
+	--[[
+		Each point of wind pushes wind-affected shots WIND_ACCEL studs per second squared along X, plus WIND_ACCEL_GROWTH
+		for every point of the wind's strength, so strong wind sweeps a steep shot back the other way (at 6, any shot
+		steeper than about 64°; at 10, steeper than about 42°) while light wind stays gentle
+	]]
 	WIND_ACCEL = 7,
+	WIND_ACCEL_GROWTH = 1.5,
 
 	-- How far in front of the snail's ball a shot starts, in studs
 	MUZZLE_GAP = 0.8,

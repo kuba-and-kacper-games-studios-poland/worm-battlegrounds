@@ -273,7 +273,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Start
 
 --[[
-	The owner presses Start: the lobby starts once someone else is in it, else a message says they can't start alone.
+	The owner presses Start: the lobby starts once someone else or bots will play, else a message says they can't start
+	alone.
 ]]
 function Module._onStart()
 	--[[ Data ]]
@@ -283,8 +284,8 @@ function Module._onStart()
 
 	--[[ Checks ]]
 
-	-- Check if anyone else is in the lobby
-	if #members < 2 then
+	-- Check if anyone else, or bots, will play
+	if #members < 2 and (not room or room:GetAttribute("Difficulty") == "None") then
 		I.WidgetManager.ShowMessage(_settings.CUSTOM_ALONE_MESSAGE)
 		return
 	end

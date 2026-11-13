@@ -198,7 +198,7 @@ end
 --[[
 	**SERVER** |
 	The lobby's owner starts it: everyone in it travels to the match, and its bots fill the empty places (Match's
-	roster). It needs 2 or more players, bots or not: playing alone is Solo vs bots.
+	roster). A lobby without bots needs 2 or more players; with bots the owner may start it alone.
 ]]
 --- @return boolean
 function Module.Start(player: Player)
@@ -218,8 +218,8 @@ function Module.Start(player: Player)
 		return false
 	end
 
-	-- Check if anyone else will play (the owner's screen says so before asking)
-	if #row.Players < 2 then
+	-- Check if anyone else, or bots, will play (the owner's screen says so before asking)
+	if #row.Players < 2 and row.Difficulty == "None" then
 		Launch._tell({ player }, _settings.CUSTOM_ALONE_MESSAGE)
 		return false
 	end

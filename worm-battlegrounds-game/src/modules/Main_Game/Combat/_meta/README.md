@@ -172,7 +172,7 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 
 | Key | Default | What |
 | --- | --- | --- |
-| `WIND_ACCEL` | `7` | Wind's push per point of wind, in studs per second squared (raised from 3 on 2026-11-13: the testers found the wind too weak) |
+| `WIND_ACCEL`, `WIND_ACCEL_GROWTH` | `7`, `1.5` | Wind's push per point of wind, in studs per second squared, plus the growth for every point of its strength: `wind × (7 + 1.5 × |wind|)`, so 8.5 at 1, 34.5 at 3, 96 at 6 and 220 at 10 (gravity is 196.2). At 6 a shot steeper than about 64° into the wind is swept back the other way; at 10, steeper than about 42°. `WIND_ACCEL` was raised from 3 on 2026-11-13 (the testers found the wind too weak), and the growth added the same day (the owner) |
 | `MUZZLE_GAP`, `SHOOTER_GRACE` | `0.8`, `0.25` | How far past the snail's ball a shot starts (closer when something is in the way: `GetShotStart`), and how long it ignores its shooter |
 | `CHARGE_SECONDS` | `1.3` | How long a held press (the mouse button, FIRE on touch, RT) takes to fill the power from none to full at one even rate, firing by itself at full (MatchHud); bots charge their shot as fast (Bots) |
 | `MAX_PROJECTILE_TIME` | `20` | A shot still moving after this is removed |

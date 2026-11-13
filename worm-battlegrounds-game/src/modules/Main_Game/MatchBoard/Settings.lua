@@ -106,8 +106,8 @@ local _settings = {
 	--- @type { string }
 	CUSTOM_DIFFICULTIES = { "None", "Easy", "Medium", "Hard", "Nightmare" },
 
-	-- What Start says in a custom lobby with only its owner in it, bots or not (playing alone is Solo vs bots)
-	CUSTOM_ALONE_MESSAGE = "You can't start a custom lobby by yourself. Invite at least one more player!",
+	-- What Start says in a custom lobby with only its owner in it and no bots
+	CUSTOM_ALONE_MESSAGE = "You can't start a custom lobby by yourself. Invite a player or turn bots on!",
 
 	--%%%%%%%%%%%%%%%%%%%% Gui
 

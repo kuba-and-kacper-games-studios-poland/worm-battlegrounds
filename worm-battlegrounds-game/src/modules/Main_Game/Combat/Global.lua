@@ -77,8 +77,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Wind Acceleration
 
 --[[
-	Returns how hard the wind pushes a weapon along X, in studs per second squared: nothing for weapons the wind
-	doesn't touch.
+	Returns how hard the wind pushes a weapon along X, in studs per second squared, each point harder the stronger the
+	wind: nothing for weapons the wind doesn't touch.
 ]]
 --- @return number
 function Module.GetWindAcceleration(itemId: string, wind: number)
@@ -88,7 +88,7 @@ function Module.GetWindAcceleration(itemId: string, wind: number)
 
 	--[[ Returning ]]
 
-	return if row.Wind then wind * _settings.WIND_ACCEL else 0
+	return if row.Wind then wind * (_settings.WIND_ACCEL + _settings.WIND_ACCEL_GROWTH * math.abs(wind)) else 0
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

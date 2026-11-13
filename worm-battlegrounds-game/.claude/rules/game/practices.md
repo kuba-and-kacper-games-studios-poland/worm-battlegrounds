@@ -198,7 +198,10 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   drawn `PROJECTILE_DRAW_SCALE` (2) times their size, hits unchanged.
 - **Every thrown shot flies like the rocket** (the testers, 2026-11-13: "same physic weight as rocket"): every Arc and
   Target weapon launches at the Bazooka's speeds (`MinSpeed` 20 to `MaxSpeed` 180, up from 150 for more power) and
-  feels the wind, which pushes `WIND_ACCEL` (7) studs/s² per point, so a shot into the wind lands visibly short. The
+  feels the wind, which pushes `WIND_ACCEL` (7) studs/s² per point, and each point harder the stronger the wind
+  (`WIND_ACCEL_GROWTH`, the owner, 2026-11-13: "on wind 6… the projectile will get swept by the wind in another
+  direction"): a shot into the wind lands visibly short, and in strong wind a steep shot is blown back over the
+  shooter's head (at 6, steeper than about 64°). The
   wind stays for a whole round: Match rolls it again only once every snail in play has played on it, and a change
   gusts across the screen (Atmosphere's `WIND_CHANGE_BURST`) and flashes the HUD's number.
 - **Teammates are never hurt by each other** (the testers, 2026-11-13): Combat's `Blast.Hit` skips a snail on the
@@ -438,8 +441,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   the `InMatch` Player attribute says which half a player is in: every screen, camera and hint that belongs to one
   half follows it instead of assuming its map. Studio saves nothing, so a playtest skips the whole tutorial (its match,
   the crate and the loadout steps) and opens on the lobby; the Workspace attribute `StudioTutorial` (true) plays it. A custom lobby picks its bots (Off to
-  Nightmare) and needs 2 or more players, bots or not (the owner, 2026-11-13: Start alone shows "You can't start a
-  custom lobby by yourself", a WidgetManager message; it used to start alone with bots). Playing alone is Solo vs bots.
+  Nightmare) and its owner may start it alone with bots; without bots it needs 2 or more players, and Start alone
+  shows "You can't start a custom lobby by yourself", a WidgetManager message (the owner, 2026-11-13).
 - **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
@@ -544,3 +547,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   loaded (their data, Replicator folders, `I.G_Player.OnPlayerAdded` instances). The server loads a player's data
   only after their client has finished starting every module, so such a wait holds up the load of everyone who joins
   together. Wait on a thread of its own (`task.spawn`), or in `I.OnLoaded`.
+- **Every asset loads in the background from the start** (the owner, 2026-11-13: "when player opens new guis, or
+  opens weapon cases… he gets the background and icons/models instantly"): the client's `AssetsPreload` module
+  (`Main/0_AssetsPreload`) preloads every gui, the asset ids in the game's data and settings, and the asset folder, on
+  a thread of its own. A new gui, data row with an icon, or asset folder is picked up with no change there; a picture
+  code builds from anything else (a string it puts together, a player's thumbnail) isn't.

@@ -13,7 +13,7 @@ party's leader picks the match." Every public row's `ROW_SECONDS` timer always r
 the board looks alive: the row starts when it's full, when its timer runs out (with whoever joined, bots filling every
 empty seat, so one player can play Trios alone; with nobody, it only resets), or when `VOTE_FRACTION` of its players
 vote to start early. A started row is replaced by a fresh one of its mode on another map, its timer starting over.
-**Custom** makes a room that friends are invited into and its owner starts, its empty places filled with bots of the difficulty picked in its Bots row (`CUSTOM_DIFFICULTIES`: Off, Easy, Medium, Hard, and Nightmare, which plays only here). It needs 2 or more players, bots or not: Start with only the owner in it shows a message (`CUSTOM_ALONE_MESSAGE`, a WidgetManager message) and the server refuses it too. In a party only the leader makes one,
+**Custom** makes a room that friends are invited into and its owner starts, its empty places filled with bots of the difficulty picked in its Bots row (`CUSTOM_DIFFICULTIES`: Off, Easy, Medium, Hard, and Nightmare, which plays only here). Without bots it needs 2 or more players: Start with only the owner in it shows a message (`CUSTOM_ALONE_MESSAGE`, a WidgetManager message) and the server refuses it too; with bots its owner may start it alone. In a party only the leader makes one,
 and the whole party is in it at once (their windows stay closed; their Custom reads "Party lobby" and opens it); the
 party must fit (on one team in Teams: `size // 2`), and a Teams lobby without bots needs someone from outside the
 party. When the player's lobby closes without them pressing Leave (it started, or its owner closed it), the window
@@ -67,7 +67,7 @@ refuses while one plays.
 - `MatchBoard_CreateCustom @ (player: Player, mapId: string, mode: string, size: number, difficulty: string)`: `difficulty` from `CUSTOM_DIFFICULTIES` (`"None"` for no bots); not from a party member, and the party must fit
 - `MatchBoard_InviteCustom @ (player: Player, target: Player)`
 - `MatchBoard_InviteAnswer @ (player: Player, roomId: string, accept: boolean)`
-- `MatchBoard_StartCustom @ (player: Player)`: the owner, with 2 or more players (bots or not); a Teams lobby without bots needs a player from outside the owner's party
+- `MatchBoard_StartCustom @ (player: Player)`: the owner, with 2 or more players, or alone with bots; a Teams lobby without bots needs a player from outside the owner's party
 - `MatchBoard_LeaveCustom @ (player: Player)`
 
 **Send: RemoteEvents**
@@ -98,7 +98,7 @@ text colour), which the picked one swaps to.
 | `MAPS`, `MAP_POOL` | 9 map rows; `{ "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle", "LakesideShowdown" }` | Map names, sizes and pictures (`Thumbnail`: Picnic Plains, Desert, Rockslide Ridge and Volcano Isle have theirs, the game home's `assets/ui/map_thumbnails`; Training Meadow, the tutorial's map, shows Picnic Plains' until it has its own and is never in the pool; Lakeside Showdown shows Picnic Plains' until it has its own); the maps in rotation |
 | `SOLO_DIFFICULTIES` | Easy, Medium, Hard | The bots' difficulties in the setup (a party also gets No bots) |
 | `CUSTOM_DIFFICULTIES` | None, Easy, Medium, Hard, Nightmare | The custom lobby's Bots row; Nightmare is only here |
-| `CUSTOM_ALONE_MESSAGE` | "You can't start a custom lobby by yourself. Invite at least one more player!" | What Start says with only the owner in the lobby |
+| `CUSTOM_ALONE_MESSAGE` | "You can't start a custom lobby by yourself. Invite a player or turn bots on!" | What Start says with only the owner in the lobby and no bots |
 | `REWARD_TEXT`, `SOLO_WIN_COINS` | | What the setup's reward line says for a solo match (beside the coins), a party match and a party match without bots; the coins a solo win pays by difficulty (20, 35, 60: MatchRewards' `SOLO_COINS`, which pays them) |
 | `PARTY_BOTS_PER_PLAYER`, `PARTY_MAX_SIZE` | `1`, `8` | Bots per member in a party match with bots, and its most snails |
 | `BOARD_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |
