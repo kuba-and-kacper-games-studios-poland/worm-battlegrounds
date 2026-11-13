@@ -190,15 +190,14 @@ function Module.Spawn(participant, position: Vector3)
 	model:SetAttribute("Team", participant.Team)
 	model:SetAttribute("Color", participant.Color)
 	model:SetAttribute("IsBot", participant.IsBot)
-	model:SetAttribute("Health", _settings.MAX_HEALTH)
-	model:SetAttribute("MaxHealth", _settings.MAX_HEALTH)
+	model:SetAttribute("Health", participant.MaxHealth or _settings.MAX_HEALTH)
+	model:SetAttribute("MaxHealth", participant.MaxHealth or _settings.MAX_HEALTH)
 	model:SetAttribute("Alive", true)
 	model:SetAttribute("Ghost", false)
 	model:SetAttribute("Facing", 1)
 	model:SetAttribute("Shiny", participant.Shiny == true)
 	model:SetAttribute("Vip", participant.Vip == true)
 	model:SetAttribute("Level", participant.Level or 0)
-	model:SetAttribute("DamageTaken", participant.DamageTaken or 1)
 
 	--[[ Saving ]]
 

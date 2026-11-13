@@ -32,6 +32,12 @@ local _settings = {
 	CEILING_EXTRA = 60,
 
 	--[[
+		How far past each side of the map the view may go, as a share of half the view's width: at 1 a snail at the map's
+		edge can sit mid-screen (the testers, 2026-11-13). Arena's SEA_EDGE_WIDTH draws the sea out there
+	]]
+	SIDE_EXTRA = 1,
+
+	--[[
 		On the player's own turn the pan eases back to their snail at RECENTER_SPEED (higher is snappier) while the snail
 		moves faster than RECENTER_MOVE_SPEED studs a second
 	]]

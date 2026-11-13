@@ -64,6 +64,9 @@ local _settings = {
 		TheBigMashup = { Name = "The Big Mashup", Sizes = { 8 }, Thumbnail = "" },
 		Desert = { Name = "Desert", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://140014161821553" },
 		VolcanoIsle = { Name = "Volcano Isle", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://110823072321769" },
+
+		-- The tutorial's own map, never in MAP_POOL. shortcut: Picnic Plains' picture until Training Meadow has its own uploaded
+		TutorialMeadow = { Name = "Training Meadow", Sizes = { 2 }, Thumbnail = "rbxassetid://114380640476396" },
 	},
 
 	--[[
@@ -100,6 +103,9 @@ local _settings = {
 	-- The bots a custom lobby can fill its empty places with, in the order its Bots row shows them; Nightmare is only here
 	--- @type { string }
 	CUSTOM_DIFFICULTIES = { "None", "Easy", "Medium", "Hard", "Nightmare" },
+
+	-- What Start says in a custom lobby with only its owner in it, bots or not (playing alone is Solo vs bots)
+	CUSTOM_ALONE_MESSAGE = "You can't start a custom lobby by yourself. Invite at least one more player!",
 
 	--%%%%%%%%%%%%%%%%%%%% Gui
 

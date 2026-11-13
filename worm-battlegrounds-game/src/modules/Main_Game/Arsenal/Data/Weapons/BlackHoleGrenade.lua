@@ -9,8 +9,8 @@ local _data = {
 	--[[ Behavior ]]
 
 	Kind = "Roller",
-	Aim = "Feet",
-	Wind = false,
+	Aim = "Arc",
+	Wind = true,
 
 	--[[ Damage ]]
 
@@ -24,10 +24,15 @@ local _data = {
 	Uses = 1,
 	Cooldown = 0,
 
+	--[[ Launch ]]
+
+	MinSpeed = 20,
+	MaxSpeed = 180,
+
 	--[[ Extras ]]
 
-	RollSpeed = 10,
-	MaxRollTime = 8,
+	HoleTime = 2.5,
+	PullRadius = 20,
 }
 
 return _data

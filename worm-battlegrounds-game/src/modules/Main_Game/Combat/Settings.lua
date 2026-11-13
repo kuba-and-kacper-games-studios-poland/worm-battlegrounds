@@ -4,7 +4,7 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Shots
 
 	-- Each point of wind pushes wind-affected shots this hard along X, in studs per second squared
-	WIND_ACCEL = 3,
+	WIND_ACCEL = 7,
 
 	-- How far in front of the snail's ball a shot starts, in studs
 	MUZZLE_GAP = 0.8,
@@ -164,6 +164,17 @@ local _settings = {
 	--- @type { [string]: string }
 	MUZZLE_VFX = { Uzi = "Flash_SMG", Minigun = "Flash_SMG", Shotgun = "Flash_Sniper" },
 
+	--[[
+		The blast out of a launcher as its shot leaves, by weapon (I.Vfx prefabs played where the shot starts, pointing
+		along it), at LAUNCH_VFX_SCALE
+	]]
+	--- @type { [string]: { string } }
+	LAUNCH_VFX = {
+		Bazooka = { "Flash_Sniper", "Explosion_Gun" },
+		HomingMissile = { "Flash_Sniper", "Explosion_Gun" },
+	},
+	LAUNCH_VFX_SCALE = 1.5,
+
 	-- One Punch's blast plays along the swing at this scale (the prefab is made for a 20-stud part)
 	PUNCH_VFX_SCALE = 0.5,
 
@@ -220,8 +231,8 @@ local _settings = {
 	CRAWL_STEP_DOWN = 3,
 	CRAWL_STOP = 0.25,
 
-	-- A rolling black hole grenade hops over bumps with this upward speed
-	ROLL_HOP_SPEED = 22,
+	-- An open black hole throws the snails around it toward it at up to this speed (studs per second)
+	BLACK_HOLE_PULL_SPEED = 45,
 
 	-- The box a melee swing checks in front of the snail, in studs on each side
 	MELEE_BOX = 4,
@@ -258,6 +269,10 @@ local _settings = {
 	]]
 	PROJECTILE_DRAW_SCALE = 2,
 
+	-- Shots drawn at a scale of their own instead, by weapon (the homing missile's model is thin: the testers, 2026-11-13)
+	--- @type { [string]: number }
+	PROJECTILE_DRAW_SCALES = { HomingMissile = 3.5 },
+
 	--[[
 		The trail (a Vfx effect, with its exhaust's emitters when it has one) a weapon's shot draws behind it while it
 		flies, by item id; it fades out where the shot ends. TRAIL_SCALE widens every one, and a rocket's starts
@@ -269,6 +284,7 @@ local _settings = {
 		HomingMissile = "Trail_Smoke",
 		BlackHoleGrenade = "Trail_BlackHole",
 		VarietyGrenade = "Trail_Variety",
+		ClusterBomb = "Trail_Smoke",
 	},
 	TRAIL_SCALE = 1,
 	TRAIL_TAIL = 2,

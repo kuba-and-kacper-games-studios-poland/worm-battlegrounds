@@ -51,12 +51,16 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Collect
 
 --[[
-	Takes the loaded map's props: every Model or part under its Decor with the `Arena_Prop` attribute.
+	Takes the loaded map's props: every Model or part under its Decor with the `Arena_Prop` attribute, each moved back
+	along Z until its front is PROP_BEHIND_GAP behind the plane (the testers, 2026-11-13: snails walked through trees
+	that covered them), but never so far that its pivot leaves the ground (PROP_GROUND_MARGIN in from its back); one
+	still too deep for that is flattened along Z until it fits.
 ]]
 function Module.Collect()
 	--[[ Data ]]
 
 	local decor: Instance? = Loader.GetArenaFolder():FindFirstChild("Decor")
+	local groundBack: number = Loader.GetGroundDepth().Min + _settings.PROP_GROUND_MARGIN
 
 	--[[ Collecting ]]
 
@@ -67,6 +71,26 @@ function Module.Collect()
 			local boxCFrame: CFrame
 			local boxSize: Vector3
 			boxCFrame, boxSize = Module._getBox(item)
+
+			-- Back behind the snails, its pivot still on the ground
+			local pivot: CFrame = item:GetPivot()
+			local back: number = math.min(-(boxCFrame.Position.Z + boxSize.Z / 2 + _settings.PROP_BEHIND_GAP), 0)
+			back = math.max(back, math.min(groundBack - pivot.Position.Z, 0))
+			if back < 0 then
+				item:PivotTo(pivot + Vector3.zAxis * back)
+				boxCFrame, boxSize = Module._getBox(item)
+			end
+
+			-- Too deep to fit behind the snails on the ground: flattened, which the camera along −Z barely sees
+			local pivotZ: number = item:GetPivot().Position.Z
+			for _pass: number = 1, 3 do
+				local front: number = boxCFrame.Position.Z + boxSize.Z / 2
+				if front <= -_settings.PROP_BEHIND_GAP + 0.05 or pivotZ >= -_settings.PROP_BEHIND_GAP then
+					break
+				end
+				Module._flatten(item, pivotZ, (-_settings.PROP_BEHIND_GAP - pivotZ) / (front - pivotZ))
+				boxCFrame, boxSize = Module._getBox(item)
+			end
 			table.insert(standing, item)
 			bases[item] = boxCFrame.Position.Y - boxSize.Y / 2
 		end
@@ -318,6 +342,39 @@ function Module._release(prop: PVInstance, push: Vector3?)
 		task.wait(_settings.PROP_FADE_TWEENINFO.Time)
 		prop:Destroy()
 	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Flatten
+
+--[[
+	Flattens a prop along Z about its pivot by a scale: each part's distance from the pivot and its depth along Z
+	shrink by it. A turned block becomes the block closest to its squashed shape, its edge pointing least along Z kept
+	exactly, so from the front it stays as wide as it was.
+]]
+function Module._flatten(prop: PVInstance, pivotZ: number, scale: number)
+	--[[ Local Variables ]]
+
+	local squash: Vector3 = Vector3.new(1, 1, scale)
+
+	--[[ Applying ]]
+
+	--- @param part Instance
+	for _index: number, part in ipairs(if prop:IsA("BasePart") then { prop } else prop:GetDescendants()) do
+		if part:IsA("BasePart") then
+			local cframe: CFrame = part.CFrame
+			local edges = { cframe.RightVector * part.Size.X * squash, cframe.UpVector * part.Size.Y * squash, cframe.LookVector * part.Size.Z * squash } --- @type { Vector3 }
+			table.sort(edges, function(a: Vector3, b: Vector3)
+				return math.abs(a.Unit.Z) < math.abs(b.Unit.Z)
+			end)
+
+			-- The squashed edges made square again, keeping the first one's direction (a QR step)
+			local first: Vector3 = edges[1].Unit
+			local second: Vector3 = edges[2] - first * edges[2]:Dot(first)
+			local third: Vector3 = first:Cross(second.Unit)
+			part.Size = Vector3.new(edges[1].Magnitude, second.Magnitude, math.abs(edges[3]:Dot(third)))
+			part.CFrame = CFrame.fromMatrix(cframe.Position + Vector3.zAxis * (cframe.Position.Z - pivotZ) * (scale - 1), first, second.Unit, third)
+		end
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

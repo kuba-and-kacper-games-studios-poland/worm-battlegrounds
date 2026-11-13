@@ -289,6 +289,14 @@ function Module.PickDrop(player: Player, x: number, y: number)
 		return
 	end
 
+	-- In the tutorial only a pick on the shown spot counts, and the snail keeps that spot
+	if Roster.GetMetadata().Kind == "Tutorial" then
+		if math.abs(spot.X - drops[participant.Id].X) > _settings.TUTORIAL_PICK_RADIUS then
+			return
+		end
+		spot = drops[participant.Id]
+	end
+
 	--[[ Saving ]]
 
 	placed[participant.Id] = true
@@ -307,7 +315,9 @@ function Module._drop()
 
 	local bounds: BasePart = I.Arena.GetBounds()
 	local participants = Roster.GetParticipants() --- @type { Match_Participant }
-	local spots = I.Arena.GetLandSpots(#participants, I.Settings["Snails"].ROOT_SIZE / 2) --- @type { Vector3 }
+	local tutorial: boolean = Roster.GetMetadata().Kind == "Tutorial"
+	local spots = I.Arena.GetLandSpots(if tutorial then _settings.TUTORIAL_SPOT_COUNT else #participants, I.Settings["Snails"].ROOT_SIZE / 2) --- @type { Vector3 }
+	local dropSeconds: number = if tutorial then _settings.TUTORIAL_DROP_SECONDS else _settings.DROP_SECONDS
 
 	--[[ Checks ]]
 
@@ -315,6 +325,11 @@ function Module._drop()
 	if #spots == 0 then
 		warn(`[{_localName}::{script.Name}]: Map ({matchFolder:GetAttribute("MapId")}) has no land to start snails on - using the top of its bounds!`)
 		table.insert(spots, bounds.Position + Vector3.new(0, bounds.Size.Y / 2 - I.Settings["Arena"].START_TOP_GAP, 0))
+	end
+
+	-- The tutorial's player and bot start close together, so the first shot is an easy one
+	if tutorial then
+		spots = Module._getTutorialSpots(spots, bounds.Position.X)
 	end
 
 	--[[ Saving ]]
@@ -325,7 +340,7 @@ function Module._drop()
 	matchFolder:SetAttribute("DropMaxX", bounds.Position.X + bounds.Size.X / 2)
 	matchFolder:SetAttribute("DropMinY", bounds.Position.Y - bounds.Size.Y / 2)
 	matchFolder:SetAttribute("DropMaxY", bounds.Position.Y + bounds.Size.Y / 2 - I.Settings["Arena"].START_TOP_GAP)
-	matchFolder:SetAttribute("DropEndsAt", I.S.Workspace:GetServerTimeNow() + _settings.DROP_SECONDS)
+	matchFolder:SetAttribute("DropEndsAt", I.S.Workspace:GetServerTimeNow() + dropSeconds)
 
 	-- Bots pick their land (the tutorial bot keeps its own); players start on one and can place their own (spots repeat when there are too few)
 	local taken = {} --- @type { Vector3 }
@@ -342,7 +357,7 @@ function Module._drop()
 	--[[ Waiting ]]
 
 	Module.SetPhase("Drop")
-	local deadline: number = os.clock() + _settings.DROP_SECONDS
+	local deadline: number = os.clock() + dropSeconds
 	while os.clock() < deadline and not Module._isEveryonePlaced() do
 		task.wait(0.1)
 	end
@@ -400,6 +415,40 @@ function Module._setDrop(participantId: string, spot: Vector2)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Tutorial Spots
+
+--[[
+	Returns the tutorial's two land spots, the player's then the bot's: the player's the one nearest TUTORIAL_GAP / 2
+	studs left of the map's middle, the bot's the other one nearest TUTORIAL_GAP studs to its right. With one spot, both
+	share it.
+]]
+--- @param spots { Vector3 }
+--- @return { Vector3 }
+function Module._getTutorialSpots(spots, middleX: number)
+	--[[ Local Variables ]]
+
+	local gap: number = _settings.TUTORIAL_GAP
+	local mine: Vector3 = spots[1]
+	local bot: Vector3? = nil
+
+	--[[ Picking ]]
+
+	for _index: number, spot: Vector3 in ipairs(spots) do
+		if math.abs(spot.X - (middleX - gap / 2)) < math.abs(mine.X - (middleX - gap / 2)) then
+			mine = spot
+		end
+	end
+	for _index: number, spot: Vector3 in ipairs(spots) do
+		if spot ~= mine and (not bot or math.abs(spot.X - mine.X - gap) < math.abs(bot.X - mine.X - gap)) then
+			bot = spot
+		end
+	end
+
+	--[[ Returning ]]
+
+	return { mine, bot or mine }
+end
 
 --%%%%%%%%%%%%%%%%%%%% Get Sky Spot
 

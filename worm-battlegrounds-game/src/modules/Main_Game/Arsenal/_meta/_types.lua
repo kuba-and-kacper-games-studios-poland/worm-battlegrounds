@@ -47,8 +47,8 @@
 --- @field CrawlSpeed number?
 --- @field LockDelay number?
 --- @field HomingSpeed number?
---- @field RollSpeed number?
---- @field MaxRollTime number?
+--- @field HoleTime number?
+--- @field PullRadius number?
 --- @field Reach number?
 --- @field Lift number?
 --- @field Pierce boolean?
@@ -63,6 +63,10 @@ local _arsenal_WeaponData = {}
 --- @field DamageMax number
 --- @field DamageEdge number
 --- @field Radius number
+---
+--- # Look #
+---
+--- @field Mini number?
 local _arsenal_Bomblets = {}
 
 --- @class Arsenal_Snails

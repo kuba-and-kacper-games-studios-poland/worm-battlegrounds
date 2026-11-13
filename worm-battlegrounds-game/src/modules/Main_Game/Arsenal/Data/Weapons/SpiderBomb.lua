@@ -10,7 +10,7 @@ local _data = {
 
 	Kind = "Crawler",
 	Aim = "Arc",
-	Wind = false,
+	Wind = true,
 
 	--[[ Damage ]]
 
@@ -26,8 +26,8 @@ local _data = {
 
 	--[[ Launch ]]
 
-	MinSpeed = 15,
-	MaxSpeed = 125,
+	MinSpeed = 20,
+	MaxSpeed = 180,
 
 	--[[ Extras ]]
 

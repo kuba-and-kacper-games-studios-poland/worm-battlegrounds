@@ -21,8 +21,9 @@ local inviteGui: ScreenGui
 -- The players invited since the list opened, so their button says Sent
 local sent = {} --- @type { [number]: boolean }
 
--- Who the open invite is from
+-- Who the open invite is from, and when it runs out (os.clock)
 local fromUserId: number? = nil
+local inviteEndsAt: number = 0
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -63,6 +64,11 @@ function Module.Start()
 		if name == _settings.INVITE_GUI_NAME then
 			sent = {}
 			Module._refreshList()
+		end
+	end)
+	I.Topic.Subscribe("WidgetManager_Closed", function(name: string)
+		if name == _settings.INVITED_GUI_NAME then
+			task.defer(Module._onInvitedClosed)
 		end
 	end)
 	I.S.Players.PlayerAdded:Connect(Module._watchPlayer)
@@ -169,15 +175,41 @@ function Module._onInvited(userId: number)
 	--[[ Showing ]]
 
 	fromUserId = userId
+	inviteEndsAt = os.clock() + _settings.INVITE_SECONDS
 	elems["From"].Text = `{if from then from.DisplayName else "Someone"} invited you to their party!`
 	elems["FromAvatar"].Image = `rbxthumb://type=AvatarHeadShot&id={userId}&w=150&h=150`
 	I.WidgetManager.Open(_settings.INVITED_GUI_NAME)
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Invited Closed
+
+--[[
+	When another window replaced the invite box (the Party panel's + opens the invite list), brings the box back once
+	that window closes, while the invite lasts. Closed by the player, it's dropped.
+]]
+function Module._onInvitedClosed()
+	--[[ Checks ]]
+
+	-- Check if the invite is still unanswered
+	if not fromUserId then
+		return
+	end
+
+	-- Check if the player closed it, or it ran out
+	if not I.WidgetManager.GetCurrent() or os.clock() >= inviteEndsAt then
+		fromUserId = nil
+		return
+	end
+
+	--[[ Queueing ]]
+
+	I.WidgetManager.OpenQueue(_settings.INVITED_GUI_NAME)
+end
+
 --%%%%%%%%%%%%%%%%%%%% Answer
 
 --[[
-	Answers the open invite and closes its box. Closing the box another way leaves the invite to run out.
+	Answers the open invite and closes its box.
 ]]
 function Module._answer(accept: boolean)
 	--[[ Checks ]]

@@ -125,6 +125,17 @@ function Module.Land(body)
 	I.Network.FireAll("Combat_ShotEnd", body.Id, body.Position)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Send State
+
+--[[
+	Sends a simulated shot's state to every client now, so their copies take it (one the server stopped in the air, as
+	an open black hole).
+]]
+--- @param body Combat_Body
+function Module.SendState(body)
+	I.Network.UFireAll("Combat_ShotState", body.Id, Ballistics.GetState(body))
+end
+
 --%%%%%%%%%%%%%%%%%%%% Spawn
 
 --[[

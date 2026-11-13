@@ -122,7 +122,7 @@ function Module.CreateParticipant(difficulty: string, number: number)
 		IsBot = true,
 		Difficulty = difficulty,
 		Loadout = table.clone(_settings.LOADOUTS[difficulty] or _settings.LOADOUTS.Easy),
-		DamageTaken = _settings.DAMAGE_TAKEN[difficulty] or 1,
+		MaxHealth = _settings.HEALTH[difficulty],
 		Connected = true,
 		Out = false,
 	}
@@ -154,7 +154,7 @@ function Module.TakeTurn(participantId: string)
 		return
 	end
 
-	-- The tutorial bot only shoots beside the player
+	-- The tutorial bot doesn't know how to shoot
 	if participant.Difficulty == "Tutorial" then
 		task.wait(thinkUntil - os.clock())
 		Module._playTutorial(participantId, model)
@@ -310,33 +310,22 @@ end
 --%%%%%%%%%%%%%%%%%%%% Play Tutorial
 
 --[[
-	The tutorial bot's turn: it stays put and fires the Bazooka at the ground beside the nearest enemy, never at it.
+	The tutorial bot's turn: it doesn't know how to shoot, so it raises the Bazooka at the sky, charges a little, gives
+	up without firing and passes the turn back.
 ]]
-function Module._playTutorial(participantId: string, model: Model)
-	--[[ Local Variables ]]
+function Module._playTutorial(participantId: string, _model: Model)
+	--[[ Fumbling ]]
 
-	local origin: Vector3 = model.PrimaryPart.Position
-	local target: Model? = nil
-	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
-		if other ~= model and (not target or (other.PrimaryPart.Position - origin).Magnitude < (target.PrimaryPart.Position - origin).Magnitude) then
-			target = other
-		end
-	end
-
-	--[[ Checks ]]
-
-	-- Check if anyone is left to aim near
-	if not target then
+	local angle: number = math.rad(random:NextNumber(70, 110))
+	if not Module._showAim(participantId, "Bazooka", angle, _settings.TUTORIAL_FUMBLE_POWER) then
 		return
 	end
 
-	--[[ Firing ]]
+	--[[ Passing ]]
 
-	local aimAt: Vector3 = target.PrimaryPart.Position + Vector3.new(random:NextNumber(4, 8) * (if random:NextNumber() < 0.5 then -1 else 1), -2, 0)
-	local wind: number = I.G_Combat.GetWindAcceleration("Bazooka", I.Match.GetWind())
-	local arc: Vector2 = I.Combat.GetArcs(origin, aimAt, "Bazooka", wind, _settings.POWER_STEPS)[1] or Vector2.new(math.rad(45), 0.6)
-	if Module._showAim(participantId, "Bazooka", arc.X, arc.Y) then
-		I.Combat.Fire(participantId, "Bazooka", arc.X, arc.Y)
+	task.wait(_settings.ACTION_PAUSE)
+	if Module._isTurn(participantId) then
+		I.Match.SkipTurn()
 	end
 end
 

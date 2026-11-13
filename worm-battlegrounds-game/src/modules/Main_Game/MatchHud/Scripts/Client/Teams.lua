@@ -61,7 +61,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Avatar
 
 --[[
-	Shows a participant's avatar headshot on an image, or BOT_AVATAR (the default snail's headshot) for a bot.
+	Shows a participant's avatar headshot on an image, or BOT_AVATAR (the default snail's headshot) for a bot. A
+	Studio test's players (negative user ids, which have no headshot) show the first Roblox avatar's.
 ]]
 function Module.SetAvatar(image: ImageLabel, entry: Configuration)
 	--[[ Local Variables ]]
@@ -70,7 +71,7 @@ function Module.SetAvatar(image: ImageLabel, entry: Configuration)
 
 	--[[ Applying ]]
 
-	image.Image = if userId > 0 then `rbxthumb://type=AvatarHeadShot&id={userId}&w=150&h=150` else _settings.BOT_AVATAR
+	image.Image = if entry:GetAttribute("IsBot") then _settings.BOT_AVATAR else `rbxthumb://type=AvatarHeadShot&id={math.max(userId, 1)}&w=150&h=150`
 end
 
 --%%%%%%%%%%%%%%%%%%%% Watch Entry

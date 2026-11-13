@@ -2,7 +2,7 @@
 
 Keeps the GUI kit's capitals. The kit's capitals styles (`Heading`, `Title` and `Hero` labels, buttons, box and window
 titles) upper-case their text only when the gui is built, so text game code writes later used to stay in mixed case
-("Your turn in 3 turns" under "YOUR TURN!"). The `WormBattlegroundsBrawl` theme tags every such text
+("You play in 3 turns" under "YOUR TURN!"). The `WormBattlegroundsBrawl` theme tags every such text
 `TextCase_Upper`, exports keep the tag, and this module's component puts whatever is written there in capitals: the
 words only, never the rich-text tags (`<font color="#ff6363">`), with escapes like `&lt;` kept.
 

@@ -22,6 +22,10 @@ local effectsFolder: Instance
 -- What each snail's effects remember between frames, by snail
 local states = {} --- @type { [Model]: Snails_EffectState }
 
+-- Finds the ground under a flying snail: anything but snails and shots
+local groundParams: RaycastParams = RaycastParams.new()
+groundParams.FilterType = Enum.RaycastFilterType.Exclude
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -97,11 +101,30 @@ function Module._watchSnail(model: Instance, appeared: boolean)
 			end
 		end
 	end
+	-- A jetpack thrusts even while it hovers still, where a trail draws nothing: an exhaust streams down under it
+	local exhaust = {} --- @type { ParticleEmitter }
+	local prefab: BasePart? = I.Vfx.Get(_settings.JET_EXHAUST_VFX)
+	local source: Instance? = prefab and prefab:FindFirstChild("Exhaust")
+	if source then
+		local nozzle: Attachment = source:Clone()
+		nozzle.Name = "JetExhaust"
+		nozzle.Position = _settings.JET_TRAIL_OFFSET
+		nozzle.Orientation = Vector3.zero
+		nozzle.Parent = root
+		for _index: number, emitter: Instance in ipairs(nozzle:GetChildren()) do
+			if emitter:IsA("ParticleEmitter") then
+				emitter.EmissionDirection = Enum.NormalId.Bottom
+				emitter.Enabled = false
+				table.insert(exhaust, emitter)
+			end
+		end
+	end
 	states[model] = {
 		Health = model:GetAttribute("Health") or 0,
 		LastRise = 0,
 		Trails = trails,
 		Jet = jet,
+		Exhaust = exhaust,
 		Climbing = 0,
 		Resting = 0,
 		Jetting = false,
@@ -178,8 +201,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Every frame, shows each snail's trail while it flies faster than TRAIL_SPEED, the active snail's jet while it climbs
-	on its jetpack (as its hum: Sounds), and puffs dust where one lands after a fall (as fast as Snail_Land's).
+	Every frame, shows each snail's trail while it flies faster than TRAIL_SPEED, the active snail's jet while it flies
+	its jetpack (climbing or hovering in the air, not dropping faster than JET_FALL_SPEED), and puffs dust where one
+	lands after a fall (as fast as Snail_Land's).
 ]]
 function Module._step(deltaTime: number)
 	--[[ Watching ]]
@@ -193,9 +217,10 @@ function Module._step(deltaTime: number)
 		local velocity: Vector3 = root.AssemblyLinearVelocity
 		local alive: boolean = model:GetAttribute("Alive") == true
 		local flying: boolean = alive and velocity.Magnitude > _settings.TRAIL_SPEED
+		local wearsJetpack: boolean = alive and model:GetAttribute("Active") == true and model:GetAttribute("JetpackFuel") ~= nil
 
-		-- A jump passes through the climbing speeds too fast to count
-		local climbing: boolean = alive and model:GetAttribute("Active") == true and model:GetAttribute("JetpackFuel") ~= nil and velocity.Y > _settings.JETPACK_SOUND_RISE and velocity.Y < _settings.JUMP_SOUND_SPEED
+		-- Climbing or hovering off the ground; a jump's first instant passes too fast to count
+		local climbing: boolean = wearsJetpack and velocity.Y > -_settings.JET_FALL_SPEED and velocity.Y < _settings.JUMP_SOUND_SPEED and not Module._isGrounded(model)
 		state.Climbing = if climbing then state.Climbing + deltaTime else 0
 		state.Resting = if climbing then 0 else state.Resting + deltaTime
 		if state.Climbing >= _settings.JETPACK_SOUND_HOLD then
@@ -210,12 +235,34 @@ function Module._step(deltaTime: number)
 		for _index: number, trail: Trail in ipairs(state.Jet) do
 			trail.Enabled = state.Jetting
 		end
+		for _index: number, emitter: ParticleEmitter in ipairs(state.Exhaust) do
+			emitter.Enabled = state.Jetting
+		end
 		if alive and state.LastRise < -_settings.LAND_SOUND_SPEED and velocity.Y > -_settings.LAND_SOUND_STOP then
 			I.Vfx.Play("Fall", CFrame.new(root.Position - Vector3.yAxis * root.Size.Y / 2), effectsFolder)
 		end
 
 		state.LastRise = velocity.Y
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Is Grounded
+
+--[[
+	Returns whether a snail's ball stands on something (within JET_GROUND_GAP studs under it).
+]]
+--- @return boolean
+function Module._isGrounded(model: Model)
+	--[[ Local Variables ]]
+
+	local root: BasePart = model.PrimaryPart
+	groundParams.FilterDescendantsInstances = { snailsFolder, effectsFolder }
+
+	--[[ Returning ]]
+
+	return I.S.Workspace:Raycast(root.Position, Vector3.yAxis * -(root.Size.Y / 2 + _settings.JET_GROUND_GAP), groundParams) ~= nil
 end
 
 return Module

@@ -251,7 +251,10 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 	--[[ Publishing ]]
 
 	I.Topic.Publish("Combat_ShotFired", participantId, itemId)
-	Module._playSound(`Fire_{itemId}`, shot.Origin)
+
+	-- A player's own screen played it at the press (MatchHud's Aim)
+	local shooter: Player? = if participant.IsBot or I.Match.IsAutopilot() then nil else I.S.Players:GetPlayerByUserId(participant.UserId)
+	Module._playSound(`Fire_{itemId}`, shot.Origin, shooter)
 
 	--[[ Running ]]
 
@@ -357,11 +360,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Play Sound
 
 --[[
-	Has every player hear a weapon's or utility's sound where it was used (SoundsList's Fire_<itemId> and
-	Use_<itemId>), within Combat's sound range.
+	Has every player (but `skip`, who heard it already) hear a weapon's or utility's sound where it was used
+	(SoundsList's Fire_<itemId> and Use_<itemId>), within Combat's sound range.
 ]]
-function Module._playSound(name: string, position: Vector3)
-	I.Sound.PlayForAll({
+function Module._playSound(name: string, position: Vector3, skip: Player?)
+	--[[ Local Variables ]]
+
+	--- @type Sound_Params
+	local params = {
 		Name = name,
 		Location = position,
 		SoundGroup = "SFX",
@@ -369,7 +375,21 @@ function Module._playSound(name: string, position: Vector3)
 		RollOffMax = _settings.SOUND_ROLLOFF_MAX,
 		PitchMin = 0.95,
 		PitchMax = 1.05,
-	})
+	}
+
+	--[[ Playing ]]
+
+	if not skip then
+		I.Sound.PlayForAll(params)
+		return
+	end
+	local others = {} --- @type { Player }
+	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
+		if player ~= skip then
+			table.insert(others, player)
+		end
+	end
+	I.Sound.PlayForPlayers(others, params)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

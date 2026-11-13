@@ -83,7 +83,8 @@ end
 --[[
 	**SERVER** |
 	Hurts one snail and throws it at a velocity change, credits the shooter, and tells every client, with whether the blow
-	knocks it out (its health went to 0). Returns the damage when it hit a snail other than the shooter's, else 0.
+	knocks it out (its health went to 0). A shooter's teammates are never hurt or thrown; the shooter always is (the
+	testers, 2026-11-13). Returns the damage when it hit a snail other than the shooter's, else 0.
 ]]
 --- @return number
 function Module.Hit(participantId: string, damage: number, velocityChange: Vector3, itemId: string, sourceId: string?, position: Vector3)
@@ -98,10 +99,14 @@ function Module.Hit(participantId: string, damage: number, velocityChange: Vecto
 		return 0
 	end
 
+	-- Skip the shooter's teammates
+	if Module.IsTeammate(participantId, sourceId) then
+		return 0
+	end
+
 	--[[ Applying ]]
 
-	-- The tutorial bot takes more damage, so a new player knocks it out in two hits
-	local taken: number = math.floor(damage * (model:GetAttribute("DamageTaken") or 1) + 0.5)
+	local taken: number = math.floor(damage + 0.5)
 	local before: number = model:GetAttribute("Health")
 	I.Snails.Damage(participantId, taken, sourceId, itemId)
 	I.Snails.Knockback(participantId, velocityChange * model.PrimaryPart:GetMass(), sourceId, itemId)
@@ -113,6 +118,27 @@ function Module.Hit(participantId: string, damage: number, velocityChange: Vecto
 	--[[ Returning ]]
 
 	return if participantId ~= sourceId then taken else 0
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Is Teammate
+
+--[[
+	**SERVER** |
+	Returns whether a snail is on the shooter's team but isn't the shooter (in a free-for-all every snail is its own
+	team), so the shooter's blows spare it.
+]]
+--- @return boolean
+function Module.IsTeammate(participantId: string, sourceId: string?)
+	--[[ Data ]]
+
+	local victim = I.Match.GetParticipant(participantId) --- @type Match_Participant?
+	local shooter = if sourceId then I.Match.GetParticipant(sourceId) else nil --- @type Match_Participant?
+
+	--[[ Returning ]]
+
+	return victim ~= nil and shooter ~= nil and participantId ~= sourceId and victim.Team == shooter.Team
 end
 
 return Module

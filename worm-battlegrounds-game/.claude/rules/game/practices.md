@@ -32,7 +32,10 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Props break under blasts:** trees, bushes and rocks in a map's Decor are `Arena_Prop` Models built from parts
   (never collidable for snails). A blast cuts its hole through them with the same stepped cutter as the terrain, and
   the pieces no longer joined to the prop's base fly off; a prop whose ground is gone (under its trunk) falls. What
-  falls fades out.
+  falls fades out. **Props stand behind the snails** (the testers and the owner, 2026-11-13: snails hid inside trees
+  and rocks): at load each moves back until its front is half a snail's length behind the plane, its pivot still on
+  the ground, and one too deep for that is flattened along Z, which the camera along −Z barely sees (Arena's
+  `PROP_BEHIND_GAP`).
 - **Maps are made in MapLab** (the game home's map kit, `assets/_tools/map-kit/`): the land drawn on the 1-stud grid
   and built into parts, props part-built, checked, then exported into the arena templates after the owner approves.
   A map the owner builds in Studio is imported where it stands (Rockslide Ridge): its parts renamed by look, in
@@ -64,8 +67,7 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   `Obsidian`). It's the one terrain built in code, merged from the liquid's half-stud cells, an exception to "Terrain
   is authored parts". **Shots fly on through any liquid, ponds too, slowed** (the owner's pick, 2026-11-10: "projectiles move
 through water but slower"): water and lava never set a shot off; it bursts on what it touches under them, or by its
-fuse (Combat's `SINK_*`). Only the black hole grenade's roll, the spider bomb's crawl and the variety grenade's worms
-end in liquid.
+fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
 
 ## Snails
 
@@ -141,7 +143,8 @@ end in liquid.
   fires. Code plays one by name (`I.Vfx.Play(name, cframe, parent, scale?)`), clones a trail (`I.Vfx.AddTrail`), and
   never builds particles of its own. Blasts pick theirs by size (Combat's `BLAST_VFX`); guns, the punch and the
   snails' spawn, landing, healing, splash and trail have theirs (Combat's and Snails' client `Effects`). Missiles and
-  the black hole and variety grenades draw the studio's trails as they fly (Combat's `PROJECTILE_TRAILS`), and a
+  the black hole, variety and cluster grenades (their mini bomblets too) draw the studio's trails as they fly (Combat's
+  `PROJECTILE_TRAILS`), and a launcher's shot blasts out of it (`LAUNCH_VFX`), and a
   jetpack its jet (Snails' `Trail_Jet`); a trail's attachments stand along Z, toward the camera, so it keeps its width.
 - **Each place has its own mood, subtle and in the game's colours** (the owner's pick, 2026-11-10: "subtle, high
   quality, minimalistic but visible… worms type of colors, but in a professional way"): the Atmosphere module sets
@@ -190,10 +193,19 @@ end in liquid.
   with the strongest weapons. Admin `give` and `refill` clear it, for testing. **Heals wait between uses** (the owner,
   2026-11-12): a utility's `Cooldown` starts at its first use, so it's ready on the first turn; the Bandage (40)
   waits 3 turns, once every 4 of the player's turns, and the Medkit (100) 5, once every 6, with 2 uses a match.
-- **Server-moved shots glide on clients:** the spider bomb's crawl and the variety grenade's worms move as server
-  parts after landing; clients draw their models gliding after them (Combat's `CRAWL_GLIDE`), and the spider bomb walks
+- **Server-moved shots glide on clients:** the spider bomb's crawl moves as a server part after landing; clients draw their models gliding after them (Combat's `CRAWL_GLIDE`), and the spider bomb walks
   up 1-stud steps rather than jumping them. Their throws fly on `Ballistics` like every other shot. Flying shots are
   drawn `PROJECTILE_DRAW_SCALE` (2) times their size, hits unchanged.
+- **Every thrown shot flies like the rocket** (the testers, 2026-11-13: "same physic weight as rocket"): every Arc and
+  Target weapon launches at the Bazooka's speeds (`MinSpeed` 20 to `MaxSpeed` 180, up from 150 for more power) and
+  feels the wind, which pushes `WIND_ACCEL` (7) studs/s² per point, so a shot into the wind lands visibly short. The
+  wind stays for a whole round: Match rolls it again only once every snail in play has played on it, and a change
+  gusts across the screen (Atmosphere's `WIND_CHANGE_BURST`) and flashes the HUD's number.
+- **Teammates are never hurt by each other** (the testers, 2026-11-13): Combat's `Blast.Hit` skips a snail on the
+  shooter's team (not the shooter: your own blows always hurt you), and an open black hole doesn't pull them.
+- **The black hole grenade is thrown, and opens on a second press** (the testers, 2026-11-13): it opens on the first
+  thing it touches, or wherever it is when its owner presses again, holds still for its `HoleTime` pulling snails in,
+  then bursts. The variety grenade bursts into four mini variety grenades (its `Bomblets`' `Mini`), no longer worms.
 - **Dynamite is placed, not thrown:** it drops at the snail's feet (`Aim = "Feet"`, no launch speed), the stamina bar
   fills again and the player keeps moving for its `Retreat` (3 s) before the server takes the snail back, and the fuse
   (3.5 s) goes off after that.
@@ -201,7 +213,14 @@ end in liquid.
   stamina (Bots' `Move`), never step into the sea or down a drop that hurts, walk to a spot their shot lands from,
   close in to swing or place Dynamite and run, and heal when hurt. Their snails stay server-owned. A bot never passes
   a turn (2026-11-10): when its brain finds no plan it still fires the Bazooka toward the nearest enemy (Bots'
-  `_fireAnyway`).
+  `_fireAnyway`). The tutorial bot is the one exception (below).
+- **The tutorial is a guided first match, then the crate** (the testers, 2026-11-13): a new player's first join sends
+  them to a 1v1 against a bot that can't shoot (it raises the Bazooka, gives up and passes) and starts with 10 health
+  (Bots' `HEALTH`), so any hit wins. The player plays first (Match keeps the roster's order) and starts about 30 studs
+  from it near the map's middle (Match's `TUTORIAL_*`): the drop shows where to land, and only a pick there counts.
+  The results show Rematch grey and dead, so the player goes back by hand; in the lobby the guide leads to the free
+  crate, then to putting its two weapons in the loadout. Its map is Training Meadow, a small island made for it
+  (MapLab, exported 2026-11-13), in no rotation.
 - **A dropped player's snail plays on under a bot** (2026-11-10): it's never knocked out for being away. A bot plays
   its turns with the player's loadout (Match's `Autopilot`, Bots' `TAKEOVER_DIFFICULTY`), taking over mid-turn too,
   and the player, back from the lobby's rejoin offer, plays from their snail's next turn as the bot left it. Only the
@@ -312,6 +331,11 @@ end in liquid.
   `Utils_UIStroke`), white Londrina text, and the design's buttons at about their own size, tinted. A design picture
   made for a small card is never stretched into a big panel: its outline and corners grow with it. The confirmation
   (`WidgetManager_Confirmation`, the game's copy of System's) is the pattern.
+- **The tutorial points with a spotlight** (the testers, 2026-11-13: "the screen is blacked out around where you
+  need to click and like a lighter square with rounded corners"): the `TutorialHint` gui darkens everything but a
+  rounded hole over what to press next (a gui button, the bot, the spot to land on), blocks presses outside it, and
+  shows the step's hint in the confirmation dialog's dark panel beside it, worded for the player's device (Tutorial's
+  `HINTS`, `TOUCH_HINTS`, `PAD_HINTS`). A new step of the tutorial is a target and a hint, never an arrow of its own.
 - **Turns are announced, and the end of a turn tightens** (the owner's pick, 2026-11-10): as a turn starts a dark
   banner opens across the screen with the snail's avatar (its headshot, or the bot picture) and whose turn it is
   (MatchHud's `U_TurnCallout`, the owner: "make it look professional"): "Your turn!" in gold over orange lines for the
@@ -332,7 +356,9 @@ end in liquid.
   `art/crates/bake_models.py`); their pieces turn on hinges in code, so a new crate keeps the eight piece names and the
   pivot in the middle of its floor. A ten-pack shares one set of effects and has no per-crate balls of light (Crates'
   `STAGE_LIGHT_COUNT`). A crate's colour and particles are its data row's look
-  (`Glow`, `Accent`, `Ambient`); the premium crate shows it's premium by small touches (a gold tab, a halo, the violet
+  (`Glow`, `Accent`, `Ambient`). **One crate per kind, paid in coins or diamonds** (the testers, 2026-11-13): the Weapon
+  crate's diamonds roll what the Premium crate did, and the Premium row stays hidden so its id is known. A crate marked
+  `Premium` shows it's premium by small touches (a gold tab, a halo, the violet
   backdrop, a PREMIUM tag, a pale-gold line), never another layout. Gui particles are `I.UIEmitter`'s. The sounds mix
   crisp clicks for the reel with the Great Strategy instruments for the melodies (`art/sfx/make_crates.py`).
 - **Models that move in a ViewportFrame sit in a WorldModel inside it** (2026-11-11, measured on the ten-pack: the owner
@@ -388,7 +414,7 @@ end in liquid.
   outlines the box.
 - **Capitals stay capitals:** text in a capitals style (headings, titles, buttons, window and box titles) shows in
   capitals whatever code writes, through the `TextCase_Upper` tag the theme adds and the TextCase module (Utils). Code
-  writes plain sentences ("Your turn in 3 turns"), never its own `string.upper`. A gui whose code writes into
+  writes plain sentences ("You play in 3 turns"), never its own `string.upper`. A gui whose code writes into
   capitals text is exported again when the theme's capitals change, so its export carries the tag.
 
 ## Maps and placeholders
@@ -410,10 +436,10 @@ end in liquid.
   teleport's data there, since a Studio test gives reserved servers no id (ume's place loader reads it only in
   Studio); `"Match"` tests the match map alone. On the Studio map the lobby hands each match to `I.Match.Host`, and
   the `InMatch` Player attribute says which half a player is in: every screen, camera and hint that belongs to one
-  half follows it instead of assuming its map. Studio saves nothing, so a playtest skips the tutorial match and opens
-  on the lobby; the Workspace attribute `StudioTutorial` (true) plays it. A custom lobby picks its bots (Off to
-  Nightmare) and its owner may start it alone with bots, which is how one tester plays it in Studio; without bots it needs
-  2 or more players.
+  half follows it instead of assuming its map. Studio saves nothing, so a playtest skips the whole tutorial (its match,
+  the crate and the loadout steps) and opens on the lobby; the Workspace attribute `StudioTutorial` (true) plays it. A custom lobby picks its bots (Off to
+  Nightmare) and needs 2 or more players, bots or not (the owner, 2026-11-13: Start alone shows "You can't start a
+  custom lobby by yourself", a WidgetManager message; it used to start alone with bots). Playing alone is Solo vs bots.
 - **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
@@ -490,7 +516,8 @@ end in liquid.
   `PARTY_NO_BOTS_SHARE`).
 - **A party's leader picks the match** (2026-11-10): members see Join, Solo vs bots and Custom greyed out (MatchBoard's
   `LOCKED_*`), and the server refuses their joins and lobbies. A custom lobby the leader makes takes the whole party
-  in at once, and a party always shares a team.
+  in at once, and a party shares a team where it fits; a party bigger than a public row's team (three in Duos) joins
+  it all the same, if the row has a seat for each, and spills onto the next team with room (the testers, 2026-11-13).
 - **Check guis shown together for overlaps** before calling a layout done: PC sizes from 1024 × 768 to 3840 × 2160,
   tablets, and phones down to 667 × 375.
 

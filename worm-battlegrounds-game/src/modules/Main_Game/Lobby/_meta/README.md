@@ -2,8 +2,9 @@
 
 The lobby screen and where a player goes when they arrive. On join the server: sends everyone in an expired match
 server (a reserved server that booted the Lobby map) to a public lobby; sends a player who hasn't played the tutorial
-match there (in Studio, where nothing saves, it marks the match played instead, unless the Workspace attribute
-`StudioTutorial` is true; the Lobby map alone can't start one either); and offers
+match there (in Studio, where nothing saves, it marks the whole tutorial done instead, `I.Tutorial.Skip`, unless the
+Workspace attribute `StudioTutorial` is true; with it true, the Lobby map alone, which can't start the match, marks
+only the match played, so the crate and loadout steps still play); and offers
 a player who dropped out of a running match to go back. Behind the lobby's panels the camera looks at a stage, as
 Fortnite's lobby does: the player's snail stands on the front pod in their equipped skin, and the rest of their party
 in this server stand on the pods around it, each in their own skin (the `EquippedSkin` Player attribute Cosmetics
@@ -66,8 +67,8 @@ shop over Loadout), from WidgetManager's `WidgetManager_Opened` and `WidgetManag
 | `STAGE_PREFAB`, `PODS_FOLDER`, `POD_PREFIX`, `CAMERA_MARKER`, `SNAIL_MARKER` | `"PREFAB \| Stage"`, `"Pods"`, `"Pod_"`, `"Camera"`, `"Snail"` | The stage's prefab in Lobby's assets, its pods (`Pod_1` the player's), and the markers the camera and each snail stand on |
 | `STAGE_FOV` | `50` | The stage camera's field of view (the `FOV` buff's base) |
 | `TELEPORT_GUI` | `"TeleportGui"` | The teleport screen |
-| `TUTORIAL_MAP`, `TUTORIAL_DIFFICULTY` | `"PicnicPlains"`, `"Tutorial"` | The tutorial match |
-| `STUDIO_TUTORIAL_ATTRIBUTE` | `"StudioTutorial"` | The Workspace attribute that plays the tutorial match in Studio (set it to true) |
+| `TUTORIAL_MAP`, `TUTORIAL_DIFFICULTY` | `"TutorialMeadow"`, `"Tutorial"` | The tutorial match: Training Meadow, against the tutorial bot |
+| `STUDIO_TUTORIAL_ATTRIBUTE` | `"StudioTutorial"` | The Workspace attribute that plays the tutorial in Studio (set it to true); without it Studio skips all of it |
 
 ## In the place
 

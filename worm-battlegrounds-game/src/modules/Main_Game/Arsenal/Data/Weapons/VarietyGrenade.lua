@@ -10,7 +10,7 @@ local _data = {
 
 	Kind = "Bouncer",
 	Aim = "Arc",
-	Wind = false,
+	Wind = true,
 
 	--[[ Damage ]]
 
@@ -22,18 +22,18 @@ local _data = {
 	--[[ Limits ]]
 
 	Uses = 1,
-	Cooldown = 0,
+	Cooldown = 2,
 
 	--[[ Launch ]]
 
-	MinSpeed = 15,
-	MaxSpeed = 106,
+	MinSpeed = 20,
+	MaxSpeed = 180,
 
 	--[[ Extras ]]
 
 	Elasticity = 0.3,
 	BurstOnContact = true,
-	Snails = { Count = 4, Hits = 8, Damage = 5, Radius = 2 },
+	Bomblets = { Count = 4, DamageMax = 20, DamageEdge = 8, Radius = 3.5, Mini = 0.5 },
 }
 
 return _data

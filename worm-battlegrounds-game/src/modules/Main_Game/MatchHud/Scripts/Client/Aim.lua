@@ -50,6 +50,10 @@ local stepConnection: RBXScriptConnection?
 -- The item the player last fired, so a click while it rolls blows up a black hole grenade
 local firedItem: string? = nil
 
+-- The angle of the shot just sent, while the server hasn't moved the match on: no aim shows, nothing fires again
+local firedAngle: number? = nil
+local firedAt: number = 0
+
 --[[ Others' Aim ]]
 
 -- The snail whose aim this player watches (the active one, while its aim keeps arriving), and the aim drawn
@@ -253,8 +257,8 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 		return
 	end
 
-	-- Check if the player may shoot now
-	if aiming or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" then
+	-- Check if the player may shoot now, with a weapon that has uses left and isn't cooling down
+	if aiming or firedAngle or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" or not LoadoutBar.IsReady(LoadoutBar.GetSelected()) then
 		return
 	end
 
@@ -341,8 +345,8 @@ function Module._onFireBegan(input: InputObject)
 		return
 	end
 
-	-- Check if the player may shoot now
-	if aiming or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" then
+	-- Check if the player may shoot now, with a weapon that has uses left and isn't cooling down
+	if aiming or firedAngle or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" or not LoadoutBar.IsReady(LoadoutBar.GetSelected()) then
 		return
 	end
 
@@ -391,10 +395,14 @@ end
 function Module._step()
 	--[[ Checks ]]
 
-	-- Hide the aim between shots and for weapons fired at the feet
+	-- Hide the aim between shots, while a shot sent waits for the server, and for weapons fired at the feet
 	local itemId: string = LoadoutBar.GetSelected()
 	local mine: Model? = I.Snails.GetMine()
-	if I.Match.GetPhase() ~= "Turn" or not mine or I.G_Arsenal.Get(itemId).Aim == "Feet" then
+	-- A shot the server never took (refused) frees the aim again after FIRE_ANSWER_SECONDS
+	if I.Match.GetPhase() ~= "Turn" or os.clock() - firedAt > _settings.FIRE_ANSWER_SECONDS then
+		firedAngle = nil
+	end
+	if firedAngle or I.Match.GetPhase() ~= "Turn" or not mine or I.G_Arsenal.Get(itemId).Aim == "Feet" then
 		Module._cancel()
 		Module._hideLook()
 		elems["Power"].Visible = false
@@ -629,12 +637,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Hide Look
 
 --[[
-	Hides the crosshair and the power circles, and hands the held weapon back to the snail's replicated aim.
+	Hides the crosshair and the power circles, and hands the held weapon back to the snail's replicated aim (or keeps it
+	on a shot just sent).
 ]]
 function Module._hideLook()
 	--[[ Hiding ]]
 
-	I.Combat.SetAim(nil)
+	I.Combat.SetAim(firedAngle)
 
 	elems["Crosshair"].Visible = false
 	for _index: number, dot: Frame in ipairs(powerDots) do
@@ -645,8 +654,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Fire
 
 --[[
-	Sends the shot (Combat_Fire) with the angle, the power and a homing missile's target, ticks a phone or pad, then
-	clears the aim.
+	Sends the shot (Combat_Fire) with the angle, the power and a homing missile's target, ticks a phone or pad, plays
+	the weapon's sound at once (the server plays it for everyone else), then clears the aim, the held weapon staying on
+	the shot's angle until the shot is away, so nothing swings while the server answers.
 ]]
 function Module._fire()
 	--[[ Local Variables ]]
@@ -665,11 +675,27 @@ function Module._fire()
 		shotPower = 1
 	end
 
+	-- A homing missile fired with no target picked (the pad's RT, FIRE on touch, a lock-on) homes on where it was aimed
+	if aim == "Target" and not target and mine and mine.PrimaryPart then
+		target = if pointer then Module._getPlanePoint(pointer) else mine.PrimaryPart.Position + Vector3.new(math.cos(shotAngle), math.sin(shotAngle), 0) * _settings.HOMING_AIM_REACH
+	end
+
 	--[[ Sending ]]
 
 	I.Network.Fire("Combat_Fire", itemId, shotAngle, shotPower, target)
 	I.Haptic.PlayOnce("Combat_Fire")
 	firedItem = itemId
+	if mine and mine.PrimaryPart then
+		I.Sound.Play({
+			Name = `Fire_{itemId}`,
+			Location = mine.PrimaryPart.Position,
+			SoundGroup = "SFX",
+			RollOffMin = I.Settings["Combat"].SOUND_ROLLOFF_MIN,
+			RollOffMax = I.Settings["Combat"].SOUND_ROLLOFF_MAX,
+			PitchMin = 0.95,
+			PitchMax = 1.05,
+		})
+	end
 
 	-- Shooting ends an emote on this screen at once, before the server's word reaches every screen
 	if mine and mine:FindFirstChild("Skin") then
@@ -678,6 +704,8 @@ function Module._fire()
 
 	--[[ Clearing ]]
 
+	firedAngle = shotAngle
+	firedAt = os.clock()
 	Module._cancel()
 	Module._hideLook()
 	target = nil

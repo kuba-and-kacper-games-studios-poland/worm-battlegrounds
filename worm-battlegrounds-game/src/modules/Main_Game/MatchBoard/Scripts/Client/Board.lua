@@ -190,8 +190,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the board: Solo vs bots (Play with party in a party), each public row's mode, map, players and Join (Join
-	teams for team modes), or the waiting room of the row the player is in, with everyone in it and the votes. The setup
+	Draws the board: Solo vs bots (Play with party in a party), each public row's mode, map, players and Join, or the
+	waiting room of the row the player is in, with everyone in it and the votes. The setup
 	panel shows in the board's place, which slides away for it. A party member's Join, Play and Custom are greyed out (their leader picks), but
 	Custom opens their leader's lobby once they're in it.
 ]]
@@ -213,7 +213,7 @@ function Module._refresh()
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
 		line:FindFirstChild("S_Map", true).Text = if mapRow then mapRow.Name else ""
 		line:FindFirstChild("S_Players", true).Text = `{#players}/{config:GetAttribute("Size")} players`
-		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if member then "Host picks" elseif config:GetAttribute("Mode") == "Deathmatch" then "Join" else "Join teams"
+		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if member then "Host picks" else "Join"
 		Module._setLocked(line:FindFirstChild("S_Join"), member)
 
 		-- shortcut: a map with no Thumbnail yet keeps the design's picture; give each map its picture when drawn

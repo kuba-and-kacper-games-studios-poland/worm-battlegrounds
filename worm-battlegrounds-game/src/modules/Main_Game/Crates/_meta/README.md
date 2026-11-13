@@ -76,7 +76,7 @@ Owned items are Inventory items. The widget reads three Replicator folders other
 | --- | --- | --- |
 | Replicator `Shop` | `VipCrateReady` | Makes the Skin crate's x1 free (FREE, paid with `VipDaily`) and the badge FREE |
 | Replicator `Tutorial` | `CrateReady` | Shows the tutorial crate's tab alone, and the badge FREE |
-| Replicator `Policy` | `ArePaidRandomItemsRestricted` | Hides the diamonds chip (and the Premium crate's tab) while not `false` |
+| Replicator `Policy` | `ArePaidRandomItemsRestricted` | Hides the diamonds chip while not `false` |
 
 A crate row: `Name`, `TabName` (its tab's text), `LayoutOrder` (its tab's place), `Hidden` (no tab unless
 it's the waiting tutorial crate; opens only one at a time), `Prices` (`{ [currency]: { One, Three, Ten } }`),
@@ -89,8 +89,8 @@ the tutorial crate uses `Crate_Starter`). The models are `art/crates`' (its READ
 
 | Crate | Prices (1, 3, 10) | Odds | Look |
 | --- | --- | --- | --- |
-| `Weapon` | 100, 300, 900 coins | Uzi, Golf Club, Dynamite, Spartan Spear 14.75 % each; Cluster Bomb, Spider Bomb, Minigun 10 %; Homing Missile, One Punch 5 %; Variety Grenade, Black Hole Grenade 0.5 % | Amber glow, embers |
-| `Premium` | 250, 750, 2,250 diamonds | Cluster, Spider, Minigun 26 % each; Homing, One Punch 10 %; Variety, Black Hole 1 % | Cyan glow, gold accent, glints, premium |
+| `Weapon` | 100, 300, 900 coins or 250, 750, 2,250 diamonds | Coins: Uzi, Golf Club, Dynamite, Spartan Spear 14.75 % each; Cluster Bomb, Spider Bomb, Minigun 10 %; Homing Missile, One Punch 5 %; Variety Grenade, Black Hole Grenade 0.5 %. Diamonds: Cluster, Spider, Minigun 26 % each; Homing, One Punch 10 %; Variety, Black Hole 1 % | Amber glow, embers |
+| `Premium` | 250, 750, 2,250 diamonds | The Weapon crate's diamonds since 2026-11-13 (the testers: one crate, coins or diamonds). Hidden, kept so its id stays known | Cyan glow, gold accent, glints, premium |
 | `Utility` | 100, 300, 900 coins or 200, 600, 1,800 diamonds | Coins: Parachute, Bandage 27.5 %; Jetpack, Speed 15 %; Medkit 10 %; Low Gravity 5 %. Diamonds: 15, 15, 20, 20, 20, 10 | Mint glow, bubbles |
 | `Skin` | 100, 300, 900 coins or 50, 150, 450 diamonds | Soldier, Pirate, Cowboy 20 % each; Ninja, Knight, Clown 10 %; Devil 7 %; Robot 2 %; Skeleton 1 % | Pink glow, sparkles |
 | `Tutorial` | 100 coins (one only) | Fixed: Grenade and Shotgun. Hidden | Green glow, sparkles |

@@ -16,7 +16,7 @@ local Blast = require(script.Parent.Parent:FindFirstChild("Blast")) --- @type Co
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
--- The participants who asked to blow up their rolling grenade
+-- The participants who asked to open their flying black hole grenade
 local detonations = {} --- @type { [string]: boolean }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -40,48 +40,85 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	The black hole grenade: released at the snail's feet, it rolls the way the snail faces at RollSpeed, hopping over
-	bumps: its owner blows it up (Detonate), or it bursts as it rolls into water or lava, or after MaxRollTime.
+	The black hole grenade (the testers, 2026-11-13): thrown like a grenade, it opens on the first thing it touches, or
+	wherever it is when its owner presses again (Detonate), even in the air. Open, it holds still for HoleTime, pulling
+	every snail within PullRadius toward it (the shooter's teammates aside) while its trail streams on every screen,
+	then bursts.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
 	--[[ Local Variables ]]
 
 	local row = shot.Row --- @type Arsenal_WeaponData
-	local rootRadius: number = I.Settings["Snails"].ROOT_SIZE / 2
-	local feet: Vector3 = shot.Shooter.PrimaryPart.Position + Vector3.new(shot.Facing * (rootRadius + 0.8), -rootRadius * 0.4, 0)
+	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(shot.ItemId, shot.Angle, shot.Power)
 	local options = Projectiles.GetOptions(shot) --- @type Combat_ShotOptions
-	options.Bounce = 0
-	options.Drive = shot.Facing * (row.RollSpeed or 10)
-	options.HopSpeed = _settings.ROLL_HOP_SPEED
-	local body = Projectiles.Launch("Roller", shot.ItemId, feet, Vector3.zero, options) --- @type Combat_Body
+	options.Wind = I.G_Combat.GetWindAcceleration(shot.ItemId, I.Match.GetWind())
+	options.Tumble = true
+	local body = Projectiles.Launch("Roller", shot.ItemId, shot.Origin, velocity, options) --- @type Combat_Body
 	detonations[shot.ParticipantId] = nil
 
-	--[[ Rolling ]]
+	--[[ Flying ]]
 
-	-- The simulation drives it along the ground and hops it over bumps in its way
 	for elapsed: number, _hit: RaycastResult? in Projectiles.Fly(body) do
 		if Projectiles.IsGone(body, elapsed) then
 			Projectiles.Land(body)
 			return
-		elseif detonations[shot.ParticipantId] or body.Sunk or elapsed >= (row.MaxRollTime or 8) then
+		elseif body.Stopped or detonations[shot.ParticipantId] then
 			break
 		end
+	end
+	detonations[shot.ParticipantId] = nil
+
+	--[[ Opening ]]
+
+	-- It holds still where it opened, on every screen too
+	body.Stopped = true
+	body.Velocity = Vector3.zero
+	local center: Vector3 = body.Position
+	Module._pull(shot, center)
+
+	local closesAt: number = os.clock() + (row.HoleTime or 2.5)
+	while os.clock() < closesAt do
+		Projectiles.SendState(body)
+		task.wait(_settings.STATE_INTERVAL)
 	end
 
 	--[[ Exploding ]]
 
-	detonations[shot.ParticipantId] = nil
-	local center: Vector3 = body.Position
 	Projectiles.Land(body)
 	shot.Damage += Blast.Explode(center, row.BlastRadius, shot.ItemId, shot.ParticipantId, shot.Shiny, row.DamageMax, row.DamageEdge, row.Knockback)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Pull
+
+--[[
+	Throws every snail within the row's PullRadius of an open black hole toward it, a little up, harder the closer it
+	is (BLACK_HOLE_PULL_SPEED at the middle, half that at the edge), the shooter's teammates aside.
+]]
+--- @param shot Combat_Shot
+function Module._pull(shot, center: Vector3)
+	--[[ Local Variables ]]
+
+	local radius: number = shot.Row.PullRadius or shot.Row.BlastRadius * 1.5
+
+	--[[ Pulling ]]
+
+	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
+		local offset: Vector3 = center - model.PrimaryPart.Position
+		if offset.Magnitude > radius or offset.Magnitude < 0.5 or Blast.IsTeammate(model.Name, shot.ParticipantId) then
+			continue
+		end
+		local speed: number = _settings.BLACK_HOLE_PULL_SPEED * (1 - 0.5 * offset.Magnitude / radius)
+		local direction: Vector3 = (offset.Unit + Vector3.yAxis * _settings.UPWARD_BIAS * 0.5).Unit
+		I.Snails.Knockback(model.Name, direction * speed * model.PrimaryPart:GetMass(), shot.ParticipantId, shot.ItemId)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Detonate
 
 --[[
 	**SERVER** |
-	Blows up a participant's rolling black hole grenade.
+	Opens a participant's flying black hole grenade where it is.
 ]]
 function Module.Detonate(participantId: string)
 	detonations[participantId] = true

@@ -51,6 +51,7 @@ local _combat_Shot = {}
 --- # Drawing #
 ---
 --- @field Tumble boolean?
+--- @field DrawScale number?
 ---
 --- # Homing #
 ---

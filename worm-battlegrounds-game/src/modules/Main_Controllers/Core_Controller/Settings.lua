@@ -3,13 +3,12 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Core Guis
 
-	-- Core guis turned back on after loading; every other core gui stays hidden.
+	-- Core guis turned back on after loading; every other core gui (the Tab player list too) stays hidden.
 	--- @type { Enum.CoreGuiType }
 	ENABLED_CORE_GUIS = {
 		Enum.CoreGuiType.Captures,
 		Enum.CoreGuiType.Chat,
 		Enum.CoreGuiType.EmotesMenu,
-		Enum.CoreGuiType.PlayerList,
 	},
 
 	-- Seconds after loading before those core guis are turned on.

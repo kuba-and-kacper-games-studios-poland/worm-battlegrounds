@@ -32,7 +32,7 @@ network.
 | `Client.lua` | The client entry: finds the world, Arena, Match, Lobby, Combat and Snails folders this map has, and starts the handlers |
 | `Settings.lua` | `Atmosphere_Settings`: the moods (`PROFILES`), sudden death, ambient, reactions and effects numbers |
 | `Scripts/Client/Mood.lua` | Picks the mood for where the player is, sets its lighting preset, music, particles, wind and the sudden-death layer; a map's particles and wind wait for its `Bounds` marker when it arrives after the markers |
-| `Scripts/Client/Wind.lua` | The wind's streaks: one `WIND_EFFECT` copy kept over the camera's view each frame (after MatchCamera, at the `Camera` render priority + 2), turned, sped up and thickened by the wind, breathing in gusts; and its sound: the map's `WindSound` loop eased to the wind's volume, and a `WIND_GUST_SOUND` whoosh at strong gusts' peaks |
+| `Scripts/Client/Wind.lua` | The wind's streaks: one `WIND_EFFECT` copy kept over the camera's view each frame (after MatchCamera, at the `Camera` render priority + 2), turned, sped up and thickened by the wind, breathing in gusts; and its sound: the map's `WindSound` loop eased to the wind's volume, and a `WIND_GUST_SOUND` whoosh at strong gusts' peaks; a change of wind bursts streaks across the view with the whoosh |
 | `Scripts/Client/Ambient.lua` | The ambient areas (a mood's `Ambient_` prefabs streaming over the map's bounds, or in front of the lobby stage camera), their wind, the liquid surface effects and ceiling grit on spots in view, and the lobby stage's drifting clouds |
 | `Scripts/Client/Reactions.lua` | The arena's reactions: prop bursts on `Arena_Carve`, splashes where watched things drop through a liquid's surface, splashes and landing dust for `Arena_Fall` groups, steam and the hiss from new obsidian |
 | `Scripts/Client/Liquids.lua` | Reads the arena's liquid rectangles (their `Arena_Liquid` kind) at most every `LIQUID_REFRESH`: surfaces crossed going down, random open surface spots, the liquid at a point, and whether a surface is the sea's |
@@ -49,7 +49,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 
 | Key | Default | What |
 | --- | --- | --- |
-| `PROFILES` | `Lobby`, `PicnicPlains`, `Desert`, `RockslideRidge`, `VolcanoIsle` | Each mood, by MapId (below) |
+| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow` (Picnic Plains' row), `Desert`, `RockslideRidge`, `VolcanoIsle` | Each mood, by MapId (below) |
 | `LOBBY_PROFILE` | `"Lobby"` | The mood outside matches |
 | `LOBBY_MAP`, `MATCH_MAP` | `"Lobby"`, `"Match"` | The place loader's maps with no matches and with only a match; the Studio map has both and follows `InMatch` |
 | `MOOD_TWEENINFO` | 2 s Sine InOut | How the lighting moves from one mood to the next |
@@ -76,6 +76,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 | `WIND_SOUND_TWEENINFO` | 2 s Sine InOut | How the loop eases to a new wind, and fades out when the map goes |
 | `WIND_GUST_SOUND`, `WIND_GUST_SOUND_FROM` | `"Wind_Gust"`, `0.4` | The whoosh at a gust's peak, in wind of 40 % of the strongest or more, as likely as the wind's share |
 | `WIND_GUST_SOUND_VOLUME` | `{ 0.15, 0.5 }` | The whoosh's volume, from just past `WIND_GUST_SOUND_FROM` to the strongest wind |
+| `WIND_CHANGE_BURST`, `WIND_CHANGE_BURST_MIN` | `40`, `8` | Streaks each emitter bursts when the wind changes (once every snail played on it), at the strongest wind and at least |
 | `PROP_EFFECTS` | `Leaves`, `Needles`, `Bush`, `Cactus`, `Twig` → `"Leaves"`; `Rock` → `"Dust"` | The burst a blast plays from each kind of prop part, by part name |
 | `PROP_PARTS_FULL` | `6` | Parts a blast must reach for a prop's full burst; fewer play a smaller one (down to half) |
 | `PROP_WIND_SHARE` | `0.5` | The share of the wind's pull that bends a burst |

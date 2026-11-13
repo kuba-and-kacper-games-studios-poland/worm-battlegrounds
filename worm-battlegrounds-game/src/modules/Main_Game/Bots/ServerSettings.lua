@@ -88,9 +88,12 @@ local _settings = {
 	AIM_TIME = 1.2,
 	AIM_STEP = 0.1,
 
-	-- How much of each hit a difficulty's bot takes: the tutorial bot falls to two Bazooka hits (35 x 3 = 105 of 200)
+	-- The health a difficulty's bot starts with, where it isn't Snails' MAX_HEALTH: any hit knocks the tutorial bot out
 	--- @type { [string]: number }
-	DAMAGE_TAKEN = { Tutorial = 3 },
+	HEALTH = { Tutorial = 10 },
+
+	-- How far the tutorial bot charges its Bazooka before it gives up without firing
+	TUTORIAL_FUMBLE_POWER = 0.3,
 
 	--%%%%%%%%%%%%%%%%%%%% Planning
 

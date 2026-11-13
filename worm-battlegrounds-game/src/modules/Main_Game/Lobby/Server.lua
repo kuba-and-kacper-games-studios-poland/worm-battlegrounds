@@ -106,10 +106,11 @@ function Module._onPlayerAdded(player: Player)
 
 	--[[ Tutorial ]]
 
-	-- Studio skips the tutorial match unless asked to; a match that can't start goes on to the lobby's part
-	local skipMatch: boolean = I.S.RunService:IsStudio() and I.S.Workspace:GetAttribute(_settings.STUDIO_TUTORIAL_ATTRIBUTE) ~= true
-	if not I.Tutorial.IsMatchDone(player) then
-		if not skipMatch and I.MatchBoard.Launch({ player }, "Solo", "Deathmatch", 2, _settings.TUTORIAL_MAP, _settings.TUTORIAL_DIFFICULTY, true) then
+	-- Studio skips the whole tutorial unless asked to; there a tutorial match that can't start goes on to the lobby's part
+	if I.S.RunService:IsStudio() and I.S.Workspace:GetAttribute(_settings.STUDIO_TUTORIAL_ATTRIBUTE) ~= true then
+		I.Tutorial.Skip(player)
+	elseif not I.Tutorial.IsMatchDone(player) then
+		if I.MatchBoard.Launch({ player }, "Solo", "Deathmatch", 2, _settings.TUTORIAL_MAP, _settings.TUTORIAL_DIFFICULTY, true) then
 			return
 		end
 		if I.S.RunService:IsStudio() then

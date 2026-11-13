@@ -16,6 +16,18 @@ local _settings = {
 	-- How high over its land a snail that wasn't placed (a bot, a player who didn't place) starts its parachute, in studs
 	DROP_HEIGHT = 20,
 
+	--%%%%%%%%%%%%%%%%%%%% Tutorial
+
+	--[[
+		The tutorial's drop: the player and the bot start on land about TUTORIAL_GAP studs apart near the map's middle
+		(chosen from TUTORIAL_SPOT_COUNT land spots), the player has TUTORIAL_DROP_SECONDS to place theirs, and only a
+		pick within TUTORIAL_PICK_RADIUS studs of the shown spot counts
+	]]
+	TUTORIAL_GAP = 30,
+	TUTORIAL_SPOT_COUNT = 16,
+	TUTORIAL_DROP_SECONDS = 40,
+	TUTORIAL_PICK_RADIUS = 6,
+
 	--%%%%%%%%%%%%%%%%%%%% Turns
 
 	-- How long a turn lasts, in seconds
@@ -43,7 +55,7 @@ local _settings = {
 	UNDERWATER_DAMAGE = 5,
 	UNDERWATER_HEAD_HEIGHT = 1.6,
 
-	-- The wind each turn is a whole number from -WIND_MAX to WIND_MAX
+	-- The wind is a whole number from -WIND_MAX to WIND_MAX, rolled again once every snail in play has played on it
 	WIND_MAX = 10,
 
 	-- Sudden death starts at SUDDEN_DEATH_ROUND (after 10 rounds): the liquid rises SUDDEN_DEATH_RISE half-stud rows every turn

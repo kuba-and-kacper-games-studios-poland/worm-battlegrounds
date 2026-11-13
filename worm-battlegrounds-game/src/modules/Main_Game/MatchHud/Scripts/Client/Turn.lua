@@ -29,6 +29,10 @@ local shownTimer: string?
 local bannerColor: Color3
 local timerColor: Color3
 local waitColor: Color3
+local windColor: Color3
+
+-- The wind shown last, so a change flashes
+local shownWind: number? = nil
 
 --[[ Feel ]]
 
@@ -86,6 +90,7 @@ function Module.Start(gui: ScreenGui)
 	bannerColor = elems["Banner"].TextColor3
 	timerColor = elems["Timer"].TextColor3
 	waitColor = elems["Wait"].TextColor3
+	windColor = elems["Wind"].TextColor3
 
 	--[[ Connections ]]
 
@@ -125,7 +130,7 @@ function Module._refresh()
 	elems["Banner"].Text = if active then `{active:GetAttribute("DisplayName")}'s turn` else "Your turn!"
 	elems["Banner"].TextColor3 = if active then active:GetAttribute("Color") else bannerColor
 	elems["Wait"].Visible = turnsLeft ~= nil
-	elems["Wait"].Text = if turnsLeft == 1 then "You're next!" elseif turnsLeft then `Your turn in {turnsLeft} turns` else ""
+	elems["Wait"].Text = if turnsLeft == 1 then "You're next!" elseif turnsLeft then `You play in {turnsLeft} turns` else ""
 
 	--[[ Visibility ]]
 
@@ -220,7 +225,7 @@ end
 
 --[[
 	Points the wind's arrow the way the wind blows and writes its strength with the side it blows to ("+3" right,
-	"-3" left); no arrow in still air.
+	"-3" left); no arrow in still air. A change of wind flashes the strength in NEXT_FLASH_COLOR.
 ]]
 function Module._refreshWind()
 	--[[ Local Variables ]]
@@ -232,6 +237,17 @@ function Module._refreshWind()
 	elems["WindArrow"].Visible = wind ~= 0
 	elems["WindArrow"].Text = if wind < 0 then "&lt;" else "&gt;"
 	elems["Wind"].Text = if wind == 0 then "0" else string.format("%+d", wind)
+
+	--[[ Flashing ]]
+
+	if shownWind ~= nil and wind ~= shownWind then
+		elems["Wind"].TextColor3 = _settings.NEXT_FLASH_COLOR
+
+		local Flash_TweenGoal = { TextColor3 = windColor }
+		local Flash_Tween: Tween = I.S.TweenService:Create(elems["Wind"], _settings.NEXT_FLASH_TWEENINFO, Flash_TweenGoal)
+		Flash_Tween:Play()
+	end
+	shownWind = wind
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Turn Started
@@ -259,7 +275,7 @@ function Module._onTurnStarted(activeId: string)
 		Teams.SetAvatar(elems["CalloutAvatar"], entry)
 	end
 	elems["CalloutTitle"].Text = if myTurn then "Your turn!" elseif active then `{active:GetAttribute("DisplayName")}'s turn` else ""
-	elems["CalloutSub"].Text = if myTurn then "Aim and fire!" elseif turnsLeft == 1 then "You're next!" elseif turnsLeft then `Your turn in {turnsLeft} turns` else ""
+	elems["CalloutSub"].Text = if myTurn then "Aim and fire!" elseif turnsLeft == 1 then "You're next!" elseif turnsLeft then `You play in {turnsLeft} turns` else ""
 	elems["CalloutTitleGradient"].Color = ColorSequence.new(gradient[1], gradient[2])
 	elems["CalloutLineTop"].BackgroundColor3 = accent
 	elems["CalloutLineBottom"].BackgroundColor3 = accent

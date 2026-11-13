@@ -41,7 +41,7 @@ function Module.Start(folder: Folder)
 
 	folder.ChildAdded:Connect(Module._watchSnail)
 	for _index: number, model: Instance in ipairs(folder:GetChildren()) do
-		Module._watchSnail(model)
+		task.spawn(Module._watchSnail, model)
 	end
 end
 
@@ -56,8 +56,8 @@ end
 function Module._watchSnail(model: Instance)
 	--[[ Checks ]]
 
-	-- Check if it's a snail with its skin
-	if not model:IsA("Model") or not model.PrimaryPart or not model:FindFirstChild("Skin") then
+	-- Check if it's a snail with its skin (a snail can arrive on this screen a moment before its skin)
+	if not model:IsA("Model") or not model.PrimaryPart or not model:WaitForChild("Skin", 5) then
 		return
 	end
 
@@ -98,7 +98,8 @@ function Module._play(model)
 		OutlineColor = Color3.new(1, 1, 1),
 		FillTransparency = 0,
 		OutlineTransparency = 0,
-		DepthMode = Enum.HighlightDepthMode.Occluded,
+		-- Seen through the sea it went out in, rising out of it (the testers, 2026-11-13: "ghost missing")
+		DepthMode = Enum.HighlightDepthMode.AlwaysOnTop,
 		Parent = model,
 	})
 	local connection: RBXScriptConnection

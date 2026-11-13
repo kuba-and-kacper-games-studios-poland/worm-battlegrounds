@@ -364,13 +364,18 @@ end
 
 --[[
 	Shows a damage number over a snail (the number and its shadow) that rises and fades, then goes away; a bigger hit's
-	number is bigger and warmer (POP_TIERS), and punches in.
+	number is bigger and warmer (POP_TIERS), and punches in. It stays where the snail was hit, so a blow that throws the
+	snail away never carries its number off the screen (the testers, 2026-11-13: rocket hits showed none).
 ]]
 function Module._popDamage(root: BasePart, amount: number)
 	--[[ Local Variables ]]
 
 	local pop: BillboardGui = templates:FindFirstChild("U_DamagePop", true):Clone()
 	local tier: { any } = _settings.POP_TIERS[1]
+	local pin: Attachment = Instance.new("Attachment")
+	pin.Name = "DamagePop"
+	pin.WorldPosition = root.Position
+	pin.Parent = I.S.Workspace.Terrain
 
 	--[[ Tier ]]
 
@@ -389,7 +394,7 @@ function Module._popDamage(root: BasePart, amount: number)
 
 	pop.Enabled = true
 	pop.Name = "DamagePop"
-	pop.Adornee = root
+	pop.Adornee = pin
 	pop.AlwaysOnTop = true
 	pop.StudsOffset = Vector3.yAxis * _settings.TAG_OFFSET
 	amountLabel.Text = `-{amount}`
@@ -402,7 +407,7 @@ function Module._popDamage(root: BasePart, amount: number)
 	local size: number = uiScale.Scale * tier[2]
 	pop.Size = UDim2.fromOffset(pop.Size.X.Offset * tier[2], pop.Size.Y.Offset * tier[2])
 	uiScale.Scale = if tier == _settings.POP_TIERS[1] then size else size * _settings.POP_PUNCH
-	pop.Parent = root
+	pop.Parent = pin
 
 	--[[ Tweening ]]
 
@@ -427,7 +432,7 @@ function Module._popDamage(root: BasePart, amount: number)
 	--[[ Cleaning ]]
 
 	Rise_Tween.Completed:Once(function()
-		pop:Destroy()
+		pin:Destroy()
 	end)
 end
 

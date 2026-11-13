@@ -146,6 +146,15 @@ local _settings = {
 	-- Where the jetpack's jet (the Trail_Jet effect) comes out, from the snail's ball: under the worn jetpack (GEAR)
 	JET_TRAIL_OFFSET = Vector3.new(0, -0.6, 2.4),
 
+	--[[
+		The jet also streams JET_EXHAUST_VFX's Exhaust emitters (the rocket's thruster and smoke) down from there, so it
+		shows while the jetpack hovers still; it's on while the snail wearing it is in the air (nothing within
+		JET_GROUND_GAP studs under its ball) and not dropping faster than JET_FALL_SPEED studs a second
+	]]
+	JET_EXHAUST_VFX = "Trail_Smoke",
+	JET_GROUND_GAP = 0.6,
+	JET_FALL_SPEED = 6,
+
 	-- The healing crosses are drawn this many times their made size, so they read from the match camera's distance
 	HEAL_VFX_SCALE = 2,
 

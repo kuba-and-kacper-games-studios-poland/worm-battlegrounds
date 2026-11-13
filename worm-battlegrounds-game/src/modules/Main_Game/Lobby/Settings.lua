@@ -38,10 +38,10 @@ local _settings = {
 	TELEPORT_GUI = "TeleportGui",
 
 	-- The match a new player is sent to before they see the lobby
-	TUTORIAL_MAP = "PicnicPlains",
+	TUTORIAL_MAP = "TutorialMeadow",
 	TUTORIAL_DIFFICULTY = "Tutorial",
 
-	-- Studio playtests skip the tutorial match (nothing saves there) unless Workspace has this attribute set to true
+	-- Studio playtests skip the whole tutorial (nothing saves there) unless Workspace has this attribute set to true
 	STUDIO_TUTORIAL_ATTRIBUTE = "StudioTutorial",
 }
 

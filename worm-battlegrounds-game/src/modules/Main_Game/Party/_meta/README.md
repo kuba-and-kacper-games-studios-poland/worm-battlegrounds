@@ -4,7 +4,8 @@ Lobby parties of up to `MAX_PARTY` players, who join match rows and solo matches
 in the same server who isn't in a party (only the leader invites once there is one); the invite stays open
 `INVITE_SECONDS`. A **+** card in the party column opens the `PartyInvite` box: everyone here who isn't in a party, each with
 **Invite** (it turns to **Sent**). An invited player gets the `PartyInvited` box: who asked, **Join party** or **No
-thanks** (closing it lets the invite run out). The leader can kick; when the leader leaves, the next member leads.
+thanks** (closing it lets the invite run out). Another window opening over it (the + card's invite list) doesn't drop
+it: the box comes back when that window closes, while the invite lasts (`INVITE_SECONDS`). The leader can kick; when the leader leaves, the next member leads.
 **Invite friends** in that box opens Roblox's game invite. Party state lives in two Player attributes, so every client draws the `Party` column
 (the PARTY column at the left: a card per member with their avatar, name (their badges after it, `I.PlayerBadges.Show`) and level, a crown on the leader, Kick for
 the leader, then a **+** card per free place for a player who may invite, and the red Leave button by the PARTY title

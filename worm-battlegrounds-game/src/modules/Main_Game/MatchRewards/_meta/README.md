@@ -3,7 +3,7 @@
 Pays players when a match ends: coins by kind, size and place, XP, statistics, then the Results screen. Public
 deathmatch and team matches pay by place; a solo match pays only a win, by the bot's difficulty; a party match (friends
 only) pays as a public deathmatch of its size, or `PARTY_NO_BOTS_SHARE` of that without bots; custom and tutorial
-matches pay no coins. Against farming, the last two places are paid only after `ANTI_FARM_ROUNDS` rounds or a knockout
+matches pay no coins, and custom lobbies give no XP. Against farming, the last two places are paid only after `ANTI_FARM_ROUNDS` rounds or a knockout
 by another player. The Double Coins pass doubles coins. Leavers get nothing.
 
 | | |
@@ -47,4 +47,4 @@ Writes the `MatchesPlayed`, `Wins`, `Knockouts` and `DamageDealt` statistics, an
 | `PARTY_NO_BOTS_SHARE` | `0.5` | The share of a deathmatch's coins a party match without bots pays |
 | `ANTI_FARM_ROUNDS` | `2` | Rounds the last two places must play to be paid |
 | `DOUBLE_COINS_PASS` | `"DoubleCoins"` | The pass that doubles coins |
-| `XP_PER_MATCH`, `XP_KINDS` | `100`; Public, Solo, Party, Custom | XP for a match of those kinds |
+| `XP_PER_MATCH`, `XP_KINDS` | `100`; Public, Solo, Party (not Custom) | XP for a match of those kinds; a custom lobby gives none |

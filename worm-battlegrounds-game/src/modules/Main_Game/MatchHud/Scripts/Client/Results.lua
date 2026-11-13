@@ -26,6 +26,9 @@ local matchFolder: Folder
 local tickConnection: RBXScriptConnection?
 local voted: boolean = false
 
+-- The Rematch button's own colours, put back after the tutorial greyed it (the Studio map plays on)
+local rematchColors = {} --- @type { [string]: Color3 }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -58,8 +61,17 @@ function Module.Start()
 	elems["BestShot"] = moduleGui:FindFirstChild("S_BestShot", true) --- @type TextLabel
 	elems["Rematch"] = moduleGui:FindFirstChild("S_Rematch", true) --- @type ImageButton
 	elems["RematchText"] = elems["Rematch"]:FindFirstChild("S_Text") --- @type TextLabel
+	elems["RematchMain"] = elems["Rematch"]:FindFirstChild("Main", true) --- @type ImageLabel
+	elems["RematchStroke"] = elems["Rematch"]:FindFirstChild("Stroke", true) --- @type ImageLabel
+	elems["RematchMask"] = elems["Rematch"]:FindFirstChild("Mask", true) --- @type ImageLabel
 	elems["Lobby"] = moduleGui:FindFirstChild("S_Lobby", true) --- @type ImageButton
 	prefabs["Placing"] = elems["Placings"]:FindFirstChild("PREFAB | Placing") --- @type Frame
+
+	--[[ Saving ]]
+
+	rematchColors.Main = elems["RematchMain"].ImageColor3
+	rematchColors.Stroke = elems["RematchStroke"].ImageColor3
+	rematchColors.Text = elems["RematchText"].TextColor3
 
 	--[[ Connections ]]
 
@@ -144,8 +156,12 @@ function Module._onResults(placements, stats, earned)
 
 	--[[ Visibility ]]
 
-	-- The tutorial match always goes back to the lobby
-	elems["Rematch"].Visible = matchFolder:GetAttribute("Kind") ~= "Tutorial"
+	-- The tutorial match always goes back to the lobby: its Rematch shows grey (its gold Mask hidden) and does nothing
+	local colors = if Module._isTutorial() then _settings.LOCKED_REMATCH_COLORS else rematchColors --- @type { [string]: Color3 }
+	elems["RematchMask"].Visible = not Module._isTutorial()
+	elems["RematchMain"].ImageColor3 = colors.Main
+	elems["RematchStroke"].ImageColor3 = colors.Stroke
+	elems["RematchText"].TextColor3 = colors.Text
 
 	--[[ Stats ]]
 
@@ -192,6 +208,10 @@ function Module._tick()
 
 	--[[ Applying ]]
 
+	if Module._isTutorial() then
+		elems["RematchText"].Text = "Rematch"
+		return
+	end
 	elems["RematchText"].Text = (if voted then "Voted" else "Rematch") .. `  {votes}/{playing}  |  0:{string.format("%02d", left)}`
 end
 
@@ -201,6 +221,13 @@ end
 	Votes to play the match again.
 ]]
 function Module._voteRematch()
+	--[[ Checks ]]
+
+	-- Check if the match can be played again
+	if Module._isTutorial() then
+		return
+	end
+
 	--[[ Sending ]]
 
 	voted = true
@@ -287,6 +314,16 @@ function Module._getOrdinal(place: number)
 	--[[ Returning ]]
 
 	return `{place}{suffix}`
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Tutorial
+
+--[[
+	Returns whether this is the tutorial match, which can't be played again.
+]]
+--- @return boolean
+function Module._isTutorial()
+	return matchFolder:GetAttribute("Kind") == "Tutorial"
 end
 
 return Module

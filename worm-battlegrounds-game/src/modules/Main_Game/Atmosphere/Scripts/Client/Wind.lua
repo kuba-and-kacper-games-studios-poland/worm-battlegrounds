@@ -33,6 +33,9 @@ local showing: boolean = false
 local direction: number = 1
 local strength: number = 0
 
+-- The wind last blown on this map (nil until its first), so a change gusts
+local lastWind: number? = nil
+
 --[[ Sound ]]
 
 -- The map's wind loop and its sound name, and the last gust peak that could whoosh
@@ -140,6 +143,7 @@ function Module.Show(bounds: BasePart?, color: Color3?, soundName: string?)
 	--[[ Saving ]]
 
 	showing = bounds ~= nil
+	lastWind = nil
 	if bounds then
 		frontZ = bounds.Position.Z + bounds.Size.Z / 2
 	end
@@ -177,17 +181,58 @@ end
 
 --[[
 	Blows the streaks with the match's wind: their way from its sign, how many and how fast from its strength (none in
-	still air).
+	still air). A change of wind on a map that shows gusts across the view.
 ]]
 function Module.SetWind(wind: number)
+	--[[ Local Variables ]]
+
+	local changed: boolean = showing and lastWind ~= nil and wind ~= lastWind
+
 	--[[ Saving ]]
 
 	direction = if wind < 0 then -1 else 1
 	strength = math.clamp(math.abs(wind) / I.Settings["Match"].WIND_MAX, 0, 1)
+	if showing then
+		lastWind = wind
+	end
 
 	--[[ Applying ]]
 
 	Module._blow()
+	if changed then
+		Module._gustChange()
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Gust Change
+
+--[[
+	Shows the wind changing: a burst of WIND_CHANGE_BURST streaks across the view the new way (a few in still air)
+	with the gust's whoosh.
+]]
+function Module._gustChange()
+	--[[ Checks ]]
+
+	-- Check if the streaks are built
+	if not part then
+		return
+	end
+
+	--[[ Bursting ]]
+
+	for emitter: ParticleEmitter, _rate: number in pairs(rates) do
+		emitter:Emit(math.max(math.round(_settings.WIND_CHANGE_BURST * strength), _settings.WIND_CHANGE_BURST_MIN))
+	end
+
+	--[[ Sound ]]
+
+	I.Sound.Play({
+		Name = _settings.WIND_GUST_SOUND,
+		SoundGroup = "SFX",
+		Volume = _settings.WIND_GUST_SOUND_VOLUME[2],
+		PitchMin = 0.9,
+		PitchMax = 1.1,
+	})
 end
 
 --%%%%%%%%%%%%%%%%%%%% Blow

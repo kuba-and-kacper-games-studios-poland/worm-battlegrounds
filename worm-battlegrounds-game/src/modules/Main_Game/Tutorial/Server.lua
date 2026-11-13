@@ -62,6 +62,7 @@ function Module.Init()
 		--[[ Control ]]
 
 		CompleteMatch = Module.CompleteMatch,
+		Skip = Module.Skip,
 
 		--[[ Methods ]]
 
@@ -141,6 +142,36 @@ function Module.CompleteMatch(player: Player)
 	--[[ Returning ]]
 
 	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Skip
+
+--[[
+	**SERVER** |
+	Marks the whole tutorial done without playing it (no match, no coins, no crate, no equip step), for Studio
+	playtests that leave it off.
+]]
+function Module.Skip(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Tutorial"]
+
+	--[[ Saving ]]
+
+	moduleData["MatchDone"] = true
+	moduleData["CrateOpened"] = true
+	moduleData["Done"] = true
+
+	--[[ Publishing ]]
+
+	Module._publish(player)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Match Ended

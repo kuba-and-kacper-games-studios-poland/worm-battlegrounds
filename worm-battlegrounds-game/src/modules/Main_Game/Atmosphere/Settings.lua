@@ -37,6 +37,22 @@ local _settings = {
 				{ Liquid = "Water", Effect = "Glint", Every = { 0.15, 0.4 }, Tint = false },
 			},
 		},
+
+		-- The tutorial's map: Picnic Plains' meadow mood and music
+		TutorialMeadow = {
+			Preset = "Plains",
+			Music = "Music_PicnicPlains",
+			SuddenDeathMusic = "Music_PicnicPlains_SuddenDeath",
+			WindColor = Color3.fromRGB(255, 255, 255),
+			WindSound = "Wind_OpenAir",
+			Ambient = {
+				{ Effect = "Ambient_Pollen", Bottom = 0.1, Top = 1, RateScale = 1 },
+				{ Effect = "Ambient_Leaf", Bottom = 0.3, Top = 1, RateScale = 1 },
+			},
+			Surface = {
+				{ Liquid = "Water", Effect = "Glint", Every = { 0.15, 0.4 }, Tint = false },
+			},
+		},
 		Desert = {
 			Preset = "Desert",
 			Music = "Music_Desert",
@@ -182,6 +198,13 @@ local _settings = {
 	]]
 	WIND_GUST_SOUND = "Wind_Gust",
 	WIND_GUST_SOUND_FROM = 0.4,
+
+	--[[
+		When the wind changes (once every snail played on it), each streak emitter bursts WIND_CHANGE_BURST streaks at the
+		strongest wind, fewer as it drops but at least WIND_CHANGE_BURST_MIN, and the gust whooshes at its loudest
+	]]
+	WIND_CHANGE_BURST = 40,
+	WIND_CHANGE_BURST_MIN = 8,
 
 	--- @type { number }
 	WIND_GUST_SOUND_VOLUME = { 0.15, 0.5 },

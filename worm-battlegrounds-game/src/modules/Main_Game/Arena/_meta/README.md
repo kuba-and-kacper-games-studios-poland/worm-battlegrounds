@@ -40,7 +40,7 @@ use, and the plane snails are held on, and tells others when a map is ready (`Ar
 | `Scripts/Helpers/Cutter.lua` | Shared by both sides: `Build`, the blast's stepped shape (one box per row of the `CARVE_CELL` squares whose centers are within the radius), and `Subtract`, the cut with `GeometryService:SubtractAsync` (`SplitApart`), copying name, attributes and collision group onto each piece |
 | `Scripts/Server/Carver.lua` | A carve on the server: cuts every anchored terrain part the cutter reaches, bedrock included, all at once, then parents every piece (marked `Arena_Carve`, the carve's number) before it removes any part, so clients never see a gap |
 | `Scripts/Server/Debris.lua` | Contacts between parts, the support search from each carved piece (held up by bedrock whose bottom still reaches the floor; a cut ledge keeps only its biggest piece), numbering the ledges at load, and the falls: each loose group (lowest first) is swept straight down to where it lands, then moved there by gravity every frame and left anchored, or removed below the arena; the liquid looks again where a group landed and where it fell from |
-| `Scripts/Server/Props.lua` | The map's props (`Arena_Prop`: trees, bushes, rocks): after each blast, cuts the blast's stepped shape (Cutter's `Build`) through every part of the ones it reaches (CSG), throws each group of pieces no longer joined to the prop's base, drops the ones whose ground is gone, and fades what falls |
+| `Scripts/Server/Props.lua` | The map's props (`Arena_Prop`: trees, bushes, rocks): at load each moves back along Z until its front is `PROP_BEHIND_GAP` behind the play plane (its pivot kept `PROP_GROUND_MARGIN` in from the ground's back), and one still too deep for that is flattened along Z about its pivot until it fits (`_flatten`), so snails always pass in front of trees and rocks; after each blast, cuts the blast's stepped shape (Cutter's `Build`) through every part of the ones it reaches (CSG), throws each group of pieces no longer joined to the prop's base, drops the ones whose ground is gone, and fades what falls |
 | `Scripts/Server/Liquid.lua` | The liquid grid: filling it from the markers over several frames, probing which cells terrain fills, the 8 fps step (falling, spreading, then pressure across each connected body, then on a map with both water and lava the water touching lava turning to obsidian), marking the liquid joined to the sea (`IsSea(position)`, which `GetHazard` reads), drawing the liquid as merged rectangles, the sea reaching `SEA_EDGE_WIDTH` past the map's sides |
 | `Scripts/Server/Obsidian.lua` | `Build`: the cells that turned to obsidian, merged like the liquid (each row's runs with the same run in the row below) into `Obsidian` parts in the map's `Terrain`: `OBSIDIAN_COLOR`, SmoothPlastic with `OBSIDIAN_VARIANT`, anchored, in the `Terrain` group |
 | `Scripts/Client/Carver.lua` | The hole on this screen: on `Arena_Carve` it cuts the terrain parts there itself (one carve at a time), hides each part (`LocalTransparencyModifier`) and shows its local pieces in `Predicted`; a server piece arriving from an earlier carve is cut again at once by the later ones; the local pieces go when the server removes their part, or after `PREDICT_TIMEOUT` when it never does |
@@ -101,6 +101,7 @@ end
 | `SUPPORT_SEARCH_LIMIT` | `400` | The most parts one support search walks before it counts the group as grounded |
 | `PREDICT_TIMEOUT` | `3` | How long a hole a client cut on its own waits for the server's pieces, in seconds, before it's undone |
 | `PROP_SUPPORT_DEPTH` | `1.5` | How far under a prop's base the ground may be before the prop falls |
+| `PROP_BEHIND_GAP`, `PROP_GROUND_MARGIN` | `2.5`, `0.5` | At load a prop moves back until its front is this far behind the plane (half a snail's length, so a snail facing the camera clears it too), its pivot kept this far in from the ground's back; a prop still too deep is flattened along Z until its front is there |
 | `PROP_BASE_HEIGHT` | `0.6` | After a cut, the pieces still joined (boxes within `CONTACT_MARGIN`) to a part starting at most this far above the prop's base stand; the rest is thrown |
 | `PROP_KNOCK_SPEED`, `PROP_KNOCK_SPIN` | `35`, `6` | How fast a blast throws what it cuts off a prop, or a one-part prop it reaches (away from the blast and up), and the most it spins it (radians per second) |
 | `PROP_FADE_DELAY`, `PROP_FADE_TWEENINFO` | `3`, 1 s Quad In | How long a fallen prop lies, then its fade before it's removed |
@@ -112,7 +113,7 @@ end
 | `LIQUID_PROBE_SCALE` | `0.5` | A cell is solid when terrain reaches into a box this share of its size around its center |
 | `LIQUID_BUILD_ROWS_PER_FRAME` | `8` | How many grid rows a map's load probes before it gives the server a frame |
 | `SEA_SLACK` | `1` | Liquid knocks snails out only in the sea (the liquid whose marker starts at the bounds' bottom, raised by sudden death), up to this many studs above its level as it ripples, and in liquid joined to it; a pond higher up on its own (Desert's oasis) is safe |
-| `SEA_EDGE_WIDTH` | `50` | How far the sea is drawn past the map's left and right sides, up to its level, so the camera never shows where it ends: the sea's blocks at the sides reach out, and a block outside tops it up where land stands at a side. Only drawn: the grid stops at the sides, and out there is out of bounds |
+| `SEA_EDGE_WIDTH` | `120` (from 50 on 2026-11-13, as the match camera now goes half a view past the sides) | How far the sea is drawn past the map's left and right sides, up to its level, so the camera never shows where it ends: the sea's blocks at the sides reach out, and a block outside tops it up where land stands at a side. Only drawn: the grid stops at the sides, and out there is out of bounds |
 | `SEA_MARK_STEPS` | `8` | Every this many liquid steps (and after a build and each `RaiseLiquid`) the liquid joined to the sea is marked again |
 | `OBSIDIAN_COLOR`, `OBSIDIAN_VARIANT` | `(38, 28, 52)`, `"2022 Stud"` | The obsidian parts lava makes of the water it touches: their colour and MaterialService variant (on SmoothPlastic, like the terrain) |
 | `LAND_SPOT_STEP`, `LAND_SPOT_GAP` | `2`, `16` | `GetLandSpots` looks for ground every 2 studs along the arena, on every storey, and keeps spots 16 studs apart while there's room |
@@ -143,7 +144,7 @@ bounds' depth on Z. The liquid is drawn as deep as the map's ground, measured at
 blocks' backs to the middle of their fronts (Loader's `GetGroundDepth`, the bounds' depth on a map without bedrock),
 so it never sticks out in front of the ground or behind it (Z −5 to 5 on Picnic Plains and Desert, −6.5 to 2 on
 Rockslide Ridge). The templates stand side by side along +X, one per slot 400 studs apart (MapLab's slots, so none
-overlaps another in Studio): `PicnicPlains` at X 0, `Desert` at 400, `RockslideRidge` at 800, `VolcanoIsle` at 1200, each centred on its
+overlaps another in Studio): `PicnicPlains` at X 0, `Desert` at 400, `RockslideRidge` at 800, `VolcanoIsle` at 1200, `TutorialMeadow` at 1600, each centred on its
 slot's X with its Bounds at Z = 0. A match plays at X 0 whatever the slot: the Loader moves each template so its
 Bounds stand at X 0 when it caches it, by the spawn, since until a player's snail drops streaming sends them only
 what's within `StreamingTargetRadius` (1024) of their parked avatar (Volcano Isle, at 1200, didn't show before). A template whose Bounds aren't on
@@ -180,6 +181,12 @@ named `Ash`, `Basalt`, `DarkBasalt`, `Scoria` (lining the passages), `Ember` (ro
 `Sea` (Y −8 to 6.5, the sea, which knocks snails out and sudden death raises), `Crater` (x 1198 to 1210, Y 63 to 67) and
 `Chamber` (x 1197 to 1203, Y 27 to 28), all `Lava` with `Arena_LiquidColor` 255, 81, 58 and `Arena_LiquidNeon`. Its 17
 props are part-built `Arena_Prop` Models in `Decor/Trees` (dead trees), `Bushes`, `Rocks` (rocks and basalt columns).
+`TutorialMeadow` (made in MapLab; x 1514 to 1686), the tutorial's map and in no rotation, is one small grassy island
+in a calm sea (`Terrain/Island_1`, its `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`): a tall hill in
+the west (top about Y 28), a lower one in the east (about Y 24) and a meadow between them, x 1566 to 1634 at Y 18 to
+19, where the tutorial's player and bot start. No ledges, no ponds. 191 parts named `Grass`, `Dirt`, `DarkDirt`,
+`Stone`, `DarkStone`, and 53 `Decor/Backdrop` parts (low hills). Markers: `Sea` (`Water`, Y −8 to 6.5) and `Bounds`
+(200 × 80 × 11). Its 7 props are part-built `Arena_Prop` Models (an oak, two pines and a birch, two bushes, a rock).
 
 ## Commands
 

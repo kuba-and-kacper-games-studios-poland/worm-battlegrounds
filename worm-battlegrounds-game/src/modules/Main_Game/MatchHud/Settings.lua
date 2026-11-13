@@ -10,6 +10,14 @@ local _settings = {
 	-- The results' placing cards that fit across at the design's width; more players' cards share it
 	RESULTS_FIT_PLACINGS = 4,
 
+	-- The tutorial's Rematch button, grey and dead: its face, its outline and its text (the tutorial always goes back)
+	--- @type { [string]: Color3 }
+	LOCKED_REMATCH_COLORS = {
+		Main = Color3.fromRGB(120, 120, 130),
+		Stroke = Color3.fromRGB(170, 170, 178),
+		Text = Color3.fromRGB(200, 200, 205),
+	},
+
 	--[[
 		Guis the framework keeps on (`UserInterface_PreventHiding`) that the match screen hides while the player is in
 		a match: the currency bar sits where the turn banner and timer go
@@ -119,6 +127,18 @@ local _settings = {
 
 	-- How often the player's aim is sent to the other players during their turn, in seconds
 	AIM_SEND_INTERVAL = 0.1,
+
+	--[[
+		After a shot is sent, the aim stays hidden and the weapon on the shot's angle until the server moves the match on;
+		if it hasn't after this many seconds (it refused the shot), the player may aim again
+	]]
+	FIRE_ANSWER_SECONDS = 2,
+
+	--[[
+		A homing missile fired with no target picked homes on the mouse's point on the arena, or (a pad) this many studs
+		along its aim
+	]]
+	HOMING_AIM_REACH = 60,
 
 	--[[
 		Another snail's angle marker and power show while its aim keeps arriving (none for AIM_SHOW_GRACE seconds hides

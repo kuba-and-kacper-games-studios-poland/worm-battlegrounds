@@ -9,15 +9,15 @@ cooldown starts when it's used. Every client
 puts the active snail's weapon in its hands during its turn, on the camera's side, turned to its aim, and draws each
 shot in flight as its weapon's model, `PROJECTILE_DRAW_SCALE` times its size.
 
-Flying shots (rockets, bouncers, bomblets, homing missiles, the black hole roller) move by the game's own simulation,
+Flying shots (rockets, bouncers, bomblets, homing missiles, the black hole grenade) move by the game's own simulation,
 `Scripts/Helpers/Ballistics.lua`, the same on the server and on every client, in fixed steps on the server's clock:
 gravity and wind with exact arcs, a ball that touches the terrain and snails (a spherecast per step), bounces that keep
 the row's `Elasticity` into the surface and `BOUNCE_FRICTION` along it, resting and rolling (down off ledges under
-gravity) when a hit is softer than `REST_SPEED`, homing and the roller's drive and hops, a thrown bomb's tumble (the
+gravity) when a hit is softer than `REST_SPEED`, homing, a thrown bomb's tumble (the
 `Tumble` option: it leaves the hand turning with its sideways speed, `AIR_SPIN`, until the ground rolls it), and water
 or lava (any liquid, a pond too): a shot flies on through them, slowed (`SINK_ENTRY_KEEP` as it splashes in, then
 `SINK_GRAVITY` and `SINK_KEEP`), bursts on what it touches under them or when its fuse runs out, and is gone without a
-blast after sinking `SINK_SECONDS` without touching anything. The black hole roller still bursts as it rolls into liquid. Shots fly in
+blast after sinking `SINK_SECONDS` without touching anything. The black hole grenade (the `Roller` kind) is thrown and opens on the first thing it touches, or where it is when its owner presses again (`Detonate`, even in the air): it holds still for its row's `HoleTime` (its state sent to every client, `Projectiles.SendState`, so its model and trail stay there on every screen), throws the snails within `PullRadius` toward it (`BLACK_HOLE_PULL_SPEED`, the shooter's teammates aside), then bursts. Shots fly in
 slow motion, `PROJECTILE_TIME_SCALE` of real speed along the same paths, so players can follow them; a thrown bomb's
 `Fuse` counts its own slowed flight time (it bursts at the same point of its path), a placed one's (Dynamite) real
 seconds. A thrown bomb with a fuse (the Grenade) bursts as soon as it comes to rest on the ground, before its fuse
@@ -70,14 +70,14 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `Scripts/Server/Uses.lua` | Uses and cooldowns per participant, the `Combat` Replicator folder |
 | `Scripts/Helpers/Ballistics.lua` | `Combat_Ballistics`, the shot simulation both sides run: `New`, `Step`, `Load`, `GetState`, `GetCFrame`, `GetSnail`, `MakePart` (the placeholder ball) |
 | `Scripts/Server/Projectiles.lua` | Simulated shots (`Launch`, `Fly`, `Land`, `GetOptions`, `GetStart`, `IsGone`), crawling shots' parts (`Spawn`), raycasts, lost shots |
-| `Scripts/Server/Blast.lua` | Explosions: tells clients first (`Combat_Explosion`, so the blast shows before the crater's cut), then craters, damage, knockback; each hit tells clients with whether it knocked the snail out (`Combat_Hit`) |
+| `Scripts/Server/Blast.lua` | Explosions: tells clients first (`Combat_Explosion`, so the blast shows before the crater's cut), then craters, damage, knockback (never on the shooter's teammates; always on the shooter); each hit tells clients with whether it knocked the snail out (`Combat_Hit`) |
 | `Scripts/Server/Behaviors/*.lua` | One file per `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee), and `Snail.lua`, the variety grenade's worms |
 | `Global.lua` | Launch velocity and wind, shared with the aim dots, the aim guide and bots |
 | `Client.lua` | Starts the client handlers; `I.Combat` on the client (`SetAim`, `GetAimGuides`) |
 | `Scripts/Client/Effects.lua` | Blasts (the `BLAST_VFX` effect for the blast's size, scaled by its radius, and chunks of the ground that bounce on the terrain in the `Chip` collision group, then fade), tracers (a gun's `MUZZLE_VFX` flash where it fires, `Flash_Bullet` and `Explosion_Gun` where each bullet lands; One Punch plays `Punch` at the snail it hits), the blast sound (`Explosion_Big` from `BIG_BLAST_SOUND_RADIUS`, else `Explosion_Small`), the camera shake (`_shake`: a jolt, then a rumble; for blasts, hits on snails and gunshots) and the haptics (`Combat_BlastBig`, `Combat_BlastSmall`, `Combat_Hurt` in `src/global_data/Haptic/Preset.lua`), and the hit stop (`_onHit`, `_hitStop`: particles' `TimeScale` 0 and `Debris` chunks anchored, then put back with their speed) |
-| `Scripts/Client/Flight.lua` | Shots in flight drawn as their weapon's model (`GetProjectileModel`) over the hidden placeholder part: rockets and missiles along their flight, thrown and rolled weapons turning with the part, the spider bomb upright facing its crawl, the Variety grenade's worms (`Projectiles/Worm`) head first along their tunnel, swaying (`WORM_SWAY`). Models are drawn `PROJECTILE_DRAW_SCALE` times their size (a placed Dynamite at its own); models of parts the server moves glide after them (`CRAWL_GLIDE`). Bomblets and weapons without a model keep the placeholder. A weapon in `PROJECTILE_TRAILS` draws its trail (a Vfx effect) on an invisible carrier part that follows the shot without turning (its attachments along Z, so the ribbon keeps its width), its exhaust's emitters streaming (a missile's smoke puffs and thruster), and a rocket's carrier rides `TRAIL_TAIL` behind it; all left to fade where the shot ends |
-| `Scripts/Client/Shots.lua` | Each simulated shot's copy on this client: a local placeholder part in `Workspace.Ume.Combat`, `PROJECTILE_DRAW_SCALE` times its size and marked `Simulated` (Flight draws on it, the camera follows it), stepped to the server's clock and corrected by its states; a bounce on the way plays `Shot_Bounce`, and a lobbed shot whistles as it comes down (`_whistle`: `Shot_Whistle` from its part, volume 0.5, kept in the shot's `Whistle` and played once, `Whistled`) |
-| `Scripts/Client/Held.lua` | The active snail's held weapon: a copy of its model in `Workspace.Ume.Combat`, in the snail's hands in the weapon's pose (`I.SnailRig.Hold`), pitched to the aim this screen draws (MatchHud's crosshair, at once) or else to the snail's replicated aim. On its player's screen a snail standing still turns to face its aim. When the shot is away, a gun with a `HoldPose` plays its shot (`I.SnailRig.Shoot`, at least `Pellets` × `BurstInterval`) before it goes. Once a shot is away (`Match_PhaseChanged` to `Flight`) the active snail's emote ends (`I.SnailRig.StopEmote`) |
+| `Scripts/Client/Flight.lua` | Shots in flight drawn as their weapon's model (`GetProjectileModel`) over the hidden placeholder part: rockets and missiles along their flight, thrown and rolled weapons turning with the part, the spider bomb upright facing its crawl, worms (`Projectiles/Worm`, unused since the variety grenade bursts into minis) head first along their tunnel, swaying (`WORM_SWAY`). Models are drawn `PROJECTILE_DRAW_SCALE` times their size (a placed Dynamite at its own; a part's `DrawScale` attribute, set by Shots, wins); models of parts the server moves glide after them (`CRAWL_GLIDE`). A bomb's bomblets with `Mini` are named after their bomb and drawn as small copies of it, with its trail; other bomblets and weapons without a model keep the placeholder. A weapon in `PROJECTILE_TRAILS` draws its trail (a Vfx effect) on an invisible carrier part that follows the shot without turning (its attachments along Z, so the ribbon keeps its width), its exhaust's emitters streaming (a missile's smoke puffs and thruster), and a rocket's carrier rides `TRAIL_TAIL` behind it; all left to fade where the shot ends |
+| `Scripts/Client/Shots.lua` | Each simulated shot's copy on this client: a local placeholder part in `Workspace.Ume.Combat`, `PROJECTILE_DRAW_SCALE` (or its `PROJECTILE_DRAW_SCALES`) times its size and marked `Simulated`, its `LAUNCH_VFX` played as it starts (Flight draws on it, the camera follows it), stepped to the server's clock and corrected by its states; a bounce on the way plays `Shot_Bounce`, and a lobbed shot whistles as it comes down (`_whistle`: `Shot_Whistle` from its part, volume 0.5, kept in the shot's `Whistle` and played once, `Whistled`) |
+| `Scripts/Client/Held.lua` | The active snail's held weapon: a copy of its model in `Workspace.Ume.Combat`, in the snail's hands in the weapon's pose (`I.SnailRig.Hold`), pitched to the aim this screen draws (MatchHud's crosshair, at once, and after the shot is sent its angle, until the next turn) or else to the snail's replicated aim. On its player's screen a snail standing still turns to face its aim. When the shot is away, a gun with a `HoldPose` plays its shot (`I.SnailRig.Shoot`, at least `Pellets` × `BurstInterval`) before it goes. Once a shot is away (`Match_PhaseChanged` to `Flight`) the active snail's emote ends (`I.SnailRig.StopEmote`) |
 | `Scripts/Client/Aimbot.lua` | Draws the aim guide the server sends (dots and a label in `Workspace.Ume.Combat.Aimbot`) and keeps it for `GetAimGuides` |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `combat` and `aimbot` commands, and the `Combat_ItemIds` dictionary (every weapon and utility id, from both of `I.G_Arsenal.GetAll()`'s tables) |
 | `Settings.lua` | `Combat_Settings` |
@@ -94,7 +94,7 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `ShowAim(participantId, itemId?, angle, power)` | | Shows a snail's aim to every player (`AimAngle`, `AimPower`, `AimTime`; `HeldItem` when `itemId` is given), and turns a bot's snail, or one a bot plays for a dropped player, to face it (`Facing`). The aim remote and bots use it |
 | `Detonate(participantId)` | | Sets off a rolling Black Hole Grenade early |
 | `Explode(center, radius, itemId, sourceId?, shiny?, damageMax, damageEdge, knockback)` | | A blast |
-| `Hit(participantId, damage, velocityChange, itemId, sourceId?, position)` | `number` | Damages and pushes one snail, and tells every client (`Combat_Hit`); the damage when it hit a snail other than the shooter's, else 0 |
+| `Hit(participantId, damage, velocityChange, itemId, sourceId?, position)` | `number` | Damages and pushes one snail, and tells every client (`Combat_Hit`); nothing for the shooter's teammate (same `Team`; the shooter itself always takes it); the damage when it hit a snail other than the shooter's, else 0 |
 | `Give(participantId, itemId)` | `boolean` | Adds a weapon or a utility (either of `I.G_Arsenal.GetAll()`'s tables) to the participant's loadout for the rest of the match, with its full uses and no cooldown (or fills it again); `false` when they aren't in the match or the item doesn't exist. For testing |
 | `Refill(participantId)` | `boolean` | Fills every item the participant has and clears its cooldowns; `false` when they aren't in the match. For testing |
 | `CanUse(participantId, itemId)` | `boolean` | Uses left and no cooldown |
@@ -166,14 +166,13 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | Replicator `Combat` | `Slots`, `Uses_<item>`, `Cooldown_<item>` | The player's items (comma-separated), uses left and turns of cooldown left |
 | Snail attributes | `HeldItem`, `AimAngle`, `AimPower`, `Facing` | What other clients draw |
 | Snail attribute | `AimTime` | The server time of the latest aim update (0 once the shot is fired): clients draw a snail's aim line and turn its held weapon while it keeps changing |
-| Snail attribute | `DamageTaken` | Damage multiplier (the tutorial bot's 3) |
 | Projectile parts | `Projectile` | Marks a part MatchCamera may follow |
 
 ## Settings
 
 | Key | Default | What |
 | --- | --- | --- |
-| `WIND_ACCEL` | `3` | Wind's push at full strength |
+| `WIND_ACCEL` | `7` | Wind's push per point of wind, in studs per second squared (raised from 3 on 2026-11-13: the testers found the wind too weak) |
 | `MUZZLE_GAP`, `SHOOTER_GRACE` | `0.8`, `0.25` | How far past the snail's ball a shot starts (closer when something is in the way: `GetShotStart`), and how long it ignores its shooter |
 | `CHARGE_SECONDS` | `1.3` | How long a held press (the mouse button, FIRE on touch, RT) takes to fill the power from none to full at one even rate, firing by itself at full (MatchHud); bots charge their shot as fast (Bots) |
 | `MAX_PROJECTILE_TIME` | `20` | A shot still moving after this is removed |
@@ -186,20 +185,22 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `STATE_INTERVAL`, `CORRECTION_TOLERANCE`, `HISTORY_SECONDS`, `CORRECTION_SMOOTH`, `MAX_CATCH_UP` | `0.1`, `0.15`, `2`, `0.1`, `240` | How often the server sends a shot's state, how far off a client's copy may be before it rewinds, how much it keeps to rewind to, how fast a correction eases out, and the most steps a client takes in one frame |
 | `UPWARD_BIAS`, `KNOCKBACK_EDGE` | `0.5`, `0.5` | Knockback's lift, and its share at a blast's edge |
 | `BULLET_CARVE`, `BULLET_KNOCK_SHARE` | `0.75`, `0.25` | Gun bullets' crater size and knockback share |
-| `BOMBLET_SPEED`, `BOMBLET_GHOST` | `{ 20, 40 }`, `0.1` | Cluster bomblets' speeds, and how long they fly through everything to leave the crater |
-| `SNAIL_SPEED`, `SNAIL_BITE`, `SNAIL_LIFETIME` | `6`, `0.3`, `6` | The variety grenade's worms: digging speed, how often they eat a tunnel, how long they dig |
-| `CONTACT_DISTANCE`, `ROLL_HOP_SPEED`, `MELEE_BOX` | `2.5`, `22`, `4` | Contact bursts, rollers, melee reach |
+| `BOMBLET_SPEED`, `BOMBLET_GHOST` | `{ 20, 40 }`, `0.1` | Bomblets' speeds (the cluster bomb's and the variety grenade's minis), and how long they fly through everything to leave the crater |
+| `SNAIL_SPEED`, `SNAIL_BITE`, `SNAIL_LIFETIME` | `6`, `0.3`, `6` | A row's `Snails` worms (no weapon has them since 2026-11-13): digging speed, how often they eat a tunnel, how long they dig |
+| `CONTACT_DISTANCE`, `BLACK_HOLE_PULL_SPEED`, `MELEE_BOX` | `2.5`, `45`, `4` | Contact bursts, an open black hole's pull (studs per second at its middle, half at `PullRadius`), melee reach |
 | `CRAWL_STEP_UP`, `CRAWL_STEP_DOWN`, `CRAWL_STOP` | `1.25`, `3`, `0.25` | A crawling spider bomb walks up ledges this high (taller ones it climbs), steps down this far (deeper and it falls), and waits this close across to its target |
 | `HELD_TURN_SPEED` | `14` | How quickly the held weapon turns to another player's new aim |
 | `PROJECTILE_COLORS`, `PROJECTILE_SIZE` | | Placeholder projectile looks (hidden under a model when the weapon has one); the simulation's ball is half the size across |
 | `PROJECTILE_DRAW_SCALE` | `2` | Flying shots are drawn this many times their size (models and placeholders, a placed Dynamite aside); hits still use `PROJECTILE_SIZE` |
-| `PROJECTILE_TRAILS` | Bazooka, HomingMissile: `Trail_Smoke`; BlackHoleGrenade: `Trail_BlackHole`; VarietyGrenade: `Trail_Variety` | The trail a weapon's shot draws behind it while it flies, by item id |
+| `PROJECTILE_DRAW_SCALES` | `{ HomingMissile = 3.5 }` | A weapon's shot drawn at its own scale instead (the homing missile's model is thin) |
+| `PROJECTILE_TRAILS` | Bazooka, HomingMissile: `Trail_Smoke`; BlackHoleGrenade: `Trail_BlackHole`; VarietyGrenade: `Trail_Variety`; ClusterBomb: `Trail_Smoke` (their mini bomblets draw the same) | The trail a weapon's shot draws behind it while it flies, by item id |
 | `TRAIL_SCALE` | `1` | Widens every shot's trail |
 | `TRAIL_TAIL` | `2` | A rocket's trail and exhaust start this many studs behind its middle, at its drawn tail |
 | `WORM_SWAY`, `WORM_SWAY_SPEED` | `0.35`, `2` | How far (radians) and how fast (swings a second) a worm's model sways as it digs |
 | `CRAWL_GLIDE` | `18` | How quickly a server-moved model (spider bomb, worm) glides after its part |
 | `BLAST_VFX`, `BLAST_VFX_RADIUS` | `{ { 0, "Explosion" }, { 6, "Explosion_Fire" }, { 9, "Explosion_Big" } }`, `6.5` | The effect a blast plays: the last row whose radius it reaches; it's scaled by its radius over `BLAST_VFX_RADIUS` |
 | `MUZZLE_VFX` | `{ Uzi = "Flash_SMG", Minigun = "Flash_SMG", Shotgun = "Flash_Sniper" }` | The flash a gun plays where its shot leaves |
+| `LAUNCH_VFX`, `LAUNCH_VFX_SCALE` | Bazooka and HomingMissile: `Flash_Sniper`, `Explosion_Gun`; `1.5` | The blast out of a launcher where its shot starts, pointing along it (Shots, on every screen) |
 | `PUNCH_VFX_SCALE` | `0.5` | One Punch's `Punch` effect's size |
 | `FEEL_FULL_RADIUS`, `FEEL_RANGE` | `10`, `90` | A blast this big is felt at full strength; it's felt less the farther from the middle of the view, and not past `FEEL_RANGE` studs |
 | `SHAKE_KICK`, `SHAKE_KICK_SETTLE` | `10`, `0.18` | A full-strength blow's jolt (CameraShake's Magnitude, roughness 35), and how long it takes to fade, in seconds |

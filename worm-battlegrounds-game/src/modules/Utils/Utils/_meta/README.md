@@ -79,7 +79,7 @@ A missing attribute uses the default in the tables below, so a tag added by UmeG
 | --- | --- | --- |
 | `Utils_ButtonKey` | `ImageButton` or `TextButton` | Gives the button a gamepad key and a keyboard key that press it while it is shown (every `Visible` up the tree and its gui `Enabled`), as a click would (`Scripts/ButtonPress.lua`); Interact binds the keys |
 | `Utils_ButtonScale` | `ImageButton` or `TextButton` | Plays its animation on hover, leave, press (click, touch or its key) and release. Plays no sound: add `Utils_ButtonSound` for that |
-| `Utils_ButtonSound` | `ImageButton` or `TextButton` | Plays a sound on click, or when its key activates the button, and on hover |
+| `Utils_ButtonSound` | `ImageButton` or `TextButton` | Plays a sound on click, or when its key activates the button; never on hover (the game's testers, 2026-11-13: hover sounds were annoying), so `HoverSound_*` attributes are ignored |
 | `Utils_ButtonTransform` | `GuiObject` | Scale, position and rotation on hover and click (or its button's key), plus an optional idle float |
 
 | Attribute | On | Type | Default | What |
@@ -87,8 +87,8 @@ A missing attribute uses the default in the tables below, so a tag added by UmeG
 | `Utils_GamepadKey`, `Utils_KeyboardKey` | ButtonKey | string | `""` | The `Enum.KeyCode` names of the keys that press the button (`ButtonA`, `ButtonB`, `Return`, `E`); empty for none. A name that isn't a KeyCode warns |
 | `Utils_ScaleAnimation` | ButtonScale | string | `"Default"` | The animation (a preset in `Data/ButtonScalePresets.lua`, below). An unknown name warns and plays `Default` |
 | `Utils_HoverScale`, `Utils_ClickScale` | ButtonScale | number | `1.04`, `0.95` | Scale while hovered / pressed, multiplied with the button's resting scale (its `UIScale`'s starting `Scale`, or PlatformScale's scale for the device) |
-| `ClickSound_Name`, `HoverSound_Name` | ButtonSound | string | `"Button_Click"`, `"Button_Hover"` | Sound names (`I.Sound`); `""` plays nothing |
-| `ClickSound_` / `HoverSound_` `Volume`, `SoundGroup`, `PlaybackSpeed`, `TimePosition`, `PitchMin`, `PitchMax` | ButtonSound | | `1`, `"UI"`, `1`, `0`, `1`, `1` | The sound's params; no pitch effect is added while both pitches are `1` |
+| `ClickSound_Name` | ButtonSound | string | `"Button_Click"` | Sound name (`I.Sound`); `""` plays nothing |
+| `ClickSound_` `Volume`, `SoundGroup`, `PlaybackSpeed`, `TimePosition`, `PitchMin`, `PitchMax` | ButtonSound | | `1`, `"UI"`, `1`, `0`, `1`, `1` | The sound's params; no pitch effect is added while both pitches are `1` |
 | `Utils_ButtonTransform_EnableScale`, `_EnablePosition`, `_EnableRotation` | ButtonTransform | boolean | `true`, `false`, `false` | Which transforms run |
 | `Utils_ButtonTransform_HoverScale`, `_ClickScale` | ButtonTransform | number | `1.04`, `0.95` | Multiplied with the resting scale, as on ButtonScale |
 | `Utils_ButtonTransform_HoverPosition`, `_ClickPosition` | ButtonTransform | UDim2 | `0` | Offsets added to the object's starting position |

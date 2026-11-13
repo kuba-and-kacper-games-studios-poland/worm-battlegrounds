@@ -2,8 +2,7 @@
 
 The lobby's way into matches, along the bottom of the screen: ACTIVE LOBBIES, a scrolling row of public matches, one
 lobby card per mode (`PUBLIC_ROWS`: Deathmatch, Duo, Trio, Quads), each with its map's picture (a landscape photo
-of the map, its `Thumbnail`; the design's for a map with none yet), mode, players ("3/6 players"), map name, timer and **Join** (**Join teams** for team
-modes); and at the right the yellow **Solo vs bots** with a blue **Custom** over it. **Solo vs bots** opens the setup in the
+of the map, its `Thumbnail`; the design's for a map with none yet), mode, players ("3/6 players"), map name, timer and **Join**; and at the right the yellow **Solo vs bots** with a blue **Custom** over it. **Solo vs bots** opens the setup in the
 board's place: the bots' difficulty (Easy, Medium, Hard), the coins a win pays and **Start**, a 1v1
 against a bot. In a party the button reads **Play with party**: its leader sets up a friends-only deathmatch with bots
 (`PARTY_BOTS_PER_PLAYER` per member) or with **No bots**, which pays half (MatchRewards). Joining a public match shows
@@ -14,12 +13,12 @@ party's leader picks the match." Every public row's `ROW_SECONDS` timer always r
 the board looks alive: the row starts when it's full, when its timer runs out (with whoever joined, bots filling every
 empty seat, so one player can play Trios alone; with nobody, it only resets), or when `VOTE_FRACTION` of its players
 vote to start early. A started row is replaced by a fresh one of its mode on another map, its timer starting over.
-**Custom** makes a room that friends are invited into and its owner starts, its empty places filled with bots of the difficulty picked in its Bots row (`CUSTOM_DIFFICULTIES`: Off, Easy, Medium, Hard, and Nightmare, which plays only here). Without bots it needs 2 or more players; with bots its owner may start it alone. In a party only the leader makes one,
+**Custom** makes a room that friends are invited into and its owner starts, its empty places filled with bots of the difficulty picked in its Bots row (`CUSTOM_DIFFICULTIES`: Off, Easy, Medium, Hard, and Nightmare, which plays only here). It needs 2 or more players, bots or not: Start with only the owner in it shows a message (`CUSTOM_ALONE_MESSAGE`, a WidgetManager message) and the server refuses it too. In a party only the leader makes one,
 and the whole party is in it at once (their windows stay closed; their Custom reads "Party lobby" and opens it); the
 party must fit (on one team in Teams: `size // 2`), and a Teams lobby without bots needs someone from outside the
 party. When the player's lobby closes without them pressing Leave (it started, or its owner closed it), the window
 closes. Launching builds the match's teams
-(parties stay together), writes the match's metadata and teleports everyone to a reserved server of the Match map.
+(parties stay together, a party bigger than a team spilling onto the next team with room), writes the match's metadata and teleports everyone to a reserved server of the Match map.
 On the Studio map (the lobby and the match on one Studio server) it hands the match to `I.Match.Host` instead, and
 refuses while one plays.
 
@@ -60,7 +59,7 @@ refuses while one plays.
 
 **Receive: RemoteEvents**
 
-- `MatchBoard_Join @ (player: Player, rowId: string)`: leaders only; the whole party must fit
+- `MatchBoard_Join @ (player: Player, rowId: string)`: leaders only; the row needs a seat for each member (a party bigger than a team is split over teams)
 - `MatchBoard_Leave @ (player: Player)`
 - `MatchBoard_Vote @ (player: Player)`: vote to start the row early
 - `MatchBoard_PlaySolo @ (player: Player, difficulty: string)`: refused in a party of 2 or more
@@ -68,7 +67,7 @@ refuses while one plays.
 - `MatchBoard_CreateCustom @ (player: Player, mapId: string, mode: string, size: number, difficulty: string)`: `difficulty` from `CUSTOM_DIFFICULTIES` (`"None"` for no bots); not from a party member, and the party must fit
 - `MatchBoard_InviteCustom @ (player: Player, target: Player)`
 - `MatchBoard_InviteAnswer @ (player: Player, roomId: string, accept: boolean)`
-- `MatchBoard_StartCustom @ (player: Player)`: the owner, with 2 or more players, or alone with bots; a Teams lobby without bots needs a player from outside the owner's party
+- `MatchBoard_StartCustom @ (player: Player)`: the owner, with 2 or more players (bots or not); a Teams lobby without bots needs a player from outside the owner's party
 - `MatchBoard_LeaveCustom @ (player: Player)`
 
 **Send: RemoteEvents**
@@ -96,9 +95,10 @@ text colour), which the picked one swaps to.
 | `PUBLIC_ROWS` | Deathmatch 4, Duo 4, Trio 6, Quads 8 | The public rows, one per mode, always on the board |
 | `TEAM_SIZES`, `MODE_NAMES` | | Players per team by mode; mode names on the cards and in the waiting room's line (Deathmatch, Duo, Trio, Quads, Teams) |
 | `PUBLIC_DIFFICULTY` | `"Medium"` | Bots that fill public matches |
-| `MAPS`, `MAP_POOL` | 8 map rows; `{ "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle" }` | Map names, sizes and pictures (`Thumbnail`: Picnic Plains, Desert, Rockslide Ridge and Volcano Isle have theirs, the game home's `assets/ui/map_thumbnails`); the maps in rotation |
+| `MAPS`, `MAP_POOL` | 9 map rows; `{ "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle" }` | Map names, sizes and pictures (`Thumbnail`: Picnic Plains, Desert, Rockslide Ridge and Volcano Isle have theirs, the game home's `assets/ui/map_thumbnails`; Training Meadow, the tutorial's map, shows Picnic Plains' until it has its own and is never in the pool); the maps in rotation |
 | `SOLO_DIFFICULTIES` | Easy, Medium, Hard | The bots' difficulties in the setup (a party also gets No bots) |
 | `CUSTOM_DIFFICULTIES` | None, Easy, Medium, Hard, Nightmare | The custom lobby's Bots row; Nightmare is only here |
+| `CUSTOM_ALONE_MESSAGE` | "You can't start a custom lobby by yourself. Invite at least one more player!" | What Start says with only the owner in the lobby |
 | `REWARD_TEXT`, `SOLO_WIN_COINS` | | What the setup's reward line says for a solo match (beside the coins), a party match and a party match without bots; the coins a solo win pays by difficulty (20, 35, 60: MatchRewards' `SOLO_COINS`, which pays them) |
 | `PARTY_BOTS_PER_PLAYER`, `PARTY_MAX_SIZE` | `1`, `8` | Bots per member in a party match with bots, and its most snails |
 | `BOARD_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |

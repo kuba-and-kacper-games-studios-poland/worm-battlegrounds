@@ -131,7 +131,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Run Bomblet
 
 --[[
-	One of a cluster bomb's bomblets: thrown up and out at a random angle and speed, it explodes on contact.
+	One of a bomb's bomblets (a cluster bomb's, a variety grenade's): thrown up and out at a random angle and speed, it
+	explodes on contact. With Mini it's drawn as a small copy of its bomb (its model and trail, at that share of its size).
 ]]
 --- @param shot Combat_Shot
 function Module._runBomblet(shot, from: Vector3)
@@ -142,8 +143,11 @@ function Module._runBomblet(shot, from: Vector3)
 	local speed: number = random:NextNumber(_settings.BOMBLET_SPEED[1], _settings.BOMBLET_SPEED[2])
 	local options = Projectiles.GetOptions(nil) --- @type Combat_ShotOptions
 	options.GhostSteps = math.round(_settings.BOMBLET_GHOST / _settings.PROJECTILE_STEP)
+	options.DrawScale = bomblets.Mini
+	options.Tumble = bomblets.Mini ~= nil
 	local velocity: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0) * speed
-	local body = Projectiles.Launch("Bomblet", "Bomblet", from + Vector3.yAxis * 1.5, velocity, options) --- @type Combat_Body
+	local name: string = if bomblets.Mini then shot.ItemId else "Bomblet"
+	local body = Projectiles.Launch("Bomblet", name, from + Vector3.yAxis * 1.5, velocity, options) --- @type Combat_Body
 
 	--[[ Flying ]]
 

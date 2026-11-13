@@ -104,7 +104,7 @@ end
 
 --[[
 	Moves each flying snail's ball along this screen's copy of its flight, on the server's clock, before the frame is
-	drawn; it waits where it landed until the server lands it too.
+	drawn; it waits where it landed until the server lands it too. A snail knocked out mid-flight is its ghost's to move.
 ]]
 function Module._step()
 	--[[ Local Variables ]]
@@ -117,7 +117,7 @@ function Module._step()
 	for model: Model, state in pairs(flights) do
 		local root: BasePart? = model.PrimaryPart
 		local started: number? = model:GetAttribute("FlightStart")
-		if root and started and root.Anchored then
+		if root and started and root.Anchored and model:GetAttribute("Alive") ~= false then
 			FlightHelper.Advance(state, now - started)
 			FlightHelper.Apply(state, root)
 		end

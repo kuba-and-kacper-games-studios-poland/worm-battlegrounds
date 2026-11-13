@@ -741,7 +741,8 @@ end
 
 --[[
 	Returns a point moved just enough that the view centered on it stays inside the bounds (their top raised by
-	`ceiling` studs), on the bounds' plane; along an axis where the view is wider than the bounds, the bounds' middle.
+	`ceiling` studs, their sides widened by SIDE_EXTRA of half the view's width, so a snail at the map's edge can sit
+	mid-screen), on the bounds' plane; along an axis where the view is wider than that, the bounds' middle.
 ]]
 --- @return Vector3
 function Module._getClamped(point: Vector3, bounds: BasePart, camera: Camera, ceiling: number)
@@ -749,8 +750,9 @@ function Module._getClamped(point: Vector3, bounds: BasePart, camera: Camera, ce
 
 	local halfHeight: number = Module._getHalfHeight()
 	local halfWidth: number = halfHeight * camera.ViewportSize.X / camera.ViewportSize.Y
-	local low: Vector3 = bounds.Position - bounds.Size / 2
-	local high: Vector3 = bounds.Position + bounds.Size / 2
+	local side: Vector3 = Vector3.xAxis * halfWidth * _settings.SIDE_EXTRA
+	local low: Vector3 = bounds.Position - bounds.Size / 2 - side
+	local high: Vector3 = bounds.Position + bounds.Size / 2 + side
 
 	-- The top on its own, since an endless ceiling (math.huge) times the other axes' zeros would be NaN
 	local top: number = high.Y + ceiling

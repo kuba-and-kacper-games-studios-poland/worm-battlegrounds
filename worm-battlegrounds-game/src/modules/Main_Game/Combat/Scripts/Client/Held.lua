@@ -84,9 +84,16 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Phase Changed
 
 --[[
-	Ends the active snail's emote once its shot is away (the match enters its Flight).
+	Ends the active snail's emote once its shot is away (the match enters its Flight). A new turn drops the angle the
+	last shot left on the held weapon (SetAim).
 ]]
 function Module._onPhaseChanged(phase: string)
+	--[[ Clearing ]]
+
+	if phase == "Turn" then
+		drawnAngle = nil
+	end
+
 	--[[ Checks ]]
 
 	-- Check if a shot is away
@@ -203,7 +210,7 @@ end
 --[[
 	**CLIENT** |
 	Points the held weapon along the aim this screen draws (the crosshair), at once, so it never trails the server's
-	copy of the aim. nil hands it back to the snail's replicated aim.
+	copy of the aim; after a shot, along the shot until the next turn. nil hands it back to the snail's replicated aim.
 ]]
 function Module.SetAim(angle: number?)
 	--[[ Saving ]]

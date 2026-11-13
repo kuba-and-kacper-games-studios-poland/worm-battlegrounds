@@ -6,7 +6,9 @@ local _data = {
 	Name = "Premium crate",
 	TabName = "Premium",
 	LayoutOrder = 2,
-	Hidden = false,
+
+	-- Folded into the Weapon crate's diamonds (the testers, 2026-11-13); kept hidden so its id stays known
+	Hidden = true,
 
 	--[[ Look ]]
 

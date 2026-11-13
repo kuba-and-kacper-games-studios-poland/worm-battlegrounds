@@ -41,8 +41,8 @@ A weapon row: `Name`, `Icon`, `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, 
 Straight, Melee, Target, Feet), `Wind`, `HoldPose` (the snail rig's pose for a gun: `Gun` for the Uzi, `MiniGun`,
 `Bazooka` for the Bazooka and the Homing missile, `ShotGun`; a row without one is held in the `Gun` pose and plays no
 shot, as `SnailRig`'s README says), `DamageMax`, `DamageEdge`, `BlastRadius`, `Knockback`, `Uses` (−1 unlimited),
-`Cooldown` (turns), then the kind's fields (`MinSpeed`, `MaxSpeed`, `Fuse`, `Elasticity`, `Bomblets`, `Snails`,
-`Pellets`, `Spread`, `Range`, `CrawlTime`, `LockDelay`, `RollSpeed`, `Reach`, `Lift`, …). `Retreat` (Dynamite) keeps
+`Cooldown` (turns), then the kind's fields (`MinSpeed`, `MaxSpeed`, `Fuse`, `Elasticity`, `Bomblets` (with `Mini`, drawn as small copies of the bomb: the cluster bomb's and the variety grenade's), `Snails`,
+`Pellets`, `Spread`, `Range`, `CrawlTime`, `LockDelay`, `HoleTime`, `PullRadius`, `Reach`, `Lift`, …). `Retreat` (Dynamite) keeps
 the turn going that many seconds after the weapon is placed, with the stamina bar full again, so the snail can run
 before its `Fuse` runs out. A `Feet` weapon with no launch speed (Dynamite) is placed where the snail stands. A utility row: `Name`,
 `Icon`, `Effect` (Heal, Jetpack, Speed, Parachute, LowGravity), `Amount`, `ShinyAmount`, `Uses`, and an optional

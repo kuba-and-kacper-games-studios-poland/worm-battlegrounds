@@ -122,8 +122,9 @@ end
 
 --[[
 	**SERVER** |
-	Puts a player, with their whole party, in a public row. Refused when they're in a party but not its leader, when
-	the party is bigger than a team, or when the row has no room. A full row starts at once.
+	Puts a player, with their whole party, in a public row. Refused when they're in a party but not its leader, or
+	when the row has no seat for each of them; a party bigger than a team is split over teams at launch. A full row
+	starts at once.
 ]]
 --- @return boolean
 function Module.Join(player: Player, rowId: string)
@@ -150,8 +151,8 @@ function Module.Join(player: Player, rowId: string)
 		return false
 	end
 
-	-- Check if the party fits a team and the row
-	if #group > (_settings.TEAM_SIZES[row.Mode] or 1) and row.Mode ~= "Deathmatch" or #row.Players + #group > row.Size then
+	-- Check if the row has a seat for everyone
+	if #row.Players + #group > row.Size then
 		Launch._tell({ player }, "Your party doesn't fit in that match.")
 		return false
 	end

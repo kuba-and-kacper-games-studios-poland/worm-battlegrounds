@@ -75,10 +75,20 @@ end
 
 --[[
 	The server launched a shot: this client makes its own copy (a projectile part Flight draws the weapon on and the
-	camera follows) and simulates it from the launch, catching up to the server's clock.
+	camera follows) and simulates it from the launch, catching up to the server's clock. A launcher's shot blasts out
+	of it (LAUNCH_VFX).
 ]]
 --- @param options Combat_ShotOptions
 function Module._onShot(id: number, kind: string, name: string, start: number, position: Vector3, velocity: Vector3, options)
+	--[[ Launch ]]
+
+	local launch = _settings.LAUNCH_VFX[name] --- @type { string }?
+	if launch and velocity.Magnitude > 1e-3 then
+		for _index: number, vfx: string in ipairs(launch) do
+			I.Vfx.Play(vfx, CFrame.lookAlong(position, velocity.Unit), effectsFolder, _settings.LAUNCH_VFX_SCALE)
+		end
+	end
+
 	--[[ Building ]]
 
 	local body = Ballistics.New(position, velocity, options) --- @type Combat_Body
@@ -88,7 +98,11 @@ function Module._onShot(id: number, kind: string, name: string, start: number, p
 	body.Start = start
 
 	local part: Part = Ballistics.MakePart(kind, name, body.Position)
-	part.Size *= _settings.PROJECTILE_DRAW_SCALE
+	local drawScale: number = (_settings.PROJECTILE_DRAW_SCALES[name] or _settings.PROJECTILE_DRAW_SCALE) * (options.DrawScale or 1)
+	part.Size *= drawScale
+
+	-- Flight draws the weapon's model at the same scale (a bomblet drawn as a small copy of its bomb)
+	part:SetAttribute("DrawScale", drawScale)
 
 	-- Moved here every frame, so Flight draws its model right on it
 	part:SetAttribute("Simulated", true)

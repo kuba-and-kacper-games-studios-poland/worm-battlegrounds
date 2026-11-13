@@ -24,6 +24,7 @@ local _data = {
 	-- Coins or diamonds for one crate, a 3-pack and a 10-pack
 	Prices = {
 		Coins = { One = "100", Three = "300", Ten = "900" },
+		Diamonds = { One = "250", Three = "750", Ten = "2250" },
 	},
 
 	--[[ Odds ]]
@@ -42,6 +43,15 @@ local _data = {
 			OnePunch = 5,
 			VarietyGrenade = 0.5,
 			BlackHoleGrenade = 0.5,
+		},
+		Diamonds = {
+			ClusterBomb = 26,
+			SpiderBomb = 26,
+			Minigun = 26,
+			HomingMissile = 10,
+			OnePunch = 10,
+			VarietyGrenade = 1,
+			BlackHoleGrenade = 1,
 		},
 	},
 

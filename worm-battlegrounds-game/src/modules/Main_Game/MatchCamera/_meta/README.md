@@ -5,7 +5,7 @@ with a narrow `FOV`, so the arena reads as flat. It follows a flying shot (parts
 while the player's `CameraFollowsShot` setting is on, staying on the same shot while it flies (never hopping between
 a cluster bomb's bomblets), else the active snail (its `Active` attribute), else between turns the snail it followed
 last, else the local player's snail, else the arena's middle, and stays inside the arena's bounds, except that the view may
-rise `CEILING_EXTRA` studs above their top, so a snail high up sits mid-screen, and has no ceiling at all while it
+rise `CEILING_EXTRA` studs above their top and go `SIDE_EXTRA` of half a view past their sides, so a snail high up or at an edge sits mid-screen, and has no ceiling at all while it
 follows a shot in flight. A flying shot is led
 `LEAD_SECONDS` along its smoothed velocity (`LEAD_SMOOTH`), at most `LEAD_MAX` studs, so where it lands comes into
 view sooner, and it (like a snail a blow sent flying) moves the view only once it leaves the middle `DEAD_ZONE` of the
@@ -83,6 +83,7 @@ Match's `Match_TurnStarted`.
 | `DEAD_ZONE` | `0.25` | A shot in flight, or a snail a blow sent flying, moves the view only once it leaves this share of the view's half size around its middle |
 | `TRAVEL_SPEED`, `TRAVEL_MAX`, `TRAVEL_DONE` | `1.6`, `2.5`, `1.5` | Moving on to the next snail, or to where bullets landed, it glides this quickly (slower than `FOLLOW_SPEED`, so the move reads) for at most this many seconds, or until it's within this many studs |
 | `CEILING_EXTRA` | `60` | How many studs above the map's `Bounds` top the view may rise (none while it follows a shot in flight) |
+| `SIDE_EXTRA` | `1` | How far past each side of the map's `Bounds` the view may go, as a share of half its width: at 1 a snail at the edge can sit mid-screen |
 | `RECENTER_SPEED`, `RECENTER_MOVE_SPEED` | `2.5`, `3` | On the player's own turn: the pan eases back to their snail this quickly (higher is snappier) while the snail moves faster than this many studs a second |
 | `BLAST_HOLD`, `BIG_BLAST_HOLD`, `BIG_BLAST_RADIUS` | `1`, `1.6`, `6` | The least seconds it stays on a blast (it stays until the next turn starts), for small blasts and for blasts at least `BIG_BLAST_RADIUS` studs big; `BLAST_HOLD` also for where bullets landed and a shot that ended without a blast |
 | `CHASE_SPEED`, `CHASE_HOLD` | `25`, `0.6` | While it holds after a shot, a snail moving faster than this many studs a second is followed, and the hold lasts this many seconds after it slows |

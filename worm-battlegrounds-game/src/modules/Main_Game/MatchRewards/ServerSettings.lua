@@ -36,11 +36,11 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% XP
 
-	-- XP for finishing a match, and the kinds of match that give it (the wiki still asks which do)
+	-- XP for finishing a match, and the kinds of match that give it (custom lobbies give none: the testers, 2026-11-13)
 	XP_PER_MATCH = 100,
 
 	--- @type { [string]: boolean }
-	XP_KINDS = { Public = true, Solo = true, Party = true, Custom = true },
+	XP_KINDS = { Public = true, Solo = true, Party = true, Custom = false },
 }
 
 return _settings

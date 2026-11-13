@@ -21,7 +21,6 @@ local ButtonPress = require(_scripts:FindFirstChild("ButtonPress")) --- @type Ut
 -- The sound each kind plays when its name attribute is missing; an empty name plays nothing
 local DEFAULT_SOUNDS = { --- @type { [string]: string }
 	["Click"] = "Button_Click",
-	["Hover"] = "Button_Hover",
 }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -45,7 +44,6 @@ local DEFAULT_SOUNDS = { --- @type { [string]: string }
 --- # Attributes #
 ---
 --- @field ClickPlayTable Sound_Params
---- @field HoverPlayTable Sound_Params
 local Component = {}
 Component.__index = Component
 
@@ -90,19 +88,19 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Attributes
 
 --[[
-	Reads the click and hover sounds from their `ClickSound_` / `HoverSound_` attributes.
+	Reads the click sound from its `ClickSound_` attributes. Hover plays nothing (the testers, 2026-11-13: hover
+	sounds in the lobby were annoying), so `HoverSound_` attributes are ignored.
 ]]
 function Component:GetAttributes()
 	--[[ Reading ]]
 
 	self.ClickPlayTable = self:GetPlayTable("Click")
-	self.HoverPlayTable = self:GetPlayTable("Hover")
 end
 
 --%%%%%%%%%%%%%%%%%%%% Connect Input
 
 --[[
-	Plays the click sound on a click and when a key activates the button (Utils_ButtonKey), and the hover sound on hover.
+	Plays the click sound on a click and when a key activates the button (Utils_ButtonKey).
 ]]
 function Component:ConnectInput()
 	--[[ Click Sound ]]
@@ -119,21 +117,12 @@ function Component:ConnectInput()
 			self:PlaySound(self.ClickPlayTable)
 		end)
 	)
-
-	--[[ Hover Sound ]]
-
-	table.insert(
-		self.Connections,
-		self.Instance.MouseEnter:Connect(function()
-			self:PlaySound(self.HoverPlayTable)
-		end)
-	)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Connect Attributes
 
 --[[
-	Re-reads the sounds whenever one of their attributes changes.
+	Re-reads the click sound whenever one of its attributes changes.
 ]]
 function Component:ConnectAttributes()
 	--[[ Connections ]]
@@ -141,8 +130,8 @@ function Component:ConnectAttributes()
 	table.insert(
 		self.Connections,
 		self.Instance.AttributeChanged:Connect(function(attribute: string)
-			-- Skip attributes that aren't a sound's
-			if not attribute:match("^ClickSound_") and not attribute:match("^HoverSound_") then
+			-- Skip attributes that aren't the click sound's
+			if not attribute:match("^ClickSound_") then
 				return
 			end
 
@@ -177,7 +166,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Play Table
 
 --[[
-	Returns the `I.Sound.Play` params of one kind (`Click` or `Hover`), from its `<kind>Sound_` attributes. No pitch
+	Returns the `I.Sound.Play` params of one kind (`Click`), from its `<kind>Sound_` attributes. No pitch
 	effect is added while both pitches stay at 1.
 ]]
 --- @return Sound_Params

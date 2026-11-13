@@ -66,6 +66,14 @@ local _settings = {
 	PROP_SUPPORT_DEPTH = 1.5,
 
 	--[[
+		At load each prop moves back along Z until its front is PROP_BEHIND_GAP studs behind the play plane (half a
+		snail's length, so even a snail facing the camera passes in front of it), but its pivot stays PROP_GROUND_MARGIN
+		studs in from the ground's back; a prop still too deep is flattened along Z about its pivot until it fits
+	]]
+	PROP_BEHIND_GAP = 2.5,
+	PROP_GROUND_MARGIN = 0.5,
+
+	--[[
 		A blast cuts through the props it reaches; the pieces that still reach the prop's base through each other stand
 		(a part that starts at most PROP_BASE_HEIGHT studs above the base is on the ground)
 	]]
@@ -110,7 +118,7 @@ local _settings = {
 		How far the sea's blocks at the map's sides are drawn past them, in studs, so the camera never shows where it
 		ends; only drawn: the liquid's grid stops at the map's sides, and out there is out of bounds
 	]]
-	SEA_EDGE_WIDTH = 50,
+	SEA_EDGE_WIDTH = 120,
 
 	-- The liquid kinds, in the order of their ids in the grid (a map's liquid marker names one)
 	--- @type { string }

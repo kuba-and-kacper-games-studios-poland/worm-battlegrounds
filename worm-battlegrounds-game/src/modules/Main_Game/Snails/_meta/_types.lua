@@ -26,7 +26,7 @@
 ---
 --- # Combat #
 ---
---- @field DamageTaken number?
+--- @field MaxHealth number?
 local _snails_Participant = {}
 
 --%%%%%%%%%%%%%%%%%%%% Gear
@@ -81,6 +81,7 @@ local _snails_SoundState = {}
 --- @field Climbing number
 --- @field Resting number
 --- @field Jetting boolean
+--- @field Exhaust { ParticleEmitter }
 local _snails_EffectState = {}
 
 --%%%%%%%%%%%%%%%%%%%% Tags

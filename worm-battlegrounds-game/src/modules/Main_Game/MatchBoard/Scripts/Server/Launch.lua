@@ -46,7 +46,8 @@ end
 
 --[[
 	**SERVER** |
-	Sends players to a new match server: puts them on teams (each party on one team, then the solo players), builds the
+	Sends players to a new match server: puts them on teams (each party on one team, a party bigger than a team
+	spilling onto the next with room, then the solo players), builds the
 	match's metadata and teleports them together. The Studio map plays the match on this server instead; the Lobby
 	map alone in Studio, which can't teleport, prints the metadata. Players who couldn't go are told so. Returns
 	whether the match started.
@@ -77,9 +78,14 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 		return #groups[a] > #groups[b]
 	end)
 
+	local teamCount: number = math.max(math.floor(size / teamSize), 1)
 	for _index: number, groupId: string in ipairs(order) do
-		local team: number = Module._getTeamWithRoom(filled, teamSize, #groups[groupId], math.max(math.floor(size / teamSize), 1))
+		local team: number = Module._getTeamWithRoom(filled, teamSize, #groups[groupId], teamCount)
 		for _index2: number, player: Player in ipairs(groups[groupId]) do
+			-- A party bigger than a team spills onto the team with the most room
+			if (filled[team] or 0) >= teamSize then
+				team = Module._getTeamWithRoom(filled, teamSize, 1, teamCount)
+			end
 			filled[team] = (filled[team] or 0) + 1
 			table.insert(roster, { UserId = player.UserId, Team = team, PartyId = player:GetAttribute("PartyId") })
 		end

@@ -106,9 +106,7 @@ function Module.Start()
 	I.Interact.OnPress(Module._getButton("S_Create"), function()
 		I.Network.Fire("MatchBoard_CreateCustom", pickedMap, pickedMode, pickedSize, pickedDifficulty)
 	end)
-	I.Interact.OnPress(Module._getButton("S_Start"), function()
-		I.Network.Fire("MatchBoard_StartCustom")
-	end)
+	I.Interact.OnPress(Module._getButton("S_Start"), Module._onStart)
 	I.Interact.OnPress(Module._getButton("S_Leave"), function()
 		leaving = true
 		I.Network.Fire("MatchBoard_LeaveCustom")
@@ -270,6 +268,30 @@ function Module._refreshRoom()
 			I.Network.Fire("MatchBoard_InviteCustom", player)
 		end)
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Start
+
+--[[
+	The owner presses Start: the lobby starts once someone else is in it, else a message says they can't start alone.
+]]
+function Module._onStart()
+	--[[ Data ]]
+
+	local room: Instance? = Module._getMyRoom()
+	local members = I.S.HttpService:JSONDecode(if room then room:GetAttribute("Players") or "[]" else "[]") --- @type { number }
+
+	--[[ Checks ]]
+
+	-- Check if anyone else is in the lobby
+	if #members < 2 then
+		I.WidgetManager.ShowMessage(_settings.CUSTOM_ALONE_MESSAGE)
+		return
+	end
+
+	--[[ Sending ]]
+
+	I.Network.Fire("MatchBoard_StartCustom")
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Invited

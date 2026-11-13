@@ -42,7 +42,7 @@ player left stops at the next turn. One match plays at a time.
 | `Server.lua` | The match folders, remotes, Topics, the `I` table; starts the handlers |
 | `Scripts/Server/Phases.lua` | The main loop: waiting, drop, landing, turns, the end, rematches |
 | `Scripts/Server/Roster.lua` | Metadata, participants (players and bots), teams, the participant entries. `AssignTeam(participant)` puts a player on their Roblox team in a team match, making the team only when `Teams` has none of that name, at the start and when they come back |
-| `Scripts/Server/Turns.lua` | Turn order, the timer (a turn also ends when its snail is hurt before its shot is away, as in Worms), wind, rounds, sudden death; a bot plays a dropped player's turns (`Autopilot`); at every turn's end each snail with its head under a pond's liquid loses `UNDERWATER_DAMAGE`, never below 1; the settle (below); after the knockouts at a turn's end it waits Snails' `GHOST_TIME` when any snail went out |
+| `Scripts/Server/Turns.lua` | Turn order, the timer (a turn also ends when its snail is hurt before its shot is away, as in Worms), wind (rolled again once every snail still in play has played on it), rounds, sudden death; a bot plays a dropped player's turns (`Autopilot`); at every turn's end each snail with its head under a pond's liquid loses `UNDERWATER_DAMAGE`, never below 1; the settle (below); after the knockouts at a turn's end it waits Snails' `GHOST_TIME` when any snail went out |
 | `Scripts/Server/Placement.lua` | Knockout order and the final places |
 | `Scripts/Server/Stats.lua` | Damage, knockouts, rounds and best shot per participant |
 | `Scripts/Server/Connection.lua` | Leaving, dropping out, rejoining (control from the snail's next turn, its team and `ReplicationFocus` back), sending players to the lobby, the `InMatch` attribute |
@@ -63,7 +63,7 @@ player left stops at the next turn. One match plays at a time.
 | `Host(players, metadata)` | `boolean` | Studio map only: plays a match the lobby hands over, with these players. `false` while another plays |
 | `SkipTurn()` | | Ends the turn playing now as if its timer ran out; a shot in flight still lands. For testing |
 | `SetTurnSeconds(seconds: number?)` | | How long every turn lasts from now on, the one playing now too, until the server closes; nil is `TURN_SECONDS` again. For testing |
-| `SetWind(wind: number)` | | This turn's wind, kept within ±`WIND_MAX`. For testing |
+| `SetWind(wind: number)` | | The wind, kept within ±`WIND_MAX`, until every snail has played on it. For testing |
 | `SetRound(round: number)` | | The round the match is on; from `SUDDEN_DEATH_ROUND` the next turn starts sudden death. For testing |
 | `GetParticipant(participantId)`, `GetParticipantOf(player)` | `Match_Participant?` | A participant by id, or a player's |
 | `GetParticipants()` | `{ Match_Participant }` | Everyone in the match, in roster order |
@@ -126,6 +126,7 @@ player left stops at the next turn. One match plays at a time.
 | --- | --- | --- |
 | `WAIT_FOR_PLAYERS` | `20` | Seconds to wait for the roster (each player in the server with their data loaded) before starting |
 | `DROP_SECONDS`, `MAX_LANDING`, `DROP_STICK_SPEED`, `DROP_HEIGHT` | `10`, `12`, `40`, `20` | The drop phase, and how high over its land a snail nobody placed starts its parachute |
+| `TUTORIAL_GAP`, `TUTORIAL_SPOT_COUNT`, `TUTORIAL_DROP_SECONDS`, `TUTORIAL_PICK_RADIUS` | `30`, `16`, `40`, `6` | The tutorial's drop: the player and the bot start on land about `TUTORIAL_GAP` studs apart near the map's middle (from `TUTORIAL_SPOT_COUNT` land spots), the player has `TUTORIAL_DROP_SECONDS`, and only a pick within `TUTORIAL_PICK_RADIUS` studs of the shown spot counts (the snail keeps that spot) |
 | `TURN_SECONDS`, `MAX_FLIGHT` | `25`, `20` | A turn's seconds, and the longest a shot flies |
 | `SETTLE_HOLD`, `HIT_HOLD`, `STALL_SECONDS`, `MAX_SETTLE` | `0.3`, `3`, `5`, `20` | The settle after a turn: the next turn waits until every snail is at rest on the ground (or in a liquid), no debris falls, no shot flies and no health changes, for `SETTLE_HOLD` seconds, or `HIT_HOLD` after a shot or a hit; nothing moving or getting hurt for `STALL_SECONDS` moves on anyway (a snail stuck off the ground), and `MAX_SETTLE` seconds of settling always does |
 | `UNDERWATER_DAMAGE`, `UNDERWATER_HEAD_HEIGHT` | `5`, `1.6` | At the end of every turn, damage to each snail whose head is under a liquid that doesn't knock it out (a pond, Desert's oasis), never taking it below 1 health, like Worms Armageddon's poison; the head's top is this many studs over the ball's centre (where Classic's eyestalks start), so a snail with only its body under is fine |
@@ -140,7 +141,7 @@ player left stops at the next turn. One match plays at a time.
 
 ## In the place
 
-Creates `Workspace.Ume.Match`. The DropMarker billboard's holder is `Assets.Match` › `PREFAB | DropMarker` (authored in `Workspace.Ume.ReplicatedStorage_Assets/Match/`: a 1 × 1 × 1 invisible `RootPart`, its `Attachment`, the BillboardGui `U_DropMarker`); clients clone only the billboard and name the copy `DropMarker`. The tutorial match (`Kind = "Tutorial"`) skips the
+Creates `Workspace.Ume.Match`. The DropMarker billboard's holder is `Assets.Match` › `PREFAB | DropMarker` (authored in `Workspace.Ume.ReplicatedStorage_Assets/Match/`: a 1 × 1 × 1 invisible `RootPart`, its `Attachment`, the BillboardGui `U_DropMarker`); clients clone only the billboard and name the copy `DropMarker`. The tutorial match (`Kind = "Tutorial"`) starts the player and the bot close together (the `TUTORIAL_*` settings), keeps the roster's turn order so the player plays first, and skips the
 rematch: everyone goes back to the lobby after the results. It counts as played (`I.Tutorial.CompleteMatch`, saved at
 once) when it ends, and when a player leaves it early (Leave game, or a match that can't play), so the lobby doesn't
 send the player straight back.

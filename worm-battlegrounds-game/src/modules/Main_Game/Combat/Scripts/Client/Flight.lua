@@ -77,7 +77,7 @@ function Module._addShot(child: Instance)
 
 	-- Drawn bigger so shots read from the match camera; a placed one keeps its own size
 	if not row or row.Aim ~= "Feet" then
-		model:ScaleTo(model:GetScale() * _settings.PROJECTILE_DRAW_SCALE)
+		model:ScaleTo(model:GetScale() * (child:GetAttribute("DrawScale") or _settings.PROJECTILE_DRAW_SCALES[child.Name] or _settings.PROJECTILE_DRAW_SCALE))
 	end
 	flying[child] = {
 		Model = model,

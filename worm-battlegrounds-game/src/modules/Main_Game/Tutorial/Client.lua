@@ -17,6 +17,7 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 
 local MatchHints = require(_scripts:FindFirstChild("Client"):FindFirstChild("MatchHints")) --- @type Tutorial_Client_MatchHints
 local LobbyHints = require(_scripts:FindFirstChild("Client"):FindFirstChild("LobbyHints")) --- @type Tutorial_Client_LobbyHints
+local Spotlight = require(_scripts:FindFirstChild("Client"):FindFirstChild("Spotlight")) --- @type Tutorial_Client_Spotlight
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -40,7 +41,8 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
-	-- The match hints run on the Match map, the pointers on the Lobby map, and the Studio map runs both
+	-- The match guide runs on the Match map, the lobby guide on the Lobby map, and the Studio map runs both
+	Spotlight.Start()
 	if I.Config.PlaceLoader.MapId ~= _settings.LOBBY_MAP then
 		MatchHints.Start()
 	end

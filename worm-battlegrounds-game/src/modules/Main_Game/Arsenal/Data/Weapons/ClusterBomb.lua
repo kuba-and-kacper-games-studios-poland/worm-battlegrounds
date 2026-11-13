@@ -26,14 +26,14 @@ local _data = {
 
 	--[[ Launch ]]
 
-	MinSpeed = 15,
-	MaxSpeed = 112,
+	MinSpeed = 20,
+	MaxSpeed = 180,
 
 	--[[ Extras ]]
 
 	Elasticity = 0.3,
 	BurstOnContact = true,
-	Bomblets = { Count = 5, DamageMax = 15, DamageEdge = 5, Radius = 3 },
+	Bomblets = { Count = 5, DamageMax = 15, DamageEdge = 5, Radius = 3, Mini = 0.5 },
 }
 
 return _data

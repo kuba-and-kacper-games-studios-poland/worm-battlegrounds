@@ -440,4 +440,14 @@ function Module.GetSelected()
 	return selected
 end
 
+--%%%%%%%%%%%%%%%%%%%% Is Ready
+
+--[[
+	Returns whether a weapon can be fired now: it has uses left and isn't cooling down.
+]]
+--- @return boolean
+function Module.IsReady(itemId: string)
+	return combatRep ~= nil and (combatRep:GetAttribute(`Uses_{itemId}`) or 0) ~= 0 and (combatRep:GetAttribute(`Cooldown_{itemId}`) or 0) <= 0
+end
+
 return Module
