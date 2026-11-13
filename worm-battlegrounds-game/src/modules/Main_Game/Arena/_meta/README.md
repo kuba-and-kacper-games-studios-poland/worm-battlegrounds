@@ -144,7 +144,7 @@ bounds' depth on Z. The liquid is drawn as deep as the map's ground, measured at
 blocks' backs to the middle of their fronts (Loader's `GetGroundDepth`, the bounds' depth on a map without bedrock),
 so it never sticks out in front of the ground or behind it (Z −5 to 5 on Picnic Plains and Desert, −6.5 to 2 on
 Rockslide Ridge). The templates stand side by side along +X, one per slot 400 studs apart (MapLab's slots, so none
-overlaps another in Studio): `PicnicPlains` at X 0, `Desert` at 400, `RockslideRidge` at 800, `VolcanoIsle` at 1200, `TutorialMeadow` at 1600, each centred on its
+overlaps another in Studio): `PicnicPlains` at X 0, `Desert` at 400, `RockslideRidge` at 800, `VolcanoIsle` at 1200, `TutorialMeadow` at 1600, `LakesideShowdown` at 2000, each centred on its
 slot's X with its Bounds at Z = 0. A match plays at X 0 whatever the slot: the Loader moves each template so its
 Bounds stand at X 0 when it caches it, by the spawn, since until a player's snail drops streaming sends them only
 what's within `StreamingTargetRadius` (1024) of their parked avatar (Volcano Isle, at 1200, didn't show before). A template whose Bounds aren't on
@@ -187,6 +187,15 @@ the west (top about Y 28), a lower one in the east (about Y 24) and a meadow bet
 19, where the tutorial's player and bot start. No ledges, no ponds. 191 parts named `Grass`, `Dirt`, `DarkDirt`,
 `Stone`, `DarkStone`, and 53 `Decor/Backdrop` parts (low hills). Markers: `Sea` (`Water`, Y −8 to 6.5) and `Bounds`
 (200 × 80 × 11). Its 7 props are part-built `Arena_Prop` Models (an oak, two pines and a birch, two bushes, a rock).
+`LakesideShowdown` (made in MapLab; x 1859 to 2141) is a lake between two grassy banks: one wide island standing on
+the sea (`Terrain/Island_1`, x 1865 to 2137, its `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`), a
+rolling bank on each side (tops about Y 33) down to a sandy beach (Y 22), and between them a deep lake bowl (x 1961
+to 2039, floor Y 9) with two lily pads floating on it (`Ledge_1`, x 1973 to 1989; `Ledge_2`, x 2011 to 2027; Y 20
+to 22, half under the water, with `Arena_Floats`). 322 parts named `Grass`, `Dirt`, `DarkDirt`, `Stone`,
+`DarkStone`, `Sand`, `LilyPad`, `DarkLilyPad`, and 54 `Decor/Backdrop` parts (a forest treeline). Markers: `Sea`
+(`Water`, Y −8 to 6.5), `Lake` (`Water`, Y 9 to 21, a pond) and `Bounds` (282 × 114 × 11). Its 16 props are
+part-built `Arena_Prop` Models in `Decor/Trees`, `Bushes`, `Rocks` and `Flowers` (a water lily on each pad, parts
+named `Flower`).
 
 ## Commands
 

@@ -59,7 +59,9 @@ local _settings = {
 		RockslideRidge = { Name = "Rockslide Ridge", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://123838177297909" },
 		PicnicPlains = { Name = "Picnic Plains", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://114380640476396" },
 		FluffyFallout = { Name = "Fluffy Fallout", Sizes = { 2, 4, 6 }, Thumbnail = "" },
-		LakesideShowdown = { Name = "Lakeside Showdown", Sizes = { 2, 4, 6 }, Thumbnail = "" },
+
+		-- shortcut: Picnic Plains' picture until Lakeside Showdown has its own uploaded
+		LakesideShowdown = { Name = "Lakeside Showdown", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://114380640476396" },
 		MoltenSpires = { Name = "Molten Spires", Sizes = { 2, 4, 6 }, Thumbnail = "" },
 		TheBigMashup = { Name = "The Big Mashup", Sizes = { 8 }, Thumbnail = "" },
 		Desert = { Name = "Desert", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://140014161821553" },
@@ -74,7 +76,7 @@ local _settings = {
 		made for plays on any map in it
 	]]
 	--- @type { string }
-	MAP_POOL = { "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle" },
+	MAP_POOL = { "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle", "LakesideShowdown" },
 
 	--%%%%%%%%%%%%%%%%%%%% Solo And Party
 

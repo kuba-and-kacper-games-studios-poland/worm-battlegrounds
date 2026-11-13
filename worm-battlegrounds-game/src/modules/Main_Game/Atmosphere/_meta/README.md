@@ -49,7 +49,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 
 | Key | Default | What |
 | --- | --- | --- |
-| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow` (Picnic Plains' row), `Desert`, `RockslideRidge`, `VolcanoIsle` | Each mood, by MapId (below) |
+| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow` and `LakesideShowdown` (Picnic Plains' row), `Desert`, `RockslideRidge`, `VolcanoIsle` | Each mood, by MapId (below) |
 | `LOBBY_PROFILE` | `"Lobby"` | The mood outside matches |
 | `LOBBY_MAP`, `MATCH_MAP` | `"Lobby"`, `"Match"` | The place loader's maps with no matches and with only a match; the Studio map has both and follows `InMatch` |
 | `MOOD_TWEENINFO` | 2 s Sine InOut | How the lighting moves from one mood to the next |
