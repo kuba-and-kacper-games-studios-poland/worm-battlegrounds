@@ -10,6 +10,7 @@ sync into.
 | `worm-battlegrounds-gui/` | The game's guis, on UmeGui, styled by the `WormBattlegroundsBrawl` theme (the GUI kit, over `WormBattlegrounds`) | its `AGENTS.md` and `.claude/rules/` |
 | `worm-battlegrounds.rbxl` | The place both projects sync into | |
 | `wiki/` | The game's Shiori wiki: the design, the player's guide under `pages/game/` | `wiki/AGENTS.md`, only when asked to change it |
+| `bot-gym/` | The PC bot gym: the Bots module's gym run outside Roblox in Lune, on every core, and its parity check against Studio | `bot-gym/README.md` |
 
 The folders' `AGENTS.md`, `CLAUDE.md` and rules are the framework's and name no game: they say `<name>-game`,
 `<name>-gui` and `<Game>`. Here `<name>` is `worm-battlegrounds` and `<Game>` is `WormBattlegrounds`. This file and `CLAUDE.md` are the
@@ -23,7 +24,7 @@ The game's own decisions (how it uses ume and ume-gui, and its gui look) are in
 | Skill | Use when |
 | --- | --- |
 | `brawl-gui` (`worm-battlegrounds-gui/.claude/skills/brawl-gui/SKILL.md`) | Asked to make or restyle a gui in the game's GUI kit look (Brawl Stars style, the `WormBattlegroundsBrawl` theme), in the gui or as a design option |
-| `train-bots` (`worm-battlegrounds-game/.claude/skills/train-bots/SKILL.md`) | Asked to train, retrain or recalibrate the bots (self-play in Studio), or to teach them something the game added. Only when asked |
+| `train-bots` (`worm-battlegrounds-game/.claude/skills/train-bots/SKILL.md`) | Asked to train, retrain or recalibrate the bots (self-play on the PC with `bot-gym/`, checked in Studio), or to teach them something the game added. Only when asked |
 
 ## Working here
 

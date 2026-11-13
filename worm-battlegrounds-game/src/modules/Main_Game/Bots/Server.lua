@@ -190,7 +190,7 @@ function Module.TakeTurn(participantId: string)
 
 	local row = I.G_Arsenal.Get(plan.ItemId) --- @type Arsenal_WeaponData
 	local flying: boolean = false
-	if plan.Spot.Walk > 0 then
+	if plan.Spot.Walk > 0 or plan.Spot.Air then
 		flying = Module._walk(participantId, model, plan, row.Retreat ~= nil)
 	end
 
@@ -199,8 +199,11 @@ function Module.TakeTurn(participantId: string)
 		return
 	end
 
-	-- A walk that ended off its spot plans the shot again from where it stands
-	if (model.PrimaryPart.Position - plan.Spot.Position).Magnitude > _settings.ARRIVE_DISTANCE + _settings.CLOSE_SLACK then
+	-- A walk that ended off its spot (along the plane, for a spot in the air) plans the shot again from the ground there
+	local reached: Vector3 = model.PrimaryPart.Position
+	local off: number = if plan.Spot.Air then math.abs(reached.X - plan.Spot.Position.X) else (reached - plan.Spot.Position).Magnitude
+	if off > _settings.ARRIVE_DISTANCE + _settings.CLOSE_SLACK then
+		Module._land(participantId, model)
 		plan = Brain.GetPlan(Module._getView(participantId, model), genome, skill, true)
 		if not Module._isTurn(participantId) then
 			return
@@ -219,10 +222,20 @@ function Module.TakeTurn(participantId: string)
 	if row.Aim ~= "Melee" and row.Aim ~= "Feet" then
 		angle, power = Aim.GetShaken(plan.Angle, plan.Power, skill, Module._countShots(participantId, plan))
 	end
-	if not Module._showAim(participantId, plan.ItemId, angle, if row.Aim == "Feet" then 0 else power) then
+	-- In the air it hovers at its spot on its jetpack while it aims, and fires from there
+	local aiming: boolean = true
+	if plan.Spot.Air then
+		task.spawn(Move.Hover, model, plan.Spot.Position.Y, function(): boolean
+			return aiming and Module._isTurn(participantId)
+		end)
+	end
+	local ready: boolean = Module._showAim(participantId, plan.ItemId, angle, if row.Aim == "Feet" then 0 else power)
+	local fired: boolean = ready and I.Combat.Fire(participantId, plan.ItemId, angle, power, plan.Target)
+	aiming = false
+	if not ready then
 		return
 	end
-	if not I.Combat.Fire(participantId, plan.ItemId, angle, power, plan.Target) then
+	if not fired then
 		I.Combat.Fire(participantId, "Bazooka", angle, power)
 		return
 	end
@@ -243,42 +256,55 @@ end
 --%%%%%%%%%%%%%%%%%%%% Walk
 
 --[[
-	Walks a bot to its plan's spot, putting its jetpack on first when the spot needs it (higher than a jump, or over a
-	gap) or when it's about to place Dynamite and run, then waits until it stands on the ground. Returns whether it
-	wears a jetpack.
+	Walks a bot to its plan's spot, putting its jetpack on first when the spot needs it (its route is a flight: straight
+	up to the spot's cruise height, along, then down) or when it's about to place Dynamite and run, then waits until it
+	stands on the ground, unless the spot is in the air. Returns whether it wears a jetpack.
 ]]
 --- @param plan Bots_Plan
 --- @return boolean
 function Module._walk(participantId: string, model: Model, plan, placing: boolean)
 	--[[ Local Variables ]]
 
-	local origin: Vector3 = model.PrimaryPart.Position
-	local jump: number = I.Settings["SnailControl"].JUMP_SPEED ^ 2 / (2 * I.S.Workspace.Gravity * I.Settings["Snails"].GRAVITY_SCALE)
-	local climbTo: number? = if plan.Spot.Position.Y - origin.Y > jump then plan.Spot.Position.Y else nil
 	local keepGoing: () -> boolean = function()
 		return Module._isTurn(participantId)
 	end
 
 	--[[ Flying ]]
 
-	local flying: boolean = (plan.Spot.Fly or climbTo ~= nil or placing) and I.Combat.CanUse(participantId, "Jetpack") and I.Combat.UseUtility(participantId, "Jetpack")
+	local flying: boolean = (plan.Spot.Fly or placing) and I.Combat.CanUse(participantId, "Jetpack") and I.Combat.UseUtility(participantId, "Jetpack")
 
 	--[[ Walking ]]
 
-	Move.WalkTo(model, plan.Spot.Position.X, _settings.MOVE_SECONDS, climbTo, keepGoing)
+	Move.WalkTo(model, plan.Spot.Position.X, _settings.MOVE_SECONDS, if flying and plan.Spot.Fly then plan.Spot.Cruise else nil, keepGoing, true)
 
 	--[[ Landing ]]
 
-	-- Shoot from the ground, never in mid-air
-	local deadline: number = os.clock() + _settings.LAND_SECONDS
-	task.wait(_settings.ACTION_PAUSE)
-	while not I.Snails.IsGrounded(model.Name) and os.clock() < deadline and keepGoing() do
-		task.wait(0.1)
+	-- Shoot from the ground, unless it means to shoot from the air
+	if not (flying and plan.Spot.Air) then
+		Module._land(participantId, model)
 	end
 
 	--[[ Returning ]]
 
 	return flying
+end
+
+--%%%%%%%%%%%%%%%%%%%% Land
+
+--[[
+	Waits a moment, then until a bot's snail stands on the ground (LAND_SECONDS at most, and only while it's its turn).
+]]
+function Module._land(participantId: string, model: Model)
+	--[[ Local Variables ]]
+
+	local deadline: number = os.clock() + _settings.LAND_SECONDS
+
+	--[[ Waiting ]]
+
+	task.wait(_settings.ACTION_PAUSE)
+	while not I.Snails.IsGrounded(model.Name) and os.clock() < deadline and Module._isTurn(participantId) do
+		task.wait(0.1)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Play Tutorial
@@ -318,8 +344,8 @@ end
 
 --[[
 	A turn the brain found no shot for (everyone out of reach or out of sight): the bot still fires its Bazooka at the
-	nearest snail not on its team, on the arc that lands nearest it, or lobbed toward it at full power when no arc
-	reaches, so a bot never just lets its turn run out.
+	nearest snail not on its team, on the arc that lands nearest it (never one that hits within DIG_MIN of itself), or
+	lobbed toward it at full power when none does, so a bot never just lets its turn run out.
 ]]
 function Module._fireAnyway(participantId: string, model: Model)
 	--[[ Local Variables ]]
@@ -344,8 +370,15 @@ function Module._fireAnyway(participantId: string, model: Model)
 
 	local aimAt: Vector3 = target.PrimaryPart.Position
 	local wind: number = I.G_Combat.GetWindAcceleration("Bazooka", I.Match.GetWind())
-	local toward: number = if aimAt.X < origin.X then math.rad(135) else math.rad(45)
-	local arc: Vector2 = I.Combat.GetArcs(origin, aimAt, "Bazooka", wind, _settings.POWER_STEPS)[1] or Vector2.new(toward, 1)
+	local arc: Vector2 = Vector2.new(if aimAt.X < origin.X then math.rad(135) else math.rad(45), 1)
+	local bestMiss: number = math.huge
+	for _index: number, option: Vector2 in ipairs(I.Combat.GetArcs(origin, aimAt, "Bazooka", wind, _settings.POWER_STEPS)) do
+		local contact: Vector3 = Aim.GetContact(origin, option.X, option.Y, "Bazooka", wind, model)
+		if (contact - origin).Magnitude >= _settings.DIG_MIN and (contact - aimAt).Magnitude < bestMiss then
+			arc = option
+			bestMiss = (contact - aimAt).Magnitude
+		end
+	end
 	if Module._showAim(participantId, "Bazooka", arc.X, arc.Y) then
 		I.Combat.Fire(participantId, "Bazooka", arc.X, arc.Y)
 	end
@@ -466,11 +499,18 @@ end
 ]]
 --- @return Bots_Snail
 function Module._getSnail(model: Model)
+	--[[ Data ]]
+
+	local participant = I.Match.GetParticipant(model.Name) --- @type Match_Participant?
+
+	--[[ Returning ]]
+
 	--- @type Bots_Snail
 	local snail = {
 		Id = model.Name,
 		Model = model,
 		Team = model:GetAttribute("Team"),
+		IsBot = participant == nil or participant.IsBot == true,
 		Position = model.PrimaryPart.Position,
 		Health = model:GetAttribute("Health"),
 	}

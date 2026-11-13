@@ -104,7 +104,7 @@ function Module.Hit(participantId: string, damage: number, velocityChange: Vecto
 	local taken: number = math.floor(damage * (model:GetAttribute("DamageTaken") or 1) + 0.5)
 	local before: number = model:GetAttribute("Health")
 	I.Snails.Damage(participantId, taken, sourceId, itemId)
-	I.Snails.Knockback(participantId, velocityChange * model.PrimaryPart.AssemblyMass, sourceId, itemId)
+	I.Snails.Knockback(participantId, velocityChange * model.PrimaryPart:GetMass(), sourceId, itemId)
 
 	--[[ Publishing ]]
 

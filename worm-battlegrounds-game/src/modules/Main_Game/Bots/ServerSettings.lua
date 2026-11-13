@@ -59,14 +59,16 @@ local _settings = {
 		- MapSense: how much it minds the map where it stands (a deadly edge, ground a blast would drop it through, low
 		  ground near the sea), from 0 to 1
 		- Choice: how loosely it picks among its plans (0 always takes the best; higher takes good-enough ones more often)
+		- AirShots: how many spots in the air, hovering on its jetpack, it also weighs shooting from (0: none)
+		- Hunt: how much nearer players (not bots) count when it picks its targets, from 0 to 1
 		Nightmare is secret: it isn't on the board.
 	]]
 	--- @type { [string]: Bots_Skill }
 	SKILLS = {
-		Easy = { AimNoise = 9, PowerNoise = 0.1, WindRead = 0.3, Ranging = 0.8, RangingMin = 0.5, Spots = 2, Targets = 1, Finalists = 3, AimPoints = 1, MapSense = 0.5, Choice = 0.5 },
-		Medium = { AimNoise = 4.5, PowerNoise = 0.06, WindRead = 0.7, Ranging = 0.75, RangingMin = 0.35, Spots = 4, Targets = 2, Finalists = 5, AimPoints = 1, MapSense = 0.75, Choice = 0.2 },
-		Hard = { AimNoise = 1.8, PowerNoise = 0.025, WindRead = 1, Ranging = 0.7, RangingMin = 0.25, Spots = 7, Targets = 3, Finalists = 8, AimPoints = 3, MapSense = 1, Choice = 0 },
-		Nightmare = { AimNoise = 0.8, PowerNoise = 0.012, WindRead = 1, Ranging = 0.6, RangingMin = 0.2, Spots = 10, Targets = 4, Finalists = 14, AimPoints = 4, MapSense = 1, Choice = 0 },
+		Easy = { AimNoise = 9, PowerNoise = 0.1, WindRead = 0.3, Ranging = 0.8, RangingMin = 0.5, Spots = 2, Targets = 1, Finalists = 3, AimPoints = 1, MapSense = 0.5, Choice = 0.5, AirShots = 0, Hunt = 0 },
+		Medium = { AimNoise = 4.5, PowerNoise = 0.06, WindRead = 0.7, Ranging = 0.75, RangingMin = 0.35, Spots = 4, Targets = 2, Finalists = 5, AimPoints = 1, MapSense = 0.75, Choice = 0.2, AirShots = 0, Hunt = 0 },
+		Hard = { AimNoise = 1.8, PowerNoise = 0.025, WindRead = 1, Ranging = 0.7, RangingMin = 0.25, Spots = 7, Targets = 3, Finalists = 8, AimPoints = 3, MapSense = 1, Choice = 0, AirShots = 0, Hunt = 0 },
+		Nightmare = { AimNoise = 0.8, PowerNoise = 0.012, WindRead = 1, Ranging = 0.6, RangingMin = 0.2, Spots = 12, Targets = 4, Finalists = 16, AimPoints = 4, MapSense = 1, Choice = 0, AirShots = 4, Hunt = 0.5 },
 	},
 
 	--%%%%%%%%%%%%%%%%%%%% Turns
@@ -145,6 +147,28 @@ local _settings = {
 	KNOCK_SECONDS = 3,
 	KNOCK_STEP = 1 / 30,
 
+	-- A spot with terrain less than COVER_HEIGHT studs over it is under cover: shots from above can't drop on it
+	COVER_HEIGHT = 12,
+
+	-- Standing with its head in a pond costs Match's UNDERWATER_DAMAGE every turn: a spot counts it this many times
+	POND_TURNS = 3,
+
+	--[[
+		A shot that hurts no enemy is still worth its genome's Pressure the nearer it lands to one, full at the snail and
+		nothing from PRESSURE_RANGE studs: it shoots toward enemies it can't reach, and digs its way to them
+	]]
+	PRESSURE_RANGE = 30,
+
+	--[[
+		With no arc reaching any target, it aims at the terrain toward each one instead: points every DIG_STEP studs along
+		the way, from DIG_MIN studs off (never right over its head)
+	]]
+	DIG_MIN = 10,
+	DIG_STEP = 8,
+
+	-- A shot that knocks out the last enemy is worth this much more: it pays for hurting its own side to win
+	WIN_VALUE = 6,
+
 	--%%%%%%%%%%%%%%%%%%%% Moving
 
 	--[[
@@ -170,6 +194,16 @@ local _settings = {
 
 	-- Running from its Dynamite with a jetpack on, a bot flies up to this many studs over where it placed it
 	ESCAPE_HEIGHT = 8,
+
+	--[[
+		Flying, it keeps HEADROOM studs between its ball and a ceiling, and gives up on a wall after jumping at it
+		WALL_JUMPS times without getting past
+	]]
+	HEADROOM = 1.5,
+	WALL_JUMPS = 2,
+
+	-- A spot in the air (a skill's AirShots) hovers at least AIR_MIN studs over the ground, and no higher than a safe fall
+	AIR_MIN = 5,
 
 	--%%%%%%%%%%%%%%%%%%%% Training
 
@@ -209,6 +243,16 @@ local _settings = {
 
 	-- The gym's bots think this long before giving its server a frame (live bots: THINK_SLICE), in seconds
 	GYM_THINK_SLICE = 0.1,
+
+	--[[
+		The parity probe (Studio only, Scripts/Server/Parity) runs when the Workspace attribute PARITY_ATTRIBUTE is set
+		to its maps as JSON (`{"Maps": [...]}`, `{}` for every map) and writes its report to ServerStorage's
+		PARITY_RESULT folder, in StringValues of under PARITY_CHUNK characters, for the PC gym's report to be compared
+		with
+	]]
+	PARITY_ATTRIBUTE = "Bots_Parity",
+	PARITY_RESULT = "Bots_ParityResult",
+	PARITY_CHUNK = 150000,
 }
 
 return _settings

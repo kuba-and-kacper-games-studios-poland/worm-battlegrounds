@@ -236,6 +236,7 @@ function Module._playTurn(seat, seats, turn: number, round: number, random: Rand
 		stats.Jetpacks += 1
 	end
 	stats.Moves += if plan.Spot.Walk > 0 then 1 else 0
+	stats.Air += if plan.Spot.Air then 1 else 0
 	stats.Weapons[plan.ItemId] = (stats.Weapons[plan.ItemId] or 0) + 1
 	seat.Model:PivotTo(CFrame.new(plan.Spot.Position))
 
@@ -306,7 +307,7 @@ function Module._playTurn(seat, seats, turn: number, round: number, random: Rand
 	end
 	if log then
 		print(
-			`[{_localName}::{script.Name}]: Turn {turn} {seat.Id}: {plan.ItemId} at {plan.TargetId} from {plan.Spot.Walk} studs{if plan.Spot.Fly then " (jetpack)" else ""}, wind {wind}, planned {string.format(
+			`[{_localName}::{script.Name}]: Turn {turn} {seat.Id}: {plan.ItemId} at {plan.TargetId} from {plan.Spot.Walk} studs{if plan.Spot.Air then " (in the air)" elseif plan.Spot.Fly then " (jetpack)" else ""}, wind {wind}, planned {string.format(
 				"%.2f",
 				plan.Score
 			)}; dealt {seat.Dealt - dealt}, own side {seat.Friendly - friendly}`
@@ -326,7 +327,8 @@ end
 
 --[[
 	Drops every snail in play onto the ground under it, which a crater may have taken: a fall into the sea or out of
-	the arena knocks it out, a long one costs fall damage, and 0 health knocks it out. Counts its knockouts in `stats`.
+	the arena knocks it out, a long one costs fall damage, a head in a pond costs Match's UNDERWATER_DAMAGE, and 0
+	health knocks it out. Counts its knockouts in `stats`.
 ]]
 --- @param seats { Bots_Seat }
 --- @param stats Bots_Stats
@@ -334,6 +336,7 @@ function Module._settle(seats, turn: number, stats)
 	--[[ Local Variables ]]
 
 	local snails = I.Settings["Snails"] --- @type Snails_Settings
+	local match = I.Settings["Match"] --- @type Match_Settings
 
 	--[[ Dropping ]]
 
@@ -352,6 +355,11 @@ function Module._settle(seats, turn: number, stats)
 			else
 				seat.Health -= math.clamp(math.floor(position.Y - landed.Y - snails.SAFE_FALL_HEIGHT), 0, snails.MAX_FALL_DAMAGE)
 				seat.Model:PivotTo(CFrame.new(landed))
+
+				-- A head in a pond: Match's poison at the end of the turn, never below 1
+				if seat.Health > 1 and I.Arena.GetLiquid(landed + Vector3.yAxis * match.UNDERWATER_HEAD_HEIGHT) then
+					seat.Health -= math.min(match.UNDERWATER_DAMAGE, seat.Health - 1)
+				end
 				if seat.Health <= 0 then
 					Module._knockOut(seat, turn)
 					stats.Knockouts += 1
@@ -434,6 +442,7 @@ function Module._getView(seat, seats, wind: number, round: number)
 			Id = seat.Id,
 			Model = seat.Model,
 			Team = seat.Team,
+			IsBot = true,
 			Position = seat.Model.PrimaryPart.Position,
 			Health = seat.Health,
 		},
@@ -468,6 +477,7 @@ function Module._getSnails(seats)
 				Id = seat.Id,
 				Model = seat.Model,
 				Team = seat.Team,
+				IsBot = true,
 				Position = seat.Model.PrimaryPart.Position,
 				Health = seat.Health,
 			})

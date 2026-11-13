@@ -134,7 +134,7 @@ function Module.Knockback(participantId: string, impulse: Vector3, sourceId: str
 	--[[ Applying ]]
 
 	Module._setAttacker(participantId, sourceId, itemId)
-	Flight.Throw(model, impulse / model.PrimaryPart.AssemblyMass)
+	Flight.Throw(model, impulse / model.PrimaryPart:GetMass())
 end
 
 --%%%%%%%%%%%%%%%%%%%% Kill

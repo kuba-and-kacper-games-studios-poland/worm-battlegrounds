@@ -1549,3 +1549,68 @@ and for the shell never to break.
   parked avatar, by every map at X 0. What moves the ghost's ball down there wasn't found.
 
 Rules: MatchCamera, Blasts are felt, The snail is the studio's rig, The shell always stays, Every map plays at X 0.
+
+### The bots train on the PC (2026-11-13)
+
+The owner asked whether the bots could train on the PC instead of in Studio, now that shots and thrown snails run on
+the game's own simulation. Not everything does (walking and the jetpack are still Roblox physics, craters are CSG and
+every collision is a Roblox cast), but the gym never walks: its stand-in snails teleport. So the repo's `bot-gym/` runs
+the gym's own code in Lune and stands in only for the engine: the instance tree, Workspace's casts and overlaps,
+collision groups, `SubtractAsync` on boxes, and `task` on a virtual clock. The owner's pick: build it, compare it with
+Studio, and train on the PC if they agree.
+
+- **Comparing them.** Studio's MCP Luau runs in its own VM, with a fresh `I` that never started, so a probe has to live
+  in the game: the Bots module's `Parity.lua`, which Studio and the PC run unchanged. Its report is lines of text, and
+  both sides hash blocks of lines, so only the blocks that differ cross between Studio and the PC (a StringValue holds
+  fewer than 200,000 characters, so Studio's report is in parts).
+- **Vector3 is 32-bit.** With 64-bit numbers a third of the shots differed by a rounding step (45 damage against 44).
+  Rounding every Vector3 and CFrame position through a 32-bit float made 2,544 of 2,592 shots identical.
+- **A cast down a seam.** A ray exactly on the line where two parts meet touches both: Roblox counts a touched edge as
+  a hit, and when two parts' tops are level, which one it reports is its own pick. The probe reads its columns a
+  quarter stud off the grid.
+- **The exam favoured the champion.** It always sat in the first seat, which moves first, and the shipped genome
+  played against itself scored 0.83 against 0.58 a seat in Studio. Who sits first now swaps every two matches.
+- **What's left.** Bouncing shots drift by hundredths of a stud and a few chaotic ones go elsewhere; Rockslide Ridge,
+  built off the stud grid, carves a little differently. Over whole matches the two agree within noise (hits 44.5 %
+  in Studio, 47 % on the PC), so the champion still sits its last exam in Studio.
+
+Rules: Bots think with a trained brain; `bot-gym/README.md`.
+
+### A self-hit sent the match to the lobby (2026-11-13)
+
+The owner played a custom deathmatch alone with three Easy bots, and on their turn everyone went back to the lobby;
+Output said `Bodies:333: attempt to index nil with 'AssemblyLinearVelocity'`, and once `Control:92` on `Position`.
+It happened when they fired the Bazooka straight down at full power: their own snail vanished.
+
+- **The cause.** A blast throws a snail on the game's own flight, with its ball anchored. The shot ends the turn while
+  it's still flying, and `ClearTurnEffects` sets the ball's `Lift` back from `root.AssemblyMass`. An anchored
+  assembly's mass is infinite, so the Lift became an infinite force; when the flight landed and the ball was
+  unanchored, the force made its position NaN, and Roblox deleted the part and its model. The next look at the snail
+  errored, `Play` failed, and Match sent everyone to the lobby.
+- **Wrong leads first:** the sea, the Leave button, the AFK teleport, NaN in the flight itself, debris and props, the
+  plane constraint. A probe that logged every step of the flight into a StringValue ring found the infinite Lift.
+- **The fix.** Every force or impulse on a snail's ball reads the ball's own mass, `root:GetMass()`, which is the
+  same anchored or not (Snails' `Health`, its admin command, SnailControl's `Effects` and `Control`, Combat's
+  `Blast`). A piercing shot that stops in the terrain no longer pushes the snails it passed with a zero speed's
+  `.Unit` (NaN) either (Combat's `Rocket`).
+
+Rules: Snails are light, and a thrown snail flies the game's own physics.
+
+### Smarter bots: digging, cover, walls and air shots (2026-11-13)
+
+The owner asked for bots that shoot toward or dig to enemies they can't reach instead of firing above themselves,
+walk to cover, never jump into walls or fly into ceilings, mind ponds, hurt teammates only when it wins, and a
+Nightmare that shoots while flying.
+
+- **Pressure, not a miss.** A shot that hurts nobody used to be worth nothing, so the brain's fallback was any shot,
+  often straight up. Now it's worth the genome's `Pressure` by how near an enemy it lands, and with no arc reaching
+  anyone the bot aims at the terrain along the way to each target, from `DIG_MIN` out.
+- **Winning pays for a friend's hurt.** Knocking out the last enemy adds `WIN_VALUE`, so team damage is weighed
+  against the match, not alone.
+- **Moving reads the walls.** Spots are reached step by step with casts up, along and down (`Move.CanStep`), flights
+  pick a height clear of ceilings, and a wall is given up after `WALL_JUMPS` tries.
+- **Nightmare flies and shoots** (`AirShots`), and hunts players a little over bots (`Hunt`).
+- **Training on the PC** (10 generations of 16, 64 matches each, 48-match exams, seed 11): Medium and Hard found
+  better genomes, Easy tied and Nightmare's champion lost, so those two keep their shipped weights.
+
+Rules: Bots think with a trained brain.

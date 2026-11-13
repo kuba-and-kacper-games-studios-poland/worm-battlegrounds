@@ -208,7 +208,11 @@ end in liquid.
   Leave button forfeits.
 - **Bots think with a trained brain** (2026-11-08): each turn the Bots module's brain plans with the game's own
   simulation (Combat's shot bodies, blasts, throws, craters and the sea) and scores every plan with its difficulty's
-  genome (`ServerData/Brains.lua`), which self-play in Studio trains (the gym, the `train-bots` skill). Difficulty is skill
+  genome (`ServerData/Brains.lua`), which self-play trains (the gym, the `train-bots` skill). **Runs play on the PC**
+  (the owner's pick, 2026-11-13): the repo's `bot-gym/` runs the gym's own code in Lune with stand-ins for the engine
+  calls, on every core at once, and Studio sits the champion's last exam before it ships. The Bots module's parity
+  probe checks the two play alike; run it after changing what the stand-ins replace (Combat's casts, the Arena's
+  carving, debris or liquid). Difficulty is skill
   (`SKILLS`: the hand's error, the wind read, how far it looks, how much it minds the map), never deliberate misses.
   Nightmare is a secret difficulty, offered only in a custom lobby's Bots row (the owner's pick, 2026-11-08). Retraining, and teaching the bots something the game adds (a
   weapon, a map object, a hazard), happens only when the owner asks.
@@ -221,7 +225,10 @@ end in liquid.
   flight, writing its speed on the anchored ball, and every client draws the same flight from the snail's `Flight*`
   attributes before each frame (Snails' `Flight`), so no remote. It bounces softly (`FLIGHT_BOUNCE` 0.2, lowered from 0.3 on 2026-11-12: the owner, "decrease the bouncing") and lands back on
   Roblox physics once it rests on the ground. Walking stays Roblox physics on the owner's client. Anything that hands
-  a ball to a player or takes it back checks it isn't anchored first.
+  a ball to a player or takes it back checks it isn't anchored first. Forces and impulses on the ball read its own
+  mass, `root:GetMass()`, never `AssemblyMass`, which is infinite while it's anchored mid-flight (2026-11-13: an
+  infinite `Lift` set at a turn's end turned the ball NaN when it landed, Roblox deleted it, and the match went back
+  to the lobby).
 - **Thrown bombs burst when they stop** (the owner, 2026-11-12): a thrown bomb with a fuse (the Grenade) goes off as
   soon as it comes to rest on the ground, or when its fuse runs out first; placed Dynamite still waits for its fuse.
 - **The next turn waits for the arena to settle** (the owner, 2026-11-12): after a shot or anyone getting hurt, 3 s

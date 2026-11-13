@@ -58,7 +58,9 @@ function Module.Run(shot)
 		while pierced < #body.Ignore do
 			pierced += 1
 			local snail: Instance = body.Ignore[pierced]
-			local push: Vector3 = (body.Velocity.Unit + Vector3.yAxis * _settings.UPWARD_BIAS).Unit
+			-- A shot that stuck in the terrain this step has no speed left to push along
+			local along: Vector3 = if body.Velocity.Magnitude > 0.05 then body.Velocity.Unit else Vector3.yAxis
+			local push: Vector3 = (along + Vector3.yAxis * _settings.UPWARD_BIAS).Unit
 			local at: Vector3 = snail:GetPivot().Position
 			shot.Damage += Blast.Hit(snail.Name, row.DamageMax, push * I.G_Arsenal.GetKnockback(row.Knockback), shot.ItemId, shot.ParticipantId, at)
 		end

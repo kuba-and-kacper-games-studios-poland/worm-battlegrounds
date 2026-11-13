@@ -141,7 +141,7 @@ function Module._registerCommands()
 		--[[ Executing ]]
 
 		-- The push is a speed change, so it doesn't depend on the snail's mass
-		I.Snails.Knockback(id, Vector3.new(x, y, 0) * model.PrimaryPart.AssemblyMass)
+		I.Snails.Knockback(id, Vector3.new(x, y, 0) * model.PrimaryPart:GetMass())
 
 		--[[ Returning ]]
 

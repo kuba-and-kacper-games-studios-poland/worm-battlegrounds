@@ -21,6 +21,7 @@ local Brains = require(_data:FindFirstChild("Brains")) --- @type { [string]: Bot
 
 local Aim = require(script.Parent:FindFirstChild("Aim")) --- @type Bots_Server_Aim
 local Brain = require(script.Parent:FindFirstChild("Brain")) --- @type Bots_Server_Brain
+local Parity = require(script.Parent:FindFirstChild("Parity")) --- @type Bots_Server_Parity
 local Sim = require(script.Parent:FindFirstChild("Sim")) --- @type Bots_Server_Sim
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
@@ -40,6 +41,7 @@ local GENOME_KEYS = {
 	"Knockout",
 	"Focus",
 	"Grudge",
+	"Pressure",
 	"AllyDamage",
 	"AllyKnockout",
 	"SelfDamage",
@@ -51,6 +53,7 @@ local GENOME_KEYS = {
 	"Footing",
 	"Low",
 	"Height",
+	"Cover",
 	"Exposure",
 	"Crowd",
 	"Threat",
@@ -109,6 +112,7 @@ function Module.Start()
 	--[[ Connections ]]
 
 	I.S.Workspace:GetAttributeChangedSignal(_settings.TRAIN_ATTRIBUTE):Connect(Module._onTrainChanged)
+	I.S.Workspace:GetAttributeChangedSignal(_settings.PARITY_ATTRIBUTE):Connect(Module._onParityChanged)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -160,6 +164,78 @@ function Module._onTrainChanged()
 	--[[ Running ]]
 
 	task.spawn(Module.Train, options)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Parity Changed
+
+--[[
+	Runs the parity probe when the Workspace's PARITY_ATTRIBUTE is set to its maps (JSON, `{}` for every map) and no
+	run or match is going, and writes its report (its lines) to ServerStorage's PARITY_RESULT folder: StringValues
+	named 1, 2… of whole lines each, under PARITY_CHUNK characters (a StringValue holds fewer than 200,000).
+]]
+function Module._onParityChanged()
+	--[[ Data ]]
+
+	local value: any = I.S.Workspace:GetAttribute(_settings.PARITY_ATTRIBUTE)
+
+	--[[ Checks ]]
+
+	-- Check if it's a request
+	if typeof(value) ~= "string" or value == "" then
+		return
+	end
+
+	-- Check if the arena is free
+	if running or (I.Match.GetPhase() ~= "Waiting" and I.Match.GetPhase() ~= "Ended") then
+		warn(`[{_localName}::{script.Name}]: The parity probe needs the arena free - no run or match may be going.`)
+		return
+	end
+
+	--[[ Parsing ]]
+
+	local success: boolean
+	local result: any | string?
+	success, result = pcall(I.S.HttpService.JSONDecode, I.S.HttpService, value)
+	if not success or typeof(result) ~= "table" then
+		warn(`[{_localName}::{script.Name}]: Parity options ({value}) aren't JSON! - ({result})`)
+		return
+	end
+
+	--[[ Probing ]]
+
+	running = true
+	Module._setStatus("Parity probe running")
+	local lines = Parity.Run(result.Maps or Module._getMaps(), snailsFolder) --- @type { string }
+
+	--[[ Saving ]]
+
+	local old: Instance? = I.S.ServerStorage:FindFirstChild(_settings.PARITY_RESULT)
+	if old then
+		old:Destroy()
+	end
+	local holder: Folder = I.Create("Folder")({
+		Name = _settings.PARITY_RESULT,
+	})
+	local chunk = {} --- @type { string }
+	local size: number = 0
+	local chunks: number = 0
+	for index: number, line: string in ipairs(lines) do
+		table.insert(chunk, line)
+		size += #line + 1
+		if index == #lines or size + #lines[index + 1] >= _settings.PARITY_CHUNK then
+			chunks += 1
+			I.Create("StringValue")({
+				Name = tostring(chunks),
+				Value = table.concat(chunk, "\n"),
+				Parent = holder,
+			})
+			chunk = {}
+			size = 0
+		end
+	end
+	holder.Parent = I.S.ServerStorage
+	Module._setStatus(`Parity probe done: {#lines} lines in {chunks} parts (ServerStorage.{_settings.PARITY_RESULT})`)
+	running = false
 end
 
 --%%%%%%%%%%%%%%%%%%%% Train
@@ -389,6 +465,7 @@ end
 --[[
 	Plays ExamMatches between a champion and the shipped genome, two seats each (a 2 v 2 or a free-for-all, in turn),
 	and returns their mean points per seat (Champion, Baseline) and the matches played. Adds how they played to `stats`.
+	Who sits first swaps every two matches: the first seat moves first, which is worth about a quarter of a point.
 ]]
 --- @param champion Bots_Genome
 --- @param baseline Bots_Genome
@@ -405,9 +482,13 @@ function Module._examine(champion, baseline, options, maps, random: Random, stat
 
 	for match: number = 1, options.ExamMatches do
 		Module._setStatus(`Exam match {match}/{options.ExamMatches}`)
-		local seatPoints = Module._playMatch({ champion, baseline, champion, baseline }, match % 2 == 1, options, maps, random, stats) --- @type { number }
-		totals.Champion += (seatPoints[1] + seatPoints[3]) / 2
-		totals.Baseline += (seatPoints[2] + seatPoints[4]) / 2
+		local championFirst: boolean = math.ceil(match / 2) % 2 == 1
+		local genomes = if championFirst then { champion, baseline, champion, baseline } else { baseline, champion, baseline, champion } --- @type { Bots_Genome }
+		local seatPoints = Module._playMatch(genomes, match % 2 == 1, options, maps, random, stats) --- @type { number }
+		local firstPoints: number = (seatPoints[1] + seatPoints[3]) / 2
+		local secondPoints: number = (seatPoints[2] + seatPoints[4]) / 2
+		totals.Champion += if championFirst then firstPoints else secondPoints
+		totals.Baseline += if championFirst then secondPoints else firstPoints
 		totals.Matches += 1
 	end
 
@@ -534,6 +615,7 @@ function Module._getNewStats()
 		Weapons = {},
 		Moves = 0,
 		Jetpacks = 0,
+		Air = 0,
 		Heals = 0,
 	}
 	return stats
@@ -544,7 +626,7 @@ end
 --[[
 	Returns play stats in a line: turns per match, the share of shots that hurt an enemy and that hurt the shooter's own
 	side, damage per shot, knockouts (and how many were throws into the sea or off the arena), how often bots moved
-	and flew, heals, and the weapons fired most.
+	and flew, how often they shot from the air, heals, and the weapons fired most.
 ]]
 --- @param stats Bots_Stats
 --- @return string
@@ -561,7 +643,7 @@ function Module._getSummary(stats)
 	--[[ Returning ]]
 
 	return string.format(
-		"%.1f turns/match, hit %d%%, own side %d%%, %.1f dmg/shot, %d knockouts (%d thrown), moved %d%%, jetpack %d%%, %d heals; %s",
+		"%.1f turns/match, hit %d%%, own side %d%%, %.1f dmg/shot, %d knockouts (%d thrown), moved %d%%, jetpack %d%%, air %d%%, %d heals; %s",
 		stats.Turns / math.max(stats.Matches, 1),
 		math.round(stats.Hits / shots * 100),
 		math.round(stats.Friendly / shots * 100),
@@ -570,6 +652,7 @@ function Module._getSummary(stats)
 		stats.Thrown,
 		math.round(stats.Moves / shots * 100),
 		math.round(stats.Jetpacks / shots * 100),
+		math.round(stats.Air / shots * 100),
 		stats.Heals,
 		table.concat(weapons, ", ")
 	)

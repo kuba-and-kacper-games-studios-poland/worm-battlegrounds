@@ -11,31 +11,41 @@ reading of the wind, how far it looks: `SKILLS`).
 **A turn.** While it thinks (`THINK_TIME`), the brain makes its plan:
 
 1. **Heal** when its health is under the genome's `HealBelow`, with the heal that fills most of what it's missing.
-2. **Spots.** Where it stands, the ground every `MOVE_STEP` studs its walk reaches within its stamina (up a ledge its
-   jump reaches), past that the ground its jetpack reaches (up to `CLIMB_MAX` higher, over gaps), and the spots beside
-   each target it could swing or place Dynamite from. Each spot knows how near a deadly drop is (`Edge`), how badly a
+2. **Spots.** Where it stands, the ground every `MOVE_STEP` studs its walk reaches within its stamina (step by step:
+   up a ledge its jump reaches, never into a wall it can't get over or under a ceiling it can't fit under), past that
+   the ground its jetpack reaches (up to `CLIMB_MAX` higher, over gaps, at a height clear of walls and ceilings), and
+   the spots beside each target it could swing or place Dynamite from. With its skill's `AirShots`, it also weighs
+   spots in the air, hovering on its jetpack (at least `AIR_MIN` studs up, no higher than a safe fall), to shoot from
+   mid-flight. Each spot knows how near a deadly drop is (`Edge`), how badly a
    blast at its feet would drop it (`Footing`: through thin ground or a floating ledge into the sea), how low it is
-   over the sea as sudden death nears (`Low`), its height over the enemies, how many enemies see it or stand near it,
-   and how many friends stand near it. The skill's `MapSense` says how much it minds the map's dangers. It keeps the
+   over the sea as sudden death nears (`Low`), whether terrain within `COVER_HEIGHT` over it shields it from shots
+   dropping on it (`Cover`), what standing with its head in a pond would cost (Match's `UNDERWATER_DAMAGE`, counted
+   `POND_TURNS` times, as danger), its height over the enemies, how many enemies see it or stand near it, and how many
+   friends stand near it. The skill's `MapSense` says how much it minds the map's dangers. It keeps the
    `Spots` its genome likes best.
-3. **Targets.** Its `Targets` nearest enemies, nearer still when wounded (`Focus`) or the last to hurt it (`Grudge`,
-   the snail's `LastAttacker` attribute).
+3. **Targets.** Its `Targets` nearest enemies, nearer still when wounded (`Focus`), the last to hurt it (`Grudge`,
+   the snail's `LastAttacker` attribute), or a player rather than a bot (the skill's `Hunt`).
 4. **Rough shots.** Every usable weapon from every spot at every target and each of its `AimPoints` on it: the snail,
    its feet, then the ground under it on the side nearer a deadly drop, then the other side (to blast the ground out
    from under it). Arcs are solved exactly with the wind it reads (Combat's `I.Combat.GetArcs` at `POWER_STEPS`) and checked against the
    terrain; guns need a clear line in range; the homing missile is marked on the point; a swing or Dynamite only from
-   beside the target. With no shot at anyone at all, it aims at the terrain in the way to a target instead, from the
-   spot nearest it (it digs).
+   beside the target. With no arc reaching any target, it aims at the terrain toward each one instead, at points every
+   `DIG_STEP` studs along the way from `DIG_MIN` studs off (never over its own head): it digs or blasts its way there.
 5. **Simulation.** The `Finalists` nearest misses are simulated in full (`Scripts/Server/Predict.lua`): the shot flies
    by Combat's own simulation (`I.G_Combat.StepBody`) from where Combat would start it (`I.Combat.GetShotStart`),
    with bounces, fuses, bomblets, bullets, swings and flight on through water or lava as Combat's behaviors do them;
    its blasts hurt and throw snails as Combat's do; thrown snails are followed to where they land
    (into the sea knocks them out, a long drop costs fall damage), and snails whose ground the craters cut away drop
    through them. Each plan's score is the genome's weighing of what it does (damage and knockouts to enemies, harm to
-   friends and itself, the ammo it spends) and of the spot it shoots from.
+   friends and itself, the ammo it spends) and of the spot it shoots from. A shot that hurts no enemy is still worth the
+   genome's `Pressure` the nearer it lands to one (none from `PRESSURE_RANGE` studs), so it shoots toward enemies it
+   can't reach instead of anywhere; one that knocks out the last enemy is worth `WIN_VALUE` more, so it hurts its own
+   side only when that wins the match.
 6. **Choice.** The best plan, or with the skill's `Choice` above 0, a good-enough one more often the better it is.
 
-Then it walks to the spot (flying its jetpack when the spot needs it, or before placing Dynamite), plans again from
+Then it walks to the spot (flying its jetpack when the spot needs it, or before placing Dynamite: it rises first,
+keeps `HEADROOM` clear of ceilings and gives up on a wall after `WALL_JUMPS` jumps at it), hovers there for an air
+spot while it aims, plans again from
 where it stands if the walk fell short, holds its weapon, swings its crosshair and charges its power for everyone to
 see (`AIM_TIME`, Combat's `CHARGE_SECONDS`), and fires with its hand's error (`AimNoise`, `PowerNoise`), which narrows
 by `Ranging` with each shot in a row at the same target from about the same spot, as players walk their shots in.
@@ -43,8 +53,8 @@ From placed Dynamite it runs toward the side with more ground, flying when it we
 
 **It never passes.** When the brain has no plan at all (at the start of the turn, or again after a walk that fell
 short), the bot still fires the Bazooka at the nearest snail not on its team (its `Team` attribute): on the first arc
-`I.Combat.GetArcs` gives at `POWER_STEPS`, or, when no arc reaches, at 45° toward it (135° when it's to the left) at
-full power. Only with no enemy left does it fire nothing.
+`I.Combat.GetArcs` gives at `POWER_STEPS`, or, when no arc reaches, on the arc that lands nearest it and not within
+`DIG_MIN` of itself (never a shot straight up that falls back on its head). Only with no enemy left does it fire nothing.
 
 The tutorial bot stays
 put and fires the Bazooka beside the nearest enemy, never at it, and takes `DAMAGE_TAKEN` times each hit.
@@ -59,9 +69,12 @@ real arena, craters and sea, stand-in snails that teleport to their spot instead
 predictions, turns as Match orders them, sudden death), free-for-alls and 2 v 2s on every map. Each seat scores
 `PLACE_POINTS` for its place (a team match: 1 to the winners), plus `DAMAGE_POINTS` for each point of damage it dealt
 enemies, less its own side's. The best (`Elites`) carry on, the rest are bred from the better ones and mutated, and
-after the last generation the champion sits an exam against the shipped genome. The report says what the bots did
-(hits, own-side hits, damage per shot, knockouts and how many were throws into the sea, moves, jetpack use, heals,
-weapons) and gives the champion as Lua for `ServerData/Brains.lua`. The code folder's `train-bots` skill is the procedure.
+after the last generation the champion sits an exam against the shipped genome, the two swapping who sits first every
+two matches (the first seat moves first, worth about a quarter of a point). The report says what the bots did (hits,
+own-side hits, damage per shot, knockouts and how many were throws into the sea, moves, jetpack use, heals, weapons)
+and gives the champion as Lua for `ServerData/Brains.lua`. The same gym also runs on the PC, many matches at once: the
+repo's `bot-gym/` runs this module's code outside Roblox, and the **parity probe** (`Scripts/Server/Parity.lua`)
+checks that both play alike. The code folder's `train-bots` skill is the procedure.
 
 | | |
 | --- | --- |
@@ -79,9 +92,10 @@ weapons) and gives the champion as Lua for `ServerData/Brains.lua`. The code fol
 | `Scripts/Server/Brain.lua` | The planner: spots and what it knows of them, targets, aim points, rough shots, the full simulations and scores, the choice; heals and drop spots |
 | `Scripts/Server/Aim.lua` | Where an arc first touches, the hand's error, and the self-check of Combat's arc solver (`GetArcs`) |
 | `Scripts/Server/Predict.lua` | What a shot would do: its flight, blasts and strikes, where thrown snails land, the ground along a column and drops through craters |
-| `Scripts/Server/Move.lua` | Moving a bot's snail: walking to an X, ledges, jumps, the jetpack, stamina, safe ground and runways |
+| `Scripts/Server/Move.lua` | Moving a bot's snail: walking to an X, ledges, walls and ceilings, jumps, the jetpack and hovering, stamina, safe ground and runways |
 | `Scripts/Server/Sim.lua` | One headless self-play match for the gym |
-| `Scripts/Server/Gym.lua` | Training runs: the trigger, generations, breeding, the exam, the report |
+| `Scripts/Server/Gym.lua` | Training runs: the trigger, generations, breeding, the exam, the report; the parity probe's trigger |
+| `Scripts/Server/Parity.lua` | The parity probe: on every map, the same stand spots, shots, plans and carves, as lines of text, for Studio's and the PC gym's to be compared (`bot-gym/README.md` → Parity) |
 | `ServerSettings.lua` | `Bots_Settings`, under a server name so clients never get it (practices → Bots stay on the server) |
 | `_meta/_types.lua` | `Bots_Genome`, `Bots_Skill`, `Bots_View`, `Bots_Snail`, `Bots_Spot`, `Bots_Plan`, `Bots_Shot`, `Bots_Blast`, `Bots_Strike`, `Bots_Effect`, `Bots_Outcome`, `Bots_Ranging`, `Bots_TrainOptions`, `Bots_Seat`, `Bots_Stats` |
 
@@ -114,10 +128,11 @@ attributes (`Health`, `Team`, `Stamina`, `LastAttacker`) and the match's `Round`
 | Where | What |
 | --- | --- |
 | `Workspace.Ume.Bots` | Studio only: the gym's folder, its stand-in snails in `Snails` (anchored balls in the `Snail` group, named `G_<seat>`, only during a run) |
-| Workspace attributes | Studio only: `Bots_Train` starts a run (its options as JSON, `{}` for the defaults) or stops one after its match (`"stop"`); `Bots_TrainStatus` shows the run's progress |
+| Workspace attributes | Studio only: `Bots_Train` starts a run (its options as JSON, `{}` for the defaults) or stops one after its match (`"stop"`); `Bots_Parity` runs the parity probe (`{}` for every map, or `{"Maps": [...]}`); `Bots_TrainStatus` shows the progress of either |
 | `ServerStorage.Bots_TrainResult` | Studio only: a StringValue with the last run's report (JSON): `Difficulty`, `Minutes`, `History` (each generation's best and mean fitness and how they played), `Exam` (`Champion`, `Baseline`, `Matches`), `ExamPlay`, `Champion`, `Lua` |
+| `ServerStorage.Bots_ParityResult` | Studio only: a Folder with the last parity probe's report, its lines in StringValues named `1`, `2`… (each under `PARITY_CHUNK` characters) |
 
-A run needs the Studio map with no match playing: it loads each map into the arena and carves it.
+A run or a probe needs the Studio map with no match playing: it loads each map into the arena and carves it.
 
 ## Settings
 
@@ -145,19 +160,25 @@ A run needs the Studio map with no match playing: it loads each map into the are
 | `WALK_LOOK`, `FALL_LOOK` | `1`, `60` | How far past its ball it checks the ground before a step, and how far down |
 | `CLOSE_SLACK` | `1.5` | A walk that ends this much further off than planned makes it plan again from there |
 | `ESCAPE_HEIGHT` | `8` | How high it flies over its placed Dynamite with a jetpack on |
+| `COVER_HEIGHT`, `POND_TURNS` | `12`, `3` | Terrain this close over a spot is cover; a pond's damage counts this many turns |
+| `PRESSURE_RANGE`, `WIN_VALUE` | `30`, `6` | How far from an enemy a shot is still worth its `Pressure`; what knocking out the last enemy adds |
+| `DIG_MIN`, `DIG_STEP` | `10`, `8` | Where it aims at the terrain toward a target it can't reach: from this far off, this far apart |
+| `HEADROOM`, `WALL_JUMPS`, `AIR_MIN` | `1.5`, `2`, `5` | Flying: room kept under ceilings, jumps at a wall before giving up, and an air spot's least height |
 | `TRAIN_ATTRIBUTE`, `TRAIN_STATUS_ATTRIBUTE`, `TRAIN_RESULT` | `"Bots_Train"`, `"Bots_TrainStatus"`, `"Bots_TrainResult"` | The gym's trigger, progress and report |
 | `TRAIN_DEFAULTS` | Hard, 6 generations of 8, 6 matches each, 6 exam matches, 2 elites, mutation 0.35 at 0.35, 14 rounds, seed 0 (the clock), no log | A run's options (`Bots_TrainOptions`; `Maps` limits the maps, `Log` prints every turn, `Start` trains on from a genome instead of the shipped one, `Baseline` is what the exam plays against; with `Generations` 0 the exam is `Start` against `Baseline`) |
 | `PLACE_POINTS`, `DAMAGE_POINTS` | `{ 1, 0.45, 0.15, 0 }`, `0.002` | A seat's fitness |
 | `SETTLE_LIMIT` | `1.5` | The longest a gym turn waits for cut ground to land |
+| `GYM_THINK_SLICE` | `0.1` | Seconds the gym's bots think before giving the server a frame |
+| `PARITY_ATTRIBUTE`, `PARITY_RESULT`, `PARITY_CHUNK` | `"Bots_Parity"`, `"Bots_ParityResult"`, `150000` | The parity probe's trigger, its report's folder, and the most characters in each of its StringValues |
 
 ### Skills
 
-| Difficulty | AimNoise | PowerNoise | WindRead | Ranging (min) | Spots | Targets | Finalists | AimPoints | MapSense | Choice |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Easy | 9° | 0.1 | 0.3 | 0.8 (0.5) | 2 | 1 | 3 | 1 | 0.5 | 0.5 |
-| Medium | 4.5° | 0.06 | 0.7 | 0.75 (0.35) | 4 | 2 | 5 | 1 | 0.75 | 0.2 |
-| Hard | 1.8° | 0.025 | 1 | 0.7 (0.25) | 7 | 3 | 8 | 3 | 1 | 0 |
-| Nightmare | 0.8° | 0.012 | 1 | 0.6 (0.2) | 10 | 4 | 14 | 4 | 1 | 0 |
+| Difficulty | AimNoise | PowerNoise | WindRead | Ranging (min) | Spots | Targets | Finalists | AimPoints | MapSense | Choice | AirShots | Hunt |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Easy | 9° | 0.1 | 0.3 | 0.8 (0.5) | 2 | 1 | 3 | 1 | 0.5 | 0.5 | 0 | 0 |
+| Medium | 4.5° | 0.06 | 0.7 | 0.75 (0.35) | 4 | 2 | 5 | 1 | 0.75 | 0.2 | 0 | 0 |
+| Hard | 1.8° | 0.025 | 1 | 0.7 (0.25) | 7 | 3 | 8 | 3 | 1 | 0 | 0 | 0 |
+| Nightmare | 0.8° | 0.012 | 1 | 0.6 (0.2) | 12 | 4 | 16 | 4 | 1 | 0 | 4 | 0.5 |
 
 ### The genome
 
@@ -166,11 +187,12 @@ What each weight in `ServerData/Brains.lua` makes a bot value (positive) or avoi
 | Key | What |
 | --- | --- |
 | `EnemyDamage`, `Knockout`, `Focus`, `Grudge` | Damage to enemies (per 100), each enemy knocked out, damage to wounded enemies, damage to the last to hurt it |
+| `Pressure` | A shot that hurts no enemy landing near one (`PRESSURE_RANGE`) |
 | `AllyDamage`, `AllyKnockout`, `SelfDamage`, `SelfKnockout` | Harm to its own side and itself (subtracted) |
 | `Ammo` | A limited weapon's use, by 1 / uses left (subtracted) |
 | `Walk`, `Jetpack` | Walking there (share of its stamina) and flying there (subtracted) |
 | `Edge`, `Footing`, `Low` | The map's dangers at the spot, times the skill's `MapSense` (subtracted) |
-| `Height` | Height over the enemies |
+| `Height`, `Cover` | Height over the enemies, terrain over its head |
 | `Exposure`, `Crowd`, `Threat` | Enemies seeing it, friends near it, enemies near it (subtracted) |
 | `HealBelow` | The health under which it heals |
 

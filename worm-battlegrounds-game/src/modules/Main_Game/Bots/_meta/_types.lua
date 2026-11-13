@@ -8,6 +8,7 @@
 --- @field Knockout number
 --- @field Focus number
 --- @field Grudge number
+--- @field Pressure number
 ---
 --- # Care #
 ---
@@ -25,6 +26,7 @@
 --- @field Footing number
 --- @field Low number
 --- @field Height number
+--- @field Cover number
 --- @field Exposure number
 --- @field Crowd number
 --- @field Threat number
@@ -52,6 +54,8 @@ local _bots_Genome = {}
 --- @field AimPoints number
 --- @field MapSense number
 --- @field Choice number
+--- @field AirShots number
+--- @field Hunt number
 local _bots_Skill = {}
 
 --%%%%%%%%%%%%%%%%%%%% View
@@ -63,6 +67,7 @@ local _bots_Skill = {}
 --- @field Id string
 --- @field Model Model
 --- @field Team number
+--- @field IsBot boolean
 ---
 --- # State #
 ---
@@ -93,12 +98,16 @@ local _bots_View = {}
 --- @field Position Vector3
 --- @field Walk number
 --- @field Fly boolean
+--- @field Air boolean
+--- @field Cruise number?
 ---
 --- # Features #
 ---
 --- @field Edge number
 --- @field Footing number
 --- @field Low number
+--- @field Cover number
+--- @field Pond number
 --- @field Height number
 --- @field Exposure number
 --- @field Crowd number
@@ -270,5 +279,6 @@ local _bots_Seat = {}
 ---
 --- @field Moves number
 --- @field Jetpacks number
+--- @field Air number
 --- @field Heals number
 local _bots_Stats = {}

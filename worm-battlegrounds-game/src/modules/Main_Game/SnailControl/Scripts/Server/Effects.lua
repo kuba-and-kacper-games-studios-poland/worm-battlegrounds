@@ -81,7 +81,7 @@ function Module.ApplyEffect(participantId: string, effect: string, shiny: boolea
 		model:SetAttribute("SpeedMultiplier", _settings.SPEED_MULTIPLIER * scale)
 	elseif effect == "LowGravity" then
 		local lift: VectorForce = root:FindFirstChild("Lift")
-		lift.Force = Vector3.yAxis * root.AssemblyMass * I.S.Workspace.Gravity * (1 - I.Settings["Snails"].GRAVITY_SCALE * _settings.LOW_GRAVITY_SCALE * scale)
+		lift.Force = Vector3.yAxis * root:GetMass() * I.S.Workspace.Gravity * (1 - I.Settings["Snails"].GRAVITY_SCALE * _settings.LOW_GRAVITY_SCALE * scale)
 		model:SetAttribute("LowGravity", true)
 	else
 		warn(`[{_localName}::{script.Name}]: ({effect}) is not a movement effect!`)
@@ -109,9 +109,9 @@ function Module.ClearTurnEffects(participantId: string)
 
 	--[[ Applying ]]
 
-	-- Back to the weight every snail feels
+	-- Back to the weight every snail feels (the ball's own mass: an anchored assembly's, mid-throw, is infinite)
 	local root: BasePart = model.PrimaryPart
-	root:FindFirstChild("Lift").Force = Vector3.yAxis * root.AssemblyMass * I.S.Workspace.Gravity * (1 - I.Settings["Snails"].GRAVITY_SCALE)
+	root:FindFirstChild("Lift").Force = Vector3.yAxis * root:GetMass() * I.S.Workspace.Gravity * (1 - I.Settings["Snails"].GRAVITY_SCALE)
 	model:SetAttribute("JetpackFuel", nil)
 	model:SetAttribute("SpeedMultiplier", nil)
 	model:SetAttribute("LowGravity", nil)

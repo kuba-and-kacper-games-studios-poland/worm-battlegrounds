@@ -343,7 +343,7 @@ function Module._getJumpHeight(model: Model)
 
 	local root: BasePart = model.PrimaryPart
 	local lift: VectorForce = root:FindFirstChild("Lift")
-	local gravity: number = I.S.Workspace.Gravity - lift.Force.Y / root.AssemblyMass
+	local gravity: number = I.S.Workspace.Gravity - lift.Force.Y / root:GetMass()
 
 	--[[ Returning ]]
 
