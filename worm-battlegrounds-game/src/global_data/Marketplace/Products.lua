@@ -24,9 +24,8 @@ local data = {
         },
     ]]
 
-	-- Placeholder Id until the owner creates the product on the Creator Hub
 	["Diamonds_Handful"] = {
-		Id = 0,
+		Id = 3730916908,
 
 		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 
@@ -38,9 +37,8 @@ local data = {
 		end,
 	},
 
-	-- Placeholder Id until the owner creates the product on the Creator Hub
 	["Diamonds_Pouch"] = {
-		Id = 0,
+		Id = 3730917013,
 
 		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 
@@ -52,9 +50,8 @@ local data = {
 		end,
 	},
 
-	-- Placeholder Id until the owner creates the product on the Creator Hub
 	["Diamonds_Bag"] = {
-		Id = 0,
+		Id = 3730917086,
 
 		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 
@@ -66,9 +63,8 @@ local data = {
 		end,
 	},
 
-	-- Placeholder Id until the owner creates the product on the Creator Hub
 	["Diamonds_Chest"] = {
-		Id = 0,
+		Id = 3730917175,
 
 		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 
@@ -80,9 +76,8 @@ local data = {
 		end,
 	},
 
-	-- Placeholder Id until the owner creates the product on the Creator Hub
 	["Diamonds_Vault"] = {
-		Id = 0,
+		Id = 3730917219,
 
 		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 

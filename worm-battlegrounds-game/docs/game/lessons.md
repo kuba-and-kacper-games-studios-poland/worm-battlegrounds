@@ -141,7 +141,8 @@ it unless `Ume_StudioMapId` names another map.
 passes stay at id 0, and models and effects are stand-ins.
 
 **Now.** Marketplace entries have `Id = 0` (Marketplace warns about each at start), projectiles are plain parts,
-every skin falls back to the Classic snail, emotes show their name.
+every skin falls back to the Classic snail, emotes show their name. On 2026-11-13 the owner asked for the 5 diamond
+packs and 4 game passes to be created, so Marketplace entries have their real ids now.
 
 **Rule.** `game/practices.md` → Maps and placeholders.
 

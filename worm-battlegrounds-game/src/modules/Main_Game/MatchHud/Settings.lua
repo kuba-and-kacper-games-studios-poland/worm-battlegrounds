@@ -107,6 +107,7 @@ local _settings = {
 		Enum.KeyCode.Four,
 		Enum.KeyCode.Five,
 		Enum.KeyCode.Six,
+		Enum.KeyCode.Seven,
 	},
 
 	--[[

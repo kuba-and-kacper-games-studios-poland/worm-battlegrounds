@@ -22,8 +22,8 @@ local _settings = {
 	PASSES = {
 		{ GamePass = "VIP", Name = "VIP", Benefits = "A free skin crate every day, a gold name, a chat tag and the VIP skin" },
 		{ GamePass = "DoubleCoins", Name = "Double Coins", Benefits = "Twice the coins from every match" },
-		{ GamePass = "Slot4", Name = "Loadout slot 4", Benefits = "A fourth weapon slot, without paying coins" },
-		{ GamePass = "Slot5", Name = "Loadout slot 5", Benefits = "A fifth weapon slot, without paying coins" },
+		{ GamePass = "Slot5", Name = "Loadout slot 5", Benefits = "One more weapon slot in your loadout" },
+		{ GamePass = "Slot6", Name = "Loadout slot 6", Benefits = "One more weapon slot in your loadout" },
 	},
 
 	--%%%%%%%%%%%%%%%%%%%% VIP

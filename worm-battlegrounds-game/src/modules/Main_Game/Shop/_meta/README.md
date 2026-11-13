@@ -55,7 +55,7 @@ No remotes of its own: purchases use Marketplace's `Marketplace_PromptProductPur
 | --- | --- | --- |
 | `PACKS` | Handful 250, Pouch 500, Bag 1,000, Chest 1,500, Vault 2,500 | `{ Product, Name, Diamonds }` per pack, in order |
 | `PACK_ICON` | the local diamond icon | The packs' picture |
-| `PASSES` | VIP, Double Coins, Loadout slot 4, Loadout slot 5 | `{ GamePass, Name, Benefits }` per pass, in order |
+| `PASSES` | VIP, Double Coins, Loadout slot 5, Loadout slot 6 | `{ GamePass, Name, Benefits }` per pass, in order |
 | `VIP_PASS` | `"VIP"` | The VIP pass's Marketplace name |
 | `VIP_CHAT_TAG` | gold `[VIP] ` | Put in front of a VIP player's chat messages |
 | `VIP_CHECK_SECONDS` | `60` | How often the server looks for a new day's crate |

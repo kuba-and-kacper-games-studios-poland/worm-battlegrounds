@@ -1,6 +1,6 @@
 # Loadout
 
-The lobby's **LOADOUT** at the right: two rows of three numbered cards, the Bazooka then slots 1 to 5 (an item's
+The lobby's **LOADOUT** at the right: two rows of numbered cards (four on top, three below), the Bazooka then slots 1 to 6 (an item's
 picture, name and copies, a + on an empty slot, the lock and price on the next slot to open), and under it the
 **EMOTES** row (the owned emotes, + for the emote shop).
 
@@ -24,7 +24,7 @@ its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`)
 | --- | --- | --- |
 | `U_Loadout` | Frame | The panel (the design's `Right`) |
 | `U_Slots` | Frame | Both rows; the tutorial's arrow points at its top |
-| `U_TopRow`, `U_BottomRow` | Frame (horizontal lists) | Loadout clones the basic weapon and slots 1, 2 into the top row, slots 3 to 5 into the bottom one |
+| `U_TopRow`, `U_BottomRow` | Frame (horizontal lists) | Loadout clones the basic weapon and slots 1 to 3 into the top row, slots 4 to 6 into the bottom one |
 | `U_Emotes` | ScrollingFrame (horizontal) | The emote row: an `Emote` card per owned emote, then `S_Shop` |
 | `U_Emotes` › `S_Shop` | ImageButton (+) | Opens `EmoteShop` (its tags) |
 
@@ -74,4 +74,4 @@ turns it on outside matches (and off while a full-screen widget is open). It kee
 | Picker open for the slot | `Slot` › `Background` | `Stroke2`, `Stroke`, colour from `Look_SelectedStroke2`, `Look_SelectedStroke`, `Look_SelectedStrokeColor` (white); otherwise `Look_Stroke2`, `Look_Stroke`, `Look_StrokeColor` |
 | Empty slot | `Slot` | `S_Plus` shown, the outline `Look_EmptyStrokeColor` |
 | Item | `Slot` › `S_Name` | The item's rarity colour (`I.Rarity.GetLook(rarity).Base`) |
-| Locked | `Slot` › `S_Lock` | Shown, with the price in `S_Price` (the number alone, "2,500": the coin is the picture beside it) |
+| Locked | `Slot` › `S_Lock` | Shown, with the price in `S_Price` (the number alone, "2,500") and `CurrencyIcon` beside it: Loadout's `COIN_ICON` for the coin slot, `ROBUX_ICON` and the pass's live price for a pass slot |

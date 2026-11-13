@@ -5,20 +5,14 @@ local _settings = {
 
 	-- Slots every player has, and the most a player can open
 	BASE_SLOTS = 3,
-	MAX_SLOTS = 5,
+	MAX_SLOTS = 6,
 
-	-- What slots 4 and 5 cost in coins, and the game passes that open them instead
-	--- @type { [number]: string }
-	SLOT_PRICES = {
-		[4] = "2500",
-		[5] = "6000",
-	},
+	-- Coins for the one slot coins open (slot 4)
+	COIN_SLOT_PRICE = "2500",
 
-	--- @type { [number]: string }
-	SLOT_PASSES = {
-		[4] = "Slot4",
-		[5] = "Slot5",
-	},
+	-- The game passes that each open one more slot, in any order; the panel offers them in this order
+	--- @type { string }
+	SLOT_PASSES = { "Slot5", "Slot6" },
 
 	--%%%%%%%%%%%%%%%%%%%% Items
 
@@ -38,9 +32,13 @@ local _settings = {
 	-- The basic weapon every loadout has, first on the panel and never in the picker
 	BASIC_WEAPON = "Bazooka",
 
-	-- Cells in each of the panel's two rows (the basic weapon, then the slots), and cards in each of the picker's rows
-	SLOTS_PER_ROW = 3,
+	-- Cells in the panel's top row (the basic weapon, then the slots; the rest go below), and cards in each of the picker's rows
+	SLOTS_PER_ROW = 4,
 	ITEMS_PER_ROW = 3,
+
+	-- The picture beside a locked slot's price: coins for the coin slot, Robux for a pass
+	COIN_ICON = "rbxassetid://111931430831562",
+	ROBUX_ICON = "rbxassetid://95337213544429",
 }
 
 return _settings

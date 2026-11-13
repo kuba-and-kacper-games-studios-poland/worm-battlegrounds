@@ -21,36 +21,32 @@ local data = {
         },
     ]]
 
-	-- Placeholder Id until the owner creates the pass on the Creator Hub
-	["Slot4"] = {
-		Id = 0,
-		Version = 1,
-
-		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
-		RewardPlaces = { `{I.Config.PlaceLoader.PlaceId}` },
-	},
-
-	-- Placeholder Id until the owner creates the pass on the Creator Hub
 	["Slot5"] = {
-		Id = 0,
+		Id = 2088224515,
 		Version = 1,
 
 		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 		RewardPlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 	},
 
-	-- Placeholder Id until the owner creates the pass on the Creator Hub
+	["Slot6"] = {
+		Id = 2088944528,
+		Version = 1,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		RewardPlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+	},
+
 	["DoubleCoins"] = {
-		Id = 0,
+		Id = 2089574514,
 		Version = 1,
 
 		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 		RewardPlaces = { `{I.Config.PlaceLoader.PlaceId}` },
 	},
 
-	-- Placeholder Id until the owner creates the pass on the Creator Hub
 	["VIP"] = {
-		Id = 0,
+		Id = 2090714510,
 		Version = 1,
 
 		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },

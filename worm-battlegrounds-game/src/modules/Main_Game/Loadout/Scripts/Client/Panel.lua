@@ -29,6 +29,9 @@ local selectedSlot: number? = nil
 -- Opens the picker for a slot
 local openPicker: (slot: number) -> ()
 
+-- The slot passes' live Robux prices, by pass, once Roblox answers
+local passPrices = {} --- @type { [string]: string }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -140,7 +143,8 @@ end
 
 --[[
 	Draws every slot: its item's picture, name in its rarity's colour, copies and shiny mark; a + on an empty open
-	slot; the lock and price on the next slot to open (later ones hide); the selected look while its picker is open.
+	slot; the lock and price on the next slot to open (later ones hide): coins while the coin slot is closed, else the
+	next slot pass's Robux price; the selected look while its picker is open.
 ]]
 function Module._refresh()
 	--[[ Checks ]]
@@ -153,6 +157,9 @@ function Module._refresh()
 	--[[ Applying ]]
 
 	local unlocked: number = moduleRep:GetAttribute("Unlocked") or _settings.BASE_SLOTS
+	local coinSlot: boolean = moduleRep:GetAttribute("CoinSlotOpen") ~= true
+	local nextPass: string? = if coinSlot then nil else Module._getNextPass()
+	local price: string = if coinSlot then I.Format.Text(_settings.COIN_SLOT_PRICE) elseif nextPass then Module._getPassPrice(nextPass) else ""
 	for slot: number, box: ImageButton in pairs(boxes) do
 		local itemId: string = moduleRep:GetAttribute(`Slot{slot}`) or ""
 		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData?
@@ -172,7 +179,8 @@ function Module._refresh()
 		box:FindFirstChild("S_Plus").Visible = empty
 		box:FindFirstChild("S_Shiny").Visible = item ~= nil and copies >= _settings.SHINY_COPIES
 		box:FindFirstChild("S_Lock").Visible = locked
-		box:FindFirstChild("S_Price", true).Text = if _settings.SLOT_PRICES[slot] then I.Format.Text(_settings.SLOT_PRICES[slot]) else ""
+		box:FindFirstChild("S_Price", true).Text = price
+		box:FindFirstChild("CurrencyIcon", true).Image = if coinSlot then _settings.COIN_ICON else _settings.ROBUX_ICON
 		background:FindFirstChild("Stroke2").Image = box:GetAttribute(if selected then "Look_SelectedStroke2" else "Look_Stroke2")
 		stroke.Image = box:GetAttribute(if selected then "Look_SelectedStroke" else "Look_Stroke")
 		stroke.ImageColor3 = box:GetAttribute(if selected then "Look_SelectedStrokeColor" elseif empty then "Look_EmptyStrokeColor" else "Look_StrokeColor")
@@ -183,7 +191,7 @@ end
 
 --[[
 	Opens the picker for an open slot, showing that slot selected; for the next locked one, asks whether to open it
-	with coins.
+	with coins, or prompts the next slot pass once the coin slot is open.
 ]]
 function Module._onSlotPressed(slot: number)
 	--[[ Local Variables ]]
@@ -199,13 +207,75 @@ function Module._onSlotPressed(slot: number)
 		return
 	end
 
+	--[[ Buying ]]
+
+	-- The coin slot is open, so the next slot comes from a pass
+	if moduleRep and moduleRep:GetAttribute("CoinSlotOpen") == true then
+		local nextPass: string? = Module._getNextPass()
+		if nextPass then
+			I.Network.Fire("Marketplace_PromptGamePassPurchase", nextPass)
+		end
+		return
+	end
+
 	--[[ Unlocking ]]
 
-	I.WidgetManager.ShowConfirmation(`Open slot {slot} for {_settings.SLOT_PRICES[slot]} coins?`, function()
+	I.WidgetManager.ShowConfirmation(`Open slot {slot} for {I.Format.Text(_settings.COIN_SLOT_PRICE)} coins?`, function()
 		if not I.Network.Invoke("Loadout_UnlockSlot", slot) then
 			I.WidgetManager.ShowMessage("Not enough coins yet.")
 		end
 	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Next Pass
+
+--[[
+	Returns the first slot pass the player doesn't own yet, or nil when they own them all.
+]]
+--- @return string?
+function Module._getNextPass()
+	--[[ Searching ]]
+
+	for _index: number, passName: string in ipairs(_settings.SLOT_PASSES) do
+		if not I.G_Marketplace.PlayerOwnsGamePass(I.S.Players.LocalPlayer, passName) then
+			return passName
+		end
+	end
+
+	--[[ Returning ]]
+
+	return nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Pass Price
+
+--[[
+	Returns a slot pass's Robux price, or "..." while Roblox hasn't answered yet; the first call asks, then redraws the
+	panel with the price.
+]]
+--- @return string
+function Module._getPassPrice(passName: string)
+	--[[ Checks ]]
+
+	-- Check if the price is known or already asked for
+	if passPrices[passName] then
+		return passPrices[passName]
+	end
+
+	--[[ Fetching ]]
+
+	passPrices[passName] = "..."
+	task.spawn(function()
+		local price: (string | number)? = I.G_Marketplace.GetProductPrice(passName, Enum.InfoType.GamePass, true)
+		passPrices[passName] = if price then I.Format.Text(tostring(price)) else "-"
+		Module._refresh()
+	end)
+
+	--[[ Returning ]]
+
+	return passPrices[passName]
 end
 
 return Module

@@ -101,7 +101,7 @@ second), `Combat_Fire` and `Combat_Detonate`, and Match's `Match_Leave` and `Mat
 | `OUT_AVATAR_COLOR` | `(70, 70, 70)` | A knocked-out snail's avatar tint in the team panels |
 | `BOT_AVATAR` | `rbxassetid://75705415395334` | A bot's avatar in the team panels, the turn list, the turn callout and the results: the default snail's voxel headshot (`art/bots`), uploaded to The Snail Studio group |
 | `LEAVE_TEXT`, `MUSIC_TEXT`, `LEAVE_QUESTION` | | The top bar buttons and the leave confirmation |
-| `SLOT_KEYS` | One … Six | Keys that pick slots 1 to 6 (the Bazooka first); also how many slots the bar shows |
+| `SLOT_KEYS` | One … Seven | Keys that pick boxes 1 to 7 (the Bazooka first, then loadout slots 1 to 6); also how many boxes the bar shows |
 | `MODEL_FOV`, `MODEL_VIEW_DIRECTION`, `MODEL_PADDING` | `30`, `0.3, 0.25, 1`, `1.15` | A slot's weapon model: the camera's field of view, the direction it looks from (the muzzle points right), and the room around the model's longest side |
 | `FEED_LINES`, `FEED_SECONDS` | `4`, `6` | Kill feed length and how long a line stays |
 | `AIM_SEND_INTERVAL` | `0.1` | How often the aim is sent to others during the player's turn |

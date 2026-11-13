@@ -450,7 +450,9 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
 - **Item ids are saved, so a renamed item keeps its id:** the Baseball bat became the Golf club on 2026-11-12 (its
   name, model, icon), and its id stays `BaseballBat` in the Inventory and Arsenal rows, so saved inventories and
   loadouts still find it.
-- **Placeholders until the owner provides the real thing:** developer products and game passes keep `Id = 0`; weapon
+- **Developer products and game passes are real** since 2026-11-13: the owner had them created on the Creator Hub,
+  and their ids are in `src/global_data/Marketplace/`. Robux prices live only on the Creator Hub (Managed pricing off).
+- **Placeholders until the owner provides the real thing:** weapon
   projectiles and effects are made in code, and skins without a snail of their own (FBI Agent, Prisoner, VIP, Wizard)
   fall back to the Classic snail. Each such spot has a `shortcut:` comment or a README line saying it's a placeholder.
   Never create products, passes or models on the owner's behalf.

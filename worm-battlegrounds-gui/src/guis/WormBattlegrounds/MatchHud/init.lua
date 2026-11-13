@@ -168,7 +168,7 @@ local _gui = {
 					BorderSizePixel = 0,
 					LayoutOrder = 8,
 					Position = UDim2.fromScale(0.5, 0.9639),
-					Size = UDim2.fromScale(0.4688, 0.0907),
+					Size = UDim2.fromScale(0.5469, 0.0907),
 					ZIndex = 9,
 				},
 				Children = {
@@ -196,7 +196,7 @@ local _gui = {
 					{
 						Primitive = "UIAspectRatioConstraint",
 						Props = {
-							AspectRatio = 9.1959,
+							AspectRatio = 10.7286,
 						},
 					},
 					{
@@ -208,8 +208,8 @@ local _gui = {
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
 							LayoutOrder = 2,
-							Position = UDim2.fromScale(-0.035, 0.5),
-							Size = UDim2.fromScale(0.06, 0.35),
+							Position = UDim2.fromScale(-0.03, 0.5),
+							Size = UDim2.fromScale(0.0514, 0.35),
 							Visible = false,
 							ZIndex = 3,
 							Image = "rbxassetid://83675298913757",
@@ -229,8 +229,8 @@ local _gui = {
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
 							LayoutOrder = 2,
-							Position = UDim2.fromScale(1.035, 0.5),
-							Size = UDim2.fromScale(0.06, 0.35),
+							Position = UDim2.fromScale(1.03, 0.5),
+							Size = UDim2.fromScale(0.0514, 0.35),
 							Visible = false,
 							ZIndex = 3,
 							Image = "rbxassetid://118989647484332",
@@ -3239,7 +3239,7 @@ local _gui = {
 				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
 				LayoutOrder = 0,
-				Size = UDim2.fromScale(0.1667, 1),
+				Size = UDim2.fromScale(0.1429, 1),
 			},
 			Attributes = {
 				HoverSound_SoundGroup = "UI",

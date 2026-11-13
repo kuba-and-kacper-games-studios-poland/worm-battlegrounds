@@ -33,7 +33,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_LoadoutBar` › `S_PrevHint`, `S_NextHint` | ImageLabel, `Console_Hint` (`Console_Action` `WeaponPrevious`, `WeaponNext`) | LB / RB beside the bar on Console |
 | `U_PadControls` | Frame, `Console_Hint` (`Console_HintHidden` until the player's turn) | The match's pad controls at the bottom left, a row each (`Console_Action`): charge and fire, aim, jump, move, camera, zoom in and out, menus |
 | `U_EmoteButton` › `Button` › `PadHint` | ImageLabel, `Console_Hint` (`Emotes`) | X on the EMOTES button |
-| `U_Slots` | Frame (horizontal list) | Holds one `BarSlot` per slot key (6) |
+| `U_Slots` | Frame (horizontal list) | Holds one `BarSlot` per slot key (7: the Bazooka and loadout slots 1 to 6) |
 | `U_Stamina` | Frame, over the loadout bar | On the player's turn |
 | `U_Stamina` › `S_Bar`, `S_BarMask` | ImageLabels (`Fit`) with a UIGradient each | How far the snail can still walk: the bar and its texture, cut by their gradients at the share times MatchHud's `BAR_FILL` (1: the studio's complete PowerSlider, 2026-11-12, fills its whole width; sized 0.9319 × 0.4312, as the track) |
 | `U_Stamina` › `S_Text` | TextLabel | "Stamina 70%" |
@@ -65,7 +65,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| BarSlot` | `U_Slots` | An ImageButton: `S_Icon`, `S_Key` ("1"–"6", Desktop only), `S_Uses` ("x5"), `S_Name`, `S_Turns` (the cooldown's turns left, hidden), `S_Plus` (an empty slot's "+", hidden), `S_UseHint` (Y on Console, a `Console_Hint` with `Console_Action` `UseUtility`, hidden by `Console_HintHidden` until the pad's cursor rests on the slot), `Background` › `Stroke` (the outline the looks recolour) |
+| `PREFAB \| BarSlot` | `U_Slots` | An ImageButton: `S_Icon`, `S_Key` ("1"–"7", Desktop only), `S_Uses` ("x5"), `S_Name`, `S_Turns` (the cooldown's turns left, hidden), `S_Plus` (an empty slot's "+", hidden), `S_UseHint` (Y on Console, a `Console_Hint` with `Console_Action` `UseUtility`, hidden by `Console_HintHidden` until the pad's cursor rests on the slot), `Background` › `Stroke` (the outline the looks recolour) |
 | `PREFAB \| TurnEntry` | `U_TurnList` | `S_Name` (with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name, whose `UITextSizeConstraint` it lowers so the name stays on one line), `Background` › `Main`, `S_Avatar` (square, under the outlines), `Stroke`, `S_Mask` (the current look's shine) |
 | `PREFAB \| Team` | `U_TeamsLeft` (clones go on either side) | `S_Players` (a horizontal list holding the nested `PREFAB \| TeamPlayer`), `S_Name` (`TextCase_Upper`) |
 | `PREFAB \| TeamPlayer` | nested in `Team` › `S_Players`, hidden | `Background` › `Main`, `S_Avatar` (square, under the outlines), `Stroke2`, `Stroke` |
@@ -87,7 +87,7 @@ The game's `MatchHud` module: it turns the ScreenGui on while the player is in a
 | `S_MyTurn` (Toggle) | On: "Your turn!", stamina and the slider; off: "Ninja's turn" in red with the wait under it |
 | `S_Aiming` (Toggle) | The power slider (and FIRE on Mobile) shows |
 | `S_Power` (Slider) | The slider's power |
-| `S_Slots` (Slider, 1 to 6) | Loadout items; the rest of the 6 slots show "+" (the second item cools down) |
+| `S_Slots` (Slider, 1 to 7) | Loadout items; the rest of the 7 slots show "+" (the second item cools down) |
 | `S_Teams` (Slider, 2 to 4) | Teams of two in the corners |
 | `S_Feed` (Slider, 0 to 3) | Kill feed lines |
 | `S_Wheel` (Toggle) | Opens the emote wheel |
@@ -102,7 +102,7 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
-| Pick a loadout slot | 1–6 or click | Tap | LB / RB (a utility only gets the cursor), Y uses it | MatchHud (`MatchHud_Slots`; the pad through `I.Console`: `WeaponPrevious`, `WeaponNext`, `UseUtility`) |
+| Pick a loadout slot | 1–7 or click | Tap | LB / RB (a utility only gets the cursor), Y uses it | MatchHud (`MatchHud_Slots`; the pad through `I.Console`: `WeaponPrevious`, `WeaponNext`, `UseUtility`) |
 | Aim | The mouse, from the snail | A finger on the arena (the aim stays where it lifts) | Right stick | MatchHud (Aim) |
 | Charge the power | Hold the left button | Hold `U_Fire` | Hold RT | MatchHud (Aim; Combat's `CHARGE_SECONDS`, firing by itself at full) |
 | Fire | Let go | Let go of `U_Fire` | Let go of RT | MatchHud (Aim) |

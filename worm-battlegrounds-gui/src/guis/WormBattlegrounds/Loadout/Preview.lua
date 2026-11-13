@@ -9,15 +9,18 @@ local _localName: string = "LoadoutPreview"
 
 --[[ Examples ]]
 
--- The basic weapon, then the items in slots 1 to 5 ("" is empty), as Loadout's Panel draws them
+-- The basic weapon, then the items in slots 1 to 6 ("" is empty), as Loadout's Panel draws them
 --- @type { string }
-local ITEMS = { "Bazooka", "Grenade", "Shotgun", "", "Uzi", "Dynamite" }
+local ITEMS = { "Bazooka", "Grenade", "Shotgun", "", "Uzi", "Dynamite", "Jetpack" }
 
--- Cells in each row and the slots' prices, as Loadout's SLOTS_PER_ROW and SLOT_PRICES
-local SLOTS_PER_ROW: number = 3
+-- Cells in the top row, as Loadout's SLOTS_PER_ROW
+local SLOTS_PER_ROW: number = 4
 
---- @type { [number]: string }
-local SLOT_PRICES = { [4] = "2,500", [5] = "6,000" }
+-- The locked slot's price and picture: coins for slot 4, Robux for slots 5 and 6, as Loadout's Panel shows them
+local COIN_PRICE: string = "2,500"
+local ROBUX_PRICE: string = "149"
+local COIN_ICON: string = "rbxassetid://111931430831562"
+local ROBUX_ICON: string = "rbxassetid://95337213544429"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -39,8 +42,8 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Slider", Id = "S_Unlocked", Label = "Open slots", Value = 3, Min = 3, Max = 5, Step = 1 },
-		{ Control = "Slider", Id = "S_Selected", Label = "Picking slot (0: none)", Value = 1, Min = 0, Max = 5, Step = 1 },
+		{ Control = "Slider", Id = "S_Unlocked", Label = "Open slots", Value = 3, Min = 3, Max = 6, Step = 1 },
+		{ Control = "Slider", Id = "S_Selected", Label = "Picking slot (0: none)", Value = 1, Min = 0, Max = 6, Step = 1 },
 		{ Control = "Slider", Id = "S_Emotes", Label = "Emotes", Value = 4, Min = 1, Max = 9, Step = 1 },
 		{ Control = "Toggle", Id = "S_Shiny", Label = "First item shiny", Value = false },
 	},
@@ -88,7 +91,8 @@ function Module.Apply(preview)
 		card:Get("S_Plus").Instance.Visible = empty
 		card:Get("S_Shiny").Instance.Visible = cell == 2 and preview.Values.S_Shiny
 		card:Get("S_Lock").Instance.Visible = locked
-		card:Get("S_Price").Instance.Text = SLOT_PRICES[slot] or ""
+		card:Get("S_Price").Instance.Text = if slot == 4 then COIN_PRICE else ROBUX_PRICE
+		card:Get("S_Price").Instance:FindFirstChild("CurrencyIcon").Image = if slot == 4 then COIN_ICON else ROBUX_ICON
 		root:FindFirstChild("Background"):FindFirstChild("Stroke2").Image = root:GetAttribute(if selected then "Look_SelectedStroke2" else "Look_Stroke2")
 		stroke.Image = root:GetAttribute(if selected then "Look_SelectedStroke" else "Look_Stroke")
 		stroke.ImageColor3 = root:GetAttribute(if selected then "Look_SelectedStrokeColor" elseif empty then "Look_EmptyStrokeColor" else "Look_StrokeColor")

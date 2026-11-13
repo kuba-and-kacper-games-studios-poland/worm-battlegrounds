@@ -34,8 +34,8 @@ function Module.Init()
 	--- @type Player_ProfileData
 	local _pt = I.Player.ProfileTemplate
 	_pt["Loadout"] = {
-		Slots = { "", "", "", "", "" },
-		CoinSlots = { Slot4 = false, Slot5 = false },
+		Slots = { "", "", "", "", "", "" },
+		CoinSlots = { Slot4 = false },
 	}
 
 	----------------------------
@@ -70,6 +70,18 @@ function Module.Init()
 		GetUnlocked = Module.GetUnlocked,
 		GetMatchLoadout = Module.GetMatchLoadout,
 	}
+end
+
+--%%%%%%%%%%%%%%%%%%%% Start
+
+function Module.Start()
+	----------------------------
+	--------- STARTING ---------
+	----------------------------
+
+	for _index: number, passName: string in ipairs(_settings.SLOT_PASSES) do
+		I.Topic.Subscribe(`Marketplace_GamePassPurchaseSucceeded-{passName}`, Module._publish)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Player Control
@@ -146,7 +158,7 @@ end
 
 --[[
 	**SERVER** |
-	Opens slot 4 or 5 with coins (SLOT_PRICES); slot 5 only once slot 4 is open. Returns whether it's open now.
+	Opens the coin slot (COIN_SLOT_PRICE) as the next slot, once per player. Returns whether it's open now.
 ]]
 --- @return boolean
 function Module.UnlockSlot(player: Player, slot: number)
@@ -163,19 +175,19 @@ function Module.UnlockSlot(player: Player, slot: number)
 
 	--[[ Checks ]]
 
-	-- Check if it's the next slot to open
-	if slot ~= Module.GetUnlocked(player) + 1 or not _settings.SLOT_PRICES[slot] then
+	-- Check if it's the next slot to open and the coin slot isn't open yet
+	if slot ~= Module.GetUnlocked(player) + 1 or slot > _settings.MAX_SLOTS or Module._coinSlotsOpen(player) > 0 then
 		return false
 	end
 
 	-- Check if the player can pay
-	if not I.Currency.Subtract(player, "Coins", _settings.SLOT_PRICES[slot]) then
+	if not I.Currency.Subtract(player, "Coins", _settings.COIN_SLOT_PRICE) then
 		return false
 	end
 
 	--[[ Saving ]]
 
-	moduleData["CoinSlots"][`Slot{slot}`] = true
+	moduleData["CoinSlots"]["Slot4"] = true
 
 	--[[ Publishing ]]
 
@@ -189,8 +201,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Publish
 
 --[[
-	Writes a player's slots (Slot1 to Slot5, an item id or "") and how many are open (Unlocked) into their Loadout
-	folder.
+	Writes a player's slots (Slot1 to Slot6, an item id or "") into their Loadout folder, with how many are open
+	(Unlocked) and whether the coin slot is open (CoinSlotOpen).
 ]]
 function Module._publish(player: Player)
 	-- Check if player is valid | SERVER
@@ -210,6 +222,7 @@ function Module._publish(player: Player)
 		I.Replicator.Set(player, _localName, `Slot{slot}`, moduleData["Slots"][slot] or "")
 	end
 	I.Replicator.Set(player, _localName, "Unlocked", Module.GetUnlocked(player))
+	I.Replicator.Set(player, _localName, "CoinSlotOpen", Module._coinSlotsOpen(player) > 0)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -218,30 +231,23 @@ end
 
 --[[
 	**SERVER** |
-	Returns how many slots a player has open: 3, plus slot 4 (coins or its game pass), plus slot 5 (the same, once
-	slot 4 is open).
+	Returns how many slots a player has open: 3, plus one for the coin slot, plus one per slot game pass owned, up to
+	MAX_SLOTS.
 ]]
 --- @return number
 function Module.GetUnlocked(player: Player)
-	--[[ Data ]]
-
-	--- @type Player_ProfileData
-	local profileData = I.Player.GetProfile(player).Data
-	local moduleData = profileData["Loadout"]
-
 	--[[ Counting ]]
 
-	local unlocked: number = _settings.BASE_SLOTS
-	for slot: number = _settings.BASE_SLOTS + 1, _settings.MAX_SLOTS do
-		if not moduleData["CoinSlots"][`Slot{slot}`] and not I.G_Marketplace.PlayerOwnsGamePass(player, _settings.SLOT_PASSES[slot]) then
-			break
+	local unlocked: number = _settings.BASE_SLOTS + Module._coinSlotsOpen(player)
+	for _index: number, passName: string in ipairs(_settings.SLOT_PASSES) do
+		if I.G_Marketplace.PlayerOwnsGamePass(player, passName) then
+			unlocked += 1
 		end
-		unlocked = slot
 	end
 
 	--[[ Returning ]]
 
-	return unlocked
+	return math.min(unlocked, _settings.MAX_SLOTS)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Match Loadout
@@ -277,6 +283,33 @@ function Module.GetMatchLoadout(player: Player)
 	--[[ Returning ]]
 
 	return items, shiny
+end
+
+--%%%%%%%%%%%%%%%%%%%% Coin Slots Open
+
+--[[
+	Returns how many slots a player opened with coins: the coin slot, plus slot 5 from before it became a pass slot.
+]]
+--- @return number
+function Module._coinSlotsOpen(player: Player)
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Loadout"]
+
+	--[[ Counting ]]
+
+	local count: number = 0
+	for _key: string, open: boolean in pairs(moduleData["CoinSlots"]) do
+		if open then
+			count += 1
+		end
+	end
+
+	--[[ Returning ]]
+
+	return count
 end
 
 --%%%%%%%%%%%%%%%%%%%% Can Slot

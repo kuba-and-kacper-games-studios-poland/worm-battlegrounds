@@ -29,6 +29,7 @@ local SLOT_ITEMS = {
 	{ "Homing missile", "rbxassetid://107350591430267" },
 	{ "Dynamite", "rbxassetid://99998769993186" },
 	{ "Jetpack", "rbxassetid://99911728604760" },
+	{ "Uzi", "rbxassetid://79744307043186" },
 }
 
 -- The snails in the match: name and team colour, two teams of two, then two more teams
@@ -90,7 +91,7 @@ local Module = {
 		{ Control = "Toggle", Id = "S_MyTurn", Label = "My turn", Value = true },
 		{ Control = "Toggle", Id = "S_Aiming", Label = "Aiming", Value = true },
 		{ Control = "Slider", Id = "S_Power", Label = "Power", Value = 0.75, Min = 0, Max = 1, Step = 0.05 },
-		{ Control = "Slider", Id = "S_Slots", Label = "Loadout items", Value = 5, Min = 1, Max = 6, Step = 1 },
+		{ Control = "Slider", Id = "S_Slots", Label = "Loadout items", Value = 5, Min = 1, Max = 7, Step = 1 },
 		{ Control = "Slider", Id = "S_Teams", Label = "Teams of two", Value = 4, Min = 2, Max = 4, Step = 1 },
 		{ Control = "Slider", Id = "S_Feed", Label = "Kill feed lines", Value = 2, Min = 0, Max = 3, Step = 1 },
 		{ Control = "Toggle", Id = "S_Wheel", Label = "Emote wheel open", Value = false },
@@ -175,7 +176,7 @@ function Module.Apply(preview)
 
 	--[[ Loadout Bar ]]
 
-	local slots = preview.Fill("PREFAB | BarSlot", 6) --- @type { UmeGui_Subview }
+	local slots = preview.Fill("PREFAB | BarSlot", #SLOT_ITEMS) --- @type { UmeGui_Subview }
 
 	--- @param slot UmeGui_Subview
 	for index: number, slot in ipairs(slots) do
