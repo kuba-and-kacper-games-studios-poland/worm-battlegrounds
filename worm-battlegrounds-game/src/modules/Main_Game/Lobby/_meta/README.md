@@ -6,8 +6,8 @@ match there (in Studio, where nothing saves, it marks the whole tutorial done in
 Workspace attribute `StudioTutorial` is true; with it true, the Lobby map alone, which can't start the match, marks
 only the match played, so the crate and loadout steps still play); and offers
 a player who dropped out of a running match to go back. Behind the lobby's panels the camera looks at a stage, as
-Fortnite's lobby does: the player's snail stands on the front pod in their equipped skin, and the rest of their party
-in this server stand on the pods around it, each in their own skin (the `EquippedSkin` Player attribute Cosmetics
+Fortnite's lobby does: the player's snail stands on the front pod in the pieces they wear, and the rest of their party
+in this server stand on the pods around it, each in their own (the `Outfit` Player attribute Cosmetics
 writes), by user id; empty pods stay bare. Each client builds its own snails, so everyone sees themselves in front.
 The client shows the lobby's panels and holds the camera on the stage except while the player is in a match (the
 `InMatch` Player attribute, which only changes on the Studio map), and hides the panels while a full-screen widget
@@ -19,7 +19,7 @@ shop over Loadout), from WidgetManager's `WidgetManager_Opened` and `WidgetManag
 | Folder | `src/modules/Main_Game/Lobby` |
 | Runs on | Server, Client · Lobby map, Studio map |
 | Exposes | `I.Lobby` (client) |
-| Uses | `I.Player`, `I.Tutorial`, `I.MatchBoard`, `I.TeleportExternal`, `I.TeleportToServer`, `I.WidgetManager`, `I.UserInterface`, `I.G_Cosmetics`, `I.SnailRig`, `I.Buff` (the `FOV` buff), the `PartyId` and `EquippedSkin` Player attributes (Party, Cosmetics) |
+| Uses | `I.Player`, `I.Tutorial`, `I.MatchBoard`, `I.TeleportExternal`, `I.TeleportToServer`, `I.WidgetManager`, `I.UserInterface`, `I.G_Cosmetics`, `I.SnailRig`, `I.Buff` (the `FOV` buff), the `PartyId` and `Outfit` Player attributes (Party, Cosmetics) |
 | Saves | `Profile.Match` (read and cleared here, written by the Match server) |
 
 ## Files

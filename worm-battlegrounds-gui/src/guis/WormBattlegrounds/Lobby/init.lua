@@ -225,6 +225,55 @@ local _gui = {
 											AspectRatio = 1.2058,
 										},
 									},
+									-- Pieces the player hasn't seen yet on the Style screen (Cosmetics)
+									{
+										Primitive = "Frame",
+										Id = "S_New",
+										Props = {
+											AnchorPoint = Vector2.new(1, 0),
+											Position = UDim2.fromScale(1.05, -0.08),
+											Size = UDim2.fromScale(0.45, 0.24),
+											ZIndex = 8,
+											Visible = false,
+											BackgroundColor3 = Color3.fromRGB(255, 77, 77),
+											BackgroundTransparency = 0,
+											Rotation = 8,
+											BorderSizePixel = 0,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.3, 0) } },
+											{
+												Primitive = "UIStroke",
+												Props = { Color = Color3.fromRGB(20, 20, 28), Thickness = 3 },
+											},
+											{
+												Primitive = "TextLabel",
+												Props = {
+													Name = "Label",
+													Position = UDim2.fromScale(0.1, 0.12),
+													Size = UDim2.fromScale(0.8, 0.76),
+													ZIndex = 9,
+													Text = "NEW!",
+													TextColor3 = Color3.fromRGB(255, 255, 255),
+													TextScaled = true,
+													TextWrapped = true,
+													RichText = true,
+													FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+												},
+												Children = {
+													{
+														Primitive = "UIStroke",
+														Props = {
+															Thickness = 0.08,
+															StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+														},
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 							{

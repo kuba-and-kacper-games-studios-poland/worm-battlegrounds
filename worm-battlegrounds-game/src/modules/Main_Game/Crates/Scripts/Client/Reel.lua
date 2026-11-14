@@ -57,9 +57,9 @@ function Module.Start()
 
 	--[[ Pictures ]]
 
-	-- The snails' pictures load now, so the first reel shows them as it rolls
+	-- The pieces' pictures load now, so the first reel shows them as it rolls
 	local pictures = {} --- @type { string }
-	for _model: string, picture: string in pairs(_settings.SKIN_PICTURES) do
+	for _pieceId: string, picture: string in pairs(_settings.PIECE_PICTURES) do
 		table.insert(pictures, picture)
 	end
 	task.spawn(function()
@@ -312,8 +312,8 @@ end
 
 --[[
 	Writes an item on a card: its picture and name, the outline and glow in its rarity's colour; a gold card instead
-	shows the star, "???" and gold. A skin with a snail shows the snail, posed, in place of its picture, in the card's
-	S_Model viewport; a reel card (inReel) shows the snail's picture instead (SKIN_PICTURES), as a rolling reel can't
+	shows the star, "???" and gold. A snail piece shows a snail wearing it, posed, in place of its picture, in the card's
+	S_Model viewport; a reel card (inReel) shows the piece's picture instead (PIECE_PICTURES), as a rolling reel can't
 	draw that many snails. A card with no name centres its picture (the card's Look_NoName* attributes).
 ]]
 function Module.FillCard(card: Frame, itemId: string, gold: boolean, showName: boolean, inReel: boolean?)
@@ -321,7 +321,7 @@ function Module.FillCard(card: Frame, itemId: string, gold: boolean, showName: b
 
 	local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData
 	local snail: string? = if gold then nil else SkinModels.GetModelName(itemId)
-	local picture: string? = if snail and inReel then _settings.SKIN_PICTURES[snail] else nil
+	local picture: string? = if snail and inReel then SkinModels.GetPicture(itemId) else nil
 	local live: boolean = snail ~= nil and not inReel
 
 	--[[ Elements ]]

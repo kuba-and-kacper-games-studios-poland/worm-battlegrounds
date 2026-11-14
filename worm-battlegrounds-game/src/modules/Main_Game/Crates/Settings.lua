@@ -170,21 +170,53 @@ local _settings = {
 	CARD_NAME_TEXT = 0.1,
 
 	--[[
-		The pictures a rolling reel's cards show for the skins' snails, by snail model (art/skins → Pictures): each snail
-		posed and framed as a still card's live one. A snail missing here keeps its item picture on reel cards
+		The pictures a rolling reel's cards show for the snail pieces, by piece (art/skins → Piece pictures):
+		each piece on the showcase snail, posed and framed as a still card's live one. A piece missing here keeps its
+		item picture on reel cards
 	]]
 	--- @type { [string]: string }
-	SKIN_PICTURES = {
-		Classic = "rbxassetid://86349344725414",
-		Clown = "rbxassetid://81428353214751",
-		Cowboy = "rbxassetid://81535697083664",
-		Devil = "rbxassetid://129536958641848",
-		Knight = "rbxassetid://86133641830063",
-		Ninja = "rbxassetid://91308817099254",
-		Pirate = "rbxassetid://92516621597215",
-		Robot = "rbxassetid://127764579921216",
-		Skeleton = "rbxassetid://103558601021448",
-		Soldier = "rbxassetid://122213949366505",
+	PIECE_PICTURES = {
+
+		--[[ Hat ]]
+
+		Hat_CaptainsTricorn = "rbxassetid://135056987354085",
+		Hat_FieldHelmet = "rbxassetid://101309397217180",
+		Hat_LichCrown = "rbxassetid://124834777223000",
+		Hat_PlumedHelm = "rbxassetid://78178626354983",
+		Hat_RedHachimaki = "rbxassetid://100345101852523",
+		Hat_RingmasterTopper = "rbxassetid://125953884372128",
+		Hat_TenGallon = "rbxassetid://81386367168512",
+
+		--[[ Neck ]]
+
+		Neck_CamoScarf = "rbxassetid://107784575265186",
+		Neck_CrestShield = "rbxassetid://105632554660040",
+		Neck_DustyBandana = "rbxassetid://132218634265014",
+		Neck_FrillyRuff = "rbxassetid://132670623238992",
+		Neck_SeaScarf = "rbxassetid://122537884582716",
+		Neck_SpikedCollar = "rbxassetid://137220668967623",
+
+		--[[ Body ]]
+
+		Body_BareBones = "rbxassetid://80074478434512",
+		Body_Brimstone = "rbxassetid://118813170196729",
+		Body_ChromePlating = "rbxassetid://76381636906404",
+		Body_GardenPink = "rbxassetid://126070750650734",
+		Body_Greasepaint = "rbxassetid://96633096951149",
+		Body_Midnight = "rbxassetid://85311614692852",
+
+		--[[ Shell ]]
+
+		Shell_Bunker = "rbxassetid://87105334966971",
+		Shell_ConfettiCoil = "rbxassetid://123134201536568",
+		Shell_GardenSwirl = "rbxassetid://119322806304281",
+		Shell_HellfireSpiral = "rbxassetid://114094632129242",
+		Shell_Ossuary = "rbxassetid://84698625447586",
+		Shell_Rampart = "rbxassetid://84063160787956",
+		Shell_ReactorCore = "rbxassetid://85928308867368",
+		Shell_Saddlebag = "rbxassetid://133177146785625",
+		Shell_ShadowCoil = "rbxassetid://90964512918642",
+		Shell_TreasureHold = "rbxassetid://131182469070766",
 	},
 
 	--[[
@@ -234,7 +266,9 @@ local _settings = {
 	LEGENDARY_DROPS = {
 		BlackHoleGrenade = "BlackHole",
 		VarietyGrenade = "Variety",
-		Skin_Skeleton = "Skeleton",
+		Hat_LichCrown = "Skeleton",
+		Body_BareBones = "Skeleton",
+		Shell_Ossuary = "Skeleton",
 		LowGravityPotion = "LowGravity",
 	},
 

@@ -156,13 +156,13 @@ function Module.Build()
 			break
 		end
 
-		-- What they take into the match: their loadout and their skin, chosen in the lobby
+		-- What they take into the match: their loadout and their snail's outfit, chosen in the lobby
 		local items = {} --- @type { string }
 		local shinyItems = {} --- @type { [string]: boolean }
-		local skinId: string
+		local outfit = {} --- @type Cosmetics_Outfit
 		local skinShiny: boolean
 		items, shinyItems = I.Loadout.GetMatchLoadout(player)
-		skinId, skinShiny = I.Cosmetics.GetSkin(player)
+		outfit, skinShiny = I.Cosmetics.GetOutfit(player)
 
 		--- @type Match_Participant
 		local participant = {
@@ -174,7 +174,7 @@ function Module.Build()
 			IsBot = false,
 			Loadout = items,
 			ShinyItems = shinyItems,
-			Skin = skinId,
+			Skin = I.G_Cosmetics.GetOutfitText(outfit),
 			Shiny = skinShiny,
 			Vip = player:GetAttribute("Vip") == true,
 			Level = player:GetAttribute("Level") or 0,

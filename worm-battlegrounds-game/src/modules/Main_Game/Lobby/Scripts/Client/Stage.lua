@@ -101,13 +101,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Player
 
 --[[
-	Restands the party when a player joins or leaves a party, or changes skin.
+	Restands the party when a player joins or leaves a party, or changes their snail's outfit.
 ]]
 function Module._watchPlayer(player: Player)
 	--[[ Connections ]]
 
 	player:GetAttributeChangedSignal("PartyId"):Connect(Module._refreshSnails)
-	player:GetAttributeChangedSignal("EquippedSkin"):Connect(Module._refreshSnails)
+	player:GetAttributeChangedSignal("Outfit"):Connect(Module._refreshSnails)
 	Module._refreshSnails()
 end
 
@@ -116,7 +116,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Snails
 
 --[[
-	Stands the player on the first pod and the rest of their party on the next ones, each in their equipped skin, and
+	Stands the player on the first pod and the rest of their party on the next ones, each in their snail's outfit, and
 	takes away the snails of players who left.
 ]]
 function Module._refreshSnails()
@@ -144,9 +144,9 @@ function Module._refreshSnails()
 	--[[ Placing ]]
 
 	for index: number, player: Player in ipairs(members) do
-		local skinId: string = player:GetAttribute("EquippedSkin") or I.Settings["Cosmetics"].DEFAULT_SKIN
-		if snailSkins[player] ~= skinId then
-			Module._dress(player, skinId)
+		local outfit: string = player:GetAttribute("Outfit") or ""
+		if snailSkins[player] ~= outfit then
+			Module._dress(player, outfit)
 		end
 		if snails[player] then
 			snails[player]:PivotTo(snailMarkers[index].CFrame)
@@ -157,19 +157,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Dress
 
 --[[
-	Gives a member's snail the model of a skin (the default snail's when the skin has none of its own), replacing the
-	one they had.
+	Gives a member a snail wearing an outfit (the Outfit attribute's text), replacing the one they had.
 ]]
-function Module._dress(player: Player, skinId: string)
+function Module._dress(player: Player, outfit: string)
 	--[[ Data ]]
 
-	local skins: Folder = I.Dirs.Assets:FindFirstChild("Skins")
-	local skin = I.G_Cosmetics.GetSkin(skinId) --- @type Cosmetics_SkinData?
-	local fallback = I.G_Cosmetics.GetSkin(I.Settings["Cosmetics"].DEFAULT_SKIN) --- @type Cosmetics_SkinData
-
-	-- shortcut: a skin without its own model stands as the default snail, as the Skins window shows it
-	local source: Instance? = skin and skins:FindFirstChild(skin.Model) or skins:FindFirstChild(fallback.Model)
-	if not source or not source:IsA("Model") then
+	local model: Model? = I.G_Cosmetics.BuildSnail(I.G_Cosmetics.GetOutfit(outfit))
+	if not model then
 		return
 	end
 
@@ -181,7 +175,6 @@ function Module._dress(player: Player, skinId: string)
 
 	--[[ Building ]]
 
-	local model: Model = source:Clone()
 	for _index: number, part: Instance in ipairs(model:GetDescendants()) do
 		if part:IsA("BasePart") then
 			-- The rest of the rig hangs from the RootPart by Motor6Ds, which its animations move
@@ -198,7 +191,7 @@ function Module._dress(player: Player, skinId: string)
 	--[[ Saving ]]
 
 	snails[player] = model
-	snailSkins[player] = skinId
+	snailSkins[player] = outfit
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Camera

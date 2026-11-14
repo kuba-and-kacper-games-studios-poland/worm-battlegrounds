@@ -13,6 +13,12 @@ local _settings = {
 		"Skin",
 		"Emote",
 
+		-- A snail's pieces (Cosmetics), worn in any mix
+		"Hat",
+		"Neck",
+		"Body",
+		"Shell",
+
 		-- Other used for all invalid categories
 		"Other",
 	},

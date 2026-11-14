@@ -106,8 +106,22 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   `HIDE_PLAY_SPEED`. **A walking snail is never in its shell** (the owner, 2026-11-12, after bots walked hidden):
   the active snail's own jumps and falls don't hide it (Motion reads `Active`, since bots never get `CanMove`), it
   comes out the moment it walks, and the walk stops the shell's `Hide` and `Show` animations.
+- **A snail is dressed piece by piece, never as a whole skin** (the owner, 2026-11-14: "divide the actual skins we
+  have to accessories"): four slots, a hat, a neck piece, a body and a shell, worn in any mix (Cosmetics'
+  `Outfit`), no snail colours. Each artist skin is a set of pieces with names of their own around the set's theme
+  (Wild West: the Ten-Gallon, the Dusty Bandana, the Saddlebag shell), each piece the set's rarity, and the Skin crate
+  rolls pieces, each set's chance shared by its pieces. A player who owned a skin got its set's pieces once, with the
+  skin's copies, and wears what they wore (Cosmetics' `PiecesGiven`): an exception to `ume/classes.md` → Profile data
+  ("no function that repairs or reshapes saved data"), since the owner asked that no one lose a skin. Every screen
+  builds its snail with `I.G_Cosmetics.BuildSnail`, from the set snails' parts (art/skins → Pieces). **The Style
+  screen is a showroom** (the owner, 2026-11-14: "drag to rotate the snail all around… the camera angle changes, zooms
+  in a bit"): the player's name under the snail, never a set count; a drag spins it all the way round, and the camera
+  eases to the slot opened or picked (round to the shell, down onto the hat). **New pieces are called NEW** until the
+  player leaves the deck that shows them (the crate cards' red NEW! tag, on the lobby's STYLE button, the decks and
+  the tiles; Cosmetics' `SeenPieces`).
 - **Every skin is a snail on Classic's skeleton** (2026-11-11, the artist's nine): the same bone names and frames,
-  scaled 0.45, a skinned `Body` (accessories and Classic's hands in it) and `Shell`, Classic's `Handle`, so Classic's
+  scaled 0.45, a skinned `Body` (Classic's hands in it; the accessories too until the pieces are uploaded), `Shell`,
+  `Hat` and `Neck`, Classic's `Handle`, so Classic's
   animations and SnailRig play on it unchanged (`art/skins`: the rigging, and why the shell is moved back by the
   Idle's offset). The rig's rest pose has the shell floating above the back and the hands held out, so a skin shown
   unanimated (a ViewportFrame) is held in its idle frame with `I.SnailRig.Pose`, never shown at rest.
@@ -409,8 +423,9 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   costs Roblox 3 to 4 ms the first time its ViewportFrame draws it (again after the viewport is hidden and shown), and
   a viewport that changed while it moved or was hidden isn't drawn until it changes again where it's seen. So a card
   that holds still shows a skin's snail live, posed (Crates' `SkinModels`, which draws a card's snail again once the
-  card settles in sight), and a card that rolls shows the snail's picture, rendered in the same pose, framing and light
-  (`art/skins` → Pictures) and uploaded only with the owner's approval. A new skin with a snail gets its picture too.
+  card settles in sight), and a card that rolls shows the piece's picture, rendered in the same pose, framing and light
+  (`art/skins` → Piece pictures, since 2026-11-14: the owner, "needs to show accessories not skins") and uploaded only
+  with the owner's approval. A new piece gets its picture too.
 - **The pad goes through the Console module** (the owner's pick, 2026-11-10: "use 0_Console module for all gamepad
   related keybinds"): its `ACTIONS` setting is the one scheme (the module's README → Scheme), modules bind or read pad
   buttons only through `I.Console` (`Bind`, `IsAction`, `IsHeld`), never `Enum.KeyCode.Button*` of their own, and
@@ -489,8 +504,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
 - **Developer products and game passes are real** since 2026-11-13: the owner had them created on the Creator Hub,
   and their ids are in `src/global_data/Marketplace/`. Robux prices live only on the Creator Hub (Managed pricing off).
 - **Placeholders until the owner provides the real thing:** weapon
-  projectiles and effects are made in code, and skins without a snail of their own (FBI Agent, Prisoner, VIP, Wizard)
-  fall back to the Classic snail. Each such spot has a `shortcut:` comment or a README line saying it's a placeholder.
+  projectiles and effects are made in code, the skins without a snail of their own (FBI Agent, Prisoner, VIP, Wizard)
+  are still given (levels, VIP) but have no pieces until their art exists. Each such spot has a `shortcut:` comment or a README line saying it's a placeholder.
   Never create products, passes or models on the owner's behalf.
 - **Sounds are the classic 2005-2009 Roblox soundscape, the studio's own, played by name** (the owner's pick,
   2026-11-10, replacing 2026-11-08's free Creator Store ids: "use the roblox 2005 soundscape... Great Strategy is the

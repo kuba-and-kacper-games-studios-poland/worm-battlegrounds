@@ -3,8 +3,8 @@
 	Edited By: 	HungryN00B
 ]]
 
--- --- @type Ume
--- local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
+--- @type Ume
+local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "Crates"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
@@ -38,6 +38,21 @@ local Reveal = require(_scripts:FindFirstChild("Client"):FindFirstChild("Reveal"
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 local Module = {}
+
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	----------------------------
+	---- ASSIGN TO INSTANCE ----
+	----------------------------
+
+	I.Crates = {
+
+		--[[ Control ]]
+
+		ShowTab = Panel.ShowTab,
+	}
+end
 
 --%%%%%%%%%%%%%%%%%%%% Start
 

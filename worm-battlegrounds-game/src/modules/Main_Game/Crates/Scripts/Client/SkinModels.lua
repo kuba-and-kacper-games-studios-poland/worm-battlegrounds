@@ -13,10 +13,10 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 --[[ State ]]
 
--- Each item's snail model name, or false for an item with no snail (worked out once)
+-- Each item's snail (the piece's own id), or false for an item that isn't a snail piece (worked out once)
 local names = {} --- @type { [string]: string | boolean }
 
--- Posed snails taken off cards, by model name, ready for the next card that shows that skin
+-- Posed snails taken off cards, by the piece they show, ready for the next card that shows that piece
 local pool = {} --- @type { [string]: { Model } }
 
 -- The snail each card shows now (weak keys, so a destroyed card lets its snail go)
@@ -63,9 +63,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Put
 
 --[[
-	Shows a skin's snail on a card, posed in its idle frame and framed as the Skins window frames it (from the front, a
-	little from above), in the card's S_Model viewport; a card that shows one already keeps it. It's drawn again each
-	time the card settles where it's seen (Redraw).
+	Shows a snail wearing a piece on a card, posed in its idle frame and framed as the Style screen frames that slot, in
+	the card's S_Model viewport; a card that shows one already keeps it. It's drawn again each time the card settles
+	where it's seen (Redraw).
 ]]
 function Module.Put(card: GuiObject, itemId: string)
 	--[[ Checks ]]
@@ -95,10 +95,7 @@ function Module.Put(card: GuiObject, itemId: string)
 		camera.Parent = viewport
 		viewport.CurrentCamera = camera
 	end
-	local box: CFrame
-	local size: Vector3
-	box, size = model:GetBoundingBox()
-	camera.CFrame = CFrame.lookAt(box.Position + Vector3.new(0, size.Y * 0.2, -size.Magnitude * I.Settings["Cosmetics"].PREVIEW_DISTANCE), box.Position)
+	camera.CFrame = I.G_Cosmetics.GetPieceShot(model, name)
 
 	--[[ Placing ]]
 
@@ -120,7 +117,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Release
 
 --[[
-	Takes a card's snail away and keeps it in the pool for the next card that shows that skin.
+	Takes a card's snail away and keeps it in the pool for the next card that shows that piece.
 ]]
 function Module.Release(card: GuiObject)
 	--[[ Data ]]
@@ -139,8 +136,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Take
 
 --[[
-	Returns a posed snail of a skin (by model name), its pivot at the origin: a spare one from the pool, or a new clone
-	held in its idle frame (`I.SnailRig.Pose`).
+	Returns a posed snail wearing a piece (by its id, on Cosmetics' showcase outfit), its pivot at the origin: a spare
+	one from the pool, or a new one held in its idle frame (`I.SnailRig.Pose`).
 ]]
 --- @return Model
 function Module.Take(name: string)
@@ -155,7 +152,8 @@ function Module.Take(name: string)
 
 	--[[ Cloning ]]
 
-	local model: Model = I.Dirs.Assets:FindFirstChild("Skins"):FindFirstChild(name):Clone()
+	local model: Model = I.G_Cosmetics.BuildSnail(I.G_Cosmetics.GetShowcase(name))
+	model.Name = name
 	model:PivotTo(CFrame.identity)
 	I.SnailRig.Pose(model)
 
@@ -167,7 +165,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Store
 
 --[[
-	Keeps a snail taken off the screen in the pool, for the next card that shows that skin.
+	Keeps a snail taken off the screen in the pool, for the next card that shows that piece.
 ]]
 function Module.Store(model: Model)
 	--[[ Pooling ]]
@@ -231,8 +229,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Model Name
 
 --[[
-	Returns the name of an item's snail in Assets/Skins: its skin row's Model, when the place has that snail; nil for an
-	item that isn't a skin or a skin with no snail yet (it keeps its picture).
+	Returns the snail an item shows on a card: the piece's own id, when the place has its set's snail; nil for an item
+	that isn't a snail piece (it keeps its picture).
 ]]
 --- @return string?
 function Module.GetModelName(itemId: string)
@@ -245,16 +243,26 @@ function Module.GetModelName(itemId: string)
 
 	--[[ Data ]]
 
-	local skin = I.G_Cosmetics.GetSkins()[itemId] --- @type Cosmetics_SkinData?
+	local piece = I.G_Cosmetics.GetPieces()[itemId] --- @type Cosmetics_PieceData?
 	local skins: Instance? = I.Dirs.Assets:FindFirstChild("Skins")
 
 	--[[ Saving ]]
 
-	names[itemId] = if skin and skins and skins:FindFirstChild(skin.Model) then skin.Model else false
+	names[itemId] = if piece and skins and skins:FindFirstChild(I.G_Cosmetics.GetSet(piece.Set).Model) then itemId else false
 
 	--[[ Returning ]]
 
 	return names[itemId] or nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Picture
+
+--[[
+	Returns the picture a rolling reel's card shows for a snail piece (PIECE_PICTURES); nil for any other item.
+]]
+--- @return string?
+function Module.GetPicture(itemId: string)
+	return _settings.PIECE_PICTURES[itemId]
 end
 
 return Module

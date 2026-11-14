@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -42,7 +43,9 @@ function Module.Init()
 	--- @type Player_ProfileData
 	local _pt = I.Player.ProfileTemplate
 	_pt["Cosmetics"] = {
-		EquippedSkin = _settings.DEFAULT_SKIN,
+		Outfit = table.clone(_settings.DEFAULT_OUTFIT),
+		PiecesGiven = false,
+		SeenPieces = {},
 	}
 
 	----------------------------
@@ -54,7 +57,7 @@ function Module.Init()
 		Name = _localName,
 		Parent = I.Dirs.UmeWorkspace,
 	})
-	I.G_Player.OnPlayerAdded(I.Priority.Replicator, Module._createReplicator)
+	I.G_Player.OnPlayerAdded(I.Priority.Replicator, Module._setUpPlayer)
 	I.G_Player.OnPlayerRemoving(I.Priority.Default, function(player: Player)
 		lastEmote[player] = nil
 	end)
@@ -64,8 +67,10 @@ function Module.Init()
 	----------------------------
 
 	--- @Network
-	I.Network.GetEvent("Cosmetics_Equip", { "Player", "string" }, { RateLimit = 2 })
+	I.Network.GetEvent("Cosmetics_Equip", { "Player", "string", "string" }, { RateLimit = 4 })
 	I.Network.Fired("Cosmetics_Equip", Module.Equip)
+	I.Network.GetEvent("Cosmetics_See", { "Player", "string" }, { RateLimit = 4 })
+	I.Network.Fired("Cosmetics_See", Module.See)
 	I.Network.GetFunction("Cosmetics_BuyEmote", { "Player", "string" }, { RateLimit = 2 })
 	I.Network.OnInvoke("Cosmetics_BuyEmote", Module.BuyEmote)
 	I.Network.GetEvent("Cosmetics_PlayEmote", { "Player", "string" }, { RateLimit = 1 })
@@ -81,37 +86,102 @@ function Module.Init()
 		--[[ Control ]]
 
 		Equip = Module.Equip,
+		See = Module.See,
 		BuyEmote = Module.BuyEmote,
 		PlayEmote = Module.PlayEmote,
 		PlaySnailEmote = Module.PlaySnailEmote,
 
 		--[[ Methods ]]
 
-		GetSkin = Module.GetSkin,
+		GetOutfit = Module.GetOutfit,
 	}
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Player Control
 
---%%%%%%%%%%%%%%%%%%%% Create Replicator
+--%%%%%%%%%%%%%%%%%%%% Set Up Player
 
 --[[
-	Gives a joining player the starter skin and emote they don't have yet, and writes the skin they wear into their
-	Cosmetics folder.
+	Gives a joining player the starter pieces and emote they don't have yet (seen already, so never NEW), swaps the
+	whole skins they owned for their sets' pieces once, and writes the outfit they wear onto the Player and the pieces
+	they've seen into their Cosmetics folder.
 ]]
-function Module._createReplicator(player: Player)
+function Module._setUpPlayer(player: Player)
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Cosmetics"]
+
 	--[[ Granting ]]
 
 	for _index: number, itemId: string in ipairs(_settings.STARTER_ITEMS) do
 		if not I.Inventory.HasItem(player, itemId) then
 			I.Inventory.AddItem(player, itemId)
 		end
+		if I.G_Cosmetics.GetPieces()[itemId] then
+			moduleData["SeenPieces"][itemId] = true
+		end
 	end
+	Module._givePieces(player)
 
 	--[[ Publishing ]]
 
 	I.Replicator.CreateFolder(player, _localName)
 	Module._publish(player)
+	Module._publishSeen(player)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Give Pieces
+
+--[[
+	Once per player (the owner's pick, 2026-11-14): every skin they own gives each piece of its set as many copies as
+	the skin had, so a shiny skin makes shiny pieces, and the skin they wore becomes the pieces they wear. The skins stay
+	in their inventory.
+]]
+function Module._givePieces(player: Player)
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Cosmetics"]
+
+	--[[ Checks ]]
+
+	-- Check if the pieces were given already
+	if moduleData["PiecesGiven"] then
+		return
+	end
+
+	--[[ Giving ]]
+
+	--- @param set Cosmetics_SetData
+	for setId: string, set in pairs(I.G_Cosmetics.GetSets()) do
+		local copies: number = tonumber(I.Inventory.GetItem(player, set.Skin)) or 0
+		if copies == 0 then
+			continue
+		end
+		for _slot: string, pieceId: string in pairs(I.G_Cosmetics.GetSetPieces(setId)) do
+			local have: number = tonumber(I.Inventory.GetItem(player, pieceId)) or 0
+			if copies > have then
+				I.Inventory.AddItem(player, pieceId, tostring(copies - have), true)
+			end
+		end
+
+		-- The skin they wore, piece for piece; a set with no body of its own keeps the starter body it showed
+		if moduleData["EquippedSkin"] == set.Skin then
+			local wearing = table.clone(_settings.DEFAULT_OUTFIT) --- @type Cosmetics_Outfit
+			for slot: string, pieceId: string in pairs(I.G_Cosmetics.GetSetPieces(setId)) do
+				wearing[slot] = pieceId
+			end
+			moduleData["Outfit"] = wearing
+		end
+	end
+
+	--[[ Saving ]]
+
+	moduleData["EquippedSkin"] = nil
+	moduleData["PiecesGiven"] = true
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -120,10 +190,55 @@ end
 
 --[[
 	**SERVER** |
-	Wears an owned skin in the next match.
+	Wears an owned piece in its slot, or takes the hat or neck piece off ("").
 ]]
 --- @return boolean
-function Module.Equip(player: Player, skinId: string)
+function Module.Equip(player: Player, slot: string, pieceId: string)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return false
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Cosmetics"]
+	local piece = I.G_Cosmetics.GetPieces()[pieceId] --- @type Cosmetics_PieceData?
+
+	--[[ Checks ]]
+
+	-- Check if it's a slot that can be left empty, when taking a piece off
+	if pieceId == "" and slot ~= "Hat" and slot ~= "Neck" then
+		return false
+	end
+
+	-- Check if it's an owned piece of this slot
+	if pieceId ~= "" and (not piece or piece.Slot ~= slot or not I.Inventory.HasItem(player, pieceId)) then
+		return false
+	end
+
+	--[[ Saving ]]
+
+	moduleData["Outfit"][slot] = pieceId
+
+	--[[ Publishing ]]
+
+	Module._publish(player)
+
+	--[[ Returning ]]
+
+	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% See
+
+--[[
+	**SERVER** |
+	Marks every piece of a slot the player owns as seen, so the Style screen stops calling them NEW.
+]]
+--- @return boolean
+function Module.See(player: Player, slot: string)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return false
@@ -137,18 +252,23 @@ function Module.Equip(player: Player, skinId: string)
 
 	--[[ Checks ]]
 
-	-- Check if it's an owned skin
-	if not I.G_Cosmetics.GetSkins()[skinId] or not I.Inventory.HasItem(player, skinId) then
+	-- Check if it's a slot
+	if not table.find(_settings.SLOTS, slot) then
 		return false
 	end
 
 	--[[ Saving ]]
 
-	moduleData["EquippedSkin"] = skinId
+	--- @param piece Cosmetics_PieceData
+	for pieceId: string, piece in pairs(I.G_Cosmetics.GetPieces()) do
+		if piece.Slot == slot and I.Inventory.HasItem(player, pieceId) then
+			moduleData["SeenPieces"][pieceId] = true
+		end
+	end
 
 	--[[ Publishing ]]
 
-	Module._publish(player)
+	Module._publishSeen(player)
 
 	--[[ Returning ]]
 
@@ -264,33 +384,20 @@ end
 --%%%%%%%%%%%%%%%%%%%% Publish
 
 --[[
-	Writes the skin a player wears into their Cosmetics folder and onto the Player (EquippedSkin), where the lobby's
-	party stage reads every member's.
+	Writes the outfit a player wears onto the Player (Outfit), where their Style screen and every lobby's party stage
+	read it.
 ]]
 function Module._publish(player: Player)
-	--[[ Data ]]
-
-	--- @type Player_ProfileData
-	local profileData = I.Player.GetProfile(player).Data
-	local moduleData = profileData["Cosmetics"]
-
-	--[[ Saving ]]
-
-	I.Replicator.Set(player, _localName, "EquippedSkin", moduleData["EquippedSkin"])
-	player:SetAttribute("EquippedSkin", moduleData["EquippedSkin"])
+	player:SetAttribute("Outfit", I.G_Cosmetics.GetOutfitText(Module.GetOutfit(player)))
 end
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
-
---%%%%%%%%%%%%%%%%%%%% Get Skin
+--%%%%%%%%%%%%%%%%%%%% Publish Seen
 
 --[[
-	**SERVER** |
-	Returns the skin a player takes into a match: its model's name in Assets.Skins, and whether it's shiny
-	(SHINY_COPIES or more copies). A skin they no longer own falls back to the default.
+	Writes the pieces a player has seen into their Cosmetics folder (Seen: piece ids, comma-separated), where their Style
+	screen tells the new ones.
 ]]
---- @return string, boolean
-function Module.GetSkin(player: Player)
+function Module._publishSeen(player: Player)
 	--[[ Data ]]
 
 	--- @type Player_ProfileData
@@ -299,14 +406,55 @@ function Module.GetSkin(player: Player)
 
 	--[[ Local Variables ]]
 
-	local skinId: string = moduleData["EquippedSkin"]
-	if not I.G_Cosmetics.GetSkins()[skinId] or not I.Inventory.HasItem(player, skinId) then
-		skinId = _settings.DEFAULT_SKIN
+	local seen = {} --- @type { string }
+	for pieceId: string, _seen: boolean in pairs(moduleData["SeenPieces"]) do
+		table.insert(seen, pieceId)
+	end
+
+	--[[ Publishing ]]
+
+	I.Replicator.Set(player, _localName, "Seen", table.concat(seen, ","))
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Outfit
+
+--[[
+	**SERVER** |
+	Returns the outfit a player wears, and whether it's shiny (a piece with SHINY_COPIES or more copies). A piece they no
+	longer own falls back to DEFAULT_OUTFIT's.
+]]
+--- @return Cosmetics_Outfit, boolean
+function Module.GetOutfit(player: Player)
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Cosmetics"]
+
+	--[[ Local Variables ]]
+
+	local outfit = I.G_Cosmetics.GetOutfit(I.G_Cosmetics.GetOutfitText(moduleData["Outfit"])) --- @type Cosmetics_Outfit
+	local shiny: boolean = false
+
+	--[[ Checking ]]
+
+	for slot: string, pieceId: string in pairs(outfit) do
+		if pieceId == "" then
+			continue
+		end
+		local copies: number = tonumber(I.Inventory.GetItem(player, pieceId)) or 0
+		if copies == 0 then
+			outfit[slot] = _settings.DEFAULT_OUTFIT[slot]
+		elseif copies >= _settings.SHINY_COPIES then
+			shiny = true
+		end
 	end
 
 	--[[ Returning ]]
 
-	return I.G_Cosmetics.GetSkin(skinId).Model, (tonumber(I.Inventory.GetItem(player, skinId)) or 0) >= _settings.SHINY_COPIES
+	return outfit, shiny
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

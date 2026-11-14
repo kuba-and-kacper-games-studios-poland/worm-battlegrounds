@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -66,9 +67,6 @@ function Module.Spawn(participant, position: Vector3)
 	--[[ Data ]]
 
 	local plane: Attachment? = I.Arena.GetPlane()
-	local skins: Instance? = I.Dirs.Assets:FindFirstChild("Skins")
-	local skinName: string = participant.Skin or _settings.DEFAULT_SKIN
-	local skin: Instance? = skins and (skins:FindFirstChild(skinName) or skins:FindFirstChild(_settings.DEFAULT_SKIN))
 
 	--[[ Checks ]]
 
@@ -78,9 +76,9 @@ function Module.Spawn(participant, position: Vector3)
 		return nil
 	end
 
-	-- Check if the skin exists
-	if not skin or not skin:IsA("Model") or not skin.PrimaryPart then
-		warn(`[{_localName}::{script.Name}]: Skin ({skinName}) and the default skin are missing from Assets.Skins!`)
+	-- Check if its snail could be built: the participant's outfit (Skin), or Cosmetics' default one for a bot
+	local skinModel: Model? = I.G_Cosmetics.BuildSnail(I.G_Cosmetics.GetOutfit(participant.Skin))
+	if not skinModel then
 		return nil
 	end
 
@@ -161,7 +159,6 @@ function Module.Spawn(participant, position: Vector3)
 
 	--[[ Skin ]]
 
-	local skinModel: Model = skin:Clone()
 	skinModel.Name = "Skin"
 	skinModel:PivotTo(root.CFrame)
 	for _index: number, part: Instance in ipairs(skinModel:GetDescendants()) do

@@ -86,8 +86,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Add Item
 
 --[[
-	Adds one item's card to its rarity's section (made on its first item): its picture (a skin's snail, posed, when it
-	has one), name and chance.
+	Adds one item's card to its rarity's section (made on its first item): its picture (a posed snail wearing it, for a
+	snail piece), name and chance.
 ]]
 function Module._addItem(itemId: string, chanceText: string, order: number)
 	--[[ Data ]]

@@ -49,7 +49,7 @@ attributes on the snail model, so the module creates no remotes.
 
 | Function | Returns | What it does |
 | --- | --- | --- |
-| `Spawn(participant: Snails_Participant, position: Vector3)` | `Model?` | Builds the participant's snail at a position on the loaded arena's plane, server-owned, and focuses the player's streaming on it. Nil and a warning with no arena loaded or no `DEFAULT_SKIN` in `Assets.Skins` |
+| `Spawn(participant: Snails_Participant, position: Vector3)` | `Model?` | Builds the participant's snail at a position on the loaded arena's plane, server-owned, and focuses the player's streaming on it. Nil and a warning with no arena loaded or no snail for its outfit in `Assets.Skins` (Cosmetics' `BuildSnail`) |
 | `Damage(participantId, amount: number, sourceId: string?, itemId: string?)` | | Takes rounded health, never below 0, and remembers the source for kill credit. A snail at 0 stays in play: the Match module knocks it out once the shot settles |
 | `Heal(participantId, amount: number)` | | Gives rounded health, never above `MaxHealth` |
 | `Knockback(participantId, impulse: Vector3, sourceId: string?, itemId: string?)` | | Throws the snail on the game's own physics (`Flight`) at its speed plus the impulse divided by its mass, and remembers the source |
@@ -103,7 +103,6 @@ No remotes: clients read the snail models' attributes. The server also writes `L
 | `FLIGHT_BOUNCE`, `FLIGHT_LAND_KEEP`, `FLIGHT_MAX_SECONDS` | `0.2`, `0.4`, `8` | A thrown snail bounces off a hard hit with this share of its speed into it, lands keeping this share of its speed to slide on, and lands anyway after this many seconds |
 | `WALK_ANIMATION_SPEED` | `1.5` | A snail plays its walk while it moves along faster than this (studs a second), rising or falling slower than `STEP_SOUND_MAX_RISE`, on the ground (never in the air on a jetpack or a jump) |
 | `HIDE_SPEED`, `SHOW_SPEED`, `HIDE_SECONDS` | `25`, `2`, `1` | A snail hides in its shell the moment it's hit, or while faster than the first (not the active snail jumping or falling on its own), and comes out at least the third (seconds) after the hit or after it last flew that fast, once slower than the second or, for the active snail, the moment it walks |
-| `DEFAULT_SKIN` | `"Classic"` | The model in `Assets.Skins` every snail wears until Cosmetics picks one |
 | `GROUND_GAP` | `0.4` | How far below the ball the ground may be for a snail to stand on it |
 | `GHOST_RISE`, `GHOST_TIME` | `9`, `1.8` | A ghost floats this many studs up over this many seconds, then it's gone from sight; Match waits `GHOST_TIME` after a turn that knocked a snail out |
 | `GHOST_BOB`, `GHOST_BOB_RATE`, `GHOST_SWAY` | `0.5`, `1.2`, `10` | As it rises it bobs this many studs side to side, this many times a second, swaying this many degrees with the bob |

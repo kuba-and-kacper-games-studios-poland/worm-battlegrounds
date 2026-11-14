@@ -1728,3 +1728,24 @@ so nothing overlaps and nothing stacks high.
   export builds. Fix the prop, not the check.
 
 Rules: Maps are made in MapLab; Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`.
+
+## Skins become pieces, and the Style screen becomes decks (2026-11-14)
+
+The owner asked to remake the STYLE screen in the crate screen's quality, drop the snail colours, and "divide the
+actual skins we have to accessories": every snail shares the body shape and the shell, so a hat, a neck piece, a body
+and a shell from different skins can be worn together, with names of their own around each skin's theme. Players who
+owned a skin had to keep it. Of three drafts the owner picked the card decks.
+
+- **The rig had already done most of the cutting.** `rig_skins.py` joined each artist body with its accessories, and
+  the join kept one material per source object, so a hat or a scarf is a set of materials on `Body`: Blender separates
+  them with their weights, and each piece stays on any snail's head or neck because every skin shares Classic's
+  skeleton. Two skins had their accessory baked into the body (the Devil's horns, the Robot's collar), so those sets
+  have no hat or neck piece of their own.
+- **Check a re-export against its source.** Reading the FBX back and comparing every vertex and bone catches a split
+  that moved something; Blender's round trip moves vertices at most 0.0001 stud, which the check allows.
+- **Keep the game working before the art lands.** The cut pieces need an upload and a rebuild in Studio. Until then a
+  set's whole body stands in for its hat or neck piece, so every full set looks as its skin did.
+- **Give, don't take.** Each owned skin gives its set's pieces once, with its copies (a shiny skin makes shiny pieces),
+  and stays in the inventory, so nothing is lost if the change is ever undone.
+
+Rules: A snail is dressed piece by piece, never as a whole skin.

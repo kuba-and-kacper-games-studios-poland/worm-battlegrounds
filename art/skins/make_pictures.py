@@ -1,13 +1,16 @@
-"""Makes the skin snails' pictures for the Crates reel cards from Studio captures of the picture booth (README → Pictures).
+"""Makes the pictures for the Crates reel cards from Studio captures of a picture booth (README → Pictures, Pieces).
 
-The booth (`picture_booth.luau`, run in a playtest's client) shows each posed snail framed and lit as a Crates card's
-S_Model viewport, six to a screen in 600 x 480 slots, once on black and once on white. Studio's screen capture of each
+A booth (`picture_booth.luau` for the set snails, `piece_booth.luau` for the pieces, run in a playtest's client) shows
+each posed snail framed and lit as a Crates card's S_Model viewport, six to a screen in 600 x 480 slots, once on black
+and once on white. Studio's screen capture of each
 (1919 x 1078 game view, saved smaller as a JPEG) goes in here; the difference between the black and the white capture
 gives each pixel's transparency, and the black one its colour. Each picture is saved as a 320 x 256 PNG.
 
-    python -I make_pictures.py <a_black.jpg> <a_white.jpg> <b_black.jpg> <b_white.jpg>
+    python -I make_pictures.py skins <1_black.jpg> <1_white.jpg> <2_black.jpg> <2_white.jpg>
+    python -I make_pictures.py pieces <1_black.jpg> <1_white.jpg> ... <5_black.jpg> <5_white.jpg>
 
-Writes out/SnailSkin_<Model>.png, and copies them into ../sfx/out/upload/ for uploading.
+Writes out/SnailSkin_<Model>.png or out/SnailPiece_<PieceId>.png, and copies them into ../sfx/out/upload/ for
+uploading.
 """
 import os
 import shutil
@@ -20,8 +23,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 UPLOAD = os.path.join(HERE, "..", "sfx", "out", "upload")
 
-# The booth's snails in its slot order (picture_booth.luau), six to a screen
-ORDER = ["Classic", "Soldier", "Pirate", "Cowboy", "Ninja", "Knight", "Clown", "Devil", "Robot", "Skeleton"]
+# The set snails in picture_booth.luau's slot order, six to a screen
+SKINS = ["Classic", "Soldier", "Pirate", "Cowboy", "Ninja", "Knight", "Clown", "Devil", "Robot", "Skeleton"]
+
+# The pieces' rows: piece_booth.luau shows them in id order, as sorted here
+PIECES_DATA = os.path.join(
+    HERE, "..", "..", "worm-battlegrounds-game", "src", "modules", "Main_Game", "Cosmetics", "Data", "Pieces"
+)
 GAME_VIEW = (1919, 1078)  # the playtest's screen in gui pixels
 SLOT = (600, 480)
 PICTURE = (320, 256)  # the cards' picture box is 1.22 to 1.27 wide by 1 tall
@@ -70,26 +78,33 @@ def shrink(colour, alpha):
     return Image.fromarray(rgba, "RGBA")
 
 
-def run(captures):
+def run(kind, captures):
+    if kind == "skins":
+        order, prefix = SKINS, "SnailSkin"
+    else:
+        order = sorted(name[:-4] for name in os.listdir(PIECES_DATA) if name.endswith(".lua"))
+        prefix = "SnailPiece"
+    if len(captures) != 2 * -(-len(order) // 6):
+        sys.exit(f"{len(order)} {kind} need {2 * -(-len(order) // 6)} captures.\n\n{__doc__}")
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(UPLOAD, exist_ok=True)
-    pairs = [(captures[0], captures[1]), (captures[2], captures[3])]
+    pairs = list(zip(captures[0::2], captures[1::2]))
     for screen, (black_path, white_path) in enumerate(pairs):
         black_image = Image.open(black_path).convert("RGB")
         white_image = Image.open(white_path).convert("RGB")
         scale = (black_image.width / GAME_VIEW[0], black_image.height / GAME_VIEW[1])
-        for index, name in enumerate(ORDER[screen * 6 : screen * 6 + 6]):
+        for index, name in enumerate(order[screen * 6 : screen * 6 + 6]):
             box = slot_box(index, scale)
             black = np.asarray(black_image.crop(box)).astype(np.float64)
             white = np.asarray(white_image.crop(box)).astype(np.float64)
             picture = shrink(*matte(black, white))
-            path = os.path.join(OUT, f"SnailSkin_{name}.png")
+            path = os.path.join(OUT, f"{prefix}_{name}.png")
             picture.save(path)
-            shutil.copy(path, os.path.join(UPLOAD, f"SnailSkin_{name}.png"))
+            shutil.copy(path, os.path.join(UPLOAD, f"{prefix}_{name}.png"))
             print(path)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
+    if len(sys.argv) < 2 or sys.argv[1] not in ("skins", "pieces"):
         sys.exit(__doc__)
-    run(sys.argv[1:])
+    run(sys.argv[1], sys.argv[2:])

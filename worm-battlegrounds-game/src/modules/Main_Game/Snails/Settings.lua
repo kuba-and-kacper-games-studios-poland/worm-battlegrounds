@@ -16,9 +16,6 @@ local _settings = {
 	ROOT_SIZE = 2.6,
 	ROOT_FRICTION = 1,
 
-	-- The skin every snail wears until Cosmetics picks the equipped one: a model in Assets.Skins, facing its pivot's front
-	DEFAULT_SKIN = "Classic",
-
 	-- How far below its ball the ground may be for a snail to count as standing on it, in studs
 	GROUND_GAP = 0.4,
 

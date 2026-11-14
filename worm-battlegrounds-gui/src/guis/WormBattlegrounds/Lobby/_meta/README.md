@@ -22,7 +22,7 @@ arrow layer is the kit's (`WormBattlegroundsBrawl`), kept from before the port.
 | Element | Kind | What game code does with it |
 | --- | --- | --- |
 | `U_Menu` | Frame | The corner menu (the design's `TopRight`) |
-| `U_Menu` › `S_Style` | ImageButton | Opens `Skins` (its tags) |
+| `U_Menu` › `S_Style` | ImageButton | Opens `Skins` (its tags). Its `S_New` (the crate cards' red NEW! tag) is shown by Cosmetics while the player owns a piece they haven't seen |
 | `U_Menu` › `S_Weapons` | ImageButton | Crates binds it and opens `Crates` on the crate in its `Crates_CrateId` attribute (`"Weapon"`) |
 | `U_Menu` › `S_Skins` | ImageButton | The same, `Crates_CrateId` `"Skin"` |
 | `U_Menu` › `S_Badge` | Frame, hidden | The badge on WEAPONS; Crates shows it |

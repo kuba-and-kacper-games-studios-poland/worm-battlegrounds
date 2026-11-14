@@ -103,8 +103,7 @@ function Module.Start(oddsDrawer, showcaseDrawer, resultsOpener)
 	-- The lobby menu's Weapons and Skins buttons open the widget on their crate's tab
 	for _index: number, button: ImageButton in ipairs({ elems["Menu"]:FindFirstChild("S_Weapons", true), elems["Menu"]:FindFirstChild("S_Skins", true) }) do
 		I.Interact.OnPress(button, function()
-			selected = button:GetAttribute("Crates_CrateId")
-			I.WidgetManager.Open(_settings.GUI_NAME)
+			Module.ShowTab(button:GetAttribute("Crates_CrateId"))
 		end)
 	end
 	I.Topic.Subscribe("WidgetManager_Opened", Module._onOpened)
@@ -171,6 +170,19 @@ function Module._connectReplicator()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Show Tab
+
+--[[
+	**CLIENT** |
+	Opens the crates widget on a crate's tab.
+]]
+function Module.ShowTab(crateId: string)
+	--[[ Opening ]]
+
+	selected = crateId
+	I.WidgetManager.Open(_settings.GUI_NAME)
+end
 
 --%%%%%%%%%%%%%%%%%%%% Open
 
