@@ -28,8 +28,8 @@ local _data = {
 
 	--[[ Odds ]]
 
-	-- Each item's chance in percent, by the currency paid; each table adds up to 100
-	OddsByCurrency = {},
+	-- Each item's chance in percent, the same whichever currency pays; adds up to 100
+	Odds = {},
 
 	-- Items always given, instead of a roll
 	Fixed = { "Grenade", "Shotgun" },

@@ -409,8 +409,10 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   `art/crates/bake_models.py`); their pieces turn on hinges in code, so a new crate keeps the eight piece names and the
   pivot in the middle of its floor. A ten-pack shares one set of effects and has no per-crate balls of light (Crates'
   `STAGE_LIGHT_COUNT`). A crate's colour and particles are its data row's look
-  (`Glow`, `Accent`, `Ambient`). **One crate per kind, paid in coins or diamonds** (the testers, 2026-11-13): the Weapon
-  crate's diamonds roll what the Premium crate did, and the Premium row stays hidden so its id is known. A crate marked
+  (`Glow`, `Accent`, `Ambient`). **One crate per kind, paid in coins or diamonds** (the testers, 2026-11-13), and since
+  2026-11-15 **the same odds either way** (the owner: "we have the same chances for both coins and gems"): a row of
+  coin buttons with a row of diamond buttons under it, 100, 300, 1,000 coins or 50, 150, 500 diamonds for 1, 3 or 10,
+  never a currency switch. The Premium row stays hidden so its id is known. A crate marked
   `Premium` shows it's premium by small touches (a gold tab, a halo, the violet
   backdrop, a PREMIUM tag, a pale-gold line), never another layout. Gui particles are `I.UIEmitter`'s. The sounds mix
   crisp clicks for the reel with the Great Strategy instruments for the melodies (`art/sfx/make_crates.py`).

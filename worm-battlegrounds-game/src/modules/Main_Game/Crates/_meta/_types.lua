@@ -20,7 +20,7 @@
 --- # Contents #
 ---
 --- @field Prices { [string]: Crates_Price }
---- @field OddsByCurrency { [string]: { [string]: number } }
+--- @field Odds { [string]: number }
 --- @field Fixed { string }
 local _crates_CrateData = {}
 

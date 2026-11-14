@@ -167,7 +167,7 @@ function Module.Show(crateId: string, count: number, payWith: string, results)
 
 	--[[ Reels ]]
 
-	local reels = Reel.Build(results, row, payWith, quick) --- @type { Crates_Reel }
+	local reels = Reel.Build(results, row, quick) --- @type { Crates_Reel }
 	elems["Title"]:FindFirstChild("S_Name", true).Text = row.Name
 	elems["Title"]:FindFirstChild("S_CountText", true).Text = `x{count}`
 	elems["Title"].Visible = true
@@ -217,9 +217,9 @@ function Module.Show(crateId: string, count: number, payWith: string, results)
 	--[[ Revealing ]]
 
 	if #results == 1 then
-		Module._revealOne(results[1], reels[1], row, payWith, thisReveal)
+		Module._revealOne(results[1], reels[1], row, thisReveal)
 	else
-		Module._revealMany(results, reels, row, payWith, thisReveal)
+		Module._revealMany(results, reels, row, thisReveal)
 	end
 	if thisReveal ~= revealId then
 		return
@@ -316,7 +316,7 @@ end
 --- @param result Crates_Result
 --- @param reel Crates_Reel
 --- @param row Crates_CrateData
-function Module._revealOne(result, reel, row, payWith: string, thisReveal: number)
+function Module._revealOne(result, reel, row, thisReveal: number)
 	--[[ Data ]]
 
 	local item = I.G_Inventory.Items[result.ItemId] --- @type Inventory_ItemData
@@ -324,7 +324,7 @@ function Module._revealOne(result, reel, row, payWith: string, thisReveal: numbe
 	--[[ Legendary ]]
 
 	if item.Rarity == "Legendary" then
-		Module._goldMoment(result, reel.WinCard, row, payWith, thisReveal)
+		Module._goldMoment(result, reel.WinCard, row, thisReveal)
 		return
 	end
 
@@ -353,13 +353,13 @@ end
 ]]
 --- @param result Crates_Result
 --- @param row Crates_CrateData
-function Module._goldMoment(result, goldCard: Frame, row, payWith: string, thisReveal: number)
+function Module._goldMoment(result, goldCard: Frame, row, thisReveal: number)
 	--[[ Local Variables ]]
 
 	local gold: Color3 = Reel.GetRarityColor("Legendary")
 	local point: Vector2 = goldCard.AbsolutePosition + goldCard.AbsoluteSize / 2
 	local pool = {} --- @type { string }
-	for itemId: string, _chance: number in pairs(row.OddsByCurrency[payWith] or row.OddsByCurrency[_settings.VIP_ODDS] or {}) do
+	for itemId: string, _chance: number in pairs(row.Odds) do
 		if I.G_Inventory.Items[itemId].Rarity == "Legendary" then
 			table.insert(pool, itemId)
 		end
@@ -461,7 +461,7 @@ end
 --- @param results { Crates_Result }
 --- @param reels { Crates_Reel }
 --- @param row Crates_CrateData
-function Module._revealMany(results, reels, row, payWith: string, thisReveal: number)
+function Module._revealMany(results, reels, row, thisReveal: number)
 	--[[ Local Variables ]]
 
 	local count: number = #results
@@ -548,7 +548,7 @@ function Module._revealMany(results, reels, row, payWith: string, thisReveal: nu
 		local Centre_Tween: Tween = I.S.TweenService:Create(solo, Centre_TweenInfo, Centre_TweenGoal)
 		Centre_Tween:Play()
 		task.wait(0.48)
-		Module._goldMoment(result, solo, row, payWith, thisReveal)
+		Module._goldMoment(result, solo, row, thisReveal)
 		task.wait(_settings.PACK_LEGENDARY_HOLD)
 		if thisReveal ~= revealId then
 			return

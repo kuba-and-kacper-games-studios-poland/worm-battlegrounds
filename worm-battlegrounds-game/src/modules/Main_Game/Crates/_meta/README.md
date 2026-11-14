@@ -27,7 +27,7 @@ holds more than one), and the legendary plays its own drop. The tutorial crate i
 | `Server.lua` | `Open`: checks, paying, rolling, giving |
 | `Global.lua` | The crate rows and pack prices; warns at start when a crate's odds don't add up to 100 or name an unknown item |
 | `Client.lua` | Starts the client handlers |
-| `Scripts/Client/Panel.lua` | The Crates widget: tabs (on a pad LB and RB step through them while it's open, the Console module's `TabPrevious` and `TabNext`), the paying currency, the buy buttons (tinted by the currency they pay with), the lobby menu's Weapons and Skins buttons and badge, opening |
+| `Scripts/Client/Panel.lua` | The Crates widget: tabs (on a pad LB and RB step through them while it's open, the Console module's `TabPrevious` and `TabNext`), the balance chips, a row of buy buttons per currency (coins on top, diamonds under them), the lobby menu's Weapons and Skins buttons and badge, opening |
 | `Scripts/Client/Odds.lua` | The Crates widget's odds list, by rarity; a snail piece shows a snail wearing it live on its card (`SkinModels`) |
 | `Scripts/Client/SkinModels.lua` | The snail pieces' snails on cards: `Put` shows a snail wearing an item's piece (Cosmetics' `BuildSnail` on its `GetShowcase` outfit), posed in its idle frame (`I.SnailRig.Pose`), in a card's `S_Model` viewport, framed on the piece as the Style screen frames it (Cosmetics' `GetPieceShot`); `Release` takes it off; spare snails wait in a pool by piece; `GetPicture` is a piece's reel picture (`PIECE_PICTURES`). While the widget is open it draws a card's snail again once the card holds still where it's seen (`SKIN_REDRAW_FRAMES`): Roblox doesn't draw a viewport that changed while it moved or was hidden until it changes again where it's seen |
 | `Scripts/Client/Showcase.lua` | The crate on its pedestal: its 3D model (the row's `Model`) in `U_Crate`'s viewport, dressed in the crate's `Look` (glow, rays, beam, ring, ambient particles, STANDARD or PREMIUM tag, name plate; the premium crate's halo and violet backdrop), turning rays, a bob, a sway and a breathing glow while the widget is open, a pop when the crate changes, and the leap off the pedestal when a crate is bought |
@@ -86,7 +86,7 @@ Owned items are Inventory items. The widget reads three Replicator folders other
 
 A crate row: `Name`, `TabName` (its tab's text), `LayoutOrder` (its tab's place), `Hidden` (no tab unless
 it's the waiting tutorial crate; opens only one at a time), `Prices` (`{ [currency]: { One, Three, Ten } }`),
-`OddsByCurrency` (`{ [currency]: { [itemId]: percent } }`, each adding up to 100), `Fixed` (items always given, in
+`Odds` (`{ [itemId]: percent }`, adding up to 100, the same whichever currency pays), `Fixed` (items always given, in
 place of a roll), and its look: `Glow` (the showcase's glow, rays and beam, and its reel band's lines), `Accent` (the
 premium ring's colour), `Ambient` (`Crates_Ambient`: the particles around it, `"Embers"`, `"Glints"`, `"Bubbles"` or
 `"Sparkles"`), `Premium` (the PREMIUM tag, the halo, the violet backdrop and the premium reel's line) and `Model` (the
@@ -95,10 +95,10 @@ the tutorial crate uses `Crate_Starter`). The models are `art/crates`' (its READ
 
 | Crate | Prices (1, 3, 10) | Odds | Look |
 | --- | --- | --- | --- |
-| `Weapon` | 100, 300, 900 coins or 250, 750, 2,250 diamonds | Coins: Uzi, Golf Club, Dynamite, Spartan Spear 14.75 % each; Cluster Bomb, Spider Bomb, Minigun 10 %; Homing Missile, One Punch 5 %; Variety Grenade, Black Hole Grenade 0.5 %. Diamonds: Cluster, Spider, Minigun 26 % each; Homing, One Punch 10 %; Variety, Black Hole 1 % | Amber glow, embers |
-| `Premium` | 250, 750, 2,250 diamonds | The Weapon crate's diamonds since 2026-11-13 (the testers: one crate, coins or diamonds). Hidden, kept so its id stays known | Cyan glow, gold accent, glints, premium |
-| `Utility` | 100, 300, 900 coins or 200, 600, 1,800 diamonds | Coins: Parachute, Bandage 27.5 %; Jetpack, Speed 15 %; Medkit 10 %; Low Gravity 5 %. Diamonds: 15, 15, 20, 20, 20, 10 | Mint glow, bubbles |
-| `Skin` | 100, 300, 900 coins or 50, 150, 450 diamonds | Snail pieces, each set sharing what its whole skin had: Frontline, High Seas, Wild West 20 % each (6.67 % a piece); Shadow Clan, Round Table, Big Top 10 %; Inferno 7 %; Circuit 2 %; Crypt 1 % | Pink glow, sparkles |
+| `Weapon` | 100, 300, 1,000 coins or 50, 150, 500 diamonds | Uzi, Golf Club, Dynamite, Spartan Spear 14.75 % each; Cluster Bomb, Spider Bomb, Minigun 10 %; Homing Missile, One Punch 5 %; Variety Grenade, Black Hole Grenade 0.5 % | Amber glow, embers |
+| `Premium` | 250, 750, 2,250 diamonds | Cluster, Spider, Minigun 26 % each; Homing, One Punch 10 %; Variety, Black Hole 1 %. Hidden since 2026-11-13 (the testers: one crate, coins or diamonds), kept so its id stays known | Cyan glow, gold accent, glints, premium |
+| `Utility` | 100, 300, 1,000 coins or 50, 150, 500 diamonds | Parachute, Bandage 27.5 %; Jetpack, Speed 15 %; Medkit 10 %; Low Gravity 5 % | Mint glow, bubbles |
+| `Skin` | 100, 300, 1,000 coins or 50, 150, 500 diamonds | Snail pieces, each set sharing what its whole skin had: Frontline, High Seas, Wild West 20 % each (6.67 % a piece); Shadow Clan, Round Table, Big Top 10 %; Inferno 7 %; Circuit 2 %; Crypt 1 % | Pink glow, sparkles |
 | `Tutorial` | 100 coins (one only) | Fixed: Grenade and Shotgun. Hidden | Green glow, sparkles |
 
 A 3-pack costs three single crates (no discount, unlike the 10-pack's 10 %).
@@ -149,10 +149,10 @@ reel. Closing the widget ends an opening at once.
 
 | Key | Default | What |
 | --- | --- | --- |
-| `COUNTS` | `{ 1, 3, 10 }` | Pack sizes the server accepts, one buy button each (`U_BuyX<count>`) |
+| `COUNTS` | `{ 1, 3, 10 }` | Pack sizes the server accepts, one buy button each per currency (`U_<currency>X<count>`) |
 | `SHINY_COPIES` | `10` | Copies that make an item shiny |
 | `PAID_CURRENCIES` | `{ "Diamonds" }` | Currencies bought with Robux: rolls with them are paid random items |
-| `VIP_CRATE`, `VIP_ODDS` | `"Skin"`, `"Coins"` | VIP's free daily crate, and which odds it rolls |
+| `VIP_CRATE` | `"Skin"` | VIP's free daily crate (the coins row's x1) |
 | `TUTORIAL_CRATE` | `"Tutorial"` | The hidden crate the tutorial gives once |
 | `INTRO_TWEENINFO`, `QUICK_INTRO_TWEENINFO` | 0.56 s, 0.26 s | The shop making way |
 | `STAGE_LAYOUTS` | 1, 3 and 10 (`Crates_StageLayout`) | Where the 3D crates stand by pack size (studs; the camera looks along +Z at their fronts), their scale and turn, the camera and the point it looks at |
@@ -195,7 +195,7 @@ reel. Closing the widget ends an opening at once.
 | `BACKDROP_PREMIUM_COLOR`, `BACKDROP_PREMIUM_TRANSPARENCY`, `BACKDROP_LIGHT_TRANSPARENCY` | violet, `0.35`, `0.45` | The premium crate's backdrop and light |
 | `BACKDROP_OPEN_COLOR`, `BACKDROP_OPEN_TRANSPARENCY`, `BACKDROP_TWEENINFO` | near black, `0.12`, 0.6 s | The dim while a crate opens |
 | `GUI_NAME` | `"Crates"` | The widget it drives |
-| `PAY_CURRENCIES` | `{ "Coins", "Diamonds" }` | The currencies crates are paid in, one balance chip each (`U_Pay<currency>`); a crate pays in the first it takes until another is picked |
+| `PAY_CURRENCIES` | `{ "Coins", "Diamonds" }` | The currencies crates are paid in, top to bottom: a balance chip (`U_Pay<currency>`) and a row of buy buttons (`S_<currency>Row`, `U_<currency>X<count>`) each, shown for the currencies the crate takes |
 | `PRICE_FREE` | `"FREE"` | The x1 price while VIP's daily crate is free |
 | `LOBBY_GUI_NAME`, `BADGE_FREE`, `BADGE_MAX` | `"Lobby"`, `"FREE"`, `9` | The gui with the corner menu, and the badge on its Weapons button: `BADGE_FREE` while a free crate waits, else how many crates the coins open, `9+` past `BADGE_MAX` |
 
@@ -214,7 +214,8 @@ group).
 
 Drives the `Crates` widget, which WidgetManager opens. The shop: `U_Tabs` › `PREFAB | CrateTab`, `U_PayCoins` /
 `U_PayDiamonds`, `U_Center` (the showcase: `U_Crate`, a ViewportFrame for the 3D crate, `S_Glow`, `S_Rays`, `S_Beam`, `S_Halo`, `S_Pedestal`,
-`S_PedestalRing`, `S_Particles`, `S_Tier`, `S_Plate`), `U_BuyX1`, `U_BuyX3`, `U_BuyX10`, `U_Quick`, `U_Odds` ›
+`S_PedestalRing`, `S_Particles`, `S_Tier`, `S_Plate`), `U_BottomCenter` › `S_CoinsRow` (`U_CoinsX1`, `U_CoinsX3`,
+`U_CoinsX10`) and `S_DiamondsRow` (`U_DiamondsX1`, `U_DiamondsX3`, `U_DiamondsX10`), `U_Quick`, `U_Odds` ›
 `PREFAB | RaritySection` › `PREFAB | OddsItem`, and `U_Backdrop`. The 3D crates: `U_Stage` (`S_Glow`, `S_Rays`,
 `S_Viewport`, `S_Tap` › `S_TapScale`, `S_TapSub`, and the full-screen tap `S_Hit`). The opening: `U_Open` (`S_Swallow`, the UIScale the black hole shrinks it with, `S_Title`, `U_Reels` with
 `PREFAB | Band`, `PREFAB | Column` and `PREFAB | Card`, the letterbox bars, `U_Skip`) and `U_Result` (`S_FxBack`,

@@ -54,10 +54,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Draw
 
 --[[
-	Draws a crate's odds in the Crates widget's left list, paid in a currency: one section per rarity, rarest first,
-	each with a card per item and its chance, likeliest first. Items a crate always gives show "Always".
+	Draws a crate's odds in the Crates widget's left list: one section per rarity, rarest first, each with a card per
+	item and its chance, likeliest first. Items a crate always gives show "Always".
 ]]
-function Module.Draw(crateId: string, currency: string)
+function Module.Draw(crateId: string)
 	--[[ Data ]]
 
 	local row = I.G_Crates.Get(crateId) --- @type Crates_CrateData?
@@ -74,8 +74,7 @@ function Module.Draw(crateId: string, currency: string)
 
 	--[[ Items ]]
 
-	local odds = row.OddsByCurrency[currency] or {} --- @type { [string]: number }
-	for itemId: string, chance: number in pairs(odds) do
+	for itemId: string, chance: number in pairs(row.Odds) do
 		Module._addItem(itemId, `{chance}%`, -chance)
 	end
 	for index: number, itemId: string in ipairs(row.Fixed) do

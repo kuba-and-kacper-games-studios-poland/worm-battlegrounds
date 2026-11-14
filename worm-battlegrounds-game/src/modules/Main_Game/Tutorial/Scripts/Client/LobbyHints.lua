@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -46,7 +47,7 @@ function Module.Start()
 
 	elems["Crates"] = I.UserInterface.UI[_settings.CRATES_GUI_NAME] --- @type ScreenGui
 	elems["Weapons"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_Menu", true):FindFirstChild("S_Weapons", true) --- @type ImageButton
-	elems["BuyOne"] = elems["Crates"]:FindFirstChild("U_BuyX1", true) --- @type ImageButton
+	elems["BuyOne"] = elems["Crates"]:FindFirstChild("U_CoinsX1", true) --- @type ImageButton
 	elems["Continue"] = elems["Crates"]:FindFirstChild("U_Continue", true) --- @type ImageButton
 	elems["Close"] = elems["Crates"]:FindFirstChild("S_Close", true) --- @type ImageButton
 	elems["Tap"] = elems["Crates"]:FindFirstChild("S_Tap", true) --- @type TextLabel

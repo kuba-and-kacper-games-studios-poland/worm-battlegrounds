@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -60,23 +61,24 @@ end
 --%%%%%%%%%%%%%%%%%%%% Check Odds
 
 --[[
-	Warns when a crate's odds for one currency don't add up to 100, or name an item the inventory doesn't know.
+	Warns when a crate's odds don't add up to 100, or name an item the inventory doesn't know.
 ]]
 function Module._checkOdds(crateId: string)
+	--[[ Local Variables ]]
+
+	local odds = crates[crateId].Odds --- @type { [string]: number }
+	local total: number = 0
+
 	--[[ Checking ]]
 
-	--- @param odds { [string]: number }
-	for currency: string, odds in pairs(crates[crateId].OddsByCurrency) do
-		local total: number = 0
-		for itemId: string, chance: number in pairs(odds) do
-			total += chance
-			if not I.G_Inventory.Items[itemId] then
-				warn(`[{_localName}::{script.Name}]: Crate ({crateId}) rolls an unknown item ({itemId})!`)
-			end
+	for itemId: string, chance: number in pairs(odds) do
+		total += chance
+		if not I.G_Inventory.Items[itemId] then
+			warn(`[{_localName}::{script.Name}]: Crate ({crateId}) rolls an unknown item ({itemId})!`)
 		end
-		if math.abs(total - 100) > 0.001 then
-			warn(`[{_localName}::{script.Name}]: Crate ({crateId}) odds in {currency} add up to {total}, not 100!`)
-		end
+	end
+	if next(odds) ~= nil and math.abs(total - 100) > 0.001 then
+		warn(`[{_localName}::{script.Name}]: Crate ({crateId}) odds add up to {total}, not 100!`)
 	end
 end
 

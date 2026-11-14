@@ -23,30 +23,20 @@ local _data = {
 
 	-- Coins or diamonds for one crate, a 3-pack and a 10-pack
 	Prices = {
-		Coins = { One = "100", Three = "300", Ten = "900" },
-		Diamonds = { One = "200", Three = "600", Ten = "1800" },
+		Coins = { One = "100", Three = "300", Ten = "1000" },
+		Diamonds = { One = "50", Three = "150", Ten = "500" },
 	},
 
 	--[[ Odds ]]
 
-	-- Each item's chance in percent, by the currency paid; each table adds up to 100
-	OddsByCurrency = {
-		Coins = {
-			Parachute = 27.5,
-			Bandage = 27.5,
-			Jetpack = 15,
-			SpeedPotion = 15,
-			Medkit = 10,
-			LowGravityPotion = 5,
-		},
-		Diamonds = {
-			Parachute = 15,
-			Bandage = 15,
-			Jetpack = 20,
-			SpeedPotion = 20,
-			Medkit = 20,
-			LowGravityPotion = 10,
-		},
+	-- Each item's chance in percent, the same whichever currency pays; adds up to 100
+	Odds = {
+		Parachute = 27.5,
+		Bandage = 27.5,
+		Jetpack = 15,
+		SpeedPotion = 15,
+		Medkit = 10,
+		LowGravityPotion = 5,
 	},
 
 	-- Items always given, instead of a roll

@@ -3,7 +3,7 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Opening
 
-	-- How many crates a pack opens: one buy button each (U_BuyX<count>), priced by the crate's One, Three and Ten
+	-- How many crates a pack opens: one buy button each per currency (U_<currency>X<count>), priced by the crate's One, Three and Ten
 	--- @type { number }
 	COUNTS = { 1, 3, 10 },
 
@@ -16,9 +16,8 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Special Crates
 
-	-- The crate VIP players open free once a day, and the odds it rolls with
+	-- The crate VIP players open free once a day
 	VIP_CRATE = "Skin",
-	VIP_ODDS = "Coins",
 
 	-- The crate the tutorial gives, once
 	TUTORIAL_CRATE = "Tutorial",
@@ -363,11 +362,14 @@ local _settings = {
 
 	GUI_NAME = "Crates",
 
-	-- The currencies crates are paid in, one balance chip each (U_Pay<currency>), in the order a crate picks first
+	--[[
+		The currencies crates are paid in, top to bottom: a balance chip each (U_Pay<currency>) and a row of buy buttons
+		(U_<currency>X<count>)
+	]]
 	--- @type { string }
 	PAY_CURRENCIES = { "Coins", "Diamonds" },
 
-	-- The x1 button's price while the crate is free (VIP's daily crate)
+	-- The first row's x1 price while the crate is free (VIP's daily crate)
 	PRICE_FREE = "FREE",
 
 	--[[

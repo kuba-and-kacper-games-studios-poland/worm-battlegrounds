@@ -23,129 +23,71 @@ local _data = {
 
 	-- Coins or diamonds for one crate, a 3-pack and a 10-pack
 	Prices = {
-		Coins = { One = "100", Three = "300", Ten = "900" },
-		Diamonds = { One = "50", Three = "150", Ten = "450" },
+		Coins = { One = "100", Three = "300", Ten = "1000" },
+		Diamonds = { One = "50", Three = "150", Ten = "500" },
 	},
 
 	--[[ Odds ]]
 
 	--[[
-		Each item's chance in percent, by the currency paid; each table adds up to 100. A set's pieces share what its
+		Each item's chance in percent, the same whichever currency pays; adds up to 100. A set's pieces share what its
 		whole skin had (2026-11-14)
 	]]
-	OddsByCurrency = {
-		Coins = {
+	Odds = {
 
-			--[[ Wild West ]]
+		--[[ Wild West ]]
 
-			Shell_Saddlebag = 6.67,
-			Hat_TenGallon = 6.67,
-			Neck_DustyBandana = 6.66,
+		Shell_Saddlebag = 6.67,
+		Hat_TenGallon = 6.67,
+		Neck_DustyBandana = 6.66,
 
-			--[[ High Seas ]]
+		--[[ High Seas ]]
 
-			Hat_CaptainsTricorn = 6.67,
-			Neck_SeaScarf = 6.67,
-			Shell_TreasureHold = 6.66,
+		Hat_CaptainsTricorn = 6.67,
+		Neck_SeaScarf = 6.67,
+		Shell_TreasureHold = 6.66,
 
-			--[[ Frontline ]]
+		--[[ Frontline ]]
 
-			Hat_FieldHelmet = 6.67,
-			Neck_CamoScarf = 6.67,
-			Shell_Bunker = 6.66,
+		Hat_FieldHelmet = 6.67,
+		Neck_CamoScarf = 6.67,
+		Shell_Bunker = 6.66,
 
-			--[[ Shadow Clan ]]
+		--[[ Shadow Clan ]]
 
-			Hat_RedHachimaki = 3.34,
-			Body_Midnight = 3.33,
-			Shell_ShadowCoil = 3.33,
+		Hat_RedHachimaki = 3.34,
+		Body_Midnight = 3.33,
+		Shell_ShadowCoil = 3.33,
 
-			--[[ Round Table ]]
+		--[[ Round Table ]]
 
-			Hat_PlumedHelm = 3.34,
-			Neck_CrestShield = 3.33,
-			Shell_Rampart = 3.33,
+		Hat_PlumedHelm = 3.34,
+		Neck_CrestShield = 3.33,
+		Shell_Rampart = 3.33,
 
-			--[[ Big Top ]]
+		--[[ Big Top ]]
 
-			Hat_RingmasterTopper = 2.5,
-			Neck_FrillyRuff = 2.5,
-			Body_Greasepaint = 2.5,
-			Shell_ConfettiCoil = 2.5,
+		Hat_RingmasterTopper = 2.5,
+		Neck_FrillyRuff = 2.5,
+		Body_Greasepaint = 2.5,
+		Shell_ConfettiCoil = 2.5,
 
-			--[[ Inferno ]]
+		--[[ Inferno ]]
 
-			Neck_SpikedCollar = 2.34,
-			Body_Brimstone = 2.33,
-			Shell_HellfireSpiral = 2.33,
+		Neck_SpikedCollar = 2.34,
+		Body_Brimstone = 2.33,
+		Shell_HellfireSpiral = 2.33,
 
-			--[[ Circuit ]]
+		--[[ Circuit ]]
 
-			Body_ChromePlating = 1,
-			Shell_ReactorCore = 1,
+		Body_ChromePlating = 1,
+		Shell_ReactorCore = 1,
 
-			--[[ Crypt ]]
+		--[[ Crypt ]]
 
-			Hat_LichCrown = 0.34,
-			Body_BareBones = 0.33,
-			Shell_Ossuary = 0.33,
-		},
-		Diamonds = {
-
-			--[[ Wild West ]]
-
-			Shell_Saddlebag = 6.67,
-			Hat_TenGallon = 6.67,
-			Neck_DustyBandana = 6.66,
-
-			--[[ High Seas ]]
-
-			Hat_CaptainsTricorn = 6.67,
-			Neck_SeaScarf = 6.67,
-			Shell_TreasureHold = 6.66,
-
-			--[[ Frontline ]]
-
-			Hat_FieldHelmet = 6.67,
-			Neck_CamoScarf = 6.67,
-			Shell_Bunker = 6.66,
-
-			--[[ Shadow Clan ]]
-
-			Hat_RedHachimaki = 3.34,
-			Body_Midnight = 3.33,
-			Shell_ShadowCoil = 3.33,
-
-			--[[ Round Table ]]
-
-			Hat_PlumedHelm = 3.34,
-			Neck_CrestShield = 3.33,
-			Shell_Rampart = 3.33,
-
-			--[[ Big Top ]]
-
-			Hat_RingmasterTopper = 2.5,
-			Neck_FrillyRuff = 2.5,
-			Body_Greasepaint = 2.5,
-			Shell_ConfettiCoil = 2.5,
-
-			--[[ Inferno ]]
-
-			Neck_SpikedCollar = 2.34,
-			Body_Brimstone = 2.33,
-			Shell_HellfireSpiral = 2.33,
-
-			--[[ Circuit ]]
-
-			Body_ChromePlating = 1,
-			Shell_ReactorCore = 1,
-
-			--[[ Crypt ]]
-
-			Hat_LichCrown = 0.34,
-			Body_BareBones = 0.33,
-			Shell_Ossuary = 0.33,
-		},
+		Hat_LichCrown = 0.34,
+		Body_BareBones = 0.33,
+		Shell_Ossuary = 0.33,
 	},
 
 	-- Items always given, instead of a roll

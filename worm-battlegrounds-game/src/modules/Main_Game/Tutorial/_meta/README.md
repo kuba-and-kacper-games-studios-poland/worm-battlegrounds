@@ -80,6 +80,6 @@ It listens to `Match_Ended` (Match map) and `Crates_Opened` (Lobby map) when tho
 ## In the place
 
 Drives `TutorialHint` (`U_Spotlight`, `U_Blockers`, `U_Hint` › `S_Text`). Lights, without changing them: MatchHud's
-`U_Fire`, Results' `S_Lobby`, the Lobby menu's `S_Weapons`, Crates' `U_BuyX1`, `U_Continue` and `S_Close`, the
+`U_Fire`, Results' `S_Lobby`, the Lobby menu's `S_Weapons`, Crates' `U_CoinsX1`, `U_Continue` and `S_Close`, the
 Loadout slots (`Slot<n>`) and the LoadoutPicker cards (named by item id). The tutorial bot's play and health are the
 Bots module's (`HEALTH`, `TUTORIAL_FUMBLE_POWER`); the tutorial's drop and turn order are the Match module's.

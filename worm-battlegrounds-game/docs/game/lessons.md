@@ -1749,3 +1749,16 @@ owned a skin had to keep it. Of three drafts the owner picked the card decks.
   and stays in the inventory, so nothing is lost if the change is ever undone.
 
 Rules: A snail is dressed piece by piece, never as a whole skin.
+
+## Crates show both prices, with one set of odds (2026-11-15)
+
+The crate shop had a coins chip and a diamonds chip at the top right: pressing one switched the buy buttons to that
+currency, and the Weapon and Utility crates rolled better odds for diamonds. The owner wanted no switch ("instead do 3
+buttons for coins and under them do 3 buttons for gems") and the same chances whichever currency pays.
+
+- **Show every price at once.** A switch hid the diamond prices behind a press players didn't know was there. Two rows
+  of the same buttons, green for coins and blue for diamonds, show both, and the chips are only balances now.
+- **One odds table per crate.** A crate row holds `Odds`, not odds by currency, so the server, the odds list, the
+  reels and the golden reel all read the same table and can't drift apart.
+
+Rules: Crates open on the GACHA screen (One crate per kind, paid in coins or diamonds).

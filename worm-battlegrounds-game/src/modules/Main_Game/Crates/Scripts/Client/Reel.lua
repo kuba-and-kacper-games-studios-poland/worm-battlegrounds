@@ -79,12 +79,12 @@ end
 --- @param results { Crates_Result }
 --- @param row Crates_CrateData
 --- @return { Crates_Reel }
-function Module.Build(results, row, payWith: string, quick: boolean)
+function Module.Build(results, row, quick: boolean)
 	--[[ Local Variables ]]
 
 	local count: number = #results
 	local timing: number = if count > 3 then 10 else count
-	local odds = row.OddsByCurrency[payWith] or row.OddsByCurrency[_settings.VIP_ODDS] or {} --- @type { [string]: number }
+	local odds = row.Odds --- @type { [string]: number }
 	local seconds: number = (if quick then _settings.QUICK_ROLL_SECONDS else _settings.ROLL_SECONDS)[timing]
 	local stagger: number = (if quick then _settings.QUICK_ROLL_STAGGER else _settings.ROLL_STAGGER)[timing]
 	local order = Module._getStopOrder(results) --- @type { [number]: number }

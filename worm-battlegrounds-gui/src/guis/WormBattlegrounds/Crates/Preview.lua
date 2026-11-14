@@ -29,7 +29,11 @@ local ODDS = {
 
 -- The weapon crate's prices in coins, by pack size
 --- @type { [number]: string }
-local PRICES = { [1] = "100", [3] = "300", [10] = "900" }
+--- @type { [string]: { [number]: string } }
+local PRICES = {
+	Coins = { [1] = "100", [3] = "300", [10] = "1,000" },
+	Diamonds = { [1] = "50", [3] = "150", [10] = "500" },
+}
 
 --[[ Showcase ]]
 
@@ -59,7 +63,6 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Toggle", Id = "S_Diamonds", Label = "Pay with diamonds", Value = false },
 		{ Control = "Toggle", Id = "S_Free", Label = "Free x1 (VIP)", Value = false },
 	},
 }
@@ -69,15 +72,11 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the widget as the Crates module does: the tabs (the first selected), the paying currency's chip picked, the
-	buy buttons' prices, the weapon crate's odds by rarity and its 3D model on the pedestal (when the place has it).
+	Fills the widget as the Crates module does: the tabs (the first selected), both rows of buy buttons' prices, the
+	weapon crate's odds by rarity and its 3D model on the pedestal (when the place has it).
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
-	--[[ Local Variables ]]
-
-	local currency: string = if preview.Values.S_Diamonds then "Diamonds" else "Coins"
-
 	--[[ Tabs ]]
 
 	local tabs = preview.Fill("PREFAB | CrateTab", #TABS) --- @type { UmeGui_Subview }
@@ -94,23 +93,17 @@ function Module.Apply(preview)
 		tab:Get("S_Stroke").Instance.ImageColor3 = root:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
 	end
 
-	--[[ Balance ]]
-
-	for _index: number, chipCurrency: string in ipairs({ "Coins", "Diamonds" }) do
-		local chip: ImageButton = preview.View:Get(`U_Pay{chipCurrency}`).Instance
-		local picked: boolean = chipCurrency == currency
-		chip:FindFirstChild("S_Stroke", true).ImageColor3 = chip:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
-		chip:FindFirstChild("S_Amount", true).TextColor3 = chip:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
-	end
-
 	--[[ Buy Buttons ]]
 
-	for count: number, price: string in pairs(PRICES) do
-		local button: ImageButton = preview.View:Get(`U_BuyX{count}`).Instance
-		local freeOne: boolean = preview.Values.S_Free and count == 1
-		button:FindFirstChild("S_Price", true).Text = if freeOne then "FREE" else price
-		button:FindFirstChild("S_Icon", true).Visible = not freeOne
-		button:FindFirstChild("S_Icon", true).Image = button:GetAttribute(`Look_{currency}Icon`)
+	-- VIP's free crate is the coins row's x1
+	--- @param prices { [number]: string }
+	for currency: string, prices in pairs(PRICES) do
+		for count: number, price: string in pairs(prices) do
+			local button: ImageButton = preview.View:Get(`U_{currency}X{count}`).Instance
+			local freeOne: boolean = preview.Values.S_Free and count == 1 and currency == "Coins"
+			button:FindFirstChild("S_Price", true).Text = if freeOne then "FREE" else price
+			button:FindFirstChild("S_Icon", true).Visible = not freeOne
+		end
 	end
 
 	--[[ Odds ]]

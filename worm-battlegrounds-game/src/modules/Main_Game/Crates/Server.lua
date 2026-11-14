@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -120,9 +121,8 @@ function Module.Open(player: Player, crateId: string, count: number, payWith: st
 	if #row.Fixed > 0 then
 		items = table.clone(row.Fixed)
 	else
-		local odds = row.OddsByCurrency[if payWith == "VipDaily" then _settings.VIP_ODDS else payWith] --- @type { [string]: number }
 		for _index: number = 1, count do
-			table.insert(items, Module._roll(odds))
+			table.insert(items, Module._roll(row.Odds))
 		end
 	end
 
