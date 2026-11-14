@@ -37,6 +37,9 @@ local usedNames = {} --- @type { [string]: boolean }
 -- Each bot's run of shots at one target from about one spot, which steadies its hand (Aim.GetShaken)
 local rangings = {} --- @type { [string]: Bots_Ranging }
 
+-- The health of the players a bot's shot in flight may hurt, by the bot, for its taunt once it lands
+local before = {} --- @type { [string]: { [Model]: number } }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -90,6 +93,9 @@ function Module.Start()
 	----------------------------
 
 	Gym.Start()
+	I.Topic.Subscribe("Combat_ShotFired", Module._onShotFired)
+	I.Topic.Subscribe("Combat_ShotResolved", Module._onShotResolved)
+	I.Topic.Subscribe("Snails_Died", Module._onDied)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -109,6 +115,7 @@ function Module.CreateParticipant(difficulty: string, number: number)
 	if number == 1 then
 		usedNames = {}
 		rangings = {}
+		before = {}
 	end
 	local name: string = Module._getName()
 	local loadout = table.clone(_settings.LOADOUTS[difficulty] or _settings.LOADOUTS.Easy) --- @type { string }
@@ -425,20 +432,133 @@ function Module._showAim(participantId: string, itemId: string, angle: number, p
 	return true
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Shot Fired
+
+--[[
+	Notes the health of every player's snail not on a bot's team when the bot fires, so its taunt knows whom the shot
+	hurt once it lands.
+]]
+function Module._onShotFired(participantId: string, _itemId: string)
+	--[[ Data ]]
+
+	local participant = I.Match.GetParticipant(participantId) --- @type Match_Participant?
+	local model: Model? = I.Snails.Get(participantId)
+
+	--[[ Checks ]]
+
+	-- Check if a bot fired it (not one playing a dropped player's snail)
+	if not participant or not participant.IsBot or not model then
+		return
+	end
+
+	--[[ Saving ]]
+
+	local healths = {} --- @type { [Model]: number }
+	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
+		local owner = I.Match.GetParticipant(other.Name) --- @type Match_Participant?
+		if owner and not owner.IsBot and other:GetAttribute("Team") ~= model:GetAttribute("Team") then
+			healths[other] = other:GetAttribute("Health") or 0
+		end
+	end
+	before[participantId] = healths
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Shot Resolved
+
+--[[
+	A bot's shot landed: when it hurt a player for TAUNT_DAMAGE or more and knocked nobody out (a knockout taunts on its
+	own, OnDied), the bot taunts at TAUNT_CHANCE.
+]]
+function Module._onShotResolved(participantId: string, _damage: number)
+	--[[ Data ]]
+
+	local healths = before[participantId] --- @type { [Model]: number }?
+	before[participantId] = nil
+	if not healths then
+		return
+	end
+
+	--[[ Measuring ]]
+
+	local most: number = 0
+	for model: Model, health: number in pairs(healths) do
+		local now: number = model:GetAttribute("Health") or 0
+		if now <= 0 then
+			return
+		end
+		most = math.max(most, health - now)
+	end
+
+	--[[ Taunting ]]
+
+	if most >= _settings.TAUNT_DAMAGE and random:NextNumber() < _settings.TAUNT_CHANCE then
+		Module._taunt(participantId, _settings.TAUNT_HIT)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Died
+
+--[[
+	A snail was knocked out: when a bot's blow did it to a snail not on its team, the bot taunts (TAUNT_KILL).
+]]
+function Module._onDied(participantId: string, _cause: string, killerId: string?, _itemId: string?)
+	--[[ Checks ]]
+
+	-- Check if someone else knocked it out
+	if not killerId or killerId == participantId then
+		return
+	end
+
+	--[[ Data ]]
+
+	local killer = I.Match.GetParticipant(killerId) --- @type Match_Participant?
+	local victim: Model? = I.Snails.Get(participantId)
+	local model: Model? = I.Snails.Get(killerId)
+
+	--[[ Checks ]]
+
+	-- Check if a bot knocked out an enemy
+	if not killer or not killer.IsBot or not model or not victim or victim:GetAttribute("Team") == model:GetAttribute("Team") then
+		return
+	end
+
+	--[[ Taunting ]]
+
+	Module._taunt(killerId, _settings.TAUNT_KILL)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Taunt
+
+--[[
+	After TAUNT_DELAY, plays one of the emotes on a bot's snail for everyone (Cosmetics' PlaySnailEmote), while it's
+	still in play.
+]]
+--- @param emotes { string }
+function Module._taunt(participantId: string, emotes)
+	--[[ Waiting ]]
+
+	task.delay(_settings.TAUNT_DELAY, function()
+		local model: Model? = I.Snails.Get(participantId)
+		if model and model:GetAttribute("Alive") then
+			I.Cosmetics.PlaySnailEmote(participantId, emotes[random:NextInteger(1, #emotes)])
+		end
+	end)
+end
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
 --%%%%%%%%%%%%%%%%%%%% Get Start
 
 --[[
 	**SERVER** |
-	Returns the land spot a bot parachutes onto, picked by its difficulty's trained genome from the match's spots, apart
-	from those taken already.
+	Returns the land spot a bot parachutes onto from the match's spots, never within START_GAP of those taken already:
+	a safe one its difficulty's genome likes, picked as loosely as its skill's StartNoise says.
 ]]
 --- @param spots { Vector3 }
 --- @param taken { Vector3 }
 --- @return Vector3
 function Module.GetStart(difficulty: string, spots, taken)
-	return Brain.GetStart(spots, taken, Brains[difficulty] or Brains.Hard)
+	return Brain.GetStart(spots, taken, Brains[difficulty] or Brains.Hard, _settings.SKILLS[difficulty] or _settings.SKILLS.Easy)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Turn

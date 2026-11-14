@@ -161,7 +161,8 @@ function Module._predict(parts, carve)
 	--[[ Local Variables ]]
 
 	local bounds: BasePart = arenaFolder:FindFirstChild("Markers"):FindFirstChild("Bounds")
-	local cutter = Cutter.Build(carve.Center, carve.Radius, bounds.Position.Z, bounds.Size.Z + _settings.CARVE_DEPTH_MARGIN, piecesFolder) --- @type { BasePart }
+	local boxes = Cutter.Build(carve.Center, carve.Radius, bounds.Position.Z, bounds.Size.Z + _settings.CARVE_DEPTH_MARGIN, piecesFolder) --- @type { BasePart }
+	local cutter = Cutter.Merge(boxes) --- @type { BasePart }
 	local results = {} --- @type { [BasePart]: { BasePart } }
 	local running: number = 0
 
@@ -174,7 +175,7 @@ function Module._predict(parts, carve)
 		for _targetIndex: number, target: BasePart in ipairs(targets) do
 			running += 1
 			task.spawn(function()
-				local pieces = Cutter.Subtract(target, cutter) or { target:Clone() } --- @type { BasePart }
+				local pieces = Cutter.Subtract(target, cutter, true) or { target:Clone() } --- @type { BasePart }
 				table.move(pieces, 1, #pieces, #results[part] + 1, results[part])
 				running -= 1
 			end)
@@ -222,6 +223,9 @@ function Module._predict(parts, carve)
 
 	--[[ Cleaning ]]
 
+	for _index: number, box: BasePart in ipairs(boxes) do
+		box:Destroy()
+	end
 	for _index: number, box: BasePart in ipairs(cutter) do
 		box:Destroy()
 	end

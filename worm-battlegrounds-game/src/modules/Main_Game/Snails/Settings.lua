@@ -177,11 +177,26 @@ local _settings = {
 	-- The most a throw lasts before the snail is handed back to Roblox physics wherever it is, in seconds
 	FLIGHT_MAX_SECONDS = 8,
 
-	--%%%%%%%%%%%%%%%%%%%% Potions
+	--%%%%%%%%%%%%%%%%%%%% Burning
 
-	-- The Vfx prefab whose particles stream around a snail while a potion's attribute is set on it
+	--[[
+		Touching lava that doesn't knock a snail out (a pool on the map, or the lava sea seeping into a small hole) sets
+		it Burning: BURN_DELAY seconds later it loses BURN_DAMAGE health, so its turn ends then as any hurt does, and again
+		every BURN_INTERVAL seconds, BURN_TICKS times in all. It burns once a dip: staying in the lava, or touching it again
+		while it burns, adds nothing, so a snail left in a pool can walk out on its turn
+	]]
+	BURN_DELAY = 2,
+	BURN_DAMAGE = 8,
+	BURN_INTERVAL = 1,
+	BURN_TICKS = 3,
+
+	--%%%%%%%%%%%%%%%%%%%% Auras
+
+	-- The Vfx prefab whose particles stream around a snail while an attribute is set on it: the potions', and burning
 	--- @type { [string]: string }
-	POTION_AURAS = { SpeedMultiplier = "Aura_Speed", LowGravity = "Aura_LowGravity" },
+	AURAS = { SpeedMultiplier = "Aura_Speed", LowGravity = "Aura_LowGravity", Burning = "Aura_Burning" },
+
+	--%%%%%%%%%%%%%%%%%%%% Potions
 
 	--[[
 		The vignette's colour on the player's own turn while their snail is under the Speed potion, the Low gravity

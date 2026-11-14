@@ -236,8 +236,13 @@ local _settings = {
 	CRAWL_STEP_DOWN = 3,
 	CRAWL_STOP = 0.25,
 
-	-- An open black hole throws the snails around it toward it at up to this speed (studs per second)
-	BLACK_HOLE_PULL_SPEED = 45,
+	--[[
+		An open black hole draws the snails in its PullRadius toward it at BLACK_HOLE_DRAG_SPEED studs per second (sliding
+		along the ground, drifting through the air), and holds each one stuck within BLACK_HOLE_STICK studs of its middle
+		until it bursts
+	]]
+	BLACK_HOLE_DRAG_SPEED = 10,
+	BLACK_HOLE_STICK = 2.5,
 
 	-- The box a melee swing checks in front of the snail, in studs on each side
 	MELEE_BOX = 4,

@@ -13,6 +13,7 @@ local _scripts = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Bodies = require(_scripts:FindFirstChild("Server"):FindFirstChild("Bodies")) --- @type Snails_Server_Bodies
+local Drag = require(_scripts:FindFirstChild("Server"):FindFirstChild("Drag")) --- @type Snails_Server_Drag
 local Health = require(_scripts:FindFirstChild("Server"):FindFirstChild("Health")) --- @type Snails_Server_Health
 local Hazards = require(_scripts:FindFirstChild("Server"):FindFirstChild("Hazards")) --- @type Snails_Server_Hazards
 
@@ -54,6 +55,8 @@ function Module.Init()
 		Heal = Health.Heal,
 		Knockback = Health.Knockback,
 		Kill = Health.Kill,
+		Drag = Drag.Drag,
+		Release = Drag.Release,
 		SetOwner = Bodies.SetOwner,
 		Clear = Bodies.Clear,
 

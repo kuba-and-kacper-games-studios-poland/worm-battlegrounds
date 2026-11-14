@@ -17,7 +17,7 @@ local _data = {
 	DamageMax = 100,
 	DamageEdge = 25,
 	BlastRadius = 14,
-	Knockback = "High",
+	Knockback = "None",
 
 	--[[ Limits ]]
 

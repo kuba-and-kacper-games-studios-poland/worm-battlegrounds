@@ -63,7 +63,7 @@ end
 --[[
 	Returns what a weapon fired from a snail's middle would do, as Combat's behaviors do it: the blasts it sets off and
 	the snails it strikes directly (bullets, a swing, a piercing spear), with the same simulation (I.G_Combat's
-	bodies), wind acceleration and fuses. A spider bomb crawls to the nearest enemy (Combat's GetCrawlStep) before it
+	bodies), wind acceleration (bomblets and the spider bomb's throw too) and fuses. A spider bomb crawls to the nearest enemy (Combat's GetCrawlStep) before it
 	bursts; a black hole pulls snails in (Pulls) before it does. `random` scatters bullets and bomblets as a real shot
 	does; without it they spread evenly, so a plan is the same every time. Nil for a weapon whose shot it can't foresee.
 ]]
@@ -137,13 +137,12 @@ function Module.GetShot(origin: Vector3, itemId: string, angle: number, power: n
 
 	--[[ Flying ]]
 
-	-- A spider bomb flies without wind, as Combat's Crawler launches it
 	--- @type Combat_ShotOptions
 	local options = {
 		Radius = combat.PROJECTILE_SIZE / 2,
 		Shooter = if row.Aim == "Feet" then nil else shooter,
 		GraceSteps = math.round(combat.SHOOTER_GRACE / combat.PROJECTILE_STEP),
-		Wind = if row.Kind == "Crawler" then nil else I.G_Combat.GetWindAcceleration(itemId, wind),
+		Wind = I.G_Combat.GetWindAcceleration(itemId, wind),
 		Pierce = row.Pierce,
 		Bounce = if row.Kind == "Bouncer" and not row.BurstOnContact then row.Elasticity or 0.5 else nil,
 		Target = if row.Kind == "Homing" then target else nil,
@@ -185,7 +184,7 @@ function Module.GetShot(origin: Vector3, itemId: string, angle: number, power: n
 		shot.Landed = burst
 	end
 
-	-- An open black hole pulls every snail in its reach but the shooter's teammates, then bursts
+	-- An open black hole draws every snail in its reach but the shooter's teammates in, then bursts
 	if row.Kind == "Roller" then
 		shot.Pulls = Module._getPulls(burst, row, team, shooter, snails)
 	end
@@ -207,6 +206,7 @@ function Module.GetShot(origin: Vector3, itemId: string, angle: number, power: n
 			local bombletOptions = {
 				Radius = combat.PROJECTILE_SIZE / 2,
 				GhostSteps = math.round(combat.BOMBLET_GHOST / combat.PROJECTILE_STEP),
+				Wind = options.Wind,
 			}
 			local bombletBurst: Vector3? = Module._fly(burst + Vector3.yAxis * 1.5, Vector3.new(math.cos(bombletAngle), math.sin(bombletAngle), 0) * speed, bombletOptions, nil, nil)
 			if bombletBurst then
@@ -229,9 +229,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Effects
 
 --[[
-	Returns what a shot does to each snail it reaches, as Combat's blasts and hits do it: where a black hole pulls it
+	Returns what a shot does to each snail it reaches, as Combat's blasts and hits do it: where a black hole draws it
 	first, the damage (blasts fall off from the center to the edge), then where the knockback throws it, or where it
-	drops when the craters take the ground under it, and whether that, or the damage, knocks it out.
+	drops when the craters take the ground under it (or the black hole lets it go), the burn when it lands in lava, and
+	whether that, or the damage, knocks it out.
 ]]
 --- @param shot Bots_Shot
 --- @param snails { Bots_Snail }
@@ -240,25 +241,19 @@ function Module.GetEffects(shot, snails)
 	--[[ Local Variables ]]
 
 	local combat = I.Settings["Combat"] --- @type Combat_Settings
-	local rootRadius: number = I.Settings["Snails"].ROOT_SIZE / 2
+	local snailSettings = I.Settings["Snails"] --- @type Snails_Settings
+	local rootRadius: number = snailSettings.ROOT_SIZE / 2
 	local damages = {} --- @type { [string]: number }
 	local pushes = {} --- @type { [string]: Vector3 }
 	local effects = {} --- @type { [string]: Bots_Effect }
 	local positions = {} --- @type { [string]: Vector3 }
-	local gone = {} --- @type { [string]: boolean }
 
 	--[[ Pulling ]]
 
-	-- A black hole throws snails toward it before it bursts, so its blast finds them where they land
+	-- A black hole draws snails to it before it bursts, so its blast finds them stuck there
 	--- @param snail Bots_Snail
 	for _index: number, snail in ipairs(snails) do
-		positions[snail.Id] = snail.Position
-		local pull: Vector3? = if shot.Pulls then shot.Pulls[snail.Id] else nil
-		if pull then
-			local fall: number
-			positions[snail.Id], gone[snail.Id], fall = Module.GetThrow(snail.Position, pull, {})
-			damages[snail.Id] = fall
-		end
+		positions[snail.Id] = if shot.Pulls and shot.Pulls[snail.Id] then shot.Pulls[snail.Id] else snail.Position
 	end
 
 	--[[ Hurting ]]
@@ -270,7 +265,7 @@ function Module.GetEffects(shot, snails)
 		for _snailIndex: number, snail in ipairs(snails) do
 			local offset: Vector3 = positions[snail.Id] - blast.Center
 			local distance: number = math.max(offset.Magnitude - rootRadius, 0)
-			if distance <= blast.Radius and not gone[snail.Id] then
+			if distance <= blast.Radius then
 				local share: number = if blast.Radius > 0 then distance / blast.Radius else 0
 				local away: Vector3 = if offset.Magnitude > 0.05 then offset.Unit else Vector3.yAxis
 				damages[snail.Id] = (damages[snail.Id] or 0) + math.floor(blast.DamageMax + (blast.DamageEdge - blast.DamageMax) * share + 0.5)
@@ -299,14 +294,16 @@ function Module.GetEffects(shot, snails)
 	for _index: number, snail in ipairs(snails) do
 		local at: Vector3 = positions[snail.Id]
 		local landed: Vector3? = if at ~= snail.Position then at else nil
-		local out: boolean = gone[snail.Id] == true
+		local out: boolean = false
 		local fall: number = 0
-		if not out and pushes[snail.Id] then
+		if pushes[snail.Id] and pushes[snail.Id].Magnitude > 0 then
 			landed, out, fall = Module.GetThrow(at, pushes[snail.Id], holes)
-		elseif not out and Module._isUndermined(at, holes) then
+		elseif landed or Module._isUndermined(at, holes) then
 			landed, out, fall = Module.GetDrop(at, holes)
 		end
-		local damage: number = (damages[snail.Id] or 0) + fall
+		-- Landing in lava burns, Snails' BURN_DAMAGE BURN_TICKS times
+		local burn: number = if landed and not out and I.Arena.IsInLava(landed, rootRadius) then snailSettings.BURN_DAMAGE * snailSettings.BURN_TICKS else 0
+		local damage: number = (damages[snail.Id] or 0) + fall + burn
 		if landed and (damage > 0 or out or (landed - snail.Position).Magnitude > 0.5) then
 			effects[snail.Id] = { Id = snail.Id, Damage = damage, Position = landed, Out = out or damage >= snail.Health }
 		end
@@ -320,10 +317,12 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Throw
 
 --[[
-	Returns where a snail thrown from a position at a velocity comes to rest (on ground it lands on; it slides down
-	walls), whether it falls into the sea or out of the arena on the way, and the fall damage its drop costs (Snails'
-	SAFE_FALL_HEIGHT and MAX_FALL_DAMAGE). It flies through the craters `holes` cut. A shortcut of the snail's real
-	physics: it doesn't roll or bounce.
+	Returns where a snail thrown from a position at a velocity comes to rest, whether it falls into the sea or out of the
+	arena on the way, and the fall damage its last drop costs (Snails' SAFE_FALL_HEIGHT and MAX_FALL_DAMAGE, from where
+	it last rose). It flies as Snails' flight does: light (GRAVITY_SCALE), bouncing off what it hits harder than
+	Combat's REST_SPEED (FLIGHT_BOUNCE of its speed into it, BOUNCE_FRICTION along), landing on ground it touches softer,
+	then sliding on (FLIGHT_LAND_KEEP of its speed for KNOCK_SLIDE_SECONDS), off an edge too. It flies through the
+	craters `holes` cut.
 ]]
 --- @param holes { Bots_Blast }
 --- @return Vector3
@@ -333,39 +332,77 @@ function Module.GetThrow(position: Vector3, velocity: Vector3, holes)
 	--[[ Local Variables ]]
 
 	local snails = I.Settings["Snails"] --- @type Snails_Settings
+	local combat = I.Settings["Combat"] --- @type Combat_Settings
 	local radius: number = snails.ROOT_SIZE / 2
 	local gravity: Vector3 = Vector3.new(0, -I.S.Workspace.Gravity * snails.GRAVITY_SCALE, 0)
 	local at: Vector3 = position
 	local speed: Vector3 = velocity
 	local peak: number = position.Y
+	local slide: number = 0
 
 	--[[ Flying ]]
 
 	for _step: number = 1, math.ceil(_settings.KNOCK_SECONDS / _settings.KNOCK_STEP) do
+		local before: Vector3 = at
 		local move: Vector3 = speed * _settings.KNOCK_STEP + gravity * (0.5 * _settings.KNOCK_STEP ^ 2)
 		speed += gravity * _settings.KNOCK_STEP
 		local hit: RaycastResult? = if move.Magnitude > 1e-4 then I.S.Workspace:Spherecast(at, radius, move, groundParams) else nil
 		if hit and Module._isInHole(hit.Position, holes) then
 			hit = nil
 		end
-		if hit and hit.Normal.Y > 0.6 then
+		if hit then
 			at += move.Unit * hit.Distance
-			break
-		elseif hit then
-			at += move.Unit * hit.Distance
-			speed = Vector3.new(0, math.min(speed.Y, 0), 0)
+			local normal: Vector3 = Vector3.new(hit.Normal.X, hit.Normal.Y, 0)
+			normal = if normal.Magnitude > 1e-3 then normal.Unit else -move.Unit
+			local into: number = speed:Dot(normal)
+			local along: Vector3 = speed - normal * math.min(into, 0)
+			if into < -combat.REST_SPEED then
+				speed = along * combat.BOUNCE_FRICTION - normal * into * snails.FLIGHT_BOUNCE
+			elseif normal.Y > 0.6 then
+				slide = along.X * snails.FLIGHT_LAND_KEEP
+				break
+			else
+				speed = Vector3.new(0, math.min(speed.Y, 0), 0)
+			end
+			at += normal * 0.05
 		else
 			at += move
 		end
-		peak = math.max(peak, at.Y)
+
+		-- Rising starts the fall over, as Snails' Hazards count it
+		peak = if at.Y > before.Y then at.Y else math.max(peak, at.Y)
 		if I.Arena.GetHazard(at) then
 			return at, true, 0
 		end
 	end
 
+	--[[ Sliding ]]
+
+	-- Along the ground it landed on, off an edge into another fall
+	local fall: number = math.clamp(math.floor(peak - at.Y - snails.SAFE_FALL_HEIGHT), 0, snails.MAX_FALL_DAMAGE)
+	local side: number = math.sign(slide)
+	for moved: number = 1, math.floor(math.abs(slide) * _settings.KNOCK_SLIDE_SECONDS) do
+		local next: Vector3 = at + Vector3.xAxis * side
+		if I.S.Workspace:Raycast(at, Vector3.xAxis * side * (radius + 1), groundParams) then
+			break
+		end
+		local ground: RaycastResult? = I.S.Workspace:Spherecast(next + Vector3.yAxis, radius, Vector3.yAxis * -2.5, groundParams)
+		if not ground or Module._isInHole(ground.Position, holes) then
+			local landed: Vector3
+			local out: boolean
+			local lastFall: number
+			landed, out, lastFall = Module.GetThrow(next, Vector3.xAxis * side * math.max(math.abs(slide) - moved / _settings.KNOCK_SLIDE_SECONDS, 1), holes)
+			return landed, out, math.max(fall, lastFall)
+		end
+		if ground.Normal.Y < 0.6 then
+			break
+		end
+		at = next + Vector3.yAxis * (1 - ground.Distance)
+	end
+
 	--[[ Returning ]]
 
-	return at, false, math.clamp(math.floor(peak - at.Y - snails.SAFE_FALL_HEIGHT), 0, snails.MAX_FALL_DAMAGE)
+	return at, false, fall
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Drop
@@ -591,8 +628,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Pulls
 
 --[[
-	Returns the speed an open black hole at a center throws each snail in its row's PullRadius with, as Combat's Roller
-	pulls: toward it and a little up, harder the closer it is, the shooter's teammates aside (the shooter isn't).
+	Returns where an open black hole at a center leaves each snail in its row's PullRadius (the shooter's teammates
+	aside, the shooter not) when it bursts, as Combat's Roller draws them in: at its middle, or as far toward it as
+	BLACK_HOLE_DRAG_SPEED takes it in the row's HoleTime. A shortcut: the path is straight, not along the ground.
 ]]
 --- @param row Arsenal_WeaponData
 --- @param snails { Bots_Snail }
@@ -602,6 +640,7 @@ function Module._getPulls(center: Vector3, row, team: number?, shooter: Model, s
 
 	local combat = I.Settings["Combat"] --- @type Combat_Settings
 	local radius: number = row.PullRadius or row.BlastRadius * 1.5
+	local travel: number = combat.BLACK_HOLE_DRAG_SPEED * (row.HoleTime or 2.5)
 	local pulls = {} --- @type { [string]: Vector3 }
 
 	--[[ Pulling ]]
@@ -610,9 +649,9 @@ function Module._getPulls(center: Vector3, row, team: number?, shooter: Model, s
 	for _index: number, snail in ipairs(snails) do
 		local offset: Vector3 = center - snail.Position
 		local teammate: boolean = snail.Team == team and snail.Model ~= shooter
-		if offset.Magnitude <= radius and offset.Magnitude >= 0.5 and not teammate then
-			local speed: number = combat.BLACK_HOLE_PULL_SPEED * (1 - 0.5 * offset.Magnitude / radius)
-			pulls[snail.Id] = (offset.Unit + Vector3.yAxis * combat.UPWARD_BIAS * 0.5).Unit * speed
+		if offset.Magnitude <= radius and not teammate then
+			local left: number = math.max(offset.Magnitude - combat.BLACK_HOLE_STICK, 0)
+			pulls[snail.Id] = if left > 0 then snail.Position + offset.Unit * math.min(left, travel) else snail.Position
 		end
 	end
 

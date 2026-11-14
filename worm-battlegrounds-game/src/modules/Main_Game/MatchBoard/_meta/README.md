@@ -95,7 +95,7 @@ text colour), which the picked one swaps to.
 | `PUBLIC_ROWS` | Deathmatch 4, Duo 4, Trio 6, Quads 8 | The public rows, one per mode, always on the board |
 | `TEAM_SIZES`, `MODE_NAMES` | | Players per team by mode; mode names on the cards and in the waiting room's line (Deathmatch, Duo, Trio, Quads, Teams) |
 | `PUBLIC_DIFFICULTY` | `"Medium"` | Bots that fill public matches |
-| `MAPS`, `MAP_POOL` | 9 map rows; `{ "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle", "LakesideShowdown" }` | Map names, sizes and pictures (`Thumbnail`: Picnic Plains, Desert, Rockslide Ridge and Volcano Isle have theirs, the game home's `assets/ui/map_thumbnails`; Training Meadow, the tutorial's map, shows Picnic Plains' until it has its own and is never in the pool; Lakeside Showdown shows Picnic Plains' until it has its own); the maps in rotation |
+| `MAPS`, `MAP_POOL` | 11 map rows; `{ "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle", "LakesideShowdown", "RollingPlains", "EchoCaverns" }` | Map names, sizes and pictures (`Thumbnail`: every map in the pool has its own, the game home's `assets/ui/map_thumbnails`; Training Meadow, the tutorial's map, shows Picnic Plains' until it has its own and is never in the pool); the maps in rotation |
 | `SOLO_DIFFICULTIES` | Easy, Medium, Hard | The bots' difficulties in the setup (a party also gets No bots) |
 | `CUSTOM_DIFFICULTIES` | None, Easy, Medium, Hard, Nightmare | The custom lobby's Bots row; Nightmare is only here |
 | `CUSTOM_ALONE_MESSAGE` | "You can't start a custom lobby by yourself. Invite a player or turn bots on!" | What Start says with only the owner in the lobby and no bots |

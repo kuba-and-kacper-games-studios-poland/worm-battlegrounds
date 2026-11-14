@@ -89,6 +89,7 @@ function Module.Init()
 		GetSeaLevel = Liquid.GetSeaLevel,
 		GetHazard = Module.GetHazard,
 		IsFree = Module.IsFree,
+		IsInLava = Module.IsInLava,
 		IsSettled = Debris.IsSettled,
 	}
 end
@@ -262,8 +263,10 @@ end
 
 --[[
 	**SERVER** |
-	Returns what knocks out a snail at a position: "Water" or "Lava" in the sea (the liquid at the map's floor, which
-	sudden death raises; a pond above it is safe), "Bounds" beside or below the play area, or nil when it's safe there.
+	Returns what knocks out a snail at a position: "Water" or "Lava" in the open sea (the liquid at the map's floor,
+	which sudden death raises, under a surface SEA_MIN_WIDTH studs across or more, or up to SEA_SLACK studs over it as
+	it ripples; a pond, a puddle or a small hole it seeped into is safe), "Bounds" beside or below the play area, or nil
+	when it's safe there.
 ]]
 --- @return string?
 function Module.GetHazard(position: Vector3)
@@ -277,13 +280,14 @@ function Module.GetHazard(position: Vector3)
 	--[[ Local Variables ]]
 
 	local inside: Vector3 = bounds.CFrame:PointToObjectSpace(position)
+	local below: Vector3 = position - Vector3.yAxis * _settings.SEA_SLACK
 
 	--[[ Returning ]]
 
 	if math.abs(inside.X) > bounds.Size.X / 2 or inside.Y < -bounds.Size.Y / 2 then
 		return "Bounds"
 	end
-	return if position.Y <= Liquid.GetSeaLevel() + _settings.SEA_SLACK or Liquid.IsSea(position) then Liquid.GetLiquid(position) else nil
+	return if Liquid.IsOpenSea(position) then Liquid.GetLiquid(position) elseif Liquid.IsOpenSea(below) then Liquid.GetLiquid(below) else nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Free
@@ -291,7 +295,7 @@ end
 --[[
 	**SERVER** |
 	Returns whether a ball of `radius` fits at a position for a snail to start from: inside the play area below its top
-	START_TOP_GAP, out of liquid and touching no terrain.
+	START_TOP_GAP, out of liquid (lava under it too) and touching no terrain.
 ]]
 --- @return boolean
 function Module.IsFree(position: Vector3, radius: number)
@@ -314,13 +318,30 @@ function Module.IsFree(position: Vector3, radius: number)
 	end
 
 	-- Check if the ball is out of liquid
-	if Liquid.GetLiquid(position) then
+	if Liquid.GetLiquid(position) or Module.IsInLava(position, radius) then
 		return false
 	end
 
 	--[[ Returning ]]
 
 	return #I.S.Workspace:GetPartBoundsInRadius(position, radius, Loader.GetTerrainParams()) == 0
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is In Lava
+
+--[[
+	**SERVER** |
+	Returns whether a ball of `radius` centered at a position dips into lava, even a cell of it under the ball.
+]]
+--- @return boolean
+function Module.IsInLava(position: Vector3, radius: number)
+	--[[ Local Variables ]]
+
+	local bottom: Vector3 = position - Vector3.yAxis * (radius - _settings.LIQUID_CELL / 2)
+
+	--[[ Returning ]]
+
+	return Liquid.GetLiquid(position) == "Lava" or Liquid.GetLiquid(bottom) == "Lava"
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

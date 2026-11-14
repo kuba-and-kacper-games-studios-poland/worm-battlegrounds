@@ -41,9 +41,9 @@ local Module = {}
 
 --[[
 	The black hole grenade (the testers, 2026-11-13): thrown like a grenade, it opens on the first thing it touches, or
-	wherever it is when its owner presses again (Detonate), even in the air. Open, it holds still for HoleTime, pulling
-	every snail within PullRadius toward it (the shooter's teammates aside) while its trail streams on every screen,
-	then bursts.
+	wherever it is when its owner presses again (Detonate), even in the air. Open, it holds still for HoleTime while its
+	trail streams on every screen, drawing every snail within PullRadius in (the shooter's teammates aside: Drag), then
+	bursts where they're stuck to it, and lets them go.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -75,42 +75,52 @@ function Module.Run(shot)
 	body.Stopped = true
 	body.Velocity = Vector3.zero
 	local center: Vector3 = body.Position
-	Module._pull(shot, center)
-
 	local closesAt: number = os.clock() + (row.HoleTime or 2.5)
+	local sentAt: number = 0
+	local dragged = {} --- @type { [string]: boolean }
 	while os.clock() < closesAt do
-		Projectiles.SendState(body)
-		task.wait(_settings.STATE_INTERVAL)
+		local deltaTime: number = I.S.RunService.Heartbeat:Wait()
+		Module._drag(shot, center, deltaTime, dragged)
+		if os.clock() - sentAt >= _settings.STATE_INTERVAL then
+			Projectiles.SendState(body)
+			sentAt = os.clock()
+		end
 	end
 
 	--[[ Exploding ]]
 
 	Projectiles.Land(body)
 	shot.Damage += Blast.Explode(center, row.BlastRadius, shot.ItemId, shot.ParticipantId, shot.Shiny, row.DamageMax, row.DamageEdge, row.Knockback)
+
+	--[[ Releasing ]]
+
+	for participantId: string, _held: boolean in pairs(dragged) do
+		I.Snails.Release(participantId)
+	end
 end
 
---%%%%%%%%%%%%%%%%%%%% Pull
+--%%%%%%%%%%%%%%%%%%%% Drag
 
 --[[
-	Throws every snail within the row's PullRadius of an open black hole toward it, a little up, harder the closer it
-	is (BLACK_HOLE_PULL_SPEED at the middle, half that at the edge), the shooter's teammates aside.
+	One frame of an open black hole: every snail within the row's PullRadius of it (the shooter's teammates aside) moves
+	toward it at BLACK_HOLE_DRAG_SPEED, sliding on the ground and drifting through the air, and sticks within
+	BLACK_HOLE_STICK of its middle (I.Snails.Drag). Each one it ever drew is noted in `dragged`, to let go of after.
 ]]
 --- @param shot Combat_Shot
-function Module._pull(shot, center: Vector3)
+--- @param dragged { [string]: boolean }
+function Module._drag(shot, center: Vector3, deltaTime: number, dragged)
 	--[[ Local Variables ]]
 
 	local radius: number = shot.Row.PullRadius or shot.Row.BlastRadius * 1.5
 
-	--[[ Pulling ]]
+	--[[ Dragging ]]
 
 	for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
-		local offset: Vector3 = center - model.PrimaryPart.Position
-		if offset.Magnitude > radius or offset.Magnitude < 0.5 or Blast.IsTeammate(model.Name, shot.ParticipantId) then
-			continue
+		local inReach: boolean = (center - model.PrimaryPart.Position).Magnitude <= radius
+		if (dragged[model.Name] or inReach) and not Blast.IsTeammate(model.Name, shot.ParticipantId) then
+			dragged[model.Name] = true
+			I.Snails.Drag(model.Name, center, _settings.BLACK_HOLE_DRAG_SPEED, deltaTime, _settings.BLACK_HOLE_STICK)
 		end
-		local speed: number = _settings.BLACK_HOLE_PULL_SPEED * (1 - 0.5 * offset.Magnitude / radius)
-		local direction: Vector3 = (offset.Unit + Vector3.yAxis * _settings.UPWARD_BIAS * 0.5).Unit
-		I.Snails.Knockback(model.Name, direction * speed * model.PrimaryPart:GetMass(), shot.ParticipantId, shot.ItemId)
 	end
 end
 

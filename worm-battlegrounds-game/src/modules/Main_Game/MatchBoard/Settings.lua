@@ -56,16 +56,16 @@ local _settings = {
 	]]
 	--- @type { [string]: MatchBoard_MapRow }
 	MAPS = {
-		RockslideRidge = { Name = "Rockslide Ridge", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://123838177297909" },
+		RockslideRidge = { Name = "Rockslide Ridge", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://101364558522354" },
 		PicnicPlains = { Name = "Picnic Plains", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://114380640476396" },
 		FluffyFallout = { Name = "Fluffy Fallout", Sizes = { 2, 4, 6 }, Thumbnail = "" },
-
-		-- shortcut: Picnic Plains' picture until Lakeside Showdown has its own uploaded
-		LakesideShowdown = { Name = "Lakeside Showdown", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://114380640476396" },
+		LakesideShowdown = { Name = "Lakeside Showdown", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://73998072466850" },
 		MoltenSpires = { Name = "Molten Spires", Sizes = { 2, 4, 6 }, Thumbnail = "" },
 		TheBigMashup = { Name = "The Big Mashup", Sizes = { 8 }, Thumbnail = "" },
 		Desert = { Name = "Desert", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://140014161821553" },
 		VolcanoIsle = { Name = "Volcano Isle", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://110823072321769" },
+		RollingPlains = { Name = "Rolling Plains", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://118659936926806" },
+		EchoCaverns = { Name = "Echo Caverns", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://97183016065357" },
 
 		-- The tutorial's own map, never in MAP_POOL. shortcut: Picnic Plains' picture until Training Meadow has its own uploaded
 		TutorialMeadow = { Name = "Training Meadow", Sizes = { 2 }, Thumbnail = "rbxassetid://114380640476396" },
@@ -76,7 +76,7 @@ local _settings = {
 		made for plays on any map in it
 	]]
 	--- @type { string }
-	MAP_POOL = { "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle", "LakesideShowdown" },
+	MAP_POOL = { "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle", "LakesideShowdown", "RollingPlains", "EchoCaverns" },
 
 	--%%%%%%%%%%%%%%%%%%%% Solo And Party
 

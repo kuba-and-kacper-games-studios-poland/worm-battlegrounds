@@ -212,14 +212,15 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Emote Played
 
 --[[
-	A played emote, on every screen: the player's snail plays it (in a match, or on the lobby's stage), its icon pops
-	up in a thought cloud over that snail's head, and in the lobby also in a speech bubble beside their party card's name.
+	A played emote, on every screen: the player's snail (by UserId) or a bot's (by its snail's id) plays it (in a match,
+	or on the lobby's stage), its icon pops up in a thought cloud over that snail's head, and in the lobby also in a
+	speech bubble beside their party card's name.
 ]]
-function Module._onEmotePlayed(userId: number, emoteId: string)
+function Module._onEmotePlayed(who: number | string, emoteId: string)
 	--[[ Data ]]
 
 	local item = I.G_Inventory.Items[emoteId] --- @type Inventory_ItemData?
-	local player: Player? = I.S.Players:GetPlayerByUserId(userId)
+	local player: Player? = if type(who) == "number" then I.S.Players:GetPlayerByUserId(who) else nil
 	if not item then
 		return
 	end
@@ -227,18 +228,18 @@ function Module._onEmotePlayed(userId: number, emoteId: string)
 	--[[ Animating ]]
 
 	-- Refused while the snail is hit or thrown on this screen: no bubble either
-	local skin: Model? = Module._getSkin(userId, player)
+	local skin: Model? = Module._getSkin(who, player)
 	if skin and not I.SnailRig.Emote(skin, emoteId, _settings.EMOTE_SECONDS) then
 		return
 	end
 
 	--[[ Bubbles ]]
 
-	I.ChatBubbles.ShowIcon(userId, item.IconId)
+	I.ChatBubbles.ShowIcon(who, item.IconId)
 	if I.S.Players.LocalPlayer:GetAttribute("InMatch") then
 		return
 	end
-	local member: GuiObject? = elems["Party"]:FindFirstChild(tostring(userId))
+	local member: GuiObject? = elems["Party"]:FindFirstChild(tostring(who))
 	if member then
 		Module._showCardBubble(member, item.IconId)
 	end
@@ -291,15 +292,15 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Skin
 
 --[[
-	Returns the skin of a player's snail this screen shows: their snail in a match, their snail on the lobby's stage;
-	nil when it shows none.
+	Returns the skin of a snail this screen shows (a player's by UserId, a bot's by its snail's id): theirs in a match,
+	a player's on the lobby's stage; nil when it shows none.
 ]]
 --- @return Model?
-function Module._getSkin(userId: number, player: Player?)
+function Module._getSkin(who: number | string, player: Player?)
 	--[[ Match ]]
 
 	if I.S.Players.LocalPlayer:GetAttribute("InMatch") then
-		local model: Model? = I.Snails.Get(`P_{userId}`)
+		local model: Model? = I.Snails.Get(if type(who) == "string" then who else `P_{who}`)
 		return if model then model:FindFirstChild("Skin") else nil
 	end
 

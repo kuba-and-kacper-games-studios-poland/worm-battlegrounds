@@ -53,7 +53,7 @@ end
 --[[
 	Plays one headless match on a map between seats, as fast as the server thinks: the real arena (Arena.Load, its
 	craters and sea), each seat a stand-in ball the brain and shots see as a snail, turns in the match's team order
-	with a random wind, sudden death from Match's SUDDEN_DEATH_ROUND, until one team is left or `maxRounds` pass. A
+	with a random wind that holds for a round, sudden death from Match's SUDDEN_DEATH_ROUND, until one team is left or `maxRounds` pass. A
 	shortcut of a real match: snails teleport to their spot instead of walking, and thrown ones land where Predict's
 	throw says. Fills each seat's result fields and adds the match to `stats`; with `log`, prints each turn to the
 	Output. Returns whether the map could be played.
@@ -67,7 +67,7 @@ function Module.Play(mapId: string, seats, maxRounds: number, folder: Folder, ra
 	if not I.Arena.Load(mapId) then
 		return false
 	end
-	local spots = I.Arena.GetLandSpots(#seats, I.Settings["Snails"].ROOT_SIZE / 2) --- @type { Vector3 }
+	local spots = I.Arena.GetLandSpots(#seats * I.Settings["Match"].DROP_SPOT_CHOICES, I.Settings["Snails"].ROOT_SIZE / 2) --- @type { Vector3 }
 	if #spots == 0 then
 		return false
 	end
@@ -79,7 +79,7 @@ function Module.Play(mapId: string, seats, maxRounds: number, folder: Folder, ra
 	local teamOf = {} --- @type { [number]: { Bots_Seat } }
 	--- @param seat Bots_Seat
 	for _index: number, seat in ipairs(seats) do
-		local spot: Vector3 = Brain.GetStart(spots, taken, seat.Genome)
+		local spot: Vector3 = Brain.GetStart(spots, taken, seat.Genome, seat.Skill)
 		table.insert(taken, spot)
 		Module._seat(seat, spot, folder)
 		if not teamOf[seat.Team] then
@@ -96,13 +96,16 @@ function Module.Play(mapId: string, seats, maxRounds: number, folder: Folder, ra
 	local memberIndex = {} --- @type { [number]: number }
 	local round: number = 1
 	local turn: number = 0
+	local wind: number = random:NextInteger(-match.WIND_MAX, match.WIND_MAX)
 	while Module._getTeamsLeft(teams) > 1 and round <= maxRounds do
 		-- The next team with a snail in play, and its next snail
 		local seat = nil --- @type Bots_Seat?
 		for _try: number = 1, #teams do
 			teamIndex = teamIndex % #teams + 1
+			-- As Match does, the wind holds for a whole round
 			if teamIndex == 1 and turn > 0 then
 				round += 1
+				wind = random:NextInteger(-match.WIND_MAX, match.WIND_MAX)
 			end
 			local members = teams[teamIndex] --- @type { Bots_Seat }
 			for _member: number = 1, #members do
@@ -124,7 +127,7 @@ function Module.Play(mapId: string, seats, maxRounds: number, folder: Folder, ra
 		if round >= match.SUDDEN_DEATH_ROUND then
 			I.Arena.RaiseLiquid(match.SUDDEN_DEATH_RISE)
 		end
-		Module._playTurn(seat, seats, turn, round, random, stats, log)
+		Module._playTurn(seat, seats, turn, round, wind, random, stats, log)
 	end
 	stats.Matches += 1
 	stats.Turns += turn
@@ -204,10 +207,9 @@ end
 --- @param seat Bots_Seat
 --- @param seats { Bots_Seat }
 --- @param stats Bots_Stats
-function Module._playTurn(seat, seats, turn: number, round: number, random: Random, stats, log: boolean)
+function Module._playTurn(seat, seats, turn: number, round: number, wind: number, random: Random, stats, log: boolean)
 	--[[ Local Variables ]]
 
-	local wind: number = random:NextInteger(-I.Settings["Match"].WIND_MAX, I.Settings["Match"].WIND_MAX)
 	for itemId: string, turns: number in pairs(seat.Cooldowns) do
 		seat.Cooldowns[itemId] = math.max(turns - 1, 0)
 	end

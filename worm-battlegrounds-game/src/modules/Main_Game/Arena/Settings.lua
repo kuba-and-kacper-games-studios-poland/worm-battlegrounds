@@ -109,10 +109,12 @@ local _settings = {
 	LIQUID_BUILD_ROWS_PER_FRAME = 8,
 
 	--[[
-		Only the sea knocks snails out (the liquid at the map's floor, which sudden death raises), up to this many studs
-		above its level as its surface ripples; ponds higher up are safe to fall in
+		Only the open sea knocks snails out: the liquid at the map's floor (which sudden death raises), up to SEA_SLACK
+		studs over its level as it ripples, under a surface at least SEA_MIN_WIDTH studs across. Ponds, puddles and small
+		holes the sea seeps into are safe; a crater as wide as a Black hole grenade's floods into sea
 	]]
 	SEA_SLACK = 1,
+	SEA_MIN_WIDTH = 16,
 
 	--[[
 		How far the sea's blocks at the map's sides are drawn past them, in studs, so the camera never shows where it
@@ -136,7 +138,7 @@ local _settings = {
 	LIQUID_PRESSURE = { Water = 8, Lava = 2 },
 
 	--- @type { [string]: Color3 }
-	LIQUID_COLORS = { Water = Color3.fromRGB(40, 140, 230), Lava = Color3.fromRGB(255, 96, 20) },
+	LIQUID_COLORS = { Water = Color3.fromRGB(40, 140, 230), Lava = Color3.fromRGB(179, 89, 47) },
 
 	--- @type { [string]: number }
 	LIQUID_TRANSPARENCY = { Water = 0.2, Lava = 0 },

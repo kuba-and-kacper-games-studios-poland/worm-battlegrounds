@@ -10,7 +10,7 @@ local _settings = {
 
 	-- The speed each knockback class throws a snail at, in studs per second: a first proposal to tune
 	--- @type { [string]: number }
-	KNOCKBACK = { Small = 20, Medium = 45, High = 70, VeryHigh = 95, Extreme = 130 },
+	KNOCKBACK = { None = 0, Small = 20, Medium = 45, High = 70, VeryHigh = 95, Extreme = 130 },
 
 	--%%%%%%%%%%%%%%%%%%%% Models
 

@@ -28,7 +28,7 @@ local thoughtHeight: number
 --[[ Speakers ]]
 
 -- Each speaker's billboard over their snail and its bubbles, by user id
-local speakers = {} --- @type { [number]: ChatBubbles_Speaker }
+local speakers = {} --- @type { [number | string]: ChatBubbles_Speaker }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -89,21 +89,21 @@ end
 
 --[[
 	**CLIENT** |
-	Shows a picture in a thought cloud over a player's snail, in the same stack as their chat (an emote's icon), when
-	this screen shows their snail; it stays ICON_SECONDS.
+	Shows a picture in a thought cloud over a player's snail (by their UserId) or a bot's (by its snail's id), in the
+	same stack as their chat (an emote's icon), when this screen shows that snail; it stays ICON_SECONDS.
 ]]
-function Module.ShowIcon(userId: number, image: string)
+function Module.ShowIcon(who: number | string, image: string)
 	--[[ Data ]]
 
 	--- @type ChatBubbles_Anchor?
-	local anchor = Module._getAnchor(userId)
+	local anchor = Module._getAnchor(who)
 	if not anchor then
 		return
 	end
 
 	--[[ Posting ]]
 
-	Module._post(userId, anchor, Module._buildThought(image), _settings.ICON_SECONDS)
+	Module._post(who, anchor, Module._buildThought(image), _settings.ICON_SECONDS)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Message
@@ -144,10 +144,10 @@ end
 	and takes it away after its lifetime.
 ]]
 --- @param anchor ChatBubbles_Anchor
-function Module._post(userId: number, anchor, bubble: Frame, lifetime: number)
+function Module._post(who: number | string, anchor, bubble: Frame, lifetime: number)
 	--[[ Speaker ]]
 
-	local speaker = speakers[userId] or Module._addSpeaker(userId) --- @type ChatBubbles_Speaker
+	local speaker = speakers[who] or Module._addSpeaker(who) --- @type ChatBubbles_Speaker
 	speaker.Billboard.Adornee = anchor.Part
 	speaker.Billboard.StudsOffset = Vector3.yAxis * anchor.Offset
 	Module._watchTag(speaker, anchor.Tag)
@@ -167,7 +167,7 @@ function Module._post(userId: number, anchor, bubble: Frame, lifetime: number)
 		Module._setTail(previous, false)
 	end
 	if #speaker.Bubbles > _settings.MAX_BUBBLES then
-		Module._removeBubble(userId, speaker.Bubbles[1])
+		Module._removeBubble(who, speaker.Bubbles[1])
 	end
 
 	--[[ Tweening ]]
@@ -180,7 +180,7 @@ function Module._post(userId: number, anchor, bubble: Frame, lifetime: number)
 
 	--[[ Fading ]]
 
-	task.delay(lifetime, Module._removeBubble, userId, bubble)
+	task.delay(lifetime, Module._removeBubble, who, bubble)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Add Speaker
@@ -190,11 +190,11 @@ end
 	anchor sets.
 ]]
 --- @return ChatBubbles_Speaker
-function Module._addSpeaker(userId: number)
+function Module._addSpeaker(who: number | string)
 	--[[ Building ]]
 
 	local billboard: BillboardGui = template:Clone()
-	billboard.Name = `ChatBubble_{userId}`
+	billboard.Name = `ChatBubble_{who}`
 	billboard.AlwaysOnTop = true
 	billboard.SizeOffset = Vector2.new(0, 0.5)
 	I.ScreenScale.AddBillboard(billboard)
@@ -204,7 +204,7 @@ function Module._addSpeaker(userId: number)
 
 	--- @type ChatBubbles_Speaker
 	local speaker = { Billboard = billboard, Bubbles = {}, Count = 0, Tag = nil, TagConnection = nil }
-	speakers[userId] = speaker
+	speakers[who] = speaker
 
 	--[[ Returning ]]
 
@@ -434,10 +434,10 @@ end
 --[[
 	Fades a speaker's bubble out and takes it away, with their billboard when it was their last.
 ]]
-function Module._removeBubble(userId: number, bubble: Frame)
+function Module._removeBubble(who: number | string, bubble: Frame)
 	--[[ Data ]]
 
-	local speaker = speakers[userId] --- @type ChatBubbles_Speaker?
+	local speaker = speakers[who] --- @type ChatBubbles_Speaker?
 	local index: number? = speaker and table.find(speaker.Bubbles, bubble)
 
 	--[[ Checks ]]
@@ -452,7 +452,7 @@ function Module._removeBubble(userId: number, bubble: Frame)
 	table.remove(speaker.Bubbles, index)
 	local last: boolean = #speaker.Bubbles == 0
 	if last then
-		speakers[userId] = nil
+		speakers[who] = nil
 		Module._watchTag(speaker, nil)
 	end
 
@@ -490,15 +490,16 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Anchor
 
 --[[
-	Returns where a speaker's bubbles stand on this screen: over their snail and its tag while this player is in a
-	match, over their snail on the lobby's stage otherwise; nil when this screen shows no snail of theirs.
+	Returns where a speaker's bubbles stand on this screen (a player by UserId, a bot by its snail's id): over their
+	snail and its tag while this player is in a match, over their snail on the lobby's stage otherwise; nil when this
+	screen shows no snail of theirs.
 ]]
 --- @return ChatBubbles_Anchor?
-function Module._getAnchor(userId: number)
+function Module._getAnchor(who: number | string)
 	--[[ Match ]]
 
 	if I.S.Players.LocalPlayer:GetAttribute("InMatch") then
-		local model: Model? = I.Snails.Get(`P_{userId}`)
+		local model: Model? = I.Snails.Get(if type(who) == "string" then who else `P_{who}`)
 
 		-- Check if the speaker's snail is in play
 		if not model or model:GetAttribute("Ghost") then
@@ -518,7 +519,7 @@ function Module._getAnchor(userId: number)
 
 	--[[ Data ]]
 
-	local player: Player? = I.S.Players:GetPlayerByUserId(userId)
+	local player: Player? = if type(who) == "number" then I.S.Players:GetPlayerByUserId(who) else nil
 	local model: Model? = player and I.Lobby.GetStageSnail(player)
 	if not model then
 		return nil

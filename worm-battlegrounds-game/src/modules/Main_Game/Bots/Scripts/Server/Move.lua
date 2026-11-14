@@ -232,7 +232,7 @@ end
 --[[
 	Returns where a snail's ball would stand at an X, on the highest ground no more than `above` studs over a height
 	(its middle, ROOT_SIZE / 2 over the ground), or nil when there's no ground within FALL_LOOK below, the ground is in
-	the sea, or the drop from that height is far enough to hurt (Snails' SAFE_FALL_HEIGHT). Whether the way there is
+	the sea or lava, or the drop from that height is far enough to hurt (Snails' SAFE_FALL_HEIGHT). Whether the way there is
 	open is CanStep's to say.
 ]]
 --- @return Vector3?
@@ -245,8 +245,8 @@ function Module.GetGround(x: number, height: number, above: number)
 
 	--[[ Checks ]]
 
-	-- Check if there's ground to stand on, out of the sea
-	if not result or I.Arena.GetHazard(result.Position + Vector3.yAxis * radius) then
+	-- Check if there's ground to stand on, out of the sea and lava
+	if not result or I.Arena.GetHazard(result.Position + Vector3.yAxis * radius) or I.Arena.IsInLava(result.Position + Vector3.yAxis * radius, radius) then
 		return nil
 	end
 
@@ -387,7 +387,7 @@ end
 
 --[[
 	Returns where a snail's ball lands coming down from a height at an X, on the ground under it, or nil when there's
-	none or it's in the sea or out of the arena.
+	none or it's in the sea, lava or out of the arena.
 ]]
 --- @return Vector3?
 function Module.GetLanding(x: number, height: number)
@@ -398,8 +398,8 @@ function Module.GetLanding(x: number, height: number)
 
 	--[[ Checks ]]
 
-	-- Check if there's ground to land on, out of the sea
-	if not result or I.Arena.GetHazard(result.Position + Vector3.yAxis * radius) then
+	-- Check if there's ground to land on, out of the sea and lava
+	if not result or I.Arena.GetHazard(result.Position + Vector3.yAxis * radius) or I.Arena.IsInLava(result.Position + Vector3.yAxis * radius, radius) then
 		return nil
 	end
 

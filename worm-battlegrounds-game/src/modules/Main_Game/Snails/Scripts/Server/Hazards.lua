@@ -20,6 +20,9 @@ local Health = require(script.Parent:FindFirstChild("Health")) --- @type Snails_
 local lastPositions = setmetatable({}, { __mode = "k" }) --- @type { [Model]: Vector3 }
 local peaks = setmetatable({}, { __mode = "k" }) --- @type { [Model]: number }
 
+-- The snails that touched lava and haven't left it since: one burn per dip, so a snail left in a pool can walk out
+local dipped = setmetatable({}, { __mode = "k" }) --- @type { [Model]: boolean }
+
 -- Casts that hit only what snails stand on
 --- @type RaycastParams
 local groundParams = RaycastParams.new()
@@ -57,8 +60,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Check
 
 --[[
-	Checks every snail still in play each frame: knocks out the ones in liquid or out of bounds, and charges a fall's
-	damage when a snail lands.
+	Checks every snail still in play each frame: knocks out the ones in the open sea or out of bounds, sets the ones
+	touching other lava burning, and charges a fall's damage when a snail lands.
 ]]
 function Module._check()
 	--[[ Checking ]]
@@ -71,8 +74,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Check Snail
 
 --[[
-	Knocks one snail out when it's in a hazard, or passed through one since last frame; otherwise follows its fall
-	from where it last rose and charges 1 health per stud above SAFE_FALL_HEIGHT when it lands, MAX_FALL_DAMAGE at most.
+	Knocks one snail out when it's in a hazard, or passed through one since last frame; otherwise sets it burning when
+	it dips into lava (once a dip, while not already burning), and follows its fall from where it last rose and charges 1 health per stud above SAFE_FALL_HEIGHT
+	when it lands, MAX_FALL_DAMAGE at most.
 ]]
 function Module._checkSnail(model: Model)
 	--[[ Local Variables ]]
@@ -87,6 +91,17 @@ function Module._checkSnail(model: Model)
 	if hazard then
 		Health.Kill(model.Name, hazard)
 		return
+	end
+
+	--[[ Burning ]]
+
+	if not I.Arena.IsInLava(position, _settings.ROOT_SIZE / 2) then
+		dipped[model] = nil
+	elseif not dipped[model] then
+		dipped[model] = true
+		if not model:GetAttribute("Burning") then
+			task.spawn(Module._burn, model)
+		end
 	end
 
 	--[[ Falling ]]
@@ -110,6 +125,37 @@ function Module._checkSnail(model: Model)
 	if peak then
 		local damage: number = math.min(math.floor(peak - position.Y - _settings.SAFE_FALL_HEIGHT), _settings.MAX_FALL_DAMAGE)
 		Health.Damage(model.Name, damage)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Burn
+
+--[[
+	Sets a snail Burning, then takes BURN_DAMAGE health BURN_TICKS times, BURN_DELAY seconds after it touched lava and
+	every BURN_INTERVAL seconds from then (the first ends its turn, as any hurt does), while it's in play.
+]]
+function Module._burn(model: Model)
+	--[[ Starting ]]
+
+	model:SetAttribute("Burning", true)
+	task.wait(_settings.BURN_DELAY)
+
+	--[[ Hurting ]]
+
+	for tick: number = 1, _settings.BURN_TICKS do
+		if not model.Parent or not model:GetAttribute("Alive") then
+			break
+		end
+		Health.Damage(model.Name, _settings.BURN_DAMAGE)
+		if tick < _settings.BURN_TICKS then
+			task.wait(_settings.BURN_INTERVAL)
+		end
+	end
+
+	--[[ Ending ]]
+
+	if model.Parent then
+		model:SetAttribute("Burning", nil)
 	end
 end
 

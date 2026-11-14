@@ -157,7 +157,8 @@ function Module._cut(prop: Model, center: Vector3, radius: number)
 	--[[ Building ]]
 
 	--- @type { BasePart }
-	local cutter = Cutter.Build(center, radius, boxCFrame.Position.Z, boxSize.Magnitude + _settings.CARVE_DEPTH_MARGIN, Loader.GetArenaFolder())
+	local boxes = Cutter.Build(center, radius, boxCFrame.Position.Z, boxSize.Magnitude + _settings.CARVE_DEPTH_MARGIN, Loader.GetArenaFolder())
+	local cutter = Cutter.Merge(boxes) --- @type { BasePart }
 
 	--[[ Cutting ]]
 
@@ -200,6 +201,9 @@ function Module._cut(prop: Model, center: Vector3, radius: number)
 
 	--[[ Cleaning ]]
 
+	for _index: number, box: BasePart in ipairs(boxes) do
+		box:Destroy()
+	end
 	for _index: number, box: BasePart in ipairs(cutter) do
 		box:Destroy()
 	end

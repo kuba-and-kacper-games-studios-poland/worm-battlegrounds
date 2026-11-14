@@ -1639,3 +1639,92 @@ and only one per bot").
 
 Rules: Panels hang from a screen edge (the HUD under the top bar), The top bar's buttons are icons, Bots think with a
 trained brain (their loadouts).
+
+## Bots that play tricks, taunt, and drop apart (2026-11-13)
+
+The owner: train every difficulty, "focus on the nightmare the most, to be super op": jetpack shots from the air
+where landing costs nothing or the trade is worth it, grenade bounces and other projectile tricks, more use of the
+wind; bots spawning on top of each other ("3 bots are in the same place"); and taunting with emotes.
+
+- **The spawn bug was a weight, not a cast.** Each bot scored the drop's spots with its genome, and Hard's trained
+  `Crowd` came out negative: Hard bots liked company, and the drop offered only one spot per snail. A hard rule
+  (`START_GAP`) now sits under the genome's taste, and the drop offers six spots per snail so there's room to choose.
+  Trained weights decide trade-offs; they must never be the only thing between the game and an obvious bug.
+- **A trick is a spot or an aim point, scored by the same simulation.** High air spots are only spots with a `Fall`;
+  bank shots are only more aim points, flown in full and judged by where they burst. No genome key was added: the
+  genome already weighs self-damage, knockouts and damage, so training decides when the trade pays.
+- **Bounces into the sea needed the throw to bounce.** Predict landed thrown snails where they first touched, so a
+  blow that bounces an enemy off its ledge looked harmless. It now follows Snails' flight rules (bounce over Combat's
+  `REST_SPEED`, then a short slide off edges).
+- **The gym's wind must hold for a round, as the game's does.** It rolled a new wind every turn, so bots never
+  trained on a round's settled wind.
+- **Taunts reuse the player's emote path.** `Cosmetics_EmotePlayed` carries a bot's snail id where a player's carries
+  a UserId, and the client's emote and bubble code takes either: no second remote, no second drawing path.
+- **Windows Python writes CRLF** in text mode; edit repo files with `newline=''` or the whole file shows as changed.
+
+Rules: Bots think with a trained brain (tricks, taunts, spawns).
+
+## Small holes stay safe, map lava burns (2026-11-13)
+
+The owner: a hole in the ground kills on Desert and Lakeside ("it shouldn't"), so "if the hole is big enough it insta
+kills you, but if there's a smaller hole the water is good, also small puddles shouldn't insta kill you"; and Volcano
+Isle's lava on the map (not the rising sea) should burn: move for 2 s, the turn ends, then 5–10 health a second for a
+few seconds.
+
+- **Two rules made any low water deadly.** `GetHazard` knocked out in any liquid at or below the sea level plus
+  `SEA_SLACK`, and the sea mark seeded from every cell of the sea's kind under that level, so lake water that flowed
+  into a low crater was marked as the sea and flooded the whole lake with it. The sea now seeds only from the grid's
+  sides and floor, and knocks out only where it's open.
+- **"Open" is the surface's width, not the row's.** Measuring free cells across the snail's own row failed under the
+  islands: maps stand on a sea layer under their bedrock, and a hole cut through it opened into a row as wide as the
+  map. The width is measured at the surface over the snail (up the liquid in its column), so a hole is as wide as
+  the hole. A snail below the land's floor is in the sea under the islands and goes out there.
+- **Test liquid rules in the PC gym, not by hand.** A scratch Lune script booted the gym's engine, carved stacks of
+  craters on every map and printed each column's liquid and hazards: it showed the lake-floor case before any Studio
+  run. Teleporting a player's snail in a Studio test doesn't stick (its client owns it on its turn); a bot's does.
+- **One burn per dip.** Re-burning every time the burn ended trapped a snail in a pool: every tick ended its next turn
+  before it could walk out.
+- **A pcall must look the method up inside.** `pcall(service.UnionAsync, service, …)` errors before the pcall when
+  the method is missing, as in the gym's GeometryService; the merged cutter crashed every gym carve until the lookup
+  moved into a function.
+
+Rules: Only the open sea knocks snails out; Lava on the map burns.
+
+## One lava colour (2026-11-14)
+
+The owner: "change the global lava color to `#b3592f`". Arena's `LIQUID_COLORS` Lava had been 255, 96, 20, but the
+two lava maps never showed it: Volcano Isle's markers (and Rockslide Ridge's redo in MapLab) gave their lava 255, 81,
+58 through `Arena_LiquidColor`. So the global colour changed and the maps' own lava colour went (the exported Volcano
+Isle's markers, both maps' `map.json`, MapLab's preview default), and Desert's lava, which had none, follows too.
+
+- **Neon isn't its colour on screen.** In Neon (`Arena_LiquidNeon`) the lab drew #b3592f as about #ffa016, much
+  brighter; the stud look shows the colour itself.
+
+Rules: Liquids are a stop-motion stud simulation.
+
+## The studio's maps, depth, and a grid of maps (2026-11-14)
+
+The studio sent two new maps and two fixes as Studio builds (`Workspace.New`): a plain, an underground rock map, a
+rebuilt Rockslide Ridge with hanging rocks and walled sides, and Lakeside Showdown with pits and small floating
+islands. The owner also asked for depth on every map ("so the maps gets depth but stays relatively the same"), lava on
+Rockslide Ridge, and then for the maps to stand "better like 4 per row" in Studio, with a plan for the old versions
+so nothing overlaps and nothing stacks high.
+
+- **Import hand-built maps through their front view.** MapLab rasterizes what the camera sees (the frontmost part
+  over each stud, `Kit.raster`) and keeps hand-built props part for part (`Kit.dumpProps`); then the map's own
+  `generate.py` fixes what the game needs: columns left hanging a few studs over the floor go down to it, slots too
+  narrow for a snail close, crumbs under `FLOAT_MIN_AREA` go.
+- **Depth without moving the plane.** Each map's front juts toward the camera in slabs of a few levels (MapLab's
+  `jut`, at most 1.5 studs so the cutter still goes through); the backs stay at the map's depth, so nothing that plays
+  moves.
+- **A redo can change how a map kills.** Rockslide Ridge's lava between its pillars is 5 to 14 studs across, under
+  `SEA_MIN_WIDTH` (16), so falling in burns instead of knocking out until sudden death raises it.
+- **One line of templates runs into everything.** At 400 studs a slot, eight maps reached X 2800, into the lab, and
+  the lab's old versions stood 140 studs apart above their map, 53 of them up to Y 7500. Now templates, the lab and
+  the old versions each stand in a block four wide that grows back (−Z), and the Loader puts every template on the
+  plane at X 0, Z 0 instead of warning about one off it.
+- **Checks near a tolerance depend on where they run.** Two planks of the studio's picnic table were 0.02 studs apart,
+  exactly MapLab's z-fighting tolerance: the check passed in the lab at X 5400 and failed at the origin, where the
+  export builds. Fix the prop, not the check.
+
+Rules: Maps are made in MapLab; Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`.

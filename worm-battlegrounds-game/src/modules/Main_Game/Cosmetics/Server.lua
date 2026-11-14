@@ -14,6 +14,9 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 -- When each player last played an emote (os.clock)
 local lastEmote = {} --- @type { [Player]: number }
 
+-- When each bot's snail last played one (PlaySnailEmote), by its snail's id
+local lastSnailEmote = {} --- @type { [string]: number }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -80,6 +83,7 @@ function Module.Init()
 		Equip = Module.Equip,
 		BuyEmote = Module.BuyEmote,
 		PlayEmote = Module.PlayEmote,
+		PlaySnailEmote = Module.PlaySnailEmote,
 
 		--[[ Methods ]]
 
@@ -219,6 +223,38 @@ function Module.PlayEmote(player: Player, emoteId: string)
 
 	lastEmote[player] = os.clock()
 	I.Network.FireAll("Cosmetics_EmotePlayed", player.UserId, emoteId)
+
+	--[[ Returning ]]
+
+	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play Snail Emote
+
+--[[
+	**SERVER** |
+	Plays an emote on a match snail that has no player behind it (a bot's, by its snail's id) for everyone, at most once
+	every EMOTE_COOLDOWN seconds per snail: bots taunt with it.
+]]
+--- @return boolean
+function Module.PlaySnailEmote(snailId: string, emoteId: string)
+	--[[ Checks ]]
+
+	-- Check if it's an emote
+	if not I.G_Cosmetics.GetEmotes()[emoteId] then
+		warn(`[{_localName}::{script.Name}]: Emote ({emoteId}) doesn't exist!`)
+		return false
+	end
+
+	-- Check if the cooldown is over
+	if lastSnailEmote[snailId] and os.clock() - lastSnailEmote[snailId] < _settings.EMOTE_COOLDOWN then
+		return false
+	end
+
+	--[[ Playing ]]
+
+	lastSnailEmote[snailId] = os.clock()
+	I.Network.FireAll("Cosmetics_EmotePlayed", snailId, emoteId)
 
 	--[[ Returning ]]
 

@@ -37,6 +37,7 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 | `Equip(player, skinId: string)` | `boolean` | Wears an owned skin in the next match |
 | `BuyEmote(player, emoteId: string)` | `boolean` | Buys an emote with coins when the level is high enough |
 | `PlayEmote(player, emoteId: string)` | `boolean` | Plays an owned emote for everyone, at most once every `EMOTE_COOLDOWN` seconds |
+| `PlaySnailEmote(snailId: string, emoteId: string)` | `boolean` | Plays an emote on a match snail with no player behind it (a bot's, by its snail's id) for everyone, at most once every `EMOTE_COOLDOWN` seconds per snail: bots taunt with it |
 | `GetSkin(player)` | `string, boolean` | The worn skin's model name and whether it's shiny (falls back to `DEFAULT_SKIN`) |
 
 ### Global: `I.G_Cosmetics`
@@ -61,7 +62,8 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 
 **Send: RemoteEvents**
 
-- `Cosmetics_EmotePlayed @ (userId: number, emoteId: string)`: to everyone, when an emote plays
+- `Cosmetics_EmotePlayed @ (who: number | string, emoteId: string)`: to everyone, when an emote plays: a player's
+  UserId, or a bot's snail's id (`PlaySnailEmote`)
 
 ## Data
 

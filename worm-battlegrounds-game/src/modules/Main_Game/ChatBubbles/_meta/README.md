@@ -31,7 +31,7 @@ holding a picture to place themselves (a lobby party card) with `I.ChatBubbles.B
 
 | Function | Returns | What it does |
 | --- | --- | --- |
-| `ShowIcon(userId: number, image: string)` | | Shows a picture in a thought cloud (`PREFAB \| Thought`) over the player's snail, in their chat stack (the newest, with its trail of puffs), for `ICON_SECONDS`, when this screen shows their snail: in a match, or on the lobby's stage |
+| `ShowIcon(who: number \| string, image: string)` | | Shows a picture in a thought cloud (`PREFAB \| Thought`) over a player's snail (by UserId) or a bot's (by its snail's id), in their chat stack (the newest, with its trail of puffs), for `ICON_SECONDS`, when this screen shows their snail: in a match, or on the lobby's stage |
 | `BuildIconBubble(image: string, tailLeft: boolean?)` | `Frame` | A bubble holding a picture (`S_Icon`, the text hidden), `ICON_SIZE` big, its tail under it or on its left (to point at a name beside it); the caller parents it, pops it (`S_Pop`) and removes it |
 
 ## Files

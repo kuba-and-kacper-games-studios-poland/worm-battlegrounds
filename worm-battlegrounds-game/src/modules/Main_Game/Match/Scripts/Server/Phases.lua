@@ -316,7 +316,7 @@ function Module._drop()
 	local bounds: BasePart = I.Arena.GetBounds()
 	local participants = Roster.GetParticipants() --- @type { Match_Participant }
 	local tutorial: boolean = Roster.GetMetadata().Kind == "Tutorial"
-	local spots = I.Arena.GetLandSpots(if tutorial then _settings.TUTORIAL_SPOT_COUNT else #participants, I.Settings["Snails"].ROOT_SIZE / 2) --- @type { Vector3 }
+	local spots = I.Arena.GetLandSpots(if tutorial then _settings.TUTORIAL_SPOT_COUNT else #participants * _settings.DROP_SPOT_CHOICES, I.Settings["Snails"].ROOT_SIZE / 2) --- @type { Vector3 }
 	local dropSeconds: number = if tutorial then _settings.TUTORIAL_DROP_SECONDS else _settings.DROP_SECONDS
 
 	--[[ Checks ]]
@@ -342,12 +342,12 @@ function Module._drop()
 	matchFolder:SetAttribute("DropMaxY", bounds.Position.Y + bounds.Size.Y / 2 - I.Settings["Arena"].START_TOP_GAP)
 	matchFolder:SetAttribute("DropEndsAt", I.S.Workspace:GetServerTimeNow() + dropSeconds)
 
-	-- Bots pick their land (the tutorial bot keeps its own); players start on one and can place their own (spots repeat when there are too few)
+	-- Bots pick their land apart from everyone's (the tutorial's keep theirs); players start on a free one and can place their own
 	local taken = {} --- @type { Vector3 }
 	--- @param participant Match_Participant
 	for index: number, participant in ipairs(participants) do
 		local picks: boolean = participant.IsBot and participant.Difficulty ~= "Tutorial"
-		local spot: Vector3 = if picks then I.Bots.GetStart(participant.Difficulty or "Easy", spots, taken) else spots[(index - 1) % #spots + 1]
+		local spot: Vector3 = if picks then I.Bots.GetStart(participant.Difficulty or "Easy", spots, taken) elseif tutorial then spots[(index - 1) % #spots + 1] else Module._getFreeSpot(spots, taken)
 		table.insert(taken, spot)
 		placed[participant.Id] = participant.IsBot
 		Roster.SetInfo(participant.Id, "Placed", participant.IsBot)
@@ -448,6 +448,42 @@ function Module._getTutorialSpots(spots, middleX: number)
 	--[[ Returning ]]
 
 	return { mine, bot or mine }
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Free Spot
+
+--[[
+	Returns the land spot a player who doesn't place starts on: the first of the drop's random spots at least Arena's
+	LAND_SPOT_GAP from every spot taken, or the one farthest from them when none is.
+]]
+--- @param spots { Vector3 }
+--- @param taken { Vector3 }
+--- @return Vector3
+function Module._getFreeSpot(spots, taken)
+	--[[ Local Variables ]]
+
+	local best: Vector3 = spots[1]
+	local bestApart: number = -1
+
+	--[[ Searching ]]
+
+	for _index: number, spot: Vector3 in ipairs(spots) do
+		local apart: number = math.huge
+		for _takenIndex: number, other: Vector3 in ipairs(taken) do
+			apart = math.min(apart, (other - spot).Magnitude)
+		end
+		if apart >= I.Settings["Arena"].LAND_SPOT_GAP then
+			return spot
+		end
+		if apart > bestApart then
+			best = spot
+			bestApart = apart
+		end
+	end
+
+	--[[ Returning ]]
+
+	return best
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Sky Spot

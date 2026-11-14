@@ -54,7 +54,7 @@ wiki's Arsenal page.
 | Key | Default | What |
 | --- | --- | --- |
 | `SHINY_DAMAGE_MULTIPLIER` | `1.05` | Extra damage from a shiny weapon |
-| `KNOCKBACK` | Small 20, Medium 45, High 70, VeryHigh 95, Extreme 130 | Knockback speed by class |
+| `KNOCKBACK` | None 0, Small 20, Medium 45, High 70, VeryHigh 95, Extreme 130 | Knockback speed by class (None: the blast doesn't throw, the black hole's) |
 | `BURST_SHOTS` | `{ "Worm" }` | Shots a weapon's burst sends out (by projectile part name) that may have a model in `Projectiles` |
 
 ## In the place

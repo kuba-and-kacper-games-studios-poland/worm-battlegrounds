@@ -38,17 +38,21 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   `PROP_BEHIND_GAP`).
 - **Maps are made in MapLab** (the game home's map kit, `assets/_tools/map-kit/`): the land drawn on the 1-stud grid
   and built into parts, props part-built, checked, then exported into the arena templates after the owner approves.
-  A map the owner builds in Studio is imported where it stands (Rockslide Ridge): its parts renamed by look, in
-  SmoothPlastic with `2022 Stud`, sorted into islands, ledges and backdrop, with its own markers.
-- **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), their
-  play plane (Bounds) at Z = 0, side by side along +X in 400-stud slots (MapLab's: X = (slot − 1) × 400) so none
-  overlaps another, and cached by the Arena module at start. **Every map plays at X 0**, by the spawn: the Loader
-  moves each template's Bounds there when it caches it (the owner, 2026-11-12: Volcano Isle, at X 1200, didn't show
+  A map the studio or the owner builds in Studio is imported into MapLab (Rolling Plains, Echo Caverns and the redone
+  Rockslide Ridge, 2026-11-14): its front view rasterized onto the grid (`Kit.raster`), its hand-built props kept part
+  for part (`Kit.dumpProps`). **Every map's land has depth** (the owner, 2026-11-14: "so the maps gets depth but stays
+  relatively the same"): its front is cut into rows of slabs that jut toward the camera by a few levels, at most 1.5
+  studs (MapLab's `jut`), less on grassy and sandy maps, more on rocky ones; the play plane doesn't move.
+- **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), standing in
+  MapLab's grid in Studio so none overlaps another: four to a row, 500 studs apart, each row 300 studs behind the last
+  (X = column × 500, Z = −row × 300, by slot; the owner, 2026-11-14: "better like 4 per row", never one line on and
+  on, nothing stacked high), and cached by the Arena module at start. **Every map plays at X 0 on the plane (Z = 0)**,
+  by the spawn: the Loader moves each template's Bounds there when it caches it (the owner, 2026-11-12: Volcano Isle, at X 1200, didn't show
   until the snails dropped, since streaming sends a player only what's within `StreamingTargetRadius` (1024) of
   their avatar, parked at the spawn, until their snail is their `ReplicationFocus`). A knockout hands the focus back
   to the parked avatar (Snails' `Health.Kill`): the ghost's ball ended up far below the arena, and with it as the focus
-  a player watching on lost the whole map and the camera its bounds (2026-11-12). The drop picker, aims and shots read the plane as Z = 0,
-  so a template dragged off it in Studio is put back on it at start, with a warning (Arena's Loader). Nothing starts
+  a player watching on lost the whole map and the camera its bounds (2026-11-12). The drop picker, aims and shots read
+  the plane as Z = 0, which the Loader's move gives every template, the grid's back rows too. Nothing starts
   in the bounds' top 20 studs (Arena's `START_TOP_GAP`), so a map's roof is never a spawn, and the liquid is drawn as
   deep as the map's bedrock, measured at load, never the bounds' depth: a map needs neither set by hand. Weapon models are authored in
   `Workspace.Ume.ReplicatedStorage_Assets/Arsenal/` and cached by Arsenal (its README → In the place).
@@ -58,11 +62,24 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   map's sides, up to its level (Arena's `SEA_EDGE_WIDTH`, the owner, 2026-11-12: "not seen as cut out"), so the
   camera never shows where it ends; only drawn, since the grid stops at the sides and out there is out of bounds.
   A map may draw a liquid in Neon instead of the stud look, so it glows (its marker's `Arena_LiquidNeon`): Volcano
-  Isle's lava, sea and pools, in 255, 81, 58 (the owner, 2026-11-12: "make lava part neon so it slightly glows").
-- **Only the sea knocks snails out** (the owner's pick, 2026-11-08): the liquid whose marker starts at the bounds'
-  bottom, raised by sudden death (Arena's `GetHazard`, `SEA_SLACK`), and since 2026-11-10 any liquid of its kind
-  joined to it, so a pond the rising sea reaches becomes the sea (Arena's `Liquid.IsSea`, `SEA_MARK_STEPS`). A pond on
-  its own, like Desert's oasis, is safe to fall in. **Lava turns the water it touches into obsidian** (2026-11-10), on
+  Isle's lava, sea and pools (the owner, 2026-11-12: "make lava part neon so it slightly glows"). **Lava is one
+  colour everywhere,** Arena's `LIQUID_COLORS` 179, 89, 47 (#b3592f, the owner, 2026-11-14): no map gives its lava a
+  colour of its own. Neon draws it much brighter on screen (about #ffa016 in Studio).
+- **Only the open sea knocks snails out** (the owner's pick, 2026-11-08): the liquid whose marker starts at the
+  bounds' bottom, raised by sudden death (Arena's `GetHazard`, `SEA_SLACK`), and since 2026-11-10 any liquid of its
+  kind joined to it, so a pond the rising sea reaches becomes the sea (Arena's `Liquid.IsSea`, `SEA_MARK_STEPS`, seeded
+  from the grid's sides and floor only). Since 2026-11-13 (the owner: "if the hole is big enough it insta kills you,
+  but if there's a smaller hole the water is good"), only where it's open: the surface over the snail is at least
+  `SEA_MIN_WIDTH` (16) studs across, or the snail is under the land's floor (a hole cut through the land drops it into
+  the sea below). A pond on its own (Desert's oasis, Lakeside's lake), a puddle, or a crater up to a Grenade's that
+  the sea seeps into is safe to fall in; a Dynamite or Black hole crater it floods is the sea.
+- **Lava on the map burns** (the owner, 2026-11-13: "you can move for 2s and then your turn ends and you'll loose
+  like 5-10hp every second for few seconds"): lava that doesn't knock a snail out (Volcano Isle's chamber and crater
+  pools, the lava sea in a small hole, Rockslide Ridge's lava between its pillars, 5 to 14 studs across: the owner's
+  pick, 2026-11-14, "Keep the burn") sets it `Burning` with a flame aura; 2 s later it loses 8 health, which ends its
+  turn as any hurt does, then 8 more each second, 24 in all (Snails' `BURN_*`, `Hazards`). One burn per dip: staying in
+  the pool or dipping again while it burns adds nothing, so a snail left in lava walks out on its next turn. Bots
+  avoid standing or landing in lava and count the burn on snails a shot throws in (Bots' `Move`, `Predict`). **Lava turns the water it touches into obsidian** (2026-11-10), on
   a map holding both: those cells leave the liquid and become terrain parts that blasts cut like any ground (Arena's
   `Obsidian`). It's the one terrain built in code, merged from the liquid's half-stud cells, an exception to "Terrain
   is authored parts". **Shots fly on through any liquid, ponds too, slowed** (the owner's pick, 2026-11-10: "projectiles move
@@ -199,7 +216,7 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   drawn `PROJECTILE_DRAW_SCALE` (2) times their size, hits unchanged.
 - **Every thrown shot flies like the rocket** (the testers, 2026-11-13: "same physic weight as rocket"): every Arc and
   Target weapon launches at the Bazooka's speeds (`MinSpeed` 20 to `MaxSpeed` 180, up from 150 for more power) and
-  feels the wind, which pushes `WIND_ACCEL` (7) studs/s² per point, and each point harder the stronger the wind
+  feels the wind (the spider bomb's throw and bomblets too, the owner, 2026-11-13), which pushes `WIND_ACCEL` (7) studs/s² per point, and each point harder the stronger the wind
   (`WIND_ACCEL_GROWTH`, the owner, 2026-11-13: "on wind 6… the projectile will get swept by the wind in another
   direction"): a shot into the wind lands visibly short, and in strong wind a steep shot is blown back over the
   shooter's head (at 6, steeper than about 64°). The
@@ -208,8 +225,15 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
 - **Teammates are never hurt by each other** (the testers, 2026-11-13): Combat's `Blast.Hit` skips a snail on the
   shooter's team (not the shooter: your own blows always hurt you), and an open black hole doesn't pull them.
 - **The black hole grenade is thrown, and opens on a second press** (the testers, 2026-11-13): it opens on the first
-  thing it touches, or wherever it is when its owner presses again, holds still for its `HoleTime` pulling snails in,
-  then bursts. The variety grenade bursts into four mini variety grenades (its `Bomblets`' `Mini`), no longer worms.
+  thing it touches, or wherever it is when its owner presses again, holds still for its `HoleTime`, then bursts.
+  **Snails stick to it, it never throws them** (the owner, 2026-11-13: "does not knock people out but sticks to
+  them… they slowly move towards it if they're on ground, they like slide towards it"): open, it draws every snail in
+  its `PullRadius` in slowly (Combat's `BLACK_HOLE_DRAG_SPEED`), sliding along the ground or drifting through the air,
+  holds each one stuck at its middle (`I.Snails.Drag`), bursts with no knockback, and lets them drop.
+- **A blast hurts at once; the crater follows** (the owner, 2026-11-13: the black hole "updates the terrain after a
+  lag… and deals damage after a lag"): Blast hurts every snail the moment it shows, while the server cuts the crater,
+  and throws them only once it's cut. Craters cut with one merged cutter (Arena's `Cutter.Merge`), and a client's own
+  pieces skip precise collision, so its hole shows in the blast's frame. The variety grenade bursts into four mini variety grenades (its `Bomblets`' `Mini`), no longer worms.
 - **Dynamite is placed, not thrown:** it drops at the snail's feet (`Aim = "Feet"`, no launch speed), the stamina bar
   fills again and the player keeps moving for its `Retreat` (3 s) before the server takes the snail back, and the fuse
   (3.5 s) goes off after that.
@@ -241,6 +265,14 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   weapon, a map object, a hazard), happens only when the owner asks. **Bots' loadouts** (the owner, 2026-11-13): the
   spider bomb from Medium up, the black hole grenade on Nightmare alone, and every bot rolls none, a Speed potion or a
   Low gravity potion at even odds (Bots' `LOADOUTS`, `POTIONS`), drunk only when the spot it wants needs it.
+  **Bots play tricks and taunt** (the owner, 2026-11-13: "make them play like pros"): Hard and Nightmare also shoot
+  hovering on their jetpack, higher than a safe fall when the shot pays for the fall after it (the spot's `Fall`,
+  their own damage in the genome), and bank grenades off the ground and walls into targets their direct arc can't
+  reach (a skill's `Banks`); every brain sees a blow bounce and slide an enemy off its ledge into the sea (Predict's
+  throw follows Snails' flight). A bot's knockout of an enemy, or a hit of 20 or more on a player, plays an emote on
+  its snail (Bots' `TAUNT_*`, Cosmetics' `PlaySnailEmote`). **Snails drop apart, never on pre-set spots** (the owner,
+  2026-11-13: "3 bots are in the same place"): the drop draws `DROP_SPOT_CHOICES` random land spots per snail, no bot
+  takes one within `START_GAP` of a spot taken, and players who don't place start on a free one.
 - **A walking snail has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 - **Snails are light, and a thrown snail flies the game's own physics** (the owner, 2026-11-12: "more like worms…

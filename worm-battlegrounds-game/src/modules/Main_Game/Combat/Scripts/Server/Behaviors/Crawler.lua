@@ -37,7 +37,7 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	The spider bomb: thrown on the shared simulation like a grenade, it lands on the first thing it touches, then crawls
+	The spider bomb: thrown on the shared simulation like a grenade, in the wind, it lands on the first thing it touches, then crawls
 	along the ground and up walls toward the nearest enemy snail for CrawlTime seconds, and explodes when it reaches
 	one, touches water or lava, or its time runs out.
 ]]
@@ -48,6 +48,7 @@ function Module.Run(shot)
 	local row = shot.Row --- @type Arsenal_WeaponData
 	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(shot.ItemId, shot.Angle, shot.Power)
 	local options = Projectiles.GetOptions(shot) --- @type Combat_ShotOptions
+	options.Wind = I.G_Combat.GetWindAcceleration(shot.ItemId, I.Match.GetWind())
 	local body = Projectiles.Launch("Crawler", shot.ItemId, shot.Origin, velocity, options) --- @type Combat_Body
 	local landed: Vector3? = nil
 

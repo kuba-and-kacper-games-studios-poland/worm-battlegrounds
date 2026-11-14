@@ -86,18 +86,28 @@ function Module.GetPlan(view, genome, skill, stay: boolean?)
 
 	--[[ Solving ]]
 
-	-- Each spot, target, weapon and point on the target keeps its shot that lands nearest the point
+	-- Each spot, target, weapon and point on the target keeps its shot that lands nearest the point; a bouncing weapon whose direct arc misses tries bank shots too
 	--- @param spot Bots_Spot
 	for _index: number, spot in ipairs(spots) do
 		--- @param target Bots_Snail
 		for _targetIndex: number, target in ipairs(targets) do
+			local direct = {} --- @type { [string]: number }
 			for point: number, aimAt: Vector3 in ipairs(Module._getAimPoints(target, skill)) do
 				for itemId: string, _uses: number in pairs(view.Uses) do
 					if I.G_Arsenal.IsWeapon(itemId) then
 						local plan = Module._getRough(view, skill, spot, target, itemId, aimAt, point) --- @type Bots_Plan?
 						if plan then
 							table.insert(candidates, plan)
+							direct[itemId] = if point == 1 then plan.Score - spot.Walk * 0.01 else direct[itemId]
 						end
+					end
+				end
+			end
+			for itemId: string, _uses: number in pairs(view.Uses) do
+				if skill.Banks > 0 and Module._isBouncing(itemId) and (direct[itemId] or math.huge) > _settings.BANK_MISS then
+					--- @param plan Bots_Plan
+					for _planIndex: number, plan in ipairs(Module._getBanks(view, skill, spot, target, itemId, everyone)) do
+						table.insert(candidates, plan)
 					end
 				end
 			end
@@ -196,40 +206,48 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Start
 
 --[[
-	Returns the spot a bot parachutes onto, from the match's land spots: the one its genome likes best away from deadly
-	edges and ground a blast would drop it through, high over the others, and apart from the spots already taken.
+	Returns the spot a bot parachutes onto, from the match's land spots (random each match): never within START_GAP of
+	a spot taken already (with none that far, the farthest from them), safe ones first (no deadly drop right beside it,
+	no blast at its feet dropping it into the sea), then the one its genome likes best (away from edges and thin
+	ground, high over the others) with its skill's StartNoise on top, so no map has a spot bots always take.
 ]]
 --- @param spots { Vector3 }
 --- @param taken { Vector3 }
 --- @param genome Bots_Genome
+--- @param skill Bots_Skill
 --- @return Vector3
-function Module.GetStart(spots, taken, genome)
+function Module.GetStart(spots, taken, genome, skill)
 	--[[ Local Variables ]]
 
 	Predict.ClearColumns()
 	local jump: number = Move.GetJump()
 	local meanHeight: number = 0
-	for _index: number, spot: Vector3 in ipairs(spots) do
+	local farthest: number = 0
+	local apart = {} --- @type { number }
+	for index: number, spot: Vector3 in ipairs(spots) do
 		meanHeight += spot.Y / #spots
+		apart[index] = math.huge
+		for _takenIndex: number, other: Vector3 in ipairs(taken) do
+			apart[index] = math.min(apart[index], (other - spot).Magnitude)
+		end
+		farthest = math.max(farthest, apart[index])
 	end
 	local best: Vector3 = spots[1]
 	local bestScore: number = -math.huge
 
 	--[[ Choosing ]]
 
-	for _index: number, spot: Vector3 in ipairs(spots) do
-		local crowd: number = 0
-		for _takenIndex: number, other: Vector3 in ipairs(taken) do
-			if (other - spot).Magnitude < _settings.CROWD_RANGE * 2 then
-				crowd += 1
+	for index: number, spot: Vector3 in ipairs(spots) do
+		if apart[index] >= math.min(_settings.START_GAP, farthest) then
+			local edge: number = Module._getEdge(spot, jump)
+			local footing: number = Module._getFooting(spot)
+			local unsafe: number = if edge >= 0.5 or footing >= 1 then 10 else 0
+			local height: number = math.clamp((spot.Y - meanHeight) / _settings.HEIGHT_SCALE, -1, 1)
+			local score: number = -unsafe - genome.Edge * edge - genome.Footing * footing + genome.Height * height + random:NextNumber() * skill.StartNoise
+			if score > bestScore then
+				best = spot
+				bestScore = score
 			end
-		end
-		local height: number = math.clamp((spot.Y - meanHeight) / _settings.HEIGHT_SCALE, -1, 1)
-		local danger: number = genome.Edge * Module._getEdge(spot, jump) + genome.Footing * Module._getFooting(spot)
-		local score: number = -danger + genome.Height * height - genome.Crowd * crowd * 4 + random:NextNumber() * 0.05
-		if score > bestScore then
-			best = spot
-			bestScore = score
 		end
 	end
 
@@ -376,9 +394,11 @@ function Module._getSpots(view, genome, skill, targets, stay: boolean)
 
 	-- Hovering right over where it stands
 	local wantsAir: boolean = canFly and skill.AirShots > 0
-	local over = if wantsAir then Module._getAirSpot(view, origin, 0, cruise, jump) else nil --- @type Bots_Spot?
-	if over then
-		table.insert(air, over)
+	if wantsAir then
+		--- @param hover Bots_Spot
+		for _index: number, hover in ipairs(Module._getAirSpots(view, origin, 0, cruise, jump)) do
+			table.insert(air, hover)
+		end
 	end
 
 	-- Each side, a stud at a time: on foot while the ground and the way let it, by jetpack while its flight's way is open
@@ -418,10 +438,12 @@ function Module._getSpots(view, genome, skill, targets, stay: boolean)
 				spot.Potion = if step > reach or boosted and not fly then potion else nil
 				table.insert(if closeX[math.round(x)] then close else open, spot)
 			end
-			local hover = if wantsAir and landing and marked then Module._getAirSpot(view, landing, step, cruise, jump) else nil --- @type Bots_Spot?
-			if hover then
-				hover.Potion = if step > reach then potion else nil
-				table.insert(air, hover)
+			if wantsAir and landing and marked then
+				--- @param hover Bots_Spot
+				for _hoverIndex: number, hover in ipairs(Module._getAirSpots(view, landing, step, cruise, jump)) do
+					hover.Potion = if step > reach then potion else nil
+					table.insert(air, hover)
+				end
 			end
 			Module.Breathe()
 		end
@@ -429,13 +451,13 @@ function Module._getSpots(view, genome, skill, targets, stay: boolean)
 
 	--[[ Choosing ]]
 
-	-- The open and air spots its genome likes best, up to its skill's Spots with where it stands, and its AirShots
+	-- The open and air spots its genome likes best, up to its skill's Spots with where it stands, and its AirShots (a high one's fall is weighed with its shot, Simulate)
 	--- @param list { Bots_Spot }
 	for _index: number, list in ipairs({ open, air }) do
 		--- @param a Bots_Spot
 		--- @param b Bots_Spot
 		table.sort(list, function(a, b): boolean
-			return Module._getPlace(a, genome, view, skill) > Module._getPlace(b, genome, view, skill)
+			return Module._getPlace(a, genome, view, skill) + genome.SelfDamage * a.Fall / 100 > Module._getPlace(b, genome, view, skill) + genome.SelfDamage * b.Fall / 100
 		end)
 	end
 	local spots = { here } --- @type { Bots_Spot }
@@ -504,6 +526,7 @@ function Module._getSpot(view, position: Vector3, walk: number, fly: boolean, ju
 		Low = if sea > -math.huge then math.clamp(1 - (standing.Y - sea) / _settings.LOW_RANGE, 0, 1) * (0.25 + 0.75 * urgency) else 0,
 		Cover = if I.S.Workspace:Raycast(standing, Vector3.yAxis * _settings.COVER_HEIGHT, sightParams) then 1 else 0,
 		Pond = if I.Arena.GetLiquid(head) then 1 else 0,
+		Fall = if ground then math.clamp(math.floor(position.Y - ground.Y - I.Settings["Snails"].SAFE_FALL_HEIGHT), 0, I.Settings["Snails"].MAX_FALL_DAMAGE) else 0,
 		Height = if enemies > 0 then math.clamp((position.Y - enemyHeight / enemies) / _settings.HEIGHT_SCALE, -1, 1) else 0,
 		Exposure = if enemies > 0 then seen / enemies else 0,
 		Crowd = crowd,
@@ -512,32 +535,35 @@ function Module._getSpot(view, position: Vector3, walk: number, fly: boolean, ju
 	return spot
 end
 
---%%%%%%%%%%%%%%%%%%%% Get Air Spot
+--%%%%%%%%%%%%%%%%%%%% Get Air Spots
 
 --[[
-	Returns a spot in the air over the ground a jetpack flight passes (its `walk`th stud from where the bot stands), to
-	hover and shoot from: as high as its cruise allows but no higher than a safe fall (Snails' SAFE_FALL_HEIGHT), and
-	at least AIR_MIN studs up. Nil when there isn't that much room.
+	Returns the spots in the air over the ground a jetpack flight passes (its `walk`th stud from where the bot stands),
+	to hover and shoot from, at least AIR_MIN studs up: one no higher than a safe fall (Snails' SAFE_FALL_HEIGHT), and
+	one as high as its cruise when that's higher still, whose fall after the shot costs health (its Fall), a trade its
+	genome weighs against what the shot does from up there. Empty when there isn't room to hover.
 ]]
 --- @param view Bots_View
---- @return Bots_Spot?
-function Module._getAirSpot(view, ground: Vector3, walk: number, cruise: number, jump: number)
+--- @return { Bots_Spot }
+function Module._getAirSpots(view, ground: Vector3, walk: number, cruise: number, jump: number)
 	--[[ Local Variables ]]
 
-	local height: number = math.min(cruise, ground.Y + I.Settings["Snails"].SAFE_FALL_HEIGHT)
+	local safe: number = math.min(cruise, ground.Y + I.Settings["Snails"].SAFE_FALL_HEIGHT)
+	local spots = {} --- @type { Bots_Spot }
 
-	--[[ Checks ]]
+	--[[ Listing ]]
 
-	-- Check if there's room to hover over the ground
-	if height - ground.Y < _settings.AIR_MIN then
-		return nil
+	for _index: number, height: number in ipairs({ safe, cruise }) do
+		if height - ground.Y >= _settings.AIR_MIN and (height == safe or height > safe + 1) then
+			local spot = Module._getSpot(view, Vector3.new(ground.X, height, 0), walk, true, jump, ground) --- @type Bots_Spot
+			spot.Cruise = cruise
+			table.insert(spots, spot)
+		end
 	end
 
 	--[[ Returning ]]
 
-	local spot = Module._getSpot(view, Vector3.new(ground.X, height, 0), walk, true, jump, ground) --- @type Bots_Spot
-	spot.Cruise = cruise
-	return spot
+	return spots
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Edge
@@ -597,9 +623,9 @@ end
 
 --[[
 	Returns how much a genome likes standing on a spot, for the spot alone: the getting there (a potion it drinks for
-	it costs as a limited weapon's use does: Ammo), the map's dangers there (the edge, its footing, low ground, a pond's
-	damage over POND_TURNS turns) as much as its skill's MapSense minds them, the height, cover from above, being seen,
-	crowded and threatened.
+	it costs as a limited weapon's use does: Ammo), the fall after shooting from high in the air (as its own damage),
+	the map's dangers there (the edge, its footing, low ground, a pond's damage over POND_TURNS turns) as much as its
+	skill's MapSense minds them, the height, cover from above, being seen, crowded and threatened.
 ]]
 --- @param spot Bots_Spot
 --- @param genome Bots_Genome
@@ -618,6 +644,7 @@ function Module._getPlace(spot, genome, view, skill)
 
 	return -genome.Walk * walk
 		- potion
+		- genome.SelfDamage * spot.Fall / 100
 		- genome.Jetpack * (if spot.Fly then 1 else 0)
 		- skill.MapSense * danger
 		+ genome.Height * spot.Height
@@ -649,6 +676,23 @@ function Module._getPotion(view)
 	--[[ Returning ]]
 
 	return nil, nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Bouncing
+
+--[[
+	Returns whether a weapon's shot bounces before it bursts (a fused Bouncer: the Grenade, the Cluster bomb), so a
+	bank shot can roll it in.
+]]
+--- @return boolean
+function Module._isBouncing(itemId: string)
+	--[[ Data ]]
+
+	local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
+
+	--[[ Returning ]]
+
+	return row.Kind == "Bouncer" and row.Aim == "Arc" and not row.BurstOnContact
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Rough
@@ -738,6 +782,52 @@ function Module._getRough(view, skill, spot, target, itemId: string, aimAt: Vect
 
 	plan.Score += bestMiss
 	return if bestMiss < math.huge then plan else nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Banks
+
+--[[
+	Returns a bouncing weapon's bank shots at a target from a spot, as many as its skill's Banks: arcs onto the ground
+	BANK_STEP studs either side of the target, then onto a wall BANK_HEIGHT studs up past it, then twice as far out,
+	each flown in full (Predict) with the wind its bot reads, its Score how far from the target it bursts.
+]]
+--- @param view Bots_View
+--- @param skill Bots_Skill
+--- @param spot Bots_Spot
+--- @param target Bots_Snail
+--- @param everyone { Bots_Snail }
+--- @return { Bots_Plan }
+function Module._getBanks(view, skill, spot, target, itemId: string, everyone)
+	--[[ Local Variables ]]
+
+	local feet: Vector3 = target.Position - Vector3.yAxis * (I.Settings["Snails"].ROOT_SIZE / 2)
+	local far: number = if target.Position.X < spot.Position.X then -1 else 1
+	local step: number = _settings.BANK_STEP
+	local points = {
+		feet - Vector3.xAxis * far * step,
+		feet + Vector3.xAxis * far * step,
+		feet + Vector3.new(far * step, _settings.BANK_HEIGHT, 0),
+		feet - Vector3.xAxis * far * step * 2,
+		feet + Vector3.xAxis * far * step * 2,
+		feet + Vector3.new(far * step * 2, _settings.BANK_HEIGHT, 0),
+	} --- @type { Vector3 }
+	local banks = {} --- @type { Bots_Plan }
+
+	--[[ Flying ]]
+
+	for index: number = 1, math.min(skill.Banks, #points) do
+		local plan = Module._getRough(view, skill, spot, target, itemId, points[index], 2) --- @type Bots_Plan?
+		local shot = if plan then Predict.GetShot(spot.Position, itemId, plan.Angle, plan.Power, nil, view.Wind * skill.WindRead, view.Self.Model, everyone, nil) else nil --- @type Bots_Shot?
+		if plan and shot then
+			plan.Score = spot.Walk * 0.01 + (shot.Landed - target.Position).Magnitude
+			table.insert(banks, plan)
+		end
+		Module.Breathe()
+	end
+
+	--[[ Returning ]]
+
+	return banks
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Aim Points
@@ -838,6 +928,8 @@ function Module._simulate(view, genome, skill, plan, everyone)
 		local damage: number = if effect then math.min(effect.Damage, snail.Health) / 100 else 0
 		local out: number = if effect and (effect.Out or effect.Damage >= snail.Health) then 1 else 0
 		if snail.Id == view.Self.Id then
+			-- Its fall from a high air spot after the shot (its damage is the spot's, GetPlace) knocks it out too
+			out = if (if effect then effect.Damage else 0) + plan.Spot.Fall >= snail.Health then 1 else out
 			score -= genome.SelfDamage * damage + genome.SelfKnockout * out
 		elseif snail.Team == view.Self.Team then
 			score -= genome.AllyDamage * damage + genome.AllyKnockout * out

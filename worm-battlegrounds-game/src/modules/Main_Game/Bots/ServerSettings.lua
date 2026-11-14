@@ -51,6 +51,23 @@ local _settings = {
 	--- @type { string }
 	POTIONS = { "", "SpeedPotion", "LowGravityPotion" },
 
+	-- No bot parachutes in within START_GAP studs of a spot taken already, a player's or a bot's (GetStart)
+	START_GAP = 20,
+
+	--[[
+		Taunts: TAUNT_DELAY seconds after a bot's shot knocks out an enemy it plays one of TAUNT_KILL, and after one that
+		hurts a player for TAUNT_DAMAGE or more, one of TAUNT_HIT at TAUNT_CHANCE (Cosmetics' PlaySnailEmote)
+	]]
+	--- @type { string }
+	TAUNT_KILL = { "Emote_Taunt", "Emote_Laugh", "Emote_Flex", "Emote_Dance", "Emote_Backflip", "Emote_VictoryTrumpet" },
+
+	--- @type { string }
+	TAUNT_HIT = { "Emote_Laugh", "Emote_ThumbsUp", "Emote_Flex", "Emote_Taunt" },
+
+	TAUNT_DAMAGE = 20,
+	TAUNT_CHANCE = 0.6,
+	TAUNT_DELAY = 1.2,
+
 	--%%%%%%%%%%%%%%%%%%%% Skill
 
 	--[[
@@ -67,15 +84,82 @@ local _settings = {
 		  ground near the sea), from 0 to 1
 		- Choice: how loosely it picks among its plans (0 always takes the best; higher takes good-enough ones more often)
 		- AirShots: how many spots in the air, hovering on its jetpack, it also weighs shooting from (0: none)
+		- Banks: how many bank shots it tries with a bouncing weapon (the Grenade, the Cluster bomb) when its direct
+		  arc at a target misses by more than BANK_MISS: landing beside or past it, to bounce and roll in
 		- Hunt: how much nearer players (not bots) count when it picks its targets, from 0 to 1
+		- StartNoise: how loosely it picks where it parachutes in (GetStart), on top of what its genome likes there
 		Nightmare is secret: it isn't on the board.
 	]]
 	--- @type { [string]: Bots_Skill }
 	SKILLS = {
-		Easy = { AimNoise = 9, PowerNoise = 0.1, WindRead = 0.3, Ranging = 0.8, RangingMin = 0.5, Spots = 2, Targets = 1, Finalists = 3, AimPoints = 1, MapSense = 0.5, Choice = 0.5, AirShots = 0, Hunt = 0 },
-		Medium = { AimNoise = 4.5, PowerNoise = 0.06, WindRead = 0.7, Ranging = 0.75, RangingMin = 0.35, Spots = 4, Targets = 2, Finalists = 5, AimPoints = 1, MapSense = 0.75, Choice = 0.2, AirShots = 0, Hunt = 0 },
-		Hard = { AimNoise = 1.8, PowerNoise = 0.025, WindRead = 1, Ranging = 0.7, RangingMin = 0.25, Spots = 7, Targets = 3, Finalists = 8, AimPoints = 3, MapSense = 1, Choice = 0, AirShots = 0, Hunt = 0 },
-		Nightmare = { AimNoise = 0.8, PowerNoise = 0.012, WindRead = 1, Ranging = 0.6, RangingMin = 0.2, Spots = 12, Targets = 4, Finalists = 16, AimPoints = 4, MapSense = 1, Choice = 0, AirShots = 4, Hunt = 0.5 },
+		Easy = {
+			AimNoise = 9,
+			PowerNoise = 0.1,
+			WindRead = 0.4,
+			Ranging = 0.8,
+			RangingMin = 0.5,
+			Spots = 2,
+			Targets = 1,
+			Finalists = 3,
+			AimPoints = 1,
+			MapSense = 0.5,
+			Choice = 0.5,
+			AirShots = 0,
+			Banks = 0,
+			Hunt = 0,
+			StartNoise = 1,
+		},
+		Medium = {
+			AimNoise = 4.5,
+			PowerNoise = 0.06,
+			WindRead = 0.8,
+			Ranging = 0.75,
+			RangingMin = 0.35,
+			Spots = 4,
+			Targets = 2,
+			Finalists = 5,
+			AimPoints = 2,
+			MapSense = 0.75,
+			Choice = 0.2,
+			AirShots = 0,
+			Banks = 0,
+			Hunt = 0,
+			StartNoise = 0.5,
+		},
+		Hard = {
+			AimNoise = 1.8,
+			PowerNoise = 0.025,
+			WindRead = 1,
+			Ranging = 0.7,
+			RangingMin = 0.25,
+			Spots = 7,
+			Targets = 3,
+			Finalists = 10,
+			AimPoints = 3,
+			MapSense = 1,
+			Choice = 0,
+			AirShots = 2,
+			Banks = 2,
+			Hunt = 0,
+			StartNoise = 0.25,
+		},
+		Nightmare = {
+			AimNoise = 0.5,
+			PowerNoise = 0.008,
+			WindRead = 1,
+			Ranging = 0.6,
+			RangingMin = 0.15,
+			Spots = 14,
+			Targets = 4,
+			Finalists = 24,
+			AimPoints = 4,
+			MapSense = 1,
+			Choice = 0,
+			AirShots = 6,
+			Banks = 6,
+			Hunt = 0.5,
+			StartNoise = 0.15,
+		},
 	},
 
 	--%%%%%%%%%%%%%%%%%%%% Turns
@@ -109,7 +193,7 @@ local _settings = {
 		against the terrain along their path for ARC_SECONDS, a point every ARC_STEP seconds
 	]]
 	--- @type { number }
-	POWER_STEPS = { 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 },
+	POWER_STEPS = { 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 },
 
 	ARC_SECONDS = 4,
 	ARC_STEP = 1 / 20,
@@ -160,6 +244,12 @@ local _settings = {
 	KNOCK_SECONDS = 3,
 	KNOCK_STEP = 1 / 30,
 
+	--[[
+		A thrown snail that lands slides on along the ground, as Snails' FLIGHT_LAND_KEEP hands it to Roblox physics: for
+		this many seconds at that share of its speed, off any edge on the way
+	]]
+	KNOCK_SLIDE_SECONDS = 0.25,
+
 	-- A spot with terrain less than COVER_HEIGHT studs over it is under cover: shots from above can't drop on it
 	COVER_HEIGHT = 12,
 
@@ -181,6 +271,15 @@ local _settings = {
 
 	-- A shot that knocks out the last enemy is worth this much more: it pays for hurting its own side to win
 	WIN_VALUE = 6,
+
+	--[[
+		A skill's Banks: when its direct arc at a target lands more than BANK_MISS studs off, a bouncing weapon also
+		tries points BANK_STEP studs apart on the ground either side of the target, and BANK_HEIGHT studs over them on
+		its far side (a wall it bounces back off), judged by where the full flight bursts
+	]]
+	BANK_MISS = 3,
+	BANK_STEP = 5,
+	BANK_HEIGHT = 6,
 
 	--%%%%%%%%%%%%%%%%%%%% Moving
 
@@ -215,7 +314,11 @@ local _settings = {
 	HEADROOM = 1.5,
 	WALL_JUMPS = 2,
 
-	-- A spot in the air (a skill's AirShots) hovers at least AIR_MIN studs over the ground, and no higher than a safe fall
+	--[[
+		A spot in the air (a skill's AirShots) hovers at least AIR_MIN studs over the ground: as high as a safe fall, and
+		also as high as its flight goes, where the fall after its shot costs health (the spot's Fall), worth it only
+		when the shot pays for it
+	]]
 	AIR_MIN = 5,
 
 	--%%%%%%%%%%%%%%%%%%%% Training

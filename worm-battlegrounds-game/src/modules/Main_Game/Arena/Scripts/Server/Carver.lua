@@ -72,11 +72,12 @@ function Module.Carve(center: Vector3, radius: number, carveId: number)
 
 	--[[ Carving ]]
 
-	-- Every part is cut at the same time, so the hole is ready in one go rather than a part a frame
+	-- Every part is cut at the same time with one merged cutter, so the hole is ready in one go rather than a part a frame
+	local merged = if #hits > 0 then Cutter.Merge(cutter) else cutter --- @type { BasePart }
 	local running: number = #hits
 	for _index: number, part: BasePart in ipairs(hits) do
 		task.spawn(function()
-			pieces[part] = Cutter.Subtract(part, cutter)
+			pieces[part] = Cutter.Subtract(part, merged)
 			running -= 1
 		end)
 	end
@@ -110,6 +111,9 @@ function Module.Carve(center: Vector3, radius: number, carveId: number)
 	--[[ Cleaning ]]
 
 	for _index: number, box: BasePart in ipairs(cutter) do
+		box:Destroy()
+	end
+	for _index: number, box: BasePart in ipairs(merged) do
 		box:Destroy()
 	end
 

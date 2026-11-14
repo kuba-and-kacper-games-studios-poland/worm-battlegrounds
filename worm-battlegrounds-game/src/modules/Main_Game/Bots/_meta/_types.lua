@@ -55,7 +55,12 @@ local _bots_Genome = {}
 --- @field MapSense number
 --- @field Choice number
 --- @field AirShots number
+--- @field Banks number
 --- @field Hunt number
+---
+--- # Start #
+---
+--- @field StartNoise number
 local _bots_Skill = {}
 
 --%%%%%%%%%%%%%%%%%%%% View
@@ -109,6 +114,7 @@ local _bots_View = {}
 --- @field Low number
 --- @field Cover number
 --- @field Pond number
+--- @field Fall number
 --- @field Height number
 --- @field Exposure number
 --- @field Crowd number

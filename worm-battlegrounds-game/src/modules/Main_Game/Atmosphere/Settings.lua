@@ -69,6 +69,22 @@ local _settings = {
 				{ Liquid = "Water", Effect = "Glint", Every = { 0.15, 0.4 }, Tint = false },
 			},
 		},
+
+		-- shortcut: Picnic Plains' mood and music until Rolling Plains gets its own
+		RollingPlains = {
+			Preset = "Plains",
+			Music = "Music_PicnicPlains",
+			SuddenDeathMusic = "Music_PicnicPlains_SuddenDeath",
+			WindColor = Color3.fromRGB(255, 255, 255),
+			WindSound = "Wind_OpenAir",
+			Ambient = {
+				{ Effect = "Ambient_Pollen", Bottom = 0.1, Top = 1, RateScale = 1 },
+				{ Effect = "Ambient_Leaf", Bottom = 0.3, Top = 1, RateScale = 1 },
+			},
+			Surface = {
+				{ Liquid = "Water", Effect = "Glint", Every = { 0.15, 0.4 }, Tint = false },
+			},
+		},
 		Desert = {
 			Preset = "Desert",
 			Music = "Music_Desert",
@@ -85,6 +101,23 @@ local _settings = {
 			},
 		},
 		RockslideRidge = {
+			Preset = "Cave",
+			Music = "Music_RockslideRidge",
+			SuddenDeathMusic = "Music_RockslideRidge_SuddenDeath",
+			WindColor = Color3.fromRGB(228, 222, 212),
+			WindSound = "Wind_Howl",
+			Ambient = {
+				{ Effect = "Ambient_CaveDust", Bottom = 0, Top = 0.85, RateScale = 1 },
+			},
+			Surface = {
+				{ Liquid = "Lava", Effect = "Lava_Bubble", Every = { 0.4, 1.2 }, Tint = false },
+				{ Liquid = "Lava", Effect = "Ember", Every = { 0.2, 0.6 }, Tint = false },
+			},
+			Ceiling = { Effect = "Grit", Every = { 3, 7 } },
+		},
+
+		-- shortcut: Rockslide Ridge's cave mood and music until Echo Caverns gets its own
+		EchoCaverns = {
 			Preset = "Cave",
 			Music = "Music_RockslideRidge",
 			SuddenDeathMusic = "Music_RockslideRidge_SuddenDeath",

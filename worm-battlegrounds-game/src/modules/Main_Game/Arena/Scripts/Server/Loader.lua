@@ -110,17 +110,11 @@ function Module._cacheTemplates()
 			continue
 		end
 
-		-- Check if the map sits on the play plane (Z = 0), which shots, aims and drops keep to: one dragged off it is put back
-		local planeZ: number = markers:FindFirstChild("Bounds"):GetPivot().Position.Z
-		if math.abs(planeZ) > 0.01 then
-			warn(`[{_localName}::{script.Name}]: Map ({template.Name}) Bounds sit at Z {planeZ}, not 0 - moved back onto the plane! -`, template)
-			template:PivotTo(template:GetPivot() - Vector3.zAxis * planeZ)
-		end
-
 		--[[ Placing ]]
 
-		-- Every map plays at X 0, by the spawn: until a snail drops, streaming sends its player only what's near their avatar
-		template:PivotTo(template:GetPivot() - Vector3.xAxis * markers:FindFirstChild("Bounds"):GetPivot().Position.X)
+		-- Every map plays at X 0 on the plane (Z = 0) that shots, aims and drops keep to, by the spawn, wherever its template stands in Studio (MapLab's grid): until a snail drops, streaming sends its player only what's near their avatar
+		local bounds: Vector3 = markers:FindFirstChild("Bounds"):GetPivot().Position
+		template:PivotTo(template:GetPivot() - Vector3.new(bounds.X, 0, bounds.Z))
 
 		--[[ Applying ]]
 

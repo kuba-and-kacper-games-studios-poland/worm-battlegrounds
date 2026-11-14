@@ -16,6 +16,13 @@ local _settings = {
 	-- How high over its land a snail that wasn't placed (a bot, a player who didn't place) starts its parachute, in studs
 	DROP_HEIGHT = 20,
 
+	--[[
+		The drop draws DROP_SPOT_CHOICES random land spots for each snail: bots pick theirs from them (Bots' GetStart:
+		never near a spot taken already), and a player who doesn't place starts on the first one at least Arena's
+		LAND_SPOT_GAP from everyone's
+	]]
+	DROP_SPOT_CHOICES = 6,
+
 	--%%%%%%%%%%%%%%%%%%%% Tutorial
 
 	--[[

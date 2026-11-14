@@ -503,8 +503,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Mark Sea
 
 --[[
-	Marks which liquid is the sea: every cell of the sea's kind (water on a map whose sudden death raises it) at or
-	under its level, and all of that kind joined to it, so a pond the rising sea reaches is the sea's from then on.
+	Marks which liquid is the sea: the cells of the sea's kind (water on a map whose sudden death raises it) at or
+	under its level along the grid's sides and floor, and all of that kind joined to them, so a pond the rising sea
+	reaches is the sea's from then on. Water that pooled low in a hole on the land isn't, unless it joins the sea.
 ]]
 function Module._markSea()
 	--[[ Local Variables ]]
@@ -519,7 +520,7 @@ function Module._markSea()
 	for cy: number = 0, top do
 		for cx: number = 0, cols - 1 do
 			local index: number = cy * cols + cx
-			if buffer.readu8(liquid, index) == kind then
+			if (cy == 0 or cx == 0 or cx == cols - 1) and buffer.readu8(liquid, index) == kind then
 				buffer.writeu8(sea, index, 1)
 				table.insert(stack, index)
 			end
@@ -867,6 +868,62 @@ function Module.IsSea(position: Vector3)
 	--[[ Returning ]]
 
 	return cx >= 0 and cx < cols and cy >= 0 and cy < rows and buffer.readu8(sea, cy * cols + cx) == 1
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Open Sea
+
+--[[
+	**SERVER** |
+	Returns whether a position is in the open sea: in the sea, no higher than SEA_SLACK over its level, under a surface
+	at least SEA_MIN_WIDTH studs across, or under the land's floor. A snail in a small hole the sea seeped into stays in
+	play, and one in a crater it flooded as wide as that, or sinking through a hole cut below the land, doesn't.
+]]
+--- @return boolean
+function Module.IsOpenSea(position: Vector3)
+	--[[ Checks ]]
+
+	-- Check if it's the sea, at its height
+	if position.Y > seaLevel + _settings.SEA_SLACK or not Module.IsSea(position) then
+		return false
+	end
+
+	-- Check if it's under the land's floor, in the sea the islands stand on (a hole cut through drops a snail in)
+	if position.Y < Loader.GetFloor() then
+		return true
+	end
+
+	--[[ Local Variables ]]
+
+	local cx: number = math.floor((position.X - origin.X) / CELL)
+	local surface: number = math.floor((position.Y - origin.Y) / CELL)
+	local needed: number = math.ceil(_settings.SEA_MIN_WIDTH / CELL)
+	local width: number = 1
+
+	--[[ Surfacing ]]
+
+	-- Up the liquid over it to its surface, where the hole's or the sea's width shows
+	while surface + 1 < rows and buffer.readu8(liquid, (surface + 1) * cols + cx) ~= 0 do
+		surface += 1
+	end
+	local row: number = surface * cols
+
+	--[[ Measuring ]]
+
+	-- Free cells to each side of the surface, up to the terrain (the grid's sides open onto the sea beyond)
+	for _side: number, direction: number in ipairs({ -1, 1 }) do
+		local x: number = cx + direction
+		while width < needed and x >= 0 and x < cols and buffer.readu8(solid, row + x) == 0 do
+			width += 1
+			x += direction
+		end
+		if x < 0 or x >= cols then
+			return true
+		end
+	end
+
+	--[[ Returning ]]
+
+	return width >= needed
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Sea Level

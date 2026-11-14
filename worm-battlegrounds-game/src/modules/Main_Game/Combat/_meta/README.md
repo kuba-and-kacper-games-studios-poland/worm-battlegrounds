@@ -17,7 +17,7 @@ gravity) when a hit is softer than `REST_SPEED`, homing, a thrown bomb's tumble 
 `Tumble` option: it leaves the hand turning with its sideways speed, `AIR_SPIN`, until the ground rolls it), and water
 or lava (any liquid, a pond too): a shot flies on through them, slowed (`SINK_ENTRY_KEEP` as it splashes in, then
 `SINK_GRAVITY` and `SINK_KEEP`), bursts on what it touches under them or when its fuse runs out, and is gone without a
-blast after sinking `SINK_SECONDS` without touching anything. The black hole grenade (the `Roller` kind) is thrown and opens on the first thing it touches, or where it is when its owner presses again (`Detonate`, even in the air): it holds still for its row's `HoleTime` (its state sent to every client, `Projectiles.SendState`, so its model and trail stay there on every screen), throws the snails within `PullRadius` toward it (`BLACK_HOLE_PULL_SPEED`, the shooter's teammates aside), then bursts. Shots fly in
+blast after sinking `SINK_SECONDS` without touching anything. The black hole grenade (the `Roller` kind) is thrown and opens on the first thing it touches, or where it is when its owner presses again (`Detonate`, even in the air): it holds still for its row's `HoleTime` (its state sent to every client, `Projectiles.SendState`, so its model and trail stay there on every screen), draws the snails within `PullRadius` in (the shooter's teammates aside) at `BLACK_HOLE_DRAG_SPEED`, sliding along the ground or drifting through the air (`I.Snails.Drag`), each held stuck within `BLACK_HOLE_STICK` of its middle, then bursts with no knockback (its row's `Knockback` `None`, the owner, 2026-11-13: "does not knock people out but sticks to them") and lets them go (`I.Snails.Release`). Shots fly in
 slow motion, `PROJECTILE_TIME_SCALE` of real speed along the same paths, so players can follow them; a thrown bomb's
 `Fuse` counts its own slowed flight time (it bursts at the same point of its path), a placed one's (Dynamite) real
 seconds. A thrown bomb with a fuse (the Grenade) bursts as soon as it comes to rest on the ground, before its fuse
@@ -72,7 +72,7 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `Scripts/Server/Uses.lua` | Uses and cooldowns per participant, the `Combat` Replicator folder |
 | `Scripts/Helpers/Ballistics.lua` | `Combat_Ballistics`, the shot simulation both sides run: `New`, `Step`, `Load`, `GetState`, `GetCFrame`, `GetSnail`, `MakePart` (the placeholder ball) |
 | `Scripts/Server/Projectiles.lua` | Simulated shots (`Launch`, `Fly`, `Land`, `GetOptions`, `GetStart`, `IsGone`), crawling shots' parts (`Spawn`), raycasts (`Cast`, and `CastTerrain` for crawlers), a crawler's step (`GetCrawlStep`), lost shots |
-| `Scripts/Server/Blast.lua` | Explosions: tells clients first (`Combat_Explosion`, so the blast shows before the crater's cut), then craters, damage, knockback (never on the shooter's teammates; always on the shooter); each hit tells clients with whether it knocked the snail out (`Combat_Hit`) |
+| `Scripts/Server/Blast.lua` | Explosions: tells clients first (`Combat_Explosion`), hurts every snail in reach at once (`Combat_Hit`) while the crater is cut, then throws them once it is (so a thrown snail flies the new ground; a `None` knockback throws nobody); never hurts or throws the shooter's teammates, always the shooter. `Hit` for one snail (guns, swings, the spear) |
 | `Scripts/Server/Behaviors/*.lua` | One file per `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee), and `Snail.lua`, the variety grenade's worms |
 | `Global.lua` | Launch velocity and wind, shared with the aim dots, the aim guide and bots |
 | `Client.lua` | Starts the client handlers; `I.Combat` on the client (`SetAim`, `GetAimGuides`) |
@@ -188,9 +188,9 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `STATE_INTERVAL`, `CORRECTION_TOLERANCE`, `HISTORY_SECONDS`, `CORRECTION_SMOOTH`, `MAX_CATCH_UP` | `0.1`, `0.15`, `2`, `0.1`, `240` | How often the server sends a shot's state, how far off a client's copy may be before it rewinds, how much it keeps to rewind to, how fast a correction eases out, and the most steps a client takes in one frame |
 | `UPWARD_BIAS`, `KNOCKBACK_EDGE` | `0.5`, `0.5` | Knockback's lift, and its share at a blast's edge |
 | `BULLET_CARVE`, `BULLET_KNOCK_SHARE` | `0.75`, `0.25` | Gun bullets' crater size and knockback share |
-| `BOMBLET_SPEED`, `BOMBLET_GHOST` | `{ 20, 40 }`, `0.1` | Bomblets' speeds (the cluster bomb's and the variety grenade's minis), and how long they fly through everything to leave the crater |
+| `BOMBLET_SPEED`, `BOMBLET_GHOST` | `{ 20, 40 }`, `0.1` | Bomblets' speeds (the cluster bomb's and the variety grenade's minis, which feel their bomb's wind), and how long they fly through everything to leave the crater |
 | `SNAIL_SPEED`, `SNAIL_BITE`, `SNAIL_LIFETIME` | `6`, `0.3`, `6` | A row's `Snails` worms (no weapon has them since 2026-11-13): digging speed, how often they eat a tunnel, how long they dig |
-| `CONTACT_DISTANCE`, `BLACK_HOLE_PULL_SPEED`, `MELEE_BOX` | `2.5`, `45`, `4` | Contact bursts, an open black hole's pull (studs per second at its middle, half at `PullRadius`), melee reach |
+| `CONTACT_DISTANCE`, `BLACK_HOLE_DRAG_SPEED`, `BLACK_HOLE_STICK`, `MELEE_BOX` | `2.5`, `10`, `2.5`, `4` | Contact bursts, an open black hole's draw (studs per second) and how near its middle a snail sticks, melee reach |
 | `CRAWL_STEP_UP`, `CRAWL_STEP_DOWN`, `CRAWL_STOP` | `1.25`, `3`, `0.25` | A crawling spider bomb walks up ledges this high (taller ones it climbs), steps down this far (deeper and it falls), and waits this close across to its target |
 | `HELD_TURN_SPEED` | `14` | How quickly the held weapon turns to another player's new aim |
 | `PROJECTILE_COLORS`, `PROJECTILE_SIZE` | | Placeholder projectile looks (hidden under a model when the weapon has one); the simulation's ball is half the size across |

@@ -49,7 +49,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 
 | Key | Default | What |
 | --- | --- | --- |
-| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow` and `LakesideShowdown` (Picnic Plains' row), `Desert`, `RockslideRidge`, `VolcanoIsle` | Each mood, by MapId (below) |
+| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow`, `LakesideShowdown` and `RollingPlains` (Picnic Plains' row), `Desert`, `RockslideRidge` (lava bubbles and embers since its lava sea, 2026-11-14), `EchoCaverns` (Rockslide Ridge's cave row, with water ripples), `VolcanoIsle` | Each mood, by MapId (below) |
 | `LOBBY_PROFILE` | `"Lobby"` | The mood outside matches |
 | `LOBBY_MAP`, `MATCH_MAP` | `"Lobby"`, `"Match"` | The place loader's maps with no matches and with only a match; the Studio map has both and follows `InMatch` |
 | `MOOD_TWEENINFO` | 2 s Sine InOut | How the lighting moves from one mood to the next |
@@ -101,7 +101,7 @@ A `PROFILES` row:
 | `WindColor` | none (no wind) | `255, 255, 255` | `255, 240, 214` | `228, 222, 212` | `235, 214, 200` |
 | `WindSound` | none | `Wind_OpenAir` | `Wind_Desert` | `Wind_Howl` | `Wind_OpenAir` |
 | `Ambient` (`Effect`, `Bottom`–`Top`, `RateScale`) | `Ambient_Motes` 0–1 | `Ambient_Pollen` 0.1–1, `Ambient_Leaf` 0.3–1 | `Ambient_Sand` 0.05–0.6 | `Ambient_CaveDust` 0–0.85 | `Ambient_CaveDust` 0.2–1, rate 0.6 (ash) |
-| `Surface` (`Liquid`, `Effect`, `Every`, `Tint`) | none | Water `Glint` 0.15–0.4 s | Lava `Lava_Bubble` 0.6–1.6 s, Lava `Ember` 0.25–0.7 s, Water `Glint` 0.8–2 s | Water `Ripple` 1.5–4 s, tinted | Lava `Lava_Bubble` 0.4–1.2 s, Lava `Ember` 0.2–0.6 s |
+| `Surface` (`Liquid`, `Effect`, `Every`, `Tint`) | none | Water `Glint` 0.15–0.4 s | Lava `Lava_Bubble` 0.6–1.6 s, Lava `Ember` 0.25–0.7 s, Water `Glint` 0.8–2 s | Lava `Lava_Bubble` 0.4–1.2 s, Lava `Ember` 0.2–0.6 s (Echo Caverns: Water `Ripple` 1.5–4 s, tinted) | Lava `Lava_Bubble` 0.4–1.2 s, Lava `Ember` 0.2–0.6 s |
 | `Ceiling` (`Effect`, `Every`) | none | none | none | `Grit` 3–7 s | none |
 
 A map with no row warns once and keeps the mood showing.
@@ -114,7 +114,7 @@ A map with no row warns once and keeps the mood showing.
 | `Lighting` | The Lighting Manager's active preset, `Lobby` (`Lighting.__config`'s `Lighting_Id`): a high soft sun behind the stage camera (`GeographicLatitude` −12, `ClockTime` 13.4), neutral fill, colour correction saturation 0.25 |
 | `Lighting.Presets.Plains` | Late morning: warm key light from the camera's side (latitude 70, 10.4), teal and lavender fill, soft blue haze, saturation 0.35 |
 | `Lighting.Presets.Desert` | Late afternoon: low golden sun (latitude 70, 15.7), warm sand bounce, warm hazy horizon (density 0.32, haze 1.4, glare 0.3), saturation 0.3 |
-| `Lighting.Presets.Cave` | Rockslide Ridge: dimmer light (brightness 2.3) with little sky fill (`EnvironmentDiffuseScale` 0.25, so the blue sky doesn't tint the rock), a dark warm-grey haze that closes in the sky (haze 2.4), no sun rays, bloom from 1.2 |
+| `Lighting.Presets.Cave` | Rockslide Ridge and Echo Caverns: dimmer light (brightness 2.3) with little sky fill (`EnvironmentDiffuseScale` 0.25, so the blue sky doesn't tint the rock), a dark warm-grey haze that closes in the sky (haze 2.4), no sun rays, bloom from 1.2 |
 | `Lighting.Presets.Volcano` | Volcano Isle: the Desert's, later and through smoke: warm sun from the camera's side (latitude 70, 16.4, brightness 2.7), reddish fill and sky shift, a thicker ember-tinted haze (density 0.36, haze 1.9, decay 140, 69, 51), saturation 0.28 |
 | `ReplicatedStorage_Assets/Vfx/PREFAB \| …` | The prefabs this module plays, made from the studio's existing emitters (their textures and flipbooks): `Leaves`, `Dust`, `Lava_Bubble`, `Ember`, `Steam`, `Glint`, `Ripple`, `Grit`, and the streams `Ambient_Motes`, `Ambient_Pollen`, `Ambient_Leaf`, `Ambient_Sand`, `Ambient_CaveDust` and `Wind_Streak` (no `EmitCount`; code sizes the part to the area and turns them on). It also plays `Splash_Water` and `Splash_Lava` |
 | `Workspace.Ume.Arena.Liquid` parts | Read for their `Arena_Liquid` attribute (`"Water"` or `"Lava"`), which Arena's liquid sets |

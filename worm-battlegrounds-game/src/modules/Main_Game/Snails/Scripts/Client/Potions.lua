@@ -18,7 +18,7 @@ local edges = {} --- @type { Frame }
 
 --[[ State ]]
 
--- The aura attachments streaming on each snail now, by snail, then by potion attribute
+-- The aura attachments streaming on each snail now, by snail, then by attribute
 local auras = {} --- @type { [Model]: { [string]: { Attachment } } }
 
 -- Whether the vignette shows now
@@ -66,7 +66,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Snail
 
 --[[
-	Looks again at a snail's potions whenever its state, its turn or a potion attribute changes, and drops its auras
+	Looks again at a snail's auras whenever its state, its turn or an aura's attribute changes, and drops its auras
 	once it's gone.
 ]]
 function Module._watchSnail(model: Instance)
@@ -80,7 +80,7 @@ function Module._watchSnail(model: Instance)
 	--[[ Connections ]]
 
 	model.AttributeChanged:Connect(function(attribute: string)
-		if attribute == "Alive" or attribute == "Ghost" or attribute == "Active" or _settings.POTION_AURAS[attribute] then
+		if attribute == "Alive" or attribute == "Ghost" or attribute == "Active" or _settings.AURAS[attribute] then
 			Module._refresh(model)
 		end
 	end)
@@ -99,8 +99,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Streams each potion's aura around a snail while its attribute is set and the snail is in play, stops the rest, and
-	sets the vignette when it's the player's own snail.
+	Streams each aura (a potion's, or burning) around a snail while its attribute is set and the snail is in play,
+	stops the rest, and sets the vignette when it's the player's own snail.
 ]]
 --- @param model Model
 function Module._refresh(model)
@@ -112,7 +112,7 @@ function Module._refresh(model)
 
 	--[[ Auras ]]
 
-	for attribute: string, prefabName: string in pairs(_settings.POTION_AURAS) do
+	for attribute: string, prefabName: string in pairs(_settings.AURAS) do
 		local show: boolean = inPlay and root ~= nil and model:GetAttribute(attribute) ~= nil
 		if show and not streaming[attribute] then
 			streaming[attribute] = Module._startAura(prefabName, root)

@@ -412,12 +412,18 @@ function Module._playMatch(genomes, duo: boolean, options, maps, random: Random,
 	local seats = {} --- @type { Bots_Seat }
 	--- @param genome Bots_Genome
 	for index: number, genome in ipairs(genomes) do
+		-- Each seat rolls its potion, as a live bot does (Server.CreateParticipant)
+		local loadout = table.clone(_settings.LOADOUTS[options.Difficulty] or _settings.LOADOUTS.Hard) --- @type { string }
+		local potion: string = _settings.POTIONS[random:NextInteger(1, #_settings.POTIONS)]
+		if potion ~= "" then
+			table.insert(loadout, potion)
+		end
 		table.insert(seats, {
 			Id = `G_{index}`,
 			Team = if duo then (index - 1) % 2 + 1 else index,
 			Genome = genome,
 			Skill = _settings.SKILLS[options.Difficulty] or _settings.SKILLS.Hard,
-			Loadout = _settings.LOADOUTS[options.Difficulty] or _settings.LOADOUTS.Hard,
+			Loadout = loadout,
 		})
 	end
 	local points = { 0, 0, 0, 0 } --- @type { number }

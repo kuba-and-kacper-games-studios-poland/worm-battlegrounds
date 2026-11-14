@@ -548,6 +548,7 @@ function boot.Boot(options)
 		GetArcs = arcs.GetArcs,
 		PredictArc = arcs.PredictArc,
 		GetShotStart = projectiles.GetStart,
+		GetCrawlStep = projectiles.GetCrawlStep,
 	}
 	for _, name in { "Aim", "Brain", "Move", "Predict", "Gym" } do
 		local script = req(`Bots/Scripts/Server/{name}`)
