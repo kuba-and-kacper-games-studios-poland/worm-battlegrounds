@@ -53,6 +53,7 @@ function Module.Init()
 		Retreat = Control.Retreat,
 		Refill = Control.Refill,
 		ApplyEffect = Effects.ApplyEffect,
+		CloseParachute = Effects.CloseParachute,
 	}
 end
 

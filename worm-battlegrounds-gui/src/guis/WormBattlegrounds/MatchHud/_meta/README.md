@@ -38,6 +38,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_Stamina` | Frame, over the loadout bar | On the player's turn |
 | `U_Stamina` › `S_Bar`, `S_BarMask` | ImageLabels (`Fit`) with a UIGradient each | How far the snail can still walk: the bar and its texture, cut by their gradients at the share times MatchHud's `BAR_FILL` (1: the studio's complete PowerSlider, 2026-11-12, fills its whole width; sized 0.9319 × 0.4312, as the track) |
 | `U_Stamina` › `S_Text` | TextLabel | "Stamina 70%" |
+| `U_Stamina` › `U_Fuel` | Frame, hanging over the stamina bar (hidden until code shows it) | The jetpack's fuel while the snail wears one: the stamina bar's twin (the same frame and pictures), its bar orange, with `S_Bar`, `S_BarMask` and `S_Text` ("Jetpack 70%", or "Jetpack next turn" while it rests) |
 | `U_Power` | Frame, bottom right | The power slider, while the player aims |
 | `U_Power` › `S_Bar`, `S_BarMask` | ImageLabels (`Fit`) with a UIGradient each | The power: the gradients cut the bar and its texture at the share times `BAR_FILL`, like the stamina bar (the studio's PowerSlider, node for node) |
 | `U_Power` › `S_Handle` › `S_Amount` | ImageButton (not interactable) › TextLabel | The handle rides the bar's edge; "75%" |

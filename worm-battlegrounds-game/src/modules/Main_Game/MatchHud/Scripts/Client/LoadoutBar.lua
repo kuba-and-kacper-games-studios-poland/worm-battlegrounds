@@ -27,6 +27,9 @@ local boxes = {} --- @type { [string]: ImageButton }
 local selected: string = "Bazooka"
 local bound: boolean = false
 
+-- The last weapon held, which the snail takes back after using a utility it held
+local lastWeapon: string = "Bazooka"
+
 -- The utility box the pad's LB and RB rest on (they pass utilities without using them; Y uses it), nil on the held weapon
 local padCursor: string? = nil
 
@@ -93,8 +96,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Select
 
 --[[
-	Picks a box: a weapon becomes the one the snail holds and aims (Combat_Select); a utility is used at once on the
-	player's turn (Combat_UseUtility), keeping the weapon in hand.
+	Picks a box: the snail holds that item (Combat_Select). A weapon is aimed and fired; a utility (a Medkit, a potion)
+	waits in the snail's hands until a press on the screen uses it (Use Held) (the owner, 2026-11-15).
 ]]
 function Module.Select(itemId: string)
 	--[[ Checks ]]
@@ -104,24 +107,38 @@ function Module.Select(itemId: string)
 		return
 	end
 
-	--[[ Using ]]
-
-	if I.G_Arsenal.IsUtility(itemId) then
-		if I.Match.IsMyTurn() and I.Match.GetPhase() == "Turn" then
-			I.Network.Fire("Combat_UseUtility", itemId)
-		end
-		return
-	end
-
 	--[[ Saving ]]
 
 	selected = itemId
 	padCursor = nil
+	if not I.G_Arsenal.IsUtility(itemId) then
+		lastWeapon = itemId
+	end
 	I.Network.Fire("Combat_Select", itemId)
 
 	--[[ Refreshing ]]
 
 	Module._refreshBoxes()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Use Held
+
+--[[
+	Uses the utility the snail holds on the player's turn (Combat_UseUtility), then hands it back the weapon it held
+	before, or the Bazooka when that weapon has no uses left or cools down.
+]]
+function Module.UseHeld()
+	--[[ Checks ]]
+
+	-- Check if the snail holds a utility it may use now
+	if not I.G_Arsenal.IsUtility(selected) or not Module.IsReady(selected) or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" then
+		return
+	end
+
+	--[[ Using ]]
+
+	I.Network.Fire("Combat_UseUtility", selected)
+	Module.Select(if Module.IsReady(lastWeapon) then lastWeapon else "Bazooka")
 end
 
 --%%%%%%%%%%%%%%%%%%%% Rebuild
@@ -257,7 +274,7 @@ end
 --[[
 	Shows each box's uses left, its cooldown (the icon darkened under the turns left), a lock over one used up for the
 	rest of the match (darkened the same way; the Jetpack only once its fuel is gone too, its box showing the fuel left
-	meanwhile) and whether it's the selected one (the design's white outline, from the box's Look_ attributes; the
+	meanwhile, and a turn's cooldown while it rests after flying) and whether it's the selected one (the design's white outline, from the box's Look_ attributes; the
 	pad's utility box instead while LB or RB rest there, with its Y hint); the key numbers only on Desktop.
 ]]
 function Module._refreshBoxes()
@@ -273,14 +290,15 @@ function Module._refreshBoxes()
 	local picked: string = padCursor or selected
 	local mine: Model? = I.Snails.GetMine()
 	local fuel: number? = if mine then mine:GetAttribute("JetpackFuel") else nil
+	local resting: boolean = mine ~= nil and mine:GetAttribute("JetpackRest") == true
 
 	--[[ Applying ]]
 
 	for itemId: string, box: ImageButton in pairs(boxes) do
 		box:FindFirstChild("S_UseHint"):SetAttribute("Console_HintHidden", itemId ~= padCursor)
 		local uses: number = combatRep:GetAttribute(`Uses_{itemId}`) or 0
-		local cooldown: number = combatRep:GetAttribute(`Cooldown_{itemId}`) or 0
 		local fueled: boolean = itemId == "Jetpack" and fuel ~= nil and fuel > 0
+		local cooldown: number = if fueled and resting then 1 else combatRep:GetAttribute(`Cooldown_{itemId}`) or 0
 		local locked: boolean = uses == 0 and not fueled
 		local icon: ImageLabel = box:FindFirstChild("S_Icon")
 		local model: ViewportFrame? = icon:FindFirstChild("S_Model")
@@ -320,6 +338,7 @@ function Module._onMyTurn(myTurn: boolean)
 	if mine and mine ~= watchedSnail then
 		watchedSnail = mine
 		mine:GetAttributeChangedSignal("JetpackFuel"):Connect(Module._refreshBoxes)
+		mine:GetAttributeChangedSignal("JetpackRest"):Connect(Module._refreshBoxes)
 	end
 
 	--[[ Selecting ]]
@@ -392,7 +411,7 @@ end
 
 --[[
 	LB and RB: step to the previous or next box. A weapon is picked at once; a utility only gets the pad's cursor, so
-	stepping past it never uses it, and Y uses it (On Use).
+	stepping past it never takes it out, and Y puts it in the snail's hands (On Use), for RT to use.
 ]]
 --- @return Enum.ContextActionResult
 function Module._onStep(action: string, state: Enum.UserInputState, _input: InputObject)
@@ -427,7 +446,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Use
 
 --[[
-	Y: uses the utility the pad's cursor rests on (Select uses a utility on the player's turn).
+	Y: puts the utility the pad's cursor rests on in the snail's hands; RT then uses it (Aim, Use Held).
 ]]
 --- @return Enum.ContextActionResult
 function Module._onUse(_action: string, state: Enum.UserInputState, _input: InputObject)

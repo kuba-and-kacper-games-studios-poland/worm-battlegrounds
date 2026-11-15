@@ -368,8 +368,9 @@ function Module._getSpots(view, genome, skill, targets, stay: boolean)
 	local fullJump: number = if effect == "LowGravity" then Move.GetJump(true) else jump
 	local fullReach: number = if effect == "Speed" then math.floor(view.Stamina * I.Settings["SnailControl"].SPEED_MULTIPLIER) else reach
 	local radius: number = I.Settings["Snails"].ROOT_SIZE / 2
-	-- The jetpack still on (its fuel lasts the match) or not put on yet
-	local canFly: boolean = (view.Uses["Jetpack"] or 0) ~= 0 or (view.Self.Model:GetAttribute("JetpackFuel") or 0) > 0
+	-- The jetpack still on (its fuel lasts the match, resting the turn after it flew) or not put on yet
+	local resting: boolean = view.Self.Model:GetAttribute("JetpackRest") == true
+	local canFly: boolean = (view.Uses["Jetpack"] or 0) ~= 0 or not resting and (view.Self.Model:GetAttribute("JetpackFuel") or 0) > 0
 	local cruise: number = Move.GetCruise(origin)
 	local here = Module._getSpot(view, origin, 0, false, jump, nil) --- @type Bots_Spot
 	local close = {} --- @type { Bots_Spot }

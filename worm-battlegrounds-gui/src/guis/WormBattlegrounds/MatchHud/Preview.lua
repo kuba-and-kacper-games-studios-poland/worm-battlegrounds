@@ -91,6 +91,7 @@ local Module = {
 		{ Control = "Toggle", Id = "S_MyTurn", Label = "My turn", Value = true },
 		{ Control = "Toggle", Id = "S_Aiming", Label = "Aiming", Value = true },
 		{ Control = "Slider", Id = "S_Power", Label = "Power", Value = 0.75, Min = 0, Max = 1, Step = 0.05 },
+		{ Control = "Slider", Id = "S_Fuel", Label = "Jetpack fuel", Value = 0.6, Min = 0, Max = 1, Step = 0.05 },
 		{ Control = "Slider", Id = "S_Slots", Label = "Loadout items", Value = 5, Min = 1, Max = 7, Step = 1 },
 		{ Control = "Slider", Id = "S_Teams", Label = "Teams of two", Value = 4, Min = 2, Max = 4, Step = 1 },
 		{ Control = "Slider", Id = "S_Feed", Label = "Kill feed lines", Value = 2, Min = 0, Max = 3, Step = 1 },
@@ -104,7 +105,7 @@ local Module = {
 
 --[[
 	Shows the blocks of the picked phase and fills the screen as MatchHud does: whose turn, the turn list, the teams,
-	the loadout bar (its second item cooling down, empty slots as "+"), stamina, the power slider, FIRE on Mobile, the
+	the loadout bar (its second item cooling down, empty slots as "+"), stamina, the jetpack's fuel (none at 0), the power slider, FIRE on Mobile, the
 	kill feed and the emote wheel.
 ]]
 --- @param preview UmeGui_Preview
@@ -146,6 +147,9 @@ function Module.Apply(preview)
 
 	view:Get("U_Stamina", "S_Text").Instance.Text = "Stamina 70%"
 	Module._cutBar(view:Get("U_Stamina", "S_Bar").Instance, 0.7)
+	view:Get("U_Fuel").Instance.Visible = preview.Values.S_Fuel > 0
+	view:Get("U_Fuel", "S_Text").Instance.Text = `Jetpack {math.round(preview.Values.S_Fuel * 100)}%`
+	Module._cutBar(view:Get("U_Fuel", "S_Bar").Instance, preview.Values.S_Fuel)
 	local bar: ImageLabel = view:Get("U_Power", "S_Bar").Instance
 	local handle: ImageButton = view:Get("U_Power", "S_Handle").Instance
 	Module._cutBar(bar, preview.Values.S_Power)

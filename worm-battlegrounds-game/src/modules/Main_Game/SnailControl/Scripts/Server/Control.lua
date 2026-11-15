@@ -62,6 +62,7 @@ function Module.Start()
 	--[[ Connections ]]
 
 	I.S.RunService.Heartbeat:Connect(Module._check)
+	I.Topic.Subscribe("Match_TurnStarted", Module._onTurnStarted)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -224,6 +225,30 @@ function Module.Refill(participantId: string)
 	return true
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Turn Started
+
+--[[
+	A snail that flew its jetpack on its last turn rests it this one (the owner, 2026-11-15: a turn's cooldown): its
+	fuel stays, but nothing flies it until its next turn.
+]]
+function Module._onTurnStarted(participantId: string)
+	--[[ Data ]]
+
+	local model: Model? = I.Snails.Get(participantId)
+
+	--[[ Checks ]]
+
+	-- Check if the snail is in play
+	if not model then
+		return
+	end
+
+	--[[ Saving ]]
+
+	model:SetAttribute("JetpackRest", if model:GetAttribute("JetpackFlew") then true else nil)
+	model:SetAttribute("JetpackFlew", nil)
+end
+
 --%%%%%%%%%%%%%%%%%%%% On Fuel
 
 --[[
@@ -260,11 +285,15 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Fuel
 
 --[[
-	Sets a snail's jetpack fuel; an empty tank takes the jetpack off, for the rest of the match.
+	Sets a snail's jetpack fuel; an empty tank takes the jetpack off, for the rest of the match. Burning any marks the
+	snail as having flown, so it rests the jetpack on its next turn.
 ]]
 function Module._setFuel(model: Model, fuel: number)
 	--[[ Saving ]]
 
+	if fuel < (model:GetAttribute("JetpackFuel") or 0) then
+		model:SetAttribute("JetpackFlew", true)
+	end
 	model:SetAttribute("JetpackFuel", if fuel > 1e-3 then fuel else nil)
 end
 
@@ -354,8 +383,8 @@ function Module._checkSnail(participantId: string, control)
 	local from: number = math.max(control.Last.Y, reach)
 	control.Lift += math.max(position.Y - from, 0)
 
-	-- Snap it back when it climbed higher than its jetpack's fuel (what's left, and what it burned this turn) lifts it
-	local fuel: number = model:GetAttribute("JetpackFuel") or 0
+	-- Snap it back when it climbed higher than its jetpack's fuel (what's left, and what it burned this turn) lifts it; a resting jetpack lifts nothing
+	local fuel: number = if model:GetAttribute("JetpackRest") then 0 else model:GetAttribute("JetpackFuel") or 0
 	if control.Lift > _settings.JETPACK_SPEED * (fuel + control.Spent) + _serverSettings.LIFT_GRACE then
 		Module._snapBack(participantId, control, "flew higher than its jump and jetpack reach")
 		return

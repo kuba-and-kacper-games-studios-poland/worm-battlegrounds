@@ -75,6 +75,10 @@ function Module.Start(gui: ScreenGui)
 	elems["StaminaBar"] = elems["Stamina"]:FindFirstChild("S_Bar") --- @type ImageLabel
 	elems["StaminaMask"] = elems["Stamina"]:FindFirstChild("S_BarMask") --- @type ImageLabel
 	elems["StaminaText"] = elems["Stamina"]:FindFirstChild("S_Text") --- @type TextLabel
+	elems["Fuel"] = elems["Stamina"]:FindFirstChild("U_Fuel") --- @type Frame
+	elems["FuelBar"] = elems["Fuel"]:FindFirstChild("S_Bar") --- @type ImageLabel
+	elems["FuelMask"] = elems["Fuel"]:FindFirstChild("S_BarMask") --- @type ImageLabel
+	elems["FuelText"] = elems["Fuel"]:FindFirstChild("S_Text") --- @type TextLabel
 	elems["TurnList"] = gui:FindFirstChild("U_TurnList", true) --- @type Frame
 	prefabs["TurnEntry"] = elems["TurnList"]:FindFirstChild("PREFAB | TurnEntry") --- @type Frame
 	elems["Callout"] = gui:FindFirstChild("U_TurnCallout") --- @type Frame
@@ -398,7 +402,7 @@ end
 --[[
 	Counts the turn down on the timer ("0:30"), held dimmed on the time left while a shot flies and settles (the owner,
 	2026-11-15), blank between turns, and fills the stamina bar from the
-	player's snail. The player's own last seconds tighten: the timer turns orange, then red as it ticks aloud (faster
+	player's snail, and the jetpack's fuel bar over it while the snail wears one. The player's own last seconds tighten: the timer turns orange, then red as it ticks aloud (faster
 	and higher at the very end), a band pulses along the screen's sides, and Turn_TimeUp sounds when it runs out.
 ]]
 function Module._tick(deltaTime: number?)
@@ -461,8 +465,29 @@ function Module._tick(deltaTime: number?)
 		return
 	end
 	local share: number = math.clamp((mine:GetAttribute("Stamina") or 0) / I.Settings["SnailControl"].STAMINA_STUDS, 0, 1)
+	Module._cutBar(elems["StaminaBar"], elems["StaminaMask"], share)
+	elems["StaminaText"].Text = string.format(_settings.STAMINA_FORMAT, math.round(share * 100))
 
-	-- The bar's and its texture's gradients cut the pictures at the share (the fill is BAR_FILL of their width), so they never squash
+	--[[ Fuel ]]
+
+	-- A snail wears its jetpack while it has fuel (SnailControl's JetpackFuel); this screen burns it as it flies
+	elems["Fuel"].Visible = mine:GetAttribute("JetpackFuel") ~= nil
+	if elems["Fuel"].Visible then
+		local fuel: number = I.SnailControl.GetFuelShare()
+		Module._cutBar(elems["FuelBar"], elems["FuelMask"], fuel)
+		elems["FuelText"].Text = if mine:GetAttribute("JetpackRest") then _settings.FUEL_REST_TEXT else string.format(_settings.FUEL_FORMAT, math.round(fuel * 100))
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Cut Bar
+
+--[[
+	Fills a bar to a share: its and its texture's gradients cut the pictures there (the fill is BAR_FILL of their width),
+	so they never squash.
+]]
+function Module._cutBar(bar: ImageLabel, mask: ImageLabel, share: number)
+	--[[ Local Variables ]]
+
 	local edge: number = math.clamp(share, 0.001, 0.998) * _settings.BAR_FILL
 	local cut: NumberSequence = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0),
@@ -470,9 +495,11 @@ function Module._tick(deltaTime: number?)
 		NumberSequenceKeypoint.new(edge + 0.001, 1),
 		NumberSequenceKeypoint.new(1, 1),
 	})
-	elems["StaminaBar"].UIGradient.Transparency = cut
-	elems["StaminaMask"].UIGradient.Transparency = cut
-	elems["StaminaText"].Text = string.format(_settings.STAMINA_FORMAT, math.round(share * 100))
+
+	--[[ Applying ]]
+
+	bar.UIGradient.Transparency = cut
+	mask.UIGradient.Transparency = cut
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

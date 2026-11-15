@@ -38,6 +38,9 @@ local fuel: number = 0
 local serverFuel: number = 0
 local reportedAt: number = 0
 
+-- The tank's seconds when the jetpack went on, for the share left
+local fullFuel: number = 0
+
 -- Casts that hit only what snails stand on
 --- @type RaycastParams
 local groundParams = RaycastParams.new()
@@ -75,6 +78,10 @@ function Module.Init()
 		--[[ Control ]]
 
 		Hold = Module.Hold,
+
+		--[[ Methods ]]
+
+		GetFuelShare = Module.GetFuelShare,
 	}
 end
 
@@ -126,7 +133,7 @@ end
 
 --[[
 	Drives the local player's snail before each physics step while they may move it: flies it up while jump is held
-	and jetpack fuel lasts (telling the server what's left), walks it along the plane at WALK_SPEED (faster under the
+	and jetpack fuel lasts, unless the jetpack rests this turn (telling the server what's left), walks it along the plane at WALK_SPEED (faster under the
 	Speed potion) until its Stamina runs out, though a snail in the air on its jetpack steers with no stamina, turns
 	it to face the way it walks, and pushes it up low ledges in front.
 ]]
@@ -148,14 +155,17 @@ function Module._step(deltaTime: number)
 		direction = math.clamp(direction + stick, -1, 1)
 	end
 
+	-- The jetpack rests the turn after it flew (SnailControl's JetpackRest): its fuel stays for later
+	local usable: number = if mySnail:GetAttribute("JetpackRest") then 0 else fuel
+
 	-- Stand still once the stamina runs out, unless it flies on its jetpack's fuel
-	if mySnail:GetAttribute("Stamina") <= 0 and not (fuel > 0 and not Module._isGrounded(root.Position)) then
+	if mySnail:GetAttribute("Stamina") <= 0 and not (usable > 0 and not Module._isGrounded(root.Position)) then
 		direction = 0
 	end
 
 	--[[ Flying ]]
 
-	local flying: boolean = jumpHeld and fuel > 0
+	local flying: boolean = jumpHeld and usable > 0
 	if flying then
 		fuel = math.max(fuel - deltaTime, 0)
 		local velocity: Vector3 = root.AssemblyLinearVelocity
@@ -222,11 +232,13 @@ function Module._onSnailAdded(model: Instance)
 	local tank: number? = model:GetAttribute("JetpackFuel")
 	fuel = tank or 0
 	serverFuel = fuel
+	fullFuel = fuel
 	model:GetAttributeChangedSignal("JetpackFuel"):Connect(function()
 		local now: number? = model:GetAttribute("JetpackFuel")
 		if now and not tank then
 			fuel = now
 			serverFuel = now
+			fullFuel = now
 		else
 			fuel = math.min(fuel, now or 0)
 			serverFuel = math.min(serverFuel, now or 0)
@@ -348,6 +360,18 @@ function Module._onJump(_action: string, state: Enum.UserInputState, _input: Inp
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Fuel Share
+
+--[[
+	**CLIENT** |
+	Returns how much of the player's jetpack fuel is left, 0 to 1, as this screen burns it (the server hears it only
+	now and then); 0 without a jetpack.
+]]
+--- @return number
+function Module.GetFuelShare()
+	return if fullFuel > 0 then math.clamp(fuel / fullFuel, 0, 1) else 0
+end
 
 --%%%%%%%%%%%%%%%%%%%% Is Grounded
 

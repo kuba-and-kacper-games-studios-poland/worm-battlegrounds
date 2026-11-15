@@ -16,7 +16,8 @@ clicks or taps anywhere in the arena a snail fits, out of walls and liquid, to p
 may move it again; it always lasts `DROP_SECONDS`, placed or not, so players can change their spot, the owner,
 2026-11-15; only the tutorial's ends once its player placed), the landing (every snail parachutes
 in: a placed one from its spot, bots and players who didn't place from up to `DROP_HEIGHT` over a spot of land from
-`I.Arena.GetLandSpots`, which each bot but the tutorial's picks with `I.Bots.GetStart`), then turns (`TURN_SECONDS` each, with wind) until one team is left, with
+`I.Arena.GetLandSpots`, which each bot but the tutorial's picks with `I.Bots.GetStart`; it waits until every snail is
+down, on ground or in a liquid, `MAX_LANDING` at most, then closes any parachute still open), then turns (`TURN_SECONDS` each, with wind) until one team is left, with
 sudden death from `SUDDEN_DEATH_ROUND`, after 10 rounds (the liquid rises every turn). Then it ends the match (MatchRewards pays and shows Results), runs the rematch
 vote and sends everyone who didn't vote to the lobby. A snail knocked out at a turn's end turns into its ghost
 (Snails' `GHOST_TIME`) before the next turn starts. A player who drops out keeps their snail, and a bot plays its

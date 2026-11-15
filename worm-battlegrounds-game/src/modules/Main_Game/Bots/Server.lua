@@ -283,8 +283,8 @@ function Module._walk(participantId: string, model: Model, plan, placing: boolea
 
 	--[[ Flying ]]
 
-	-- The match's one jetpack keeps its fuel from turn to turn: put it on once, then fly while fuel is left
-	local fueled: boolean = (model:GetAttribute("JetpackFuel") or 0) > 0
+	-- The match's one jetpack keeps its fuel from turn to turn: put it on once, then fly while fuel is left, resting it the turn after it flew
+	local fueled: boolean = (model:GetAttribute("JetpackFuel") or 0) > 0 and not model:GetAttribute("JetpackRest")
 	local flying: boolean = (plan.Spot.Fly or placing) and (fueled or I.Combat.CanUse(participantId, "Jetpack") and I.Combat.UseUtility(participantId, "Jetpack"))
 
 	--[[ Walking ]]

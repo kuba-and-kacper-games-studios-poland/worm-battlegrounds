@@ -1978,3 +1978,20 @@ snails brought new shells, which turned out to be the old meshes on new textures
   whole job, with no Blender, upload or rig.
 
 Rules: Arena (The open sea takes a shot at once).
+
+## Stuck under a parachute, the vanishing health, and the jetpack's rest (2026-11-15)
+
+**What happened.** The owner: "I spawned in this spot and was falling, couldn't move afterwards", by Volcano Isle's
+chamber pool. A parachute closed only when its snail touched ground after being airborne, so a snail that came down
+into the pool, or one the drop set straight onto ground, kept its `Chute` open, and the chute's line held the snail.
+The same day: "sometimes … your health disappears when it's your turn". It wasn't a bug but a rule: the snail tag hid
+whole once the active snail acted, Worms style, with its health. And the jetpack got a turn's rest after flying.
+
+- **A state that ends on one event needs every way out.** "Closes when it lands" missed landing in liquid and never
+  leaving the ground; the landing phase now also closes every chute before the first turn.
+- **A rule that hides information reads as a bug.** Keep what players track (health) and hide only the pointer.
+- **A cooldown that spans turns lives on the snail, set at the turn's start:** `JetpackFlew` while it burns,
+  turned into `JetpackRest` when its next turn starts, so the client, the server's check and the bots read one
+  attribute.
+
+Rules: Snails (Every snail parachutes in; One jetpack a match, on fuel; Utilities are held, then used).

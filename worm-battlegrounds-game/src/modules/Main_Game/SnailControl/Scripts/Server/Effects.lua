@@ -118,10 +118,37 @@ function Module.ClearTurnEffects(participantId: string)
 	model:SetAttribute("LowGravity", nil)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Close Parachute
+
+--[[
+	**SERVER** |
+	Closes a snail's parachute, when it has one open: the match's landing closes any still open once it's over, so no
+	snail starts its turn under one.
+]]
+function Module.CloseParachute(participantId: string)
+	--[[ Data ]]
+
+	local model: Model? = I.Snails.Get(participantId)
+
+	--[[ Checks ]]
+
+	-- Check if the snail has its parachute open
+	if not model or not model:GetAttribute("Parachute") then
+		return
+	end
+
+	--[[ Closing ]]
+
+	model.PrimaryPart:FindFirstChild("Chute").Enabled = false
+	model:SetAttribute("Parachute", nil)
+	airborne[model] = nil
+end
+
 --%%%%%%%%%%%%%%%%%%%% Check Parachutes
 
 --[[
-	Closes the parachute of every snail that landed after it opened.
+	Closes the parachute of every snail that landed after it opened, or that came down into water or lava (the owner,
+	2026-11-15: a snail that landed in Volcano Isle's chamber pool kept its parachute and couldn't move).
 ]]
 function Module._checkParachutes()
 	--[[ Checking ]]
@@ -130,12 +157,11 @@ function Module._checkParachutes()
 		if not model:GetAttribute("Parachute") then
 			continue
 		end
-		if not I.Snails.IsGrounded(model.Name) then
+		local grounded: boolean = I.Snails.IsGrounded(model.Name)
+		if I.Arena.GetLiquid(model.PrimaryPart.Position) or grounded and airborne[model] then
+			Module.CloseParachute(model.Name)
+		elseif not grounded then
 			airborne[model] = true
-		elseif airborne[model] then
-			model.PrimaryPart:FindFirstChild("Chute").Enabled = false
-			model:SetAttribute("Parachute", nil)
-			airborne[model] = nil
 		end
 	end
 end

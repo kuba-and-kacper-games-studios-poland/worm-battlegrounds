@@ -109,7 +109,10 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   the snail back. Anything the server does to a snail (knockback, a knockout) happens while the server owns it.
 - **Every snail parachutes in** (the studio's wiki): a player's placed spot, or for bots and players who don't place,
   up to the Match module's `DROP_HEIGHT` over a spot from `I.Arena.GetLandSpots` (on top of the ground on any storey,
-  never over liquid), clear of the terrain above it.
+  never over liquid), clear of the terrain above it. **No snail keeps its parachute past the landing** (the owner,
+  2026-11-15: a snail that came down by Volcano Isle's chamber pool kept it open and couldn't move): a parachute
+  closes when the snail lands or touches water or lava (SnailControl's `Effects`), and the landing closes any still
+  open before the first turn (Match's `Phases._land`, which counts a snail dropped onto ground as down).
 - **The snail is the studio's rig, animated on each client** (2026-11-09): the `Classic` skin has bones, hands and a
   `Handle`, and the `SnailRig` library plays its animations (idle, walk, hiding in its shell while it's thrown) from
   how its ball moves (Snails' `Motion`), never from the server. Only the skin's RootPart is welded to the ball. Its
@@ -281,7 +284,16 @@ mirrored in the bots' `Predict`); ponds still only slow it.
 - **One jetpack a match, on fuel** (the owner, 2026-11-15): the Jetpack's single use puts it on with SnailControl's
   `JETPACK_FUEL` (6 s) of flight that lasts from turn to turn (`JetpackFuel`) until it's spent, then it comes off and
   the bar's slot locks. Flying spends fuel, never stamina; the flying client reports what's left
-  (`SnailControl_Fuel`) and the server takes at least what its climb burned.
+  (`SnailControl_Fuel`) and the server takes at least what its climb burned. **It rests the turn after it flew**
+  (the owner, 2026-11-15: "1 turn cooldown"): a snail that burned fuel on its turn (`JetpackFlew`) can't fly its next
+  one (`JetpackRest`, set as that turn starts), its fuel kept; bots obey it too. While the jetpack is on, its fuel
+  shows on a bar over the stamina bar (MatchHud's `U_Stamina` › `U_Fuel`, the stamina bar's twin in orange: "Jetpack
+  75%", or "Jetpack next turn" while it rests), drawn from the client's own count as it burns.
+- **Utilities are held, then used** (the owner, 2026-11-15: "when you click it it equips and the worm is holding
+  it, and when you click on screen it's used"): picking a Medkit, a Bandage, a potion, the Jetpack or the Parachute
+  puts it in the snail's hands (`HeldItem`, no aim); the next press on the screen uses it (MatchHud's
+  `LoadoutBar.UseHeld`, any press, a finger's too; RT on a pad), and the snail takes back the weapon it held before, or
+  the Bazooka when that one has no uses left or cools down.
 - **Used-up items lock on the bar** (the owner, 2026-11-15): a slot with no uses left for the match shows a lock over
   its darkened icon (MatchHud's `BarSlot` › `S_Lock`), as a cooling one is darkened.
 - **Dynamite is placed, not thrown:** it drops at the snail's feet (`Aim = "Feet"`, no launch speed), the stamina bar

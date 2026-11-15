@@ -71,7 +71,8 @@ local _settings = {
 
 	--[[
 		Worms Armageddon's way: once the active snail moves (TAG_HIDE_MOVE studs from where its turn started), aims
-		(TAG_HIDE_AIM radians, or charges a shot) or shoots, its tag and arrow hide until the turn ends. The aim follows
+		(TAG_HIDE_AIM radians, or charges a shot) or shoots, its turn arrow hides until the turn ends (its tag and health
+		stay: the owner, 2026-11-15). The aim follows
 		the pointer, so it counts only while this screen's camera is still (moving less than TAG_HIDE_CAMERA_STILL studs a
 		frame): the camera flying to the snail as the turn starts drifts it
 	]]

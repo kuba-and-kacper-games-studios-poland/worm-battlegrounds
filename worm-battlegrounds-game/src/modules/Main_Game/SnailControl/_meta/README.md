@@ -8,7 +8,9 @@ charges the distance the snail moves sideways to `Stamina`. At 0 its client stop
 snail can still jump. A snail in the air with jetpack fuel steers for free: flying spends fuel, never stamina. The jetpack
 is one a match (the Jetpack row's single use), its `JetpackFuel` kept from turn to turn until it's spent, then the
 jetpack comes off: the client reports what's left as it flies (`SnailControl_Fuel`), and the server takes at least what
-its climb burned when the turn ends. The server takes the snail back when the turn ends, and snaps it back with a warning when it left
+its climb burned when the turn ends. A snail that burned fuel on its turn rests the jetpack on its next (`Match_TurnStarted`
+turns `JetpackFlew` into `JetpackRest`): its fuel stays, but it can't fly that turn, on its client, in the server's
+height check and for bots. A parachute closes when its snail lands or touches water or lava. The server takes the snail back when the turn ends, and snaps it back with a warning when it left
 the arena's plane, went through the terrain, moved faster than its player could have made it, climbed higher than its jump and jetpack fuel
 reach, or kept going well past an empty bar. The client follows the snail's attributes. The movement utilities (parachute, jetpack, speed, low gravity) are effects on the snail that Combat
 applies, and the match HUD's touch buttons press the controls through `Hold`.
@@ -43,6 +45,7 @@ applies, and the match HUD's touch buttons press the controls through `Hold`.
 | `EndTurn(participantId: string)` | | Takes the snail back: `CanMove` off, server ownership, facing kept, the turn's effects cleared. Call it before anything hits the snail |
 | `Retreat(participantId: string, seconds: number)` | | After the snail placed Dynamite: fills its `Stamina` again and leaves its player moving it for `seconds`, then takes it back (`EndTurn`) |
 | `Refill(participantId: string)` | `boolean` | Fills the snail's `Stamina` again, forgiving what it overspent; `false` when it isn't in play |
+| `CloseParachute(participantId: string)` | | Closes the snail's parachute when it has one open (the match's landing closes any still open) |
 | `ApplyEffect(participantId: string, effect: string, shiny: boolean?)` | `boolean` | `"Parachute"` (falls slowly, no fall damage until it lands), `"Jetpack"` (fuel to fly while holding jump), `"Speed"` (walks faster and further this turn) or `"LowGravity"` (jumps higher, falls slower this turn); shiny copies give a little more |
 
 ### Client: `I.SnailControl`
@@ -50,6 +53,7 @@ applies, and the match HUD's touch buttons press the controls through `Hold`.
 | Function | Returns | What it does |
 | --- | --- | --- |
 | `Hold(control: string, state: boolean)` | | Presses or releases `"Left"`, `"Right"` or `"Jump"` from an on-screen button, as its key does; nothing while the snail can't move |
+| `GetFuelShare()` | `number` | The player's jetpack fuel left, 0 to 1 of the tank it went on with, as this screen burns it (MatchHud's fuel bar); 0 without a jetpack |
 
 ## Usage
 
@@ -107,7 +111,8 @@ Bound at `Enum.ContextActionPriority.High` while `CanMove` is on, and sunk: the 
 ## In the place
 
 Snail attributes it writes: `CanMove` (the owner may move it), `Stamina` (studs left this turn), and the effects'
-`Parachute`, `JetpackFuel`, `SpeedMultiplier` and `LowGravity`.
+`Parachute`, `JetpackFuel`, `SpeedMultiplier` and `LowGravity`; `JetpackFlew` (it burned fuel this turn) and
+`JetpackRest` (the jetpack rests this turn).
 
 ## Commands
 

@@ -64,7 +64,7 @@ function Module.WalkTo(model: Model, targetX: number, seconds: number, climbTo: 
 	local rest: PhysicalProperties = root.CustomPhysicalProperties
 	local startX: number = root.Position.X
 	local deadline: number = os.clock() + seconds
-	local fuel: number = model:GetAttribute("JetpackFuel") or 0
+	local fuel: number = if model:GetAttribute("JetpackRest") then 0 else model:GetAttribute("JetpackFuel") or 0
 	local closest: number = math.abs(targetX - startX)
 	local stuckSince: number = os.clock()
 	local wallJumps: number = 0
@@ -161,9 +161,7 @@ function Module.WalkTo(model: Model, targetX: number, seconds: number, climbTo: 
 	if model.Parent then
 		root.CustomPhysicalProperties = rest
 	end
-	if model:GetAttribute("JetpackFuel") ~= nil then
-		model:SetAttribute("JetpackFuel", fuel)
-	end
+	Module._saveFuel(model, fuel)
 
 	--[[ Returning ]]
 
@@ -183,7 +181,7 @@ function Module.Hover(model: Model, height: number, keepGoing)
 
 	local root: BasePart = model.PrimaryPart
 	local push: number = I.Settings["SnailControl"].JETPACK_SPEED * 0.4
-	local fuel: number = model:GetAttribute("JetpackFuel") or 0
+	local fuel: number = if model:GetAttribute("JetpackRest") then 0 else model:GetAttribute("JetpackFuel") or 0
 
 	--[[ Hovering ]]
 
@@ -201,9 +199,33 @@ function Module.Hover(model: Model, height: number, keepGoing)
 
 	--[[ Saving ]]
 
-	if model.Parent and model:GetAttribute("JetpackFuel") ~= nil then
-		model:SetAttribute("JetpackFuel", fuel)
+	Module._saveFuel(model, fuel)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Save Fuel
+
+--[[
+	Writes back the jetpack fuel a bot's snail has left, as SnailControl does for a player's: burning any marks it as
+	having flown (JetpackFlew), so it rests the jetpack on its next turn. A resting jetpack keeps its fuel untouched.
+]]
+function Module._saveFuel(model: Model, fuel: number)
+	--[[ Local Variables ]]
+
+	local tank: number? = model:GetAttribute("JetpackFuel")
+
+	--[[ Checks ]]
+
+	-- Check if the snail wears a jetpack it could fly this turn
+	if not model.Parent or tank == nil or model:GetAttribute("JetpackRest") then
+		return
 	end
+
+	--[[ Saving ]]
+
+	if fuel < tank then
+		model:SetAttribute("JetpackFlew", true)
+	end
+	model:SetAttribute("JetpackFuel", fuel)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Hop

@@ -250,7 +250,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Input Began
 
 --[[
-	A press on the player's turn: the mouse button or RT shoots (Start Shot), and a finger on the arena points the aim
+	A press on the player's turn: the mouse button or RT shoots (Start Shot), or uses a utility the snail holds (any
+	press, a finger's too), and a finger on the arena points the aim
 	(a homing missile's first click or tap picks its target instead). With an admin's aim guide showing, a right click
 	locks on to it and the next press fires; otherwise right click, Esc and the pad's CancelAim drop the aim, and a second
 	finger stops pointing (the camera pans).
@@ -302,6 +303,14 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 
 	-- Check if the player may shoot now, with a weapon that has uses left and isn't cooling down
 	if aiming or firedAngle or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" or not LoadoutBar.IsReady(LoadoutBar.GetSelected()) then
+		return
+	end
+
+	--[[ Using ]]
+
+	-- A utility in the snail's hands (a Medkit, a potion) is used by any press on the screen, a finger's too
+	if I.G_Arsenal.IsUtility(LoadoutBar.GetSelected()) then
+		LoadoutBar.UseHeld()
 		return
 	end
 
@@ -447,14 +456,14 @@ end
 function Module._step()
 	--[[ Checks ]]
 
-	-- Hide the aim between shots, while a shot sent waits for the server, and for weapons fired at the feet
+	-- Hide the aim between shots, while a shot sent waits for the server, for weapons fired at the feet and for a utility held
 	local itemId: string = LoadoutBar.GetSelected()
 	local mine: Model? = I.Snails.GetMine()
 	-- A shot the server never took (refused) frees the aim again after FIRE_ANSWER_SECONDS
 	if I.Match.GetPhase() ~= "Turn" or os.clock() - firedAt > _settings.FIRE_ANSWER_SECONDS then
 		firedAngle = nil
 	end
-	if firedAngle or I.Match.GetPhase() ~= "Turn" or not mine or I.G_Arsenal.Get(itemId).Aim == "Feet" then
+	if firedAngle or I.Match.GetPhase() ~= "Turn" or not mine or I.G_Arsenal.IsUtility(itemId) or I.G_Arsenal.Get(itemId).Aim == "Feet" then
 		Module._cancel()
 		Module._hideLook()
 		elems["Power"].Visible = false
@@ -977,7 +986,7 @@ function Module._watchStep(deltaTime: number)
 	local model: Model? = watched
 	local itemId: string? = model and model:GetAttribute("HeldItem")
 	local fresh: boolean = model ~= nil and model.Parent ~= nil and I.S.Workspace:GetServerTimeNow() - (model:GetAttribute("AimTime") or 0) <= _settings.AIM_SHOW_GRACE
-	if stepConnection or not fresh or not itemId or I.G_Arsenal.Get(itemId).Aim == "Feet" then
+	if stepConnection or not fresh or not itemId or I.G_Arsenal.IsUtility(itemId) or I.G_Arsenal.Get(itemId).Aim == "Feet" then
 		Module._stopWatching()
 		return
 	end

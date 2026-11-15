@@ -72,6 +72,10 @@ local _settings = {
 	-- The stamina bar's text, with its share in percent
 	STAMINA_FORMAT = "Stamina %d%%",
 
+	-- The jetpack's fuel bar, over the stamina bar while the snail wears a jetpack: its share, or the turn it rests after flying
+	FUEL_FORMAT = "Jetpack %d%%",
+	FUEL_REST_TEXT = "Jetpack next turn",
+
 	-- How many snails the turn list on the left shows: the one playing, then the next ones
 	TURN_LIST_ENTRIES = 6,
 

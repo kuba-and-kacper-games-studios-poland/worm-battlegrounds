@@ -120,7 +120,8 @@ end
 --[[
 	Shows a snail's health on its tag (the number, and the bar's outline and fill in its team's colour), the turn arrow
 	and timer while it's the active snail (the timer for everyone but its own player, who reads it on the turn panel),
-	and hides the tag and outline once it's a ghost. The active snail's tag also hides once it acts, until its turn ends.
+	and hides the tag and outline once it's a ghost. The active snail's tag, health and all, stays up all through its
+	turn (the owner, 2026-11-15: "your health disappears when it's your turn"); only its arrow goes once it acts.
 ]]
 function Module._refreshTag(model: Instance, tag: BillboardGui)
 	--[[ Elements ]]
@@ -150,7 +151,7 @@ function Module._refreshTag(model: Instance, tag: BillboardGui)
 
 	--[[ Applying ]]
 
-	tag.Enabled = not model:GetAttribute("Ghost") and not (turn and turn.Tag == tag and turn.Hidden)
+	tag.Enabled = not model:GetAttribute("Ghost")
 	model:FindFirstChild("TeamOutline").Enabled = not model:GetAttribute("Ghost")
 	active.Visible = isActive
 	timer.Visible = isActive and model ~= I.Snails.GetMine()
@@ -231,7 +232,6 @@ function Module._startTurn(model: Instance, tag: BillboardGui)
 		CameraAt = I.S.Workspace.CurrentCamera.CFrame.Position,
 		AimBase = nil,
 		SawTurn = false,
-		Hidden = false,
 	}
 
 	--[[ Connections ]]
@@ -243,8 +243,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step Turn
 
 --[[
-	Drops the turn arrow in from above the screen with a bounce, then bobs it; once the snail acts, hides its tag and
-	arrow until the turn ends.
+	Drops the turn arrow in from above the screen with a bounce, then bobs it; once the snail acts, hides the arrow
+	until the turn ends.
 ]]
 function Module._stepTurn()
 	--[[ Checks ]]
@@ -256,10 +256,9 @@ function Module._stepTurn()
 
 	--[[ Hiding ]]
 
-	-- Once the snail acts, its tag and arrow hide and the step stops
+	-- Once the snail acts, its arrow hides and the step stops
 	if Module._hasActed(turn) then
-		turn.Hidden = true
-		turn.Tag.Enabled = false
+		turn.Arrow.Visible = false
 		turnConnection:Disconnect()
 		turnConnection = nil
 		return
@@ -287,8 +286,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% End Turn
 
 --[[
-	Ends the turn shown on a tag: stops its step, puts the arrow back in its slot and shows the tag again (unless its
-	snail is a ghost).
+	Ends the turn shown on a tag: stops its step and puts the arrow back in its slot, shown for the next turn.
 ]]
 function Module._endTurn()
 	--[[ Checks ]]
@@ -305,14 +303,14 @@ function Module._endTurn()
 		turnConnection = nil
 	end
 	turn.Arrow.Position = UDim2.fromScale(0.5, 0.5)
-	turn.Tag.Enabled = not turn.Model:GetAttribute("Ghost")
+	turn.Arrow.Visible = true
 	turn = nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Has Acted
 
 --[[
-	Returns whether the active snail acted this turn, as Worms Armageddon hides its worm's tag: it moved TAG_HIDE_MOVE
+	Returns whether the active snail acted this turn, as Worms Armageddon tells it, so its arrow hides: it moved TAG_HIDE_MOVE
 	studs from where the turn started, aimed TAG_HIDE_AIM from its first aim (or charged a shot), or shot.
 ]]
 --- @param current Snails_TagTurn

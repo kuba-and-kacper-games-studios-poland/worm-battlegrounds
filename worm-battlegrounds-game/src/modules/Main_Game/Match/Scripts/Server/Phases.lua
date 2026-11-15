@@ -387,8 +387,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Land
 
 --[[
-	The landing: every snail appears on its spot with its parachute open, and the match waits until they all landed (or
-	went out), MAX_LANDING seconds at most.
+	The landing: every snail appears on its spot with its parachute open, and the match waits until they all landed (on
+	the ground or in a liquid, or went out), MAX_LANDING seconds at most, then closes any parachute still open.
 ]]
 function Module._land()
 	--[[ Spawning ]]
@@ -403,11 +403,12 @@ function Module._land()
 
 	--[[ Waiting ]]
 
+	-- A snail dropped onto ground (a low cave's spot) is down already, though its parachute never saw the air
 	local deadline: number = os.clock() + _settings.MAX_LANDING
 	while os.clock() < deadline do
 		local landing: boolean = false
 		for _index: number, model: Model in ipairs(I.Snails.GetAlive()) do
-			if model:GetAttribute("Parachute") then
+			if model:GetAttribute("Parachute") and not I.Snails.IsGrounded(model.Name) then
 				landing = true
 				break
 			end
@@ -416,6 +417,13 @@ function Module._land()
 			break
 		end
 		task.wait(0.1)
+	end
+
+	--[[ Closing ]]
+
+	--- @param participant Match_Participant
+	for _index: number, participant in ipairs(Roster.GetParticipants()) do
+		I.SnailControl.CloseParachute(participant.Id)
 	end
 end
 

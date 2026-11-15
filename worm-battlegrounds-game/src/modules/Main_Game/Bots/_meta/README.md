@@ -55,6 +55,9 @@ reading of the wind, how far it looks: `SKILLS`).
    side only when that wins the match.
 6. **Choice.** The best plan, or with the skill's `Choice` above 0, a good-enough one more often the better it is.
 
+A bot's jetpack rests the turn after it flew, as a player's does (`JetpackRest`): that turn its brain plans no flight
+and `Move` reads no fuel.
+
 Then it walks to the spot (flying its jetpack when the spot needs it, or before placing Dynamite: it rises first,
 keeps `HEADROOM` clear of ceilings and gives up on a wall after `WALL_JUMPS` jumps at it), hovers there for an air
 spot while it aims, plans again from

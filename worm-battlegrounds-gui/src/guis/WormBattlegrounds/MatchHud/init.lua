@@ -2500,6 +2500,161 @@ local _gui = {
 							},
 						},
 					},
+					-- The jetpack's fuel, the stamina bar's twin in orange, over it while the snail wears a jetpack (the owner, 2026-11-15)
+					{
+						Primitive = "Frame",
+						Id = "U_Fuel",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 1),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 3,
+							Position = UDim2.fromScale(0.5, 0),
+							Size = UDim2.fromScale(1, 1),
+							Visible = false,
+							ZIndex = 9,
+						},
+						Children = {
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Background",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Position = UDim2.fromScale(0, 0.3511),
+									Size = UDim2.fromScale(1, 0.6259),
+								},
+								Children = {
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0132, 0.0635),
+											Size = UDim2.fromScale(0.9696, 0.8447),
+											Image = "rbxassetid://77473983467863",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "940_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke2",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 1,
+											Size = UDim2.fromScale(1, 1),
+											ZIndex = 2,
+											Image = "rbxassetid://126651430001748",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_63__Frame__Stroke2_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 2,
+											Position = UDim2.fromScale(0.0069, 0.0367),
+											Size = UDim2.fromScale(0.9863, 0.9265),
+											ZIndex = 3,
+											Image = "rbxassetid://84151015109804",
+											ImageColor3 = Color3.fromRGB(130, 130, 130),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_64__Frame__Stroke_gray",
+										},
+									},
+								},
+							},
+							{
+								Primitive = "ImageLabel",
+								Id = "S_Bar",
+								Props = {
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0.0372, 0.4424),
+									Size = UDim2.fromScale(0.9319, 0.4312),
+									ZIndex = 2,
+									Image = "rbxassetid://94393789837606",
+									ImageColor3 = Color3.fromRGB(255, 150, 40),
+									ScaleType = Enum.ScaleType.Fit,
+								},
+								Attributes = { _ImageName = "940_6__Frame__Bar_gray" },
+								Children = { { Primitive = "UIGradient" } },
+							},
+							-- The bar's texture, cut at the same edge as the bar
+							{
+								Primitive = "ImageLabel",
+								Id = "S_BarMask",
+								Props = {
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									ClipsDescendants = true,
+									LayoutOrder = 2,
+									Position = UDim2.fromScale(0.0372, 0.4424),
+									Size = UDim2.fromScale(0.9319, 0.4312),
+									ZIndex = 3,
+									Image = "rbxassetid://136846436221511",
+								},
+								Attributes = {
+									_ImageName = "952_125__Frame__Mask_image",
+								},
+								Children = { { Primitive = "UIGradient" } },
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_Text",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0.5, 0.17),
+									Size = UDim2.fromScale(1, 0.32),
+									ZIndex = 2,
+									Text = "Jetpack 70%",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextSize = 20,
+									TextWrapped = true,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{
+										Primitive = "UIStroke",
+										Props = {
+											Thickness = 0.15,
+											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+										},
+									},
+								},
+							},
+							{
+								Primitive = "UIAspectRatioConstraint",
+								Props = {
+									AspectRatio = 3.358,
+								},
+							},
+						},
+					},
 					{
 						Primitive = "UIAspectRatioConstraint",
 						Props = {
