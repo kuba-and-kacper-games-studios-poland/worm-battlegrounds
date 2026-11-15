@@ -27,13 +27,15 @@ local _settings = {
 
 	--[[
 		The tutorial's drop: the player and the bot start on land about TUTORIAL_GAP studs apart near the map's middle
-		(chosen from TUTORIAL_SPOT_COUNT land spots), the player has TUTORIAL_DROP_SECONDS to place theirs, and only a
-		pick within TUTORIAL_PICK_RADIUS studs of the shown spot counts
+		(chosen from TUTORIAL_SPOT_COUNT land spots), lit TUTORIAL_DROP_HEIGHT studs over it, the player has
+		TUTORIAL_DROP_SECONDS to place theirs, and any press within TUTORIAL_PICK_RADIUS studs of the lit spot counts
+		(the spotlight's hole is at least HOLE_MIN pixels, wider than a few studs when the camera is far out)
 	]]
 	TUTORIAL_GAP = 30,
 	TUTORIAL_SPOT_COUNT = 16,
+	TUTORIAL_DROP_HEIGHT = 8,
 	TUTORIAL_DROP_SECONDS = 40,
-	TUTORIAL_PICK_RADIUS = 6,
+	TUTORIAL_PICK_RADIUS = 10,
 
 	--%%%%%%%%%%%%%%%%%%%% Turns
 

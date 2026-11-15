@@ -221,7 +221,11 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   replicated parts. **What moves on the server's clock is drawn on `I.Match.GetDrawTime()`** (the owner, 2026-11-15:
   rockets stopped for a few frames mid-air live), never `GetServerTimeNow()` read each frame: a client's estimate of
   the server's clock is corrected now and then, and drawing on it froze shots, thrown snails and falling ground for a
-  moment; the draw clock runs at the local clock's rate and eases toward the server's.
+  moment; the draw clock runs at the local clock's rate and eases toward the server's. **Whatever moves something the
+  camera follows runs before the camera** (2026-11-15, a thrown snail and its tag stuttered): bound with
+  `BindToRenderStep` under `Enum.RenderPriority.Camera` (Combat's `Shots` and `Flight`, Snails' `Flight` and `Gear`),
+  never on `PreRender` or `RenderStepped`, which run after every bound step, the camera's included, so the camera aims
+  at where it was a frame before.
 - **Shots fly in slow motion** (the tester's notes, 2026-11-08): the simulation runs at Combat's
   `PROJECTILE_TIME_SCALE` (0.5, half speed) along the same paths, so eyes can follow a shot. A thrown bomb's `Fuse`
   counts its own slowed flight time, so it bursts where it did at full speed; a placed one's (Dynamite) stays in real
@@ -280,7 +284,7 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
 - **The tutorial is a guided first match, then the crate** (the testers, 2026-11-13): a new player's first join sends
   them to a 1v1 against a bot that can't shoot (it raises the Bazooka, gives up and passes) and starts with 10 health
   (Bots' `HEALTH`), so any hit wins. The player plays first (Match keeps the roster's order) and starts about 30 studs
-  from it near the map's middle (Match's `TUTORIAL_*`): the drop shows where to land, and only a pick there counts.
+  from it near the map's middle (Match's `TUTORIAL_*`): the drop lights where to land, 8 studs over the land, and any press on the lit spot counts (2026-11-15: presses near its edge did nothing).
   The results show Rematch grey and dead, so the player goes back by hand; in the lobby the guide leads to the free
   crate, then to putting its two weapons in the loadout. Its map is Training Meadow, a small island made for it
   (MapLab, exported 2026-11-13), in no rotation.
@@ -586,8 +590,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   written short by the slot (`Currency_ShortFrom`: "18.62k"), so a count never wraps.
 - **The lobby is a party stage, as Fortnite's** (the owner's pick, 2026-11-09, replacing the bot match behind the
   guis): each client clones the stage prefab (`ReplicatedStorage_Assets/Lobby/PREFAB | Stage`, built by hand where it
-  stands, beyond the baseplate; since 2026-11-12 the studio's meadow, `Spawn_New`, its four platforms the pods; its parts are SmoothPlastic, since this place's `2022 Stud` variants are) and holds the camera on its `Camera` marker, low and close; the player's snail
-  stands on the front pod (`Pod_1`) in their equipped skin, and their party in this server on the pods around it in
+  stands, beyond the baseplate; since 2026-11-12 the studio's meadow, `Spawn_New`, and since 2026-11-15 the owner's `NewSpawn` (the same meadow, new platforms with glowing ring beams, the back one raised as before), its four platforms the pods; its parts are SmoothPlastic, since this place's `2022 Stud` variants are) and holds the camera on its `Camera` marker, low and close; the player's snail
+  stands on the front pod (`Pod_1`) in their equipped skin, 1.5 times its match size (Lobby's `STAGE_SNAIL_SCALE`, the owner, 2026-11-15), and their party in this server on the pods around it in
   theirs (Lobby's `Stage` handler, from the `PartyId` and `EquippedSkin` Player attributes). Each client stands its
   own snails, so everyone is in front on their own screen; the pods are parts in the prefab, so the layout is moved
   in Studio. The

@@ -13,7 +13,8 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 -- The gear each snail wears now (a copy of its utility's model), by snail, then by item id
 local worn = {} --- @type { [Model]: { [string]: Model } }
-local stepConnection: RBXScriptConnection?
+-- Whether the step is bound: after Flight moves the balls, before the camera aims at them
+local stepping: boolean = false
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -116,11 +117,12 @@ end
 function Module._refreshLoop()
 	--[[ Connections ]]
 
-	if next(worn) and not stepConnection then
-		stepConnection = I.S.RunService.RenderStepped:Connect(Module._step)
-	elseif not next(worn) and stepConnection then
-		stepConnection:Disconnect()
-		stepConnection = nil
+	if next(worn) and not stepping then
+		stepping = true
+		I.S.RunService:BindToRenderStep("Snails_Gear", Enum.RenderPriority.Camera.Value - 1, Module._step)
+	elseif not next(worn) and stepping then
+		stepping = false
+		I.S.RunService:UnbindFromRenderStep("Snails_Gear")
 	end
 end
 

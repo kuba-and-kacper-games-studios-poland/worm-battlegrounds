@@ -158,13 +158,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Place
 
 --[[
-	Sends the picked spot to the server when a snail fits there; the server checks it again.
+	Sends the picked spot to the server when a snail fits there (in the tutorial, any press: the snail lands on the lit
+	spot); the server checks it again.
 ]]
 function Module._place()
 	--[[ Checks ]]
 
 	-- Check if a snail fits on the spot
-	if not Module._isFree(pick) then
+	if matchFolder:GetAttribute("Kind") ~= "Tutorial" and not Module._isFree(pick) then
 		return
 	end
 

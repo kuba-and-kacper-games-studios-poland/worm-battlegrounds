@@ -15,7 +15,8 @@ local FlightHelper = require(script.Parent.Parent:FindFirstChild("Helpers"):Find
 -- The snails this screen draws flying now, and their flights
 local flights = {} --- @type { [Model]: Snails_FlightState }
 
-local stepConnection: RBXScriptConnection?
+-- Whether the step is bound: before the camera (and Gear), so the camera aims at where the snail is this frame
+local stepping: boolean = false
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -92,11 +93,12 @@ function Module._refresh(model)
 
 	--[[ Connections ]]
 
-	if next(flights) and not stepConnection then
-		stepConnection = I.S.RunService.PreRender:Connect(Module._step)
-	elseif not next(flights) and stepConnection then
-		stepConnection:Disconnect()
-		stepConnection = nil
+	if next(flights) and not stepping then
+		stepping = true
+		I.S.RunService:BindToRenderStep("Snails_Flight", Enum.RenderPriority.Camera.Value - 2, Module._step)
+	elseif not next(flights) and stepping then
+		stepping = false
+		I.S.RunService:UnbindFromRenderStep("Snails_Flight")
 	end
 end
 

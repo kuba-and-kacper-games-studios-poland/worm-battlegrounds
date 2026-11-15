@@ -1853,5 +1853,11 @@ were"), a hit snail's health bar stutter while it moved, AssetsPreload fail on e
   runs only in the lobby (the same mistake as Atmosphere's wind earlier that day).
 - **The wind changes every turn now** (the owner), never the same as the turn before; the testers' wind for a whole
   round (2026-11-13) is gone.
+- **Move what the camera follows before the camera.** The tags still glitched after the clock fix. Measured in Studio:
+  `PreRender` and `RenderStepped` handlers run after every `BindToRenderStep` function, the camera's included. Snails'
+  `Flight` moved a thrown snail's ball on `PreRender`, so MatchCamera always aimed at where it was a frame before, and
+  the snail and its tag stuttered on screen as it flew; Gear followed the ball from `RenderStepped`, in no set order with
+  Flight. Both are bound before the camera now, as Combat's shots already were. Walking was checked too, with Studio's
+  simulated lag (`IncomingReplicationLag` 0.15): the balls moved cleanly.
 
 Rules: Snails (Shots fly by the game's own simulation; Every thrown shot flies like the rocket).

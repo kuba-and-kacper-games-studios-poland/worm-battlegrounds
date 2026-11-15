@@ -283,18 +283,18 @@ function Module.PickDrop(player: Player, x: number, y: number)
 		return
 	end
 
-	-- Check if a snail fits there
 	local spot: Vector2 = Vector2.new(x, y)
-	if not I.Arena.IsFree(Vector3.new(spot.X, spot.Y, 0), I.Settings["Snails"].ROOT_SIZE / 2) then
-		return
-	end
 
-	-- In the tutorial only a pick on the shown spot counts, and the snail keeps that spot
+	-- In the tutorial any press on the lit spot counts (the spotlight blocks the rest), and the snail keeps that spot
 	if Roster.GetMetadata().Kind == "Tutorial" then
-		if math.abs(spot.X - drops[participant.Id].X) > _settings.TUTORIAL_PICK_RADIUS then
+		if (spot - drops[participant.Id]).Magnitude > _settings.TUTORIAL_PICK_RADIUS then
 			return
 		end
 		spot = drops[participant.Id]
+
+	-- Check if a snail fits there
+	elseif not I.Arena.IsFree(Vector3.new(spot.X, spot.Y, 0), I.Settings["Snails"].ROOT_SIZE / 2) then
+		return
 	end
 
 	--[[ Saving ]]
@@ -351,7 +351,7 @@ function Module._drop()
 		table.insert(taken, spot)
 		placed[participant.Id] = participant.IsBot
 		Roster.SetInfo(participant.Id, "Placed", participant.IsBot)
-		Module._setDrop(participant.Id, Module._getSkySpot(spot))
+		Module._setDrop(participant.Id, Module._getSkySpot(spot, if tutorial then _settings.TUTORIAL_DROP_HEIGHT else _settings.DROP_HEIGHT))
 	end
 
 	--[[ Waiting ]]
@@ -489,11 +489,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Sky Spot
 
 --[[
-	Returns where a snail parachutes from onto a land spot: DROP_HEIGHT above it, or lower where terrain over it (a
-	floating ledge) or the top of the play area is in the way.
+	Returns where a snail parachutes from onto a land spot: `dropHeight` above it (DROP_HEIGHT, or the tutorial's lower
+	TUTORIAL_DROP_HEIGHT), or lower where terrain over it (a floating ledge) or the top of the play area is in the way.
 ]]
 --- @return Vector2
-function Module._getSkySpot(land: Vector3)
+function Module._getSkySpot(land: Vector3, dropHeight: number)
 	--[[ Local Variables ]]
 
 	local radius: number = I.Settings["Snails"].ROOT_SIZE / 2
@@ -502,7 +502,7 @@ function Module._getSkySpot(land: Vector3)
 	--[[ Calculating ]]
 
 	-- Climbs a stud at a time while the way down to the land stays clear
-	while height < _settings.DROP_HEIGHT and I.Arena.IsFree(land + Vector3.new(0, height + 1, 0), radius) do
+	while height < dropHeight and I.Arena.IsFree(land + Vector3.new(0, height + 1, 0), radius) do
 		height += 1
 	end
 

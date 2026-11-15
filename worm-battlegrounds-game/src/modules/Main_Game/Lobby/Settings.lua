@@ -32,6 +32,9 @@ local _settings = {
 	-- The stage camera's field of view
 	STAGE_FOV = 50,
 
+	-- How much bigger the snails stand on the stage than in a match (the owner, 2026-11-15: "50% larger in lobby")
+	STAGE_SNAIL_SCALE = 1.5,
+
 	--%%%%%%%%%%%%%%%%%%%% Travel
 
 	-- The teleport screen

@@ -22,9 +22,10 @@ local snailMarkers = {} --- @type { BasePart }
 
 --[[ Snails ]]
 
--- Each party member's snail on the stage, and the skin it wears
+-- Each party member's snail on the stage, the skin it wears, and how far it's lifted to keep its feet on its pod
 local snails = {} --- @type { [Player]: Model }
 local snailSkins = {} --- @type { [Player]: string }
+local snailLifts = {} --- @type { [Player]: number }
 
 -- Whether the camera is held on the stage
 local holding: boolean = false
@@ -138,6 +139,7 @@ function Module._refreshSnails()
 			model:Destroy()
 			snails[player] = nil
 			snailSkins[player] = nil
+			snailLifts[player] = nil
 		end
 	end
 
@@ -149,7 +151,7 @@ function Module._refreshSnails()
 			Module._dress(player, outfit)
 		end
 		if snails[player] then
-			snails[player]:PivotTo(snailMarkers[index].CFrame)
+			snails[player]:PivotTo(snailMarkers[index].CFrame + Vector3.yAxis * snailLifts[player])
 		end
 	end
 end
@@ -173,6 +175,15 @@ function Module._dress(player: Player, outfit: string)
 		snails[player]:Destroy()
 	end
 
+	--[[ Scaling ]]
+
+	-- Bigger on the stage; scaled about its pivot, it would sink by what grew under the pivot, so it's lifted that much
+	local box: CFrame
+	local size: Vector3
+	box, size = model:GetBoundingBox()
+	local underPivot: number = model:GetPivot().Position.Y - (box.Position.Y - size.Y / 2)
+	model:ScaleTo(model:GetScale() * _settings.STAGE_SNAIL_SCALE)
+
 	--[[ Building ]]
 
 	for _index: number, part: Instance in ipairs(model:GetDescendants()) do
@@ -192,6 +203,7 @@ function Module._dress(player: Player, outfit: string)
 
 	snails[player] = model
 	snailSkins[player] = outfit
+	snailLifts[player] = underPivot * (_settings.STAGE_SNAIL_SCALE - 1)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Camera
