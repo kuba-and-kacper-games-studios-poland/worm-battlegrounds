@@ -495,9 +495,15 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
 - **Two places, one file, two maps:** the lobby place (players join it) and the match place, Arena (matches run in
   its reserved servers), are copies of the same place file, saved and published together, so Roblox's analytics
   count the lobby and the matches apart. Each boots its own map, `Lobby` or `Match`, by its place id
-  (`core/.../configs/place_loader.lua`: `LOBBY_PLACE_ID`, `MATCH_PLACE_ID`, the same id as MatchBoard's
-  `MATCH_PLACE_ID`). Each map loads the `Default` folders (shared by both) plus its own, and its module list leaves out
-  the other map's modules (`MATCH_ONLY`, `LOBBY_ONLY`).
+  (`core/.../configs/place_loader.lua`: `LOBBY_PLACE_ID`, `MATCH_PLACE_ID`; MatchBoard teleports to the config's
+  `MatchPlaceId`). Each map loads the `Default` folders (shared by both) plus its own, and its module list leaves out
+  the other map's modules (`MATCH_ONLY`, `LOBBY_ONLY`), so a module that runs on both never reads the other map's
+  modules or settings unguarded (Atmosphere's wind read Match's `WIND_MAX` in the lobby, 2026-11-15).
+- **Built in the dev experience, published to the main one** (the owner, 2026-11-15): the same place file runs in
+  both, and the place loader's `EXPERIENCES` picks the lobby and match place ids by universe (`game.GameId`): the main
+  game (10774518479: lobby 83410278033601, Arena 118265066788984) and the dev copy (10776882453: [DEV] Snail Lobby
+  82550122321970, [DEV] Snail Arena 75433175788458). A file in neither plays as the main game. Each experience has its
+  own DataStores; products and passes, and group pictures with restricted permissions, are the main game's.
 - **Every teleport between the places shows the card:** the server names the destination
   (`I.Transition.SetDestination`) right before a teleport, the `TeleportGui` card slides over the screen and Roblox
   carries it through the teleport; the next server's ReplicatedFirst script (`src/replicated_first/`, the code
@@ -632,3 +638,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   (`Main/0_AssetsPreload`) preloads every gui, the asset ids in the game's data and settings, and the asset folder, on
   a thread of its own. A new gui, data row with an icon, or asset folder is picked up with no change there; a picture
   code builds from anything else (a string it puts together, a player's thumbnail) isn't.
+- **Clients wait until the framework has fully arrived, on live servers too** (the owner, 2026-11-15, after matches
+  sometimes started with no camera): a match server is fresh, so players join while it's still starting and the
+  framework's module tree reaches them in pieces. The replication gate (`core/game_instance/Start/tasks/replication_gate.lua`)
+  holds the client until everything in the server's manifest has arrived (extras allowed: remotes made later), up to
+  60 s, then kicks. A framework file changed by the game: overrides ume's Studio-only gate until ume takes it in.

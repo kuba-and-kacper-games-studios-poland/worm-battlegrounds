@@ -1800,3 +1800,38 @@ The owner played a round of matches and sent fifteen changes at once. The ones t
 Rules: Getting hurt doesn't end your turn; A thrown shot leaves the snail moving until it bursts; One jetpack a match,
 on fuel; Used-up items lock on the bar; Only the open sea knocks snails out (past the sides); Strong weapons start on their
 cooldown.
+
+## Matches that sometimes started with no camera (2026-11-15)
+
+Now and then a match opened with the camera far off and nothing to press, while the client's console filled with
+`Snails.Scripts.Client.Tags:191: attempt to index nil with 'GetFolder'` every frame: `I.Match` didn't exist.
+
+- **A fresh server sends the framework late.** The server makes `UmePointer` early but moves the module tree
+  (`Instance`) into ReplicatedStorage only at the end of its start. A lobby is running long before anyone joins, so the
+  tree comes in the first download; a match is a reserved server that boots as its players teleport in, so the tree
+  reaches them while they're connected, in pieces. The client starts 0.5 s after the pointer's value arrives, and a
+  module whose scripts haven't all arrived is skipped without a word: Match's was, so no `I.Match`, no camera, no
+  controls.
+- **The guard existed, only in Studio.** ume's replication gate waits for the server's manifest of the tree, but its
+  server and client sides both returned outside Studio, where the bug never shows. It now runs everywhere.
+- **Check "has arrived", not "is identical".** The gate compared the tree exactly, descendant counts included. On a
+  long-running lobby the server can add remotes inside the tree after the manifest (`Modules_Ume/Ume/Network/Remotes`),
+  and every later joiner would wait out the gate and be kicked. Everything in the manifest must be there; extras are
+  fine. The wait is 60 s, as the client's other waits are.
+
+Rules: Loading (Clients wait until the framework has fully arrived).
+
+## A dev experience beside the main game (2026-11-15)
+
+**What happened.** The owner moved development to a dev experience ([DEV] Snail Lobby and [DEV] Snail Arena) and will
+publish to the main game later. The place ids were written once, for the main game, so a dev lobby would have
+teleported its matches to the main game's Arena, and the dev place booted on the lobby config's fallback. The same
+day the dev lobby's console showed Atmosphere failing to start: `Wind:194: attempt to index nil with 'WIND_MAX'`.
+
+- **Pick the places by universe.** One place file runs in both experiences, so the place loader's config keeps a row
+  per universe (`EXPERIENCES`, by `game.GameId`) and MatchBoard reads the match place from it (`MatchPlaceId`)
+  instead of holding its own copy of the id. A file in neither plays as the main game.
+- **The Studio map hides lobby-only bugs.** It loads both maps' modules, so a lobby module reading the Match module's
+  settings works there and fails on a real lobby, where Match is off. Test the lobby with `Ume_StudioMapId = "Lobby"`.
+
+Rules: Maps and placeholders (Two places, one file, two maps; Built in the dev experience, published to the main one).

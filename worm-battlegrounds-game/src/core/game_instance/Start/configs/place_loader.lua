@@ -29,11 +29,25 @@ local LOBBY_ONLY = { "Lobby", "MatchBoard", "Party", "Crates" } --- @type { stri
 --[[ Places ]]
 
 --[[
-	The experience's two places, copies of one file: players join the lobby place, and matches run in reserved servers
+	Each experience's two places, copies of one file: players join the lobby place, and matches run in reserved servers
 	of the match place (Arena). Each boots its own map, so Roblox's analytics count the lobby and the matches apart.
+	The game is built in the dev experience and published to the main one, by universe id (game.GameId); a place file
+	in neither (unpublished, GameId 0) plays as the main game.
 ]]
-local LOBBY_PLACE_ID: number = 83410278033601
-local MATCH_PLACE_ID: number = 118265066788984
+--- @type { [number]: { [string]: number } }
+local EXPERIENCES = {
+	-- Snail Battlegrounds, the main game
+	[10774518479] = { Lobby = 83410278033601, Match = 118265066788984 },
+
+	-- [DEV] Snail Lobby and [DEV] Snail Arena
+	[10776882453] = { Lobby = 82550122321970, Match = 75433175788458 },
+}
+local MAIN_UNIVERSE_ID: number = 10774518479
+
+--- @type { [string]: number }
+local experience = EXPERIENCES[game.GameId] or EXPERIENCES[MAIN_UNIVERSE_ID]
+local LOBBY_PLACE_ID: number = experience.Lobby
+local MATCH_PLACE_ID: number = experience.Match
 
 --%%%%%%%%%%%%%%%%%%%% Concat
 
@@ -235,6 +249,9 @@ local _config = {
 		You should point it to a specific place if the game works across multiple places.
 	]]
 	DefaultPlaceId = LOBBY_PLACE_ID,
+
+	-- This experience's match place (Arena), where the lobby teleports its matches
+	MatchPlaceId = MATCH_PLACE_ID,
 
 	--%%%%%%%%%%%%%%%%%%%% Map Loader / Persistent Lobby
 

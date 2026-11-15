@@ -3,11 +3,7 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Places
 
-	--[[
-		The match place (Arena), where matches run in reserved servers (the same id as MATCH_PLACE_ID in the place
-		loader's config), and the teleport screen
-	]]
-	MATCH_PLACE_ID = 118265066788984,
+	-- The teleport screen; the match place is the place loader config's MatchPlaceId, this experience's Arena
 	TELEPORT_GUI = "TeleportGui",
 
 	-- The map that plays the lobby and its matches in one Studio server: matches start there instead of teleporting

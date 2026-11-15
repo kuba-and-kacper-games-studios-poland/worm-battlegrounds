@@ -88,7 +88,7 @@ text colour), which the picked one swaps to.
 
 | Key | Default | What |
 | --- | --- | --- |
-| `MATCH_PLACE_ID`, `TELEPORT_GUI` | `118265066788984` (Arena), `"TeleportGui"` | The match place (the place loader config's `MATCH_PLACE_ID`), the teleport screen |
+| `TELEPORT_GUI` | `"TeleportGui"` | The teleport screen. Matches teleport to the place loader config's `MatchPlaceId`, the Arena of the experience the lobby runs in (dev or main) |
 | `STUDIO_MAP` | `"Studio"` | The map where matches start on the lobby's own server |
 | `ROW_SECONDS` | `30` | Every public row's countdown, always running; at 0 it starts with whoever joined (bots filling the rest), or nobody, and a fresh row on another map takes its place |
 | `VOTE_FRACTION` | `2 / 3` | Share of a row's players whose votes start it |

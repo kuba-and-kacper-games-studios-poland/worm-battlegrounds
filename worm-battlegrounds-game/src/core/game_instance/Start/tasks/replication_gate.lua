@@ -13,7 +13,7 @@ local WARN_MANIFEST_MISSING = false
 
 --[[ Client Wait ]]
 
-local CLIENT_WAIT_SECONDS = 10
+local CLIENT_WAIT_SECONDS = 60
 local REPLICATION_TIMEOUT_MESSAGE = "Ume Instance replication incomplete or manifest mismatch (timed out)."
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
@@ -93,7 +93,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Hierarchy Matches
 
 --[[
-	Returns whether the live instance hierarchy matches the encoded tree (same names, sibling order ignored); truncated leaves compare descendant counts instead.
+	Returns whether everything in the encoded tree has replicated (same names, sibling order ignored; truncated leaves need at least their descendant count). Extras are fine: the server may add remotes after writing the manifest.
 ]]
 --- @param node ReplicationGate_NameTreeNode
 --- @return boolean
@@ -109,7 +109,7 @@ local function hierarchyMatches(parent: Instance, node)
 
 	-- Compare descendant counts when the branch was truncated
 	if type(node.descendantCount) == "number" then
-		return #parent:GetDescendants() == node.descendantCount
+		return #parent:GetDescendants() >= node.descendantCount
 	end
 
 	--[[ Local Variables ]]
@@ -149,18 +149,6 @@ local function hierarchyMatches(parent: Instance, node)
 
 		-- Check if this child matches the manifest
 		if not hierarchyMatches(childInst, childNode) then
-			return false
-		end
-	end
-
-	--[[ Leftover Check ]]
-
-	--- @param unmatchedQueue { Instance }
-	for _: string, unmatchedQueue in pairs(actualByName) do
-		--[[ Checks ]]
-
-		-- Check if this name still has unmatched children
-		if #unmatchedQueue > 0 then
 			return false
 		end
 	end
@@ -399,7 +387,7 @@ function _task.WriteServerManifest(umeInstance)
 	--- @type Ume
 	local I = umeInstance
 
-	if I.Started or not I.Env.IsServer or not I.Env.IsStudio then
+	if I.Started or not I.Env.IsServer then
 		return
 	end
 
@@ -435,7 +423,8 @@ end
 
 --[[
 	**CLIENT** |
-	Waits until the manifest attribute is present and the instance hierarchy matches it.
+	Waits until the manifest attribute is present and everything in it has replicated, in Studio and on live servers;
+	kicks the player after CLIENT_WAIT_SECONDS.
 ]]
 function _task.WaitBeforeFrameworkLoad(umeInstance)
 	--- @type Ume
@@ -451,8 +440,8 @@ function _task.WaitBeforeFrameworkLoad(umeInstance)
 
 	local RunService: RunService = game:GetService("RunService")
 
-	-- Skip when this is not a Studio client
-	if not RunService:IsClient() or not RunService:IsStudio() then
+	-- Skip on the server (live servers too: a client joining a server that's still starting gets the instance late)
+	if not RunService:IsClient() then
 		return
 	end
 

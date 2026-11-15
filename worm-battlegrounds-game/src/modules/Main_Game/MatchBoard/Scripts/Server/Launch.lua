@@ -120,7 +120,7 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 
 	local success: boolean
 	local result: any | string?
-	success, result = pcall(I.Teleport, players, _settings.MATCH_PLACE_ID, "Match", metadata, _settings.TELEPORT_GUI)
+	success, result = pcall(I.Teleport, players, I.Config.PlaceLoader.MatchPlaceId, "Match", metadata, _settings.TELEPORT_GUI)
 	if not success or not result then
 		warn(`[{_localName}::{script.Name}]: Couldn't start match ({metadata.MatchId})! - ({result})`)
 		Module._tell(players, "Couldn't start the match. Try again!")

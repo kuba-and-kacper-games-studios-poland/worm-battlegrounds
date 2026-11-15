@@ -191,7 +191,8 @@ function Module.SetWind(wind: number)
 	--[[ Saving ]]
 
 	direction = if wind < 0 then -1 else 1
-	strength = math.clamp(math.abs(wind) / I.Settings["Match"].WIND_MAX, 0, 1)
+	-- The lobby map has no wind, and no Match module or settings
+	strength = if wind == 0 then 0 else math.clamp(math.abs(wind) / I.Settings["Match"].WIND_MAX, 0, 1)
 	if showing then
 		lastWind = wind
 	end
