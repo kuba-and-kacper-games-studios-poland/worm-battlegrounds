@@ -10,7 +10,7 @@ local _settings = {
 			--[[ General ]]
 
 			DefaultValue = "0",
-			IconId = "rbxassetid://108986846988315",
+			IconId = "rbxassetid://123804836570291",
 
 			--[[ Range ]]
 
@@ -34,7 +34,7 @@ local _settings = {
 			--[[ General ]]
 
 			DefaultValue = "0",
-			IconId = "rbxassetid://76353040161236",
+			IconId = "rbxassetid://98200575516825",
 
 			--[[ Range ]]
 

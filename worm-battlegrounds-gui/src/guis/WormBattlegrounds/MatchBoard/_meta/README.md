@@ -13,7 +13,8 @@ studio's `PlaySolo` design (2026-11-12), ported 1:1 the same way: a dark slanted
 (AnchorPoint 0.5, 1 at 50 % across, 97.8 % down, the owner's pick, 2026-11-12). The picked difficulty wears a white
 outline, the rest grey. The lobby card is minimal (the owner, 2026-11-15): the map's picture covers the whole card
 and fades out to the right before Join (a `UIGradient` on `S_MapIcon`), the mode big and the map's name under it over
-the picture, with no player count or timer. The texts code writes into the
+the picture, with no player count; since 2026-11-16 the timer is back at the top right, over Join (the owner: "show the
+timer back"), counting down to the card's next map. The texts code writes into the
 buttons (SOLO VS BOTS, JOIN) carry `TextCase_Upper`.
 
 |  |  |
@@ -44,7 +45,7 @@ buttons (SOLO VS BOTS, JOIN) carry `TextCase_Upper`.
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB | Row` | `U_Rows` | A lobby card (the gui maker's card, 2026-11-11, made minimal 2026-11-15): `S_MapIcon` (the map's picture over the card's whole fill, `Background` › `Main`, stretched: the pictures are cut to the card's slanted shape, so it lines up with the frame; fading out to the right; empty for a map with no `Thumbnail`), `S_Mode` (big, over the picture), `S_Map` (the map's name under it), `S_Join` (ImageButton; its `Name1` reads Join, or "Host picks" greyed out for a party member) |
+| `PREFAB | Row` | `U_Rows` | A lobby card (the gui maker's card, 2026-11-11, made minimal 2026-11-15): `S_MapIcon` (the map's picture over the card's whole fill, `Background` › `Main`, stretched: the pictures are cut to the card's slanted shape, so it lines up with the frame; fading out to the right; empty for a map with no `Thumbnail`), `S_Mode` (big, over the picture), `S_Map` (the map's name under it), `Timer` › `S_Timer` (the clock icon and "0:30": the seconds until the card's next map, over Join), `S_Join` (ImageButton; its `Name1` reads Join, or "Host picks" greyed out for a party member) |
 
 ## Driven by
 

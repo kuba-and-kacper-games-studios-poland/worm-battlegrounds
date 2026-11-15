@@ -29,6 +29,7 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 | `Scripts/Client/SkinsStage.lua` | The snail in the middle of the Style screen, with the player's name under it: a drag (mouse or finger) spins it all the way round, and the camera eases to the open or picked slot's view (`STAGE_FOCUS`): round to the shell, down onto the hat, in on the neck piece, back for the body. The camera moves only while it has somewhere to go, and only while the screen shows |
 | `Scripts/Client/EmoteShop.lua` | The `EmoteShop` widget: a card per emote (`PREFAB \| EmoteCard`: its icon, name and rarity badge), cheapest first; one not owned wears the locked cover with its price in coins and the level it needs ("Any level" from level 1), and a press buys it; a press on an owned one closes the panel and plays it (the lobby's only place to pick an emote, since 2026-11-15) |
 | `Scripts/Client/Emotes.lua` | The emote wheel (it closes on a pick, a click or tap anywhere but a button, and when the hud hides the emote button; on a pad it holds the selection while open, `I.Console.Focus`, and B closes it), and playing played emotes on every screen: the player's snail plays it (`I.SnailRig.Emote`: in a match, or on the lobby's stage), its icon pops up in a thought cloud over that snail's head (`I.ChatBubbles.ShowIcon`, in their chat stack: in a match, and on the lobby's stage), and in the lobby also in a speech bubble beside their name on their party card (`I.ChatBubbles.BuildIconBubble`, its tail pointing at the name) |
+| `Scripts/AdminPanel/CommandBar/Server.lua` | The `cosmetics` command, and the `Cosmetics_SetIds` dictionary |
 | `Settings.lua` | `Cosmetics_Settings` |
 | `Data/Sets/<SetId>.lua` | `Cosmetics_SetData`: `Name`, `LayoutOrder`, `Model` (the snail in `Assets.Skins` holding its pieces), `Skin` (the whole skin it was) |
 | `Data/Pieces/<PieceId>.lua` | `Cosmetics_PieceData`: `Slot` (`Hat`, `Neck`, `Body`, `Shell`), `Set`. Its name, picture and rarity are its Inventory row's (`Data/Items/<Slot>/`) |
@@ -130,3 +131,15 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
   them in place, so previews hold each clone in its idle pose (`I.SnailRig.Pose`).
 - Emote animations and voice lines aren't made yet: each emote plays a stand-in motion made in code
   (`I.SnailRig.Emote`, the SnailRig README → Emotes), replaced by its animation once one is published under its name.
+
+## Commands
+
+`cosmetics` (server, level 255):
+
+| Subcommand | Arguments | What |
+| --- | --- | --- |
+| `give_skin` | `player`, `setId` (autocompleted from `Cosmetics_SetIds`) | Gives one more copy of each piece of a set, a whole skin |
+| `unlock_skins` | `player` | Gives one copy of every piece the player doesn't own yet |
+| `unlock_emotes` | `player` | Gives one copy of every emote the player doesn't own yet |
+
+Giving one piece or emote, or more copies of it, is the Inventory's `inventory add_standard player itemId quantity?`.

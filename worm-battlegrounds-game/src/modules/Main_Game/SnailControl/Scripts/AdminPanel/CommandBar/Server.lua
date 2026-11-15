@@ -37,38 +37,57 @@ end
 
 --[[
 	Registers the commands that start and end a snail's turn and fill its stamina by hand, for testing. Each one acts on the invoker's own
-	snail unless it names a participant id.
+	snail unless it names another by its name, its player's username or its id.
 ]]
 function Module._registerCommands()
-	--%%%%%%%%%%%%%%%%%%%% Helper Functions
+	--%%%%%%%%%%%%%%%%%%%% Get Snail Id
 
-	local function getId(invoker: Player | number, participantId: string?)
-		return participantId or `P_{if typeof(invoker) == "Instance" then invoker.UserId else invoker}`
+	--[[
+		Returns the participant id and the name of the snail a command acts on: the one it names (by its name, its
+		player's username or its id), or the invoker's own. Text that names no snail comes back as both.
+	]]
+	--- @return string, string
+	local function getSnailId(invoker: Player | number, snail: string?)
+		--[[ Data ]]
+
+		local query: string = snail or `P_{if typeof(invoker) == "Instance" then invoker.UserId else invoker}`
+		local participant = I.Match.FindParticipant(query) --- @type Match_Participant?
+
+		--[[ Returning ]]
+
+		if participant then
+			return participant.Id, participant.DisplayName
+		end
+		return query, query
 	end
 
 	--%%%%%%%%%%%%%%%%%%%% Control Functions
 
-	local function turn(invoker: Player | number, participantId: string?)
+	local function turn(invoker: Player | number, snail: string?)
 		--[[ Local Variables ]]
 
-		local id: string = getId(invoker, participantId)
+		local id: string
+		local name: string
+		id, name = getSnailId(invoker, snail)
 
 		--[[ Executing ]]
 
 		-- Check if the turn started
 		if not I.SnailControl.StartTurn(id) then
-			return false, `$|cr$|{id}#| has no snail in play that a player here moves`
+			return false, `No snail $|cr$|{name}#| in play that a player here moves`
 		end
 
 		--[[ Returning ]]
 
-		return true, `Started a turn for $|cr$|{id}#|`
+		return true, `Started a turn for $|cr$|{name}#|`
 	end
 
-	local function stop(invoker: Player | number, participantId: string?)
+	local function stop(invoker: Player | number, snail: string?)
 		--[[ Local Variables ]]
 
-		local id: string = getId(invoker, participantId)
+		local id: string
+		local name: string
+		id, name = getSnailId(invoker, snail)
 
 		--[[ Executing ]]
 
@@ -76,24 +95,26 @@ function Module._registerCommands()
 
 		--[[ Returning ]]
 
-		return true, `Ended the turn of $|cr$|{id}#|`
+		return true, `Ended the turn of $|cr$|{name}#|`
 	end
 
-	local function refill(invoker: Player | number, participantId: string?)
+	local function refill(invoker: Player | number, snail: string?)
 		--[[ Local Variables ]]
 
-		local id: string = getId(invoker, participantId)
+		local id: string
+		local name: string
+		id, name = getSnailId(invoker, snail)
 
 		--[[ Executing ]]
 
 		-- Check if the stamina was filled
 		if not I.SnailControl.Refill(id) then
-			return false, `$|cr$|{id}#| has no snail in play`
+			return false, `No snail $|cr$|{name}#| in play`
 		end
 
 		--[[ Returning ]]
 
-		return true, `Filled the stamina of $|cr$|{id}#|`
+		return true, `Filled the stamina of $|cr$|{name}#|`
 	end
 
 	--%%%%%%%%%%%%%%%%%%%% Commands
@@ -107,7 +128,7 @@ function Module._registerCommands()
 		{
 			Aliases = { "turn" },
 			Args = {
-				{ name = "participantId", types = { "string" }, optional = true },
+				{ name = "snail", types = { "string" }, dict = "Match_Snails", optional = true },
 			},
 			PassInvoker = true,
 			Callback = turn,
@@ -115,7 +136,7 @@ function Module._registerCommands()
 		{
 			Aliases = { "end" },
 			Args = {
-				{ name = "participantId", types = { "string" }, optional = true },
+				{ name = "snail", types = { "string" }, dict = "Match_Snails", optional = true },
 			},
 			PassInvoker = true,
 			Callback = stop,
@@ -123,7 +144,7 @@ function Module._registerCommands()
 		{
 			Aliases = { "refill" },
 			Args = {
-				{ name = "participantId", types = { "string" }, optional = true },
+				{ name = "snail", types = { "string" }, dict = "Match_Snails", optional = true },
 			},
 			PassInvoker = true,
 			Callback = refill,

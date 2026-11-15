@@ -1996,6 +1996,35 @@ whole once the active snail acted, Worms style, with its health. And the jetpack
 
 Rules: Snails (Every snail parachutes in; One jetpack a match, on fuel; Utilities are held, then used).
 
+## Shop prices and the studio's shop pictures (2026-11-15)
+
+**What happened.** The owner: "fix shop because the prices are displayed incorrectly, the text on prices is too
+small", with the studio's pictures for the shop and the currencies. The shop asked Marketplace for prices with its
+Robux prefix (`\u{E002}`), which the game's font draws as a small ring, into a price label about a sixth of the
+button's width: "199" wrapped to "19 / 9". The Robux icon beside it, the pass pictures and the shop's balance icons
+were the design port's blank pictures, so nothing showed there. The coin and the diamond were two pairs of older
+pictures (the first kit's and the Brawl kit's).
+
+- **A port's pictures can be blank.** An `ImageLabel` that loads and shows nothing is a placeholder from the design
+  export; look at it in a playtest before calling a screen done.
+- **A glyph from another font is a bug in this one.** Prices are numbers; the currency is a picture beside them.
+- **One picture per thing.** Two coin pictures crept in; now one id per currency, everywhere.
+
+Rules: Maps and placeholders (A Robux price is the number alone; The coin and the diamond are the studio's pictures).
+
+## The loadout's unreadable cards (2026-11-15)
+
+**What happened.** The owner: "re-style how the text and amount look on the loadout in the menu on the right, the
+texts are not readable". The design's slot card stacked the name and the copies ("x12") in the middle, over the
+item's picture, in a thin font with no outline, and the name took its rarity's colour, so a red Medkit name over the
+red medkit vanished. Only the lock's price had an outline.
+
+- **Text over a picture needs an outline, or a place of its own.** Now the picture keeps the middle and every text
+  has a corner or the bottom band, outlined.
+- **A colour that carries meaning (rarity) needs a dark edge** to stay readable over any picture.
+
+Rules: Guis (Text on a card never sits on its picture).
+
 ## Bots that hurt themselves, and shots at the drowned (2026-11-15)
 
 **What happened.** The owner: "remove that the bots sacrifice their hp", "make them use homing missiles better",
@@ -2012,3 +2041,21 @@ and the bot planned on it and fired at its last spot.
 - **Bots should have every move players have.** Players run after a thrown shot; bots stood still.
 
 Rules: Snails (Bots play tricks and taunt: never spend their own health, move like players).
+
+## Lobby cards that changed map on Join (2026-11-16)
+
+**What happened.** The owner: "the active lobby is broken, when I click on join it changes the map, the map should stay
+globally for 30s, so every server should basically have the same map for 30s and show the timer back". Each lobby
+server picked its own random map per card, and a Join that opened a new match moved that card on to another map at
+once; the card also showed the map of whatever open match a Join would land in, so it changed whenever matches opened
+and closed elsewhere. Servers disagreed, and the map under the player's finger moved.
+
+- **A value every server must agree on comes from the clock, not from a server** (`ume/values.md`). The cards' maps
+  are now a pure function of the server time, so there's nothing to store, sync or race.
+- **What a button shows is what it does.** Join now only joins matches on the card's map, and the card sends the map
+  it showed, so a press at 0:00 still gets the map the player saw.
+- **Test at the boundary.** The first Join test fired exactly as the window rolled over and caught the label 0.2 s
+  behind the server: the reason for `JOIN_GRACE`.
+
+Rules: Guis (A lobby card is minimal), Public matches are global.
+

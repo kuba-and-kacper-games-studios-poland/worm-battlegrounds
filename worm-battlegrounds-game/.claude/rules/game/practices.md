@@ -533,6 +533,10 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   this).
 - **Text outlines follow the letters:** a UIStroke on text sets `ApplyStrokeMode = Contextual`, since `ctx.Stroke`
   outlines the box.
+- **Text on a card never sits on its picture** (the owner, 2026-11-15, on the loadout: "the texts are not
+  readable"): the picture keeps the middle, the texts take the corners and a band along the bottom, every one in the
+  heavy font with a black `UIStroke` (ScaledSize, about 0.14), on one line (a long name shrinks rather than wrap).
+  The loadout's slot cards are the pattern: number top left, copies top right, the name under the picture.
 - **Capitals stay capitals:** text in a capitals style (headings, titles, buttons, window and box titles) shows in
   capitals whatever code writes, through the `TextCase_Upper` tag the theme adds and the TextCase module (Utils). Code
   writes plain sentences ("You play in 3 turns"), never its own `string.upper`. A gui whose code writes into
@@ -564,7 +568,10 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   (`I.Transition.SetDestination`) right before a teleport, the `TeleportGui` card slides over the screen and Roblox
   carries it through the teleport; the next server's ReplicatedFirst script (`src/replicated_first/`, the code
   folder's only mount there) keeps it up until the player's client started, then slides it off. The place's own
-  `LoadingScreen` plays only on joins from the website.
+  `LoadingScreen` plays only on joins from the website. `I.TeleportToServer` (a Join into an open public match, a rejoin) sets
+  only the `TeleportOptions` property it's given, a job id or an access code (2026-11-16: Roblox refuses nil on the
+  other, so every such teleport failed): a framework file changed by the game (`tasks/place_loader/Teleport.lua`), set
+  again when a newer ume replaces `core/`.
 - **Studio plays the `Studio` map:** both maps' folders and modules on one server, the quick way to test a match. The
   Workspace attribute `Ume_StudioMapId = "Lobby"` tests the real trip instead: the lobby teleports to the match place,
   which a Studio test runs as last saved to Roblox, so save both places first. The map and match ride in the
@@ -590,6 +597,14 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   `ALWAYS_OFF`).
 - **Developer products and game passes are real** since 2026-11-13: the owner had them created on the Creator Hub,
   and their ids are in `src/global_data/Marketplace/`. Robux prices live only on the Creator Hub (Managed pricing off).
+  **A Robux price is the number alone, beside a Robux picture** (the owner, 2026-11-15: "the prices are displayed
+  incorrectly, the text on prices is too small"): read it with `GetProductPrice(…, false)`, never with the `\u{E002}`
+  glyph (the game's font draws it as a small ring, and the extra character wrapped "199" onto two lines), and show
+  Roblox's own icon, `rbxasset://textures/ui/common/robux@3x.png`, in an ImageLabel beside it, the row as tall as
+  its button.
+- **The coin and the diamond are the studio's pictures** (2026-11-15, the game home's `assets/ui/icons/shop/`), the
+  same everywhere: Currency's `IconId`, the themes' `wb-coin` and `wb-diamond`, and every gui and setting that draws
+  one. A new picture of either replaces every copy in the same change.
 - **Placeholders until the owner provides the real thing:** weapon
   projectiles and effects are made in code, the skins without a snail of their own (FBI Agent, Prisoner, VIP, Wizard)
   are still given (levels, VIP) but have no pieces until their art exists. Each such spot has a `shortcut:` comment or a README line saying it's a placeholder.
@@ -657,14 +672,17 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   (`EmoteShop`, its right edge on the column's), where an owned emote plays when pressed (the owner, 2026-11-15). **A lobby card is minimal** (the owner, 2026-11-15: "hide how many players are
   playing, and make the image much much bigger, in the background fading out to the right, but keep it readable"):
   the map's picture over the whole card (cut to its slanted frame), fading out before Join, the mode big and the map's name over it, no player
-  count or timer. The solo or party setup takes the board's place, whose lobby rows and buttons slide down off the
+  count, and a timer over Join counting down to the card's next map (the owner, 2026-11-16: "show the timer back"). The solo or party setup takes the board's place, whose lobby rows and buttons slide down off the
   screen for it and back after (MatchBoard's `PLAY_*` settings, the owner's pick, 2026-11-12), at the bottom centre
   (the owner's pick, 2026-11-12); custom lobbies open in a window. Crates and Skins are full-screen widgets: while either is open the lobby's guis hide
   (Lobby's `FULL_SCREEN_WIDGETS` and `LOBBY_GUIS`).
 - **Public matches are global** (the owner, 2026-11-15, replacing the per-server rows and timers of 2026-11-09):
   each public mode has one card, and Join sends the player and their party here straight to a match server: the
   fullest open match of that mode on any server with a seat for each of them, on one team where it fits, or a new one
-  (a party of 4 in Duo gets a 2v2 of its own). The open matches live in MemoryStore (the Matchmaking module), and
+  (a party of 4 in Duo gets a 2v2 of its own). **Each card's map is the same on every server for 30 seconds** (the
+  owner, 2026-11-16: "when I click on join it changes the map, the map should stay globally for 30s"): MatchBoard's
+  `Rotation` works it out from the server clock (`MAP_SECONDS`, a shuffle of the rotation per mode), so no server
+  stores it and a Join never moves it; Join only joins open matches on that map, or opens one on it. The open matches live in MemoryStore (the Matchmaking module), and
   **no match may ever hold more players than its size**: every seat is claimed in one `UpdateAsync`, which checks the
   room and takes the seats in the same step, and the match server closes its entry the same way, so the roster it
   closes with is final; it also sends back anyone who arrives without a seat. Never write a match's seats with
@@ -696,8 +714,8 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   checks). Code requires them by name (`FindFirstChild("ServerSettings")`), and `I.Settings` doesn't hold them.
   Overrides `ume/settings.md` (a module's settings are `Settings.lua`) for these files.
 - **Anything that would help a cheater runs on the server:** the bots' brain and genomes, the aim solver
-  (`I.Combat.GetArcs`, `PredictArc`), whose admin aim guide the server solves and sends to that player alone
-  (`Combat_AimbotGuide`), and the movement checks' margins. What clients need to draw (shot flight, launch speeds,
+  (`I.Combat.GetArcs`, `PredictArc`), whose admin aimbot the server solves (with the bots' prediction) and sends to
+  that player alone (`Combat_AimbotTargets`: only which snails they can hit), and the movement checks' margins. What clients need to draw (shot flight, launch speeds,
   Arsenal rows) stays shared. A client check of a Player attribute is never a gate: the server decides what it sends.
 - **A match place server plays only a match a lobby sent it:** one with no metadata outside Studio (a public server
   joined directly) plays nothing and sends everyone to the lobby (Match's `Connection.IsStray`).

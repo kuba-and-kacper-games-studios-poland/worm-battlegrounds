@@ -29,6 +29,16 @@ function Module.Init()
 	----------------------------
 
 	Module._registerCommands()
+	Module._refreshSnailNames()
+
+	----------------------------
+	--------- REGISTRY ---------
+	----------------------------
+
+	--- @Topic
+	I.Topic.Subscribe("Match_PhaseChanged", function(_phase: string)
+		Module._refreshSnailNames()
+	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization
@@ -37,7 +47,8 @@ end
 
 --[[
 	Registers the commands that steer a match by hand, for testing: skip a turn, change how long turns last, set the
-	wind and the round, and win at once.
+	wind and the round, and win at once (for the invoker's snail, or one named by its snail's name, its player's
+	username or its participant id).
 ]]
 function Module._registerCommands()
 	--%%%%%%%%%%%%%%%%%%%% Control Functions
@@ -99,17 +110,17 @@ function Module._registerCommands()
 		return true, `The match is on round $|cr$|{math.max(math.round(value), 1)}#|`
 	end
 
-	local function win(invoker: Player | number, participantId: string?)
+	local function win(invoker: Player | number, snail: string?)
 		--[[ Data ]]
 
-		local id: string = participantId or `P_{if typeof(invoker) == "Instance" then invoker.UserId else invoker}`
-		local winner = I.Match.GetParticipant(id) --- @type Match_Participant?
+		local id: string = snail or `P_{if typeof(invoker) == "Instance" then invoker.UserId else invoker}`
+		local winner = I.Match.FindParticipant(id) --- @type Match_Participant?
 
 		--[[ Checks ]]
 
 		-- Check if they play this match
 		if not winner then
-			return false, `$|cr$|{id}#| isn't in the match`
+			return false, `No snail in the match is called $|cr$|{id}#|`
 		end
 
 		-- Check if snails are in play
@@ -132,7 +143,7 @@ function Module._registerCommands()
 
 		--[[ Returning ]]
 
-		return true, `Knocked out $|cr$|{count}#| snails, so $|cr$|{id}#|'s team wins after this turn`
+		return true, `Knocked out $|cr$|{count}#| snails, so $|cr$|{winner.DisplayName}#|'s team wins after this turn`
 	end
 
 	--%%%%%%%%%%%%%%%%%%%% Commands
@@ -174,7 +185,7 @@ function Module._registerCommands()
 		{
 			Aliases = { "win" },
 			Args = {
-				{ name = "participantId", types = { "string" }, optional = true },
+				{ name = "snail", types = { "string" }, dict = "Match_Snails", optional = true },
 			},
 			PassInvoker = true,
 			Callback = win,
@@ -189,6 +200,29 @@ function Module._registerCommands()
 
 		Variants = variants,
 	})
+end
+
+--%%%%%%%%%%%%%%%%%%%% Refresh Snail Names
+
+--[[
+	Sets the `Match_Snails` dictionary, the match's snails as the commands that take a snail suggest them: each one's
+	name, spaces written as underscores (the bar reads one word).
+]]
+function Module._refreshSnailNames()
+	--[[ Local Variables ]]
+
+	local names = {} --- @type { string }
+
+	--[[ Collecting ]]
+
+	--- @param participant Match_Participant
+	for _index: number, participant in ipairs(I.Match.GetParticipants()) do
+		table.insert(names, (string.gsub(participant.DisplayName, "%s", "_")))
+	end
+
+	--[[ Saving ]]
+
+	I.AdminPanel_CommandBar.SetDictionary("Match_Snails", names, 255)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

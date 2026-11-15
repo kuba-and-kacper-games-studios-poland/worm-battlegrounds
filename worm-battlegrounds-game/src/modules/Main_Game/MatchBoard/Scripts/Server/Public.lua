@@ -13,11 +13,9 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 local Rows = require(script.Parent:FindFirstChild("Rows")) --- @type MatchBoard_Server_Rows
 local Launch = require(script.Parent:FindFirstChild("Launch")) --- @type MatchBoard_Server_Launch
+local Rotation = require(script.Parent.Parent:FindFirstChild("Helpers"):FindFirstChild("Rotation")) --- @type MatchBoard_Rotation
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
-
--- The public cards, one per mode, in PUBLIC_ROWS order
-local cards = {} --- @type { MatchBoard_Row }
 
 -- The leaders whose Join is on its way (it waits on Matchmaking's store), so a second press doesn't seat them twice
 local joining = {} --- @type { [Player]: boolean }
@@ -43,7 +41,7 @@ local Module = {}
 function Module.Init()
 	--[[ Network ]]
 
-	I.Network.GetEvent("MatchBoard_Join", { "Player", "string" }, { RateLimit = 2 })
+	I.Network.GetEvent("MatchBoard_Join", { "Player", "string", { Type = "string", Optional = true } }, { RateLimit = 2 })
 	I.Network.Fired("MatchBoard_Join", Module.Join)
 end
 
@@ -54,35 +52,8 @@ function Module.Start()
 
 	--- @param option MatchBoard_RowOption
 	for _index: number, option in ipairs(_settings.PUBLIC_ROWS) do
-		table.insert(cards, Rows.AddRow("Public", option.Mode, option.Size, Launch.GetMap(option.Size)))
-	end
-
-	--[[ Starting ]]
-
-	task.spawn(Module._mainLoop)
-end
-
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Main
-
---%%%%%%%%%%%%%%%%%%%% Main Loop
-
---[[
-	Reads every mode's open matches again each TARGETS_SECONDS, so each card shows the map a Join would land on.
-]]
-function Module._mainLoop()
-	--[[ Refreshing ]]
-
-	while true do
-		--- @param card MatchBoard_Row
-		for _index: number, card in ipairs(cards) do
-			local success: boolean
-			local result: any | string?
-			success, result = pcall(Module._refreshTargets, card)
-			if not success then
-				warn(`[{_localName}::{script.Name}]: Couldn't read the open {card.Mode} matches! - ({result})`)
-			end
-		end
-		task.wait(_settings.TARGETS_SECONDS)
+		-- A public card's map is the rotation's, which each client works out from the clock
+		Rows.AddRow("Public", option.Mode, option.Size, "")
 	end
 end
 
@@ -93,12 +64,14 @@ end
 --[[
 	**SERVER** |
 	Sends a player, with their whole party here, into a public match of a card's mode: the fullest open one on any
-	server with a seat for each of them (on one team where it can), or a new one on the card's map. Refused for a party
+	server on the map the card shows now (the rotation's) with a seat for each of them, on one team where it can, or a
+	new one on that map (`shownMap`, the map the player's card showed, when the card moved on less than JOIN_GRACE
+	seconds ago). Refused for a party
 	member (their leader picks), while their last Join is on its way, and for a party bigger than the mode. Returns
 	whether they're on their way.
 ]]
 --- @return boolean
-function Module.Join(player: Player, rowId: string)
+function Module.Join(player: Player, rowId: string, shownMap: string?)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return false
@@ -138,7 +111,7 @@ function Module.Join(player: Player, rowId: string)
 	joining[player] = true
 	local success: boolean
 	local result: any | string?
-	success, result = pcall(Module._join, card, group)
+	success, result = pcall(Module._join, card, group, Module._getMap(card, shownMap))
 	joining[player] = nil
 	if not success then
 		warn(`[{_localName}::{script.Name}]: Couldn't join a {card.Mode} match for ({player.Name})! - ({result})`)
@@ -154,14 +127,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Join Group
 
 --[[
-	Seats a group in an open match of the card's mode and sends it there, trying the matches in order until a claim
-	holds (another server may have filled one first). With none, opens a new match on the card's map and moves the
-	card to another. A teleport that fails gives the seats back. Returns whether the group is on its way.
+	Seats a group in an open match of the card's mode on a map and sends it there, trying the matches in order until a
+	claim holds (another server may have filled one first). With none, opens a new match on that map. A teleport that
+	fails gives the seats back. Returns whether the group is on its way.
 ]]
 --- @param card MatchBoard_Row
 --- @param group { Player }
 --- @return boolean
-function Module._join(card, group)
+function Module._join(card, group, mapId: string)
 	--[[ Local Variables ]]
 
 	local seats = {} --- @type { Match_RosterEntry }
@@ -175,7 +148,7 @@ function Module._join(card, group)
 	--[[ Open Matches ]]
 
 	--- @param lobby Matchmaking_Lobby
-	for _index: number, lobby in ipairs(Module._getTargets(I.Matchmaking.GetOpen(card.Mode), #group)) do
+	for _index: number, lobby in ipairs(Module._getTargets(I.Matchmaking.GetOpen(card.Mode), #group, mapId)) do
 		if not I.Matchmaking.Claim(card.Mode, lobby.Id, seats) then
 			continue
 		end
@@ -190,9 +163,6 @@ function Module._join(card, group)
 
 	local lobbyId: string = I.S.HttpService:GenerateGUID(false)
 	local roster = I.Matchmaking.Seat({}, seats, _settings.TEAM_SIZES[card.Mode], card.Size) --- @type { Match_RosterEntry }?
-	local mapId: string = card.MapId
-	card.MapId = Launch.GetMap(card.Size, mapId)
-	Rows.Publish(card)
 
 	--[[ Returning ]]
 
@@ -208,43 +178,36 @@ function Module._join(card, group)
 	})
 end
 
---%%%%%%%%%%%%%%%%%%%% Refresh Targets
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Map
 
 --[[
-	Writes on a card the map a Join would land on for each group size up to Party's MAX_PARTY: the open match it'd
-	join, or "" for a new one on the card's map.
+	Returns the map a Join on a card plays: the rotation's now, or the one before it when the press came in less than
+	JOIN_GRACE seconds after the card moved on and the player's card still showed that one.
 ]]
 --- @param card MatchBoard_Row
-function Module._refreshTargets(card)
+--- @return string
+function Module._getMap(card, shownMap: string?)
 	--[[ Local Variables ]]
 
-	local lobbies = I.Matchmaking.GetOpen(card.Mode) --- @type { Matchmaking_Lobby }
-	local targets = {} --- @type { string }
+	local now: number = I.S.Workspace:GetServerTimeNow()
+	local previous: string = Rotation.GetMap(card.Mode, card.Size, now - _settings.JOIN_GRACE)
 
-	--[[ Calculating ]]
+	--[[ Returning ]]
 
-	for groupSize: number = 1, I.Settings["Party"].MAX_PARTY do
-		local target = Module._getTargets(lobbies, groupSize)[1] --- @type Matchmaking_Lobby?
-		table.insert(targets, if target then target.MapId else "")
-	end
-
-	--[[ Publishing ]]
-
-	card.Targets = targets
-	Rows.Publish(card)
+	return if shownMap == previous then previous else Rotation.GetMap(card.Mode, card.Size, now)
 end
-
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
 --%%%%%%%%%%%%%%%%%%%% Get Targets
 
 --[[
-	Returns the open matches a group of this size fits in, best first: those where it sits on one team, then the
-	fullest, so matches fill up instead of many starting half empty.
+	Returns the open matches on a map that a group of this size fits in, best first: those where it sits on one team,
+	then the fullest, so matches fill up instead of many starting half empty.
 ]]
 --- @param lobbies { Matchmaking_Lobby }
 --- @return { Matchmaking_Lobby }
-function Module._getTargets(lobbies, groupSize: number)
+function Module._getTargets(lobbies, groupSize: number, mapId: string)
 	--[[ Local Variables ]]
 
 	local targets = {} --- @type { Matchmaking_Lobby }
@@ -258,7 +221,7 @@ function Module._getTargets(lobbies, groupSize: number)
 		local seats: number
 		local oneTeam: boolean
 		seats, oneTeam = I.Matchmaking.GetFit(lobby, groupSize)
-		if seats >= groupSize then
+		if seats >= groupSize and lobby.MapId == mapId then
 			free[lobby.Id] = seats
 			together[lobby.Id] = oneTeam
 			table.insert(targets, lobby)

@@ -12,7 +12,10 @@ attributes on the slot prefab (normal, selected, the + slot's darker outline). A
 its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker polished the lock cover
 (2026-11-11): the design's darker locked card with a coin before the price. Changed from the design (2026-11-15): a
 column two cards wide instead of rows of four and three, and the emote row is one button, showing Wave's icon (`art/emotes`) instead of a +. EMOTES is placed
-under all four rows; Loadout moves it up to sit under the last row shown.
+under all four rows; Loadout moves it up to sit under the last row shown. Restyled for reading (the owner,
+2026-11-15): the picture keeps the card's middle, the number sits top left, the copies top right with Shiny under
+them, and the name in a band along the bottom; every text is heavy, on one line and outlined in black, and the lock
+shows its price under the lock, as tall as the name band, with the coin or Robux icon left of it.
 
 |  |  |
 | --- | --- |
@@ -36,7 +39,7 @@ under all four rows; Loadout moves it up to sit under the last row shown.
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| Slot` | `U_Row1` | An ImageButton: `S_Number`, `S_Icon`, `S_Name`, `S_Amount` ("x5"), `S_Plus` (empty slot), `S_Shiny`, `S_Lock` (the gui maker's locked card, 2026-11-11: `Main`, `Stroke`, `LockIcon`) › `S_Price` (white, with its `CurrencyIcon` coin). `Background` › `Stroke2` / `Stroke` take the looks in its attributes |
+| `PREFAB \| Slot` | `U_Row1` | An ImageButton: `S_Number` (top left), `S_Icon` (the middle, fitted), `S_Name` (the bottom band), `S_Amount` ("x5", top right), `S_Plus` (empty slot), `S_Shiny` (under `S_Amount`), `S_Lock` (the gui maker's locked card, 2026-11-11: `Main`, `Stroke`, `LockIcon`) › `S_Price` (white, with its `CurrencyIcon` left of the number). `Background` › `Stroke2` / `Stroke` take the looks in its attributes |
 
 ## Driven by
 

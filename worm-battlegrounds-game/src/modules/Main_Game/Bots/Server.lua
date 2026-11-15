@@ -86,6 +86,7 @@ function Module.Init()
 		--[[ Methods ]]
 
 		GetStart = Module.GetStart,
+		GetShotHits = Module.GetShotHits,
 	}
 end
 
@@ -663,6 +664,47 @@ end
 --- @return Vector3
 function Module.GetStart(difficulty: string, spots, taken)
 	return Brain.GetStart(spots, taken, Brains[difficulty] or Brains.Hard, _settings.SKILLS[difficulty] or _settings.SKILLS.Easy)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Shot Hits
+
+--[[
+	**SERVER** |
+	Returns the snails a shot from a snail in play would hurt, by id, as the bots foresee it in the match's wind (its
+	flight with bounces, fuses, bomblets, a crawl or a black hole's pull, then its blasts and strikes). The admin aim
+	guide uses it; nil for a weapon whose shot it can't foresee.
+]]
+--- @return { [string]: number }?
+function Module.GetShotHits(model: Model, itemId: string, angle: number, power: number, target: Vector3?)
+	--[[ Local Variables ]]
+
+	local everyone = {} --- @type { Bots_Snail }
+	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
+		table.insert(everyone, Module._getSnail(other))
+	end
+
+	--[[ Predicting ]]
+
+	-- The ground may have changed since a bot last looked
+	Predict.ClearColumns()
+	local shot = Predict.GetShot(model.PrimaryPart.Position, itemId, angle, power, target, I.Match.GetWind(), model, everyone) --- @type Bots_Shot?
+	if not shot then
+		return nil
+	end
+
+	--[[ Collecting ]]
+
+	local hits = {} --- @type { [string]: number }
+	--- @param effect Bots_Effect
+	for id: string, effect in pairs(Predict.GetEffects(shot, everyone)) do
+		if effect.Damage > 0 then
+			hits[id] = effect.Damage
+		end
+	end
+
+	--[[ Returning ]]
+
+	return hits
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Turn

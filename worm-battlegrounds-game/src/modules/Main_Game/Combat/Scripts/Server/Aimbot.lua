@@ -67,8 +67,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Main Loop
 
 --[[
-	Every AIMBOT_REFRESH seconds, solves the guide again for each player whose `Aimbot` attribute the server set (the
-	admin `aimbot` command), and clears it for those whose aimbot went off.
+	Every AIMBOT_REFRESH seconds, finds again the snails each player whose `Aimbot` attribute the server set (the admin
+	`aimbot` command) can hit, and clears them for those whose aimbot went off.
 ]]
 function Module._mainLoop()
 	--[[ Looping ]]
@@ -79,7 +79,7 @@ function Module._mainLoop()
 			local result: any | string?
 			success, result = pcall(Module._updatePlayer, player)
 			if not success then
-				warn(`[{_localName}::{script.Name}]: Failed to update the aim guide for ({player.Name})! - ({result})`)
+				warn(`[{_localName}::{script.Name}]: Failed to update the aimbot for ({player.Name})! - ({result})`)
 			end
 		end
 	end)
@@ -90,8 +90,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Update Player
 
 --[[
-	Sends a player with the aimbot on, on their turn, the shot that lands on each enemy snail from their snail with the
-	weapon it holds, once something moved; sends an empty guide when there's nothing to show.
+	Sends a player with the aimbot on, on their turn, the enemy snails a shot with the weapon their snail holds would
+	hurt, once something moved; sends an empty list when there's nothing to show.
 ]]
 function Module._updatePlayer(player: Player)
 	-- Check if player is valid | SERVER
@@ -106,11 +106,11 @@ function Module._updatePlayer(player: Player)
 
 	--[[ Checks ]]
 
-	-- Check if it's the player's turn to aim, and clear a guide that was showing
-	if not snail or not itemId or not snail.PrimaryPart or not I.Match.IsActivePlayer(player) or I.Match.GetPhase() ~= "Turn" then
+	-- Check if it's the player's turn to aim with a weapon, and clear the marks that were showing
+	if not snail or not itemId or I.G_Arsenal.IsUtility(itemId) or not snail.PrimaryPart or not I.Match.IsActivePlayer(player) or I.Match.GetPhase() ~= "Turn" then
 		if lastKeys[player] then
 			lastKeys[player] = nil
-			I.Network.Fire("Combat_AimbotGuide", player, {})
+			I.Network.Fire("Combat_AimbotTargets", player, {})
 		end
 		return
 	end
@@ -127,7 +127,7 @@ function Module._updatePlayer(player: Player)
 
 	--[[ Checks ]]
 
-	-- Check if anything moved since the last guide
+	-- Check if anything moved since the last list
 	if key == lastKeys[player] then
 		return
 	end
@@ -136,20 +136,19 @@ function Module._updatePlayer(player: Player)
 
 	lastKeys[player] = key
 	arcParams.FilterDescendantsInstances = { snail, effectsFolder }
-	local guides = {} --- @type { Combat_AimGuide }
+	local hittable = {} --- @type { Model }
 	for _index: number, target: Model in ipairs(targets) do
-		local guide = Module._getGuide(origin, target, itemId, wind) --- @type Combat_AimGuide?
-		if guide then
-			table.insert(guides, guide)
+		if Module._canHit(snail, target, itemId, wind) then
+			table.insert(hittable, target)
 		end
 	end
 
 	--[[ Sending ]]
 
-	I.Network.Fire("Combat_AimbotGuide", player, guides)
+	I.Network.Fire("Combat_AimbotTargets", player, hittable)
 end
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
 --%%%%%%%%%%%%%%%%%%%% Get Targets
 
@@ -176,68 +175,57 @@ function Module._getTargets(snail: Model)
 	return targets
 end
 
---%%%%%%%%%%%%%%%%%%%% Get Guide
+--%%%%%%%%%%%%%%%%%%%% Can Hit
 
 --[[
-	Returns the best shot at a target with a weapon: an arc weapon's angle and power whose path lands nearest it (an
-	exact hit when one is open), a gun's straight line, or a homing shot's launch up toward its side; nil for weapons
-	that aren't aimed.
+	Returns whether some aim with a weapon hurts a target, as the bots foresee a shot (I.Bots.GetShotHits: bounces,
+	fuses, bomblets, crawls and blasts included). An arc weapon tries the arcs from GetArcs at AIMBOT_POWERS whose
+	paths first touch nearest the target, AIMBOT_SIMULATED of them; a gun or a swing aims straight at it, and a homing
+	shot is fired up toward its side (as the bots fire it). A weapon placed at the feet hits nothing here.
 ]]
---- @return Combat_AimGuide?
-function Module._getGuide(origin: Vector3, target: Model, itemId: string, wind: number)
+--- @return boolean
+function Module._canHit(snail: Model, target: Model, itemId: string, wind: number)
 	--[[ Data ]]
 
 	local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
 
 	--[[ Local Variables ]]
 
+	local origin: Vector3 = snail.PrimaryPart.Position
 	local aimAt: Vector3 = target.PrimaryPart.Position
 	local toTarget: Vector3 = aimAt - origin
 
-	--[[ Guns ]]
+	-- Each aim's angle (X), power (Y) and, for arcs, how far from the target its path first touches (Z)
+	local aims = {} --- @type { Vector3 }
 
-	if row.Aim == "Straight" then
-		local hit: RaycastResult? = I.S.Workspace:Raycast(origin, toTarget, arcParams)
-		local reached: boolean = toTarget.Magnitude <= (row.Range or 60) and (not hit or hit.Instance:IsDescendantOf(target))
-		local stop: Vector3 = if hit then hit.Position else aimAt
-		return { Angle = math.atan2(toTarget.Y, toTarget.X), Power = nil, Points = { origin, stop }, Target = aimAt, Hit = reached }
+	--[[ Aiming ]]
+
+	if row.Aim == "Arc" then
+		for _index: number, arc: Vector2 in ipairs(Arcs.GetArcs(origin, aimAt, itemId, wind, _serverSettings.AIMBOT_POWERS)) do
+			local points = Module._getPath(origin, arc.X, arc.Y, itemId, wind, target) --- @type { Vector3 }
+			table.insert(aims, Vector3.new(arc.X, arc.Y, (points[#points] - aimAt).Magnitude))
+		end
+		table.sort(aims, function(a: Vector3, b: Vector3): boolean
+			return a.Z < b.Z
+		end)
+	elseif row.Aim == "Target" then
+		table.insert(aims, Vector3.new(math.rad(if toTarget.X < 0 then 110 else 70), 0.7, 0))
+	elseif row.Aim == "Straight" or row.Aim == "Melee" then
+		table.insert(aims, Vector3.new(math.atan2(toTarget.Y, toTarget.X), 1, 0))
 	end
 
-	--[[ Homing ]]
+	--[[ Predicting ]]
 
-	-- Fired up toward the target's side, it steers itself (as the bots fire it)
-	if row.Aim == "Target" then
-		local angle: number = math.rad(if toTarget.X < 0 then 110 else 70)
-		local points = Module._getPath(origin, angle, 0.7, itemId, wind, target) --- @type { Vector3 }
-		return { Angle = angle, Power = 0.7, Points = points, Target = aimAt, Hit = true }
-	end
-
-	--[[ Checks ]]
-
-	-- Check if it's an arc weapon
-	if row.Aim ~= "Arc" then
-		return nil
-	end
-
-	--[[ Solving ]]
-
-	local best = nil --- @type Combat_AimGuide?
-	local bestMiss: number = math.huge
-	for _index: number, arc: Vector2 in ipairs(Arcs.GetArcs(origin, aimAt, itemId, wind, _serverSettings.AIMBOT_POWERS)) do
-		local points = Module._getPath(origin, arc.X, arc.Y, itemId, wind, target) --- @type { Vector3 }
-		local miss: number = (points[#points] - aimAt).Magnitude
-		if miss < bestMiss then
-			bestMiss = miss
-			best = { Angle = arc.X, Power = arc.Y, Points = points, Target = aimAt, Hit = false }
+	for index: number = 1, math.min(#aims, _serverSettings.AIMBOT_SIMULATED) do
+		local hits = I.Bots.GetShotHits(snail, itemId, aims[index].X, aims[index].Y, aimAt) --- @type { [string]: number }?
+		if hits and hits[target.Name] then
+			return true
 		end
 	end
 
 	--[[ Returning ]]
 
-	if best then
-		best.Hit = bestMiss <= _serverSettings.AIMBOT_HIT_MARGIN
-	end
-	return best
+	return false
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Path

@@ -53,9 +53,8 @@ No remotes of its own: purchases use Marketplace's `Marketplace_PromptProductPur
 
 | Key | Default | What |
 | --- | --- | --- |
-| `PACKS` | Handful 250, Pouch 500, Bag 1,000, Chest 1,500, Vault 2,500 | `{ Product, Name, Diamonds }` per pack, in order |
-| `PACK_ICON` | the local diamond icon | The packs' picture |
-| `PASSES` | VIP, Double Coins, Loadout slot 5, Loadout slot 6 | `{ GamePass, Name, Benefits }` per pass, in order |
+| `PACKS` | Handful 250, Pouch 500, Bag 1,000, Chest 1,500, Vault 2,500 | `{ Product, Name, Icon, Diamonds }` per pack, in order; `Icon` is the studio's pack picture |
+| `PASSES` | VIP, Double Coins, Loadout slot 5, Loadout slot 6 | `{ GamePass, Name, Icon, Benefits }` per pass, in order; `Icon` is the studio's pass picture |
 | `VIP_PASS` | `"VIP"` | The VIP pass's Marketplace name |
 | `VIP_CHAT_TAG` | gold `[VIP] ` | Put in front of a VIP player's chat messages |
 | `VIP_CHECK_SECONDS` | `60` | How often the server looks for a new day's crate |
@@ -64,6 +63,7 @@ No remotes of its own: purchases use Marketplace's `Marketplace_PromptProductPur
 ## In the place
 
 Drives the `Shop` widget (`U_Packs` › `PREFAB | Pack`: `S_Icon`, `S_Name`, `S_Info`, `S_Buy` › `S_Price`; `U_Passes` ›
-`PREFAB | Pass`: `S_Name`, `S_Benefits`, `S_Buy` › `S_RobuxIcon`, `S_Price`, coloured from the button's `Look_*` and
-`Look_Owned*` attributes, "Owned" once owned). Sets
+`PREFAB | Pass`: `S_Icon`, `S_Name`, `S_Benefits`, `S_Buy` › `S_RobuxIcon`, `S_Price`, coloured from the button's `Look_*` and
+`Look_Owned*` attributes, "Owned" once owned). Prices are the number alone (`GetProductPrice(…, false)`, with
+thousands separators), beside the button's Robux picture. Sets
 `TextChatService.OnIncomingMessage` on the client.

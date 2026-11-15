@@ -107,7 +107,7 @@ function Module._onOpened(widgetName: string)
 		card.LayoutOrder = index
 		card.Visible = true
 		card:FindFirstChild("S_Name", true).Text = pack.Name
-		card:FindFirstChild("S_Icon", true).Image = _settings.PACK_ICON
+		card:FindFirstChild("S_Icon", true).Image = pack.Icon
 		card:FindFirstChild("S_Info", true).Text = `{pack.Diamonds} diamonds`
 		card.Parent = elems["Packs"]
 		Module._showPrice(card:FindFirstChild("S_Price", true), pack.Product, Enum.InfoType.Product)
@@ -129,6 +129,7 @@ function Module._onOpened(widgetName: string)
 		card.LayoutOrder = index
 		card.Visible = true
 		card:FindFirstChild("S_Name", true).Text = pass.Name
+		card:FindFirstChild("S_Icon", true).Image = pass.Icon
 		card:FindFirstChild("S_Benefits", true).Text = pass.Benefits
 		background:FindFirstChild("Main").ImageColor3 = buy:GetAttribute(`Look_{look}MainColor`)
 		background:FindFirstChild("Stroke").ImageColor3 = buy:GetAttribute(`Look_{look}StrokeColor`)
@@ -152,15 +153,16 @@ end
 --%%%%%%%%%%%%%%%%%%%% Show Price
 
 --[[
-	Writes a product's live Robux price on a label once Roblox answers, or a dash while it isn't on sale.
+	Writes a product's live Robux price on a label once Roblox answers, or a dash while it isn't on sale. The
+	number only: the button's Robux icon is a picture beside it.
 ]]
 function Module._showPrice(label: TextLabel, productName: string, infoType: Enum.InfoType)
 	--[[ Applying ]]
 
 	label.Text = "..."
 	task.spawn(function()
-		local price: (string | number)? = I.G_Marketplace.GetProductPrice(productName, infoType, true)
-		label.Text = if price then tostring(price) else "-"
+		local price: (string | number)? = I.G_Marketplace.GetProductPrice(productName, infoType, false)
+		label.Text = if price then I.Format.Text(tostring(price)) else "-"
 	end)
 end
 

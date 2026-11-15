@@ -37,8 +37,8 @@ local _settings = {
 	ITEMS_PER_ROW = 3,
 
 	-- The picture beside a locked slot's price: coins for the coin slot, Robux for a pass
-	COIN_ICON = "rbxassetid://111931430831562",
-	ROBUX_ICON = "rbxassetid://95337213544429",
+	COIN_ICON = "rbxassetid://123804836570291",
+	ROBUX_ICON = "rbxasset://textures/ui/common/robux@3x.png",
 }
 
 return _settings

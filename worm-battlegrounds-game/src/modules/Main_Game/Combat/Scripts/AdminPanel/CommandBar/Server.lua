@@ -38,49 +38,68 @@ end
 
 --[[
 	Registers the commands that give weapons and utilities mid-match and fill their uses, for testing (each acts on the
-	invoker's own snail unless it names a participant id), and `aimbot`, which turns a player's aim guide on or off.
+	invoker's own snail unless it names another by its name, its player's username or its id), and `aimbot`, which turns a player's aim guide on or off.
 ]]
 function Module._registerCommands()
-	--%%%%%%%%%%%%%%%%%%%% Helper Functions
+	--%%%%%%%%%%%%%%%%%%%% Get Snail Id
 
-	local function getId(invoker: Player | number, participantId: string?)
-		return participantId or `P_{if typeof(invoker) == "Instance" then invoker.UserId else invoker}`
+	--[[
+		Returns the participant id and the name of the snail a command acts on: the one it names (by its name, its
+		player's username or its id), or the invoker's own. Text that names no snail comes back as both.
+	]]
+	--- @return string, string
+	local function getSnailId(invoker: Player | number, snail: string?)
+		--[[ Data ]]
+
+		local query: string = snail or `P_{if typeof(invoker) == "Instance" then invoker.UserId else invoker}`
+		local participant = I.Match.FindParticipant(query) --- @type Match_Participant?
+
+		--[[ Returning ]]
+
+		if participant then
+			return participant.Id, participant.DisplayName
+		end
+		return query, query
 	end
 
 	--%%%%%%%%%%%%%%%%%%%% Control Functions
 
-	local function give(invoker: Player | number, itemId: string, participantId: string?)
+	local function give(invoker: Player | number, itemId: string, snail: string?)
 		--[[ Local Variables ]]
 
-		local id: string = getId(invoker, participantId)
+		local id: string
+		local name: string
+		id, name = getSnailId(invoker, snail)
 
 		--[[ Executing ]]
 
 		-- Check if the item was given
 		if not I.Combat.Give(id, itemId) then
-			return false, `$|cr$|{id}#| isn't in a match, or $|cr$|{itemId}#| isn't an item`
+			return false, `No snail $|cr$|{name}#| in play, or $|cr$|{itemId}#| isn't an item`
 		end
 
 		--[[ Returning ]]
 
-		return true, `Gave $|cr$|{itemId}#| to $|cr$|{id}#|`
+		return true, `Gave $|cr$|{itemId}#| to $|cr$|{name}#|`
 	end
 
-	local function refill(invoker: Player | number, participantId: string?)
+	local function refill(invoker: Player | number, snail: string?)
 		--[[ Local Variables ]]
 
-		local id: string = getId(invoker, participantId)
+		local id: string
+		local name: string
+		id, name = getSnailId(invoker, snail)
 
 		--[[ Executing ]]
 
 		-- Check if the uses were filled
 		if not I.Combat.Refill(id) then
-			return false, `$|cr$|{id}#| isn't in a match`
+			return false, `No snail $|cr$|{name}#| in play`
 		end
 
 		--[[ Returning ]]
 
-		return true, `Filled every use of $|cr$|{id}#| and cleared its cooldowns`
+		return true, `Filled every use of $|cr$|{name}#| and cleared its cooldowns`
 	end
 
 	local function aimbot(player: Player)
@@ -137,7 +156,7 @@ function Module._registerCommands()
 			Aliases = { "give" },
 			Args = {
 				{ name = "itemId", types = { "string" }, dict = "Combat_ItemIds", requireDict = true },
-				{ name = "participantId", types = { "string" }, optional = true },
+				{ name = "snail", types = { "string" }, dict = "Match_Snails", optional = true },
 			},
 			PassInvoker = true,
 			Callback = give,
@@ -145,7 +164,7 @@ function Module._registerCommands()
 		{
 			Aliases = { "refill" },
 			Args = {
-				{ name = "participantId", types = { "string" }, optional = true },
+				{ name = "snail", types = { "string" }, dict = "Match_Snails", optional = true },
 			},
 			PassInvoker = true,
 			Callback = refill,

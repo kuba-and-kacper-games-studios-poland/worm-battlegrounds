@@ -59,7 +59,7 @@ player left stops at the next turn. One match plays at a time.
 | `Client.lua` | Match state for other client modules |
 | `Scripts/Client/WaitingRoom.lua` | The `MatchWaiting` gui while a public match's room is open: the countdown, the mode and seats, everyone seated ("Joining…" while on the way, READY once pressed), Ready (with how many are) and Leave match. On a pad it holds the selection (`I.Console.Focus`) |
 | `Scripts/Client/DropPicker.lua` | Picking the drop point: the marker follows the mouse (or the left stick), faded where a snail doesn't fit; a click, a tap or the gamepad's A places it (the pad's buttons are the Console module's `Move` and `PlaceDrop`, read through `I.Console.IsAction`); each DropMarker is sized with the screen by `I.ScreenScale.AddBillboard` |
-| `Scripts/AdminPanel/CommandBar/Server.lua` | The `match` command |
+| `Scripts/AdminPanel/CommandBar/Server.lua` | The `match` command, and the `Match_Snails` dictionary (each snail's name, spaces as underscores, set again on every phase change) that the commands taking a snail suggest from |
 | `Settings.lua` | `Match_Settings` |
 | `_meta/_types.lua` | `Match_Metadata`, `Match_RosterEntry`, `Match_Participant`, `Match_Placement`, `Match_Stats`, … |
 
@@ -77,6 +77,7 @@ player left stops at the next turn. One match plays at a time.
 | `SetRound(round: number)` | | The round the match is on; from `SUDDEN_DEATH_ROUND` the next turn starts sudden death. For testing |
 | `GetParticipant(participantId)`, `GetParticipantOf(player)` | `Match_Participant?` | A participant by id, or a player's |
 | `GetParticipants()` | `{ Match_Participant }` | Everyone in the match, in roster order |
+| `FindParticipant(query: string)` | `Match_Participant?` | The participant a typed name means, for admin commands: its id, its snail's name or its player's username, ignoring case, spaces and underscores; else the only one whose name starts with it |
 | `GetMetadata()` | `Match_Metadata` | The match this server plays |
 | `GetActive()` | `string?` | The active participant's id |
 | `GetPhase()` | `string` | `Waiting`, `Drop`, `Landing`, `Turn`, `Flight`, `Settle` or `Ended` |
@@ -177,4 +178,4 @@ send the player straight back.
 | `time` | `seconds` | Every turn lasts this long, until the server closes; `0` is `TURN_SECONDS` again |
 | `wind` | `wind` | This turn's wind |
 | `round` | `round` | The round (`11` starts sudden death next turn) |
-| `win` | `participantId?` | Knocks out every other team's snails and skips the turn, so the invoker's team wins |
+| `win` | `snail?` | Knocks out every other team's snails and skips the turn, so the invoker's team wins, or the named snail's (its name, its player's username or its id, as `FindParticipant` reads it) |

@@ -64,6 +64,7 @@ function Module.Init()
 
 		Set = Module.Set,
 		UnlockSlot = Module.UnlockSlot,
+		OpenAllSlots = Module.OpenAllSlots,
 
 		--[[ Methods ]]
 
@@ -188,6 +189,41 @@ function Module.UnlockSlot(player: Player, slot: number)
 	--[[ Saving ]]
 
 	moduleData["CoinSlots"]["Slot4"] = true
+
+	--[[ Publishing ]]
+
+	Module._publish(player)
+
+	--[[ Returning ]]
+
+	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Open All Slots
+
+--[[
+	**SERVER** |
+	Opens every slot for a player for good, whatever passes they own (the admin `loadout unlock_slots` command): each
+	slot past the base is saved as a coin slot, since each true coin slot opens one.
+]]
+--- @return boolean
+function Module.OpenAllSlots(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return false
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Loadout"]
+
+	--[[ Saving ]]
+
+	for slot: number = _settings.BASE_SLOTS + 1, _settings.MAX_SLOTS do
+		moduleData["CoinSlots"][`Slot{slot}`] = true
+	end
 
 	--[[ Publishing ]]
 

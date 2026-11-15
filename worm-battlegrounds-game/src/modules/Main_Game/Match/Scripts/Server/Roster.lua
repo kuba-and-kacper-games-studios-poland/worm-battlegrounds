@@ -378,6 +378,53 @@ function Module.GetParticipants()
 	return list
 end
 
+--%%%%%%%%%%%%%%%%%%%% Find Participant
+
+--[[
+	Returns the participant a typed name means, for admin commands: its id (`P_123`, `B_2`), its snail's name or its
+	player's username, ignoring case, spaces and underscores; else the only one whose name starts with it.
+]]
+--- @return Match_Participant?
+function Module.FindParticipant(query: string)
+	--[[ Local Variables ]]
+
+	local wanted: string = Module.GetNameKey(query)
+	local found = nil --- @type Match_Participant?
+	local starts: number = 0
+
+	--[[ Searching ]]
+
+	--- @param participant Match_Participant
+	for _index: number, participant in ipairs(Module.GetParticipants()) do
+		local player: Player? = if participant.IsBot then nil else I.S.Players:GetPlayerByUserId(participant.UserId)
+		local names = { participant.Id, participant.DisplayName, if player then player.Name else "" } --- @type { string }
+		for _nameIndex: number, name: string in ipairs(names) do
+			local key: string = Module.GetNameKey(name)
+			if key == wanted then
+				return participant
+			end
+			if key ~= "" and string.sub(key, 1, #wanted) == wanted and found ~= participant then
+				found = participant
+				starts += 1
+			end
+		end
+	end
+
+	--[[ Returning ]]
+
+	return if starts == 1 then found else nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Name Key
+
+--[[
+	Returns a name as commands compare it: lower case, without spaces and underscores.
+]]
+--- @return string
+function Module.GetNameKey(name: string)
+	return string.lower((string.gsub(name, "[%s_]", "")))
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Team Size
 
 --[[

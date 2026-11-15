@@ -1398,8 +1398,8 @@ local _gui = {
 													Look_CoinsStrokeColor = Color3.fromRGB(77, 199, 97),
 													Look_DiamondsMainColor = Color3.fromRGB(86, 184, 255),
 													Look_DiamondsStrokeColor = Color3.fromRGB(255, 210, 74),
-													Look_CoinsIcon = "rbxassetid://108986846988315",
-													Look_DiamondsIcon = "rbxassetid://76353040161236",
+													Look_CoinsIcon = "rbxassetid://123804836570291",
+													Look_DiamondsIcon = "rbxassetid://98200575516825",
 												},
 												Tags = {
 													["Utils_ButtonScale"] = {},
@@ -1494,7 +1494,7 @@ local _gui = {
 																Id = "S_Icon",
 																Props = {
 																	Size = UDim2.fromScale(0.1724, 0.625),
-																	Image = "rbxassetid://108986846988315",
+																	Image = "rbxassetid://123804836570291",
 																	ScaleType = Enum.ScaleType.Fit,
 																	ZIndex = 2,
 																	LayoutOrder = 0,
@@ -1920,7 +1920,7 @@ local _gui = {
 																	LayoutOrder = 0,
 																	Position = UDim2.fromOffset(37, 12),
 																	Size = UDim2.fromScale(0.1724, 0.625),
-																	Image = "rbxassetid://108986846988315",
+																	Image = "rbxassetid://123804836570291",
 																},
 																Attributes = {
 																	_ImageName = "1020_16__Gacha__CurrencyIcon_image",
@@ -2142,7 +2142,7 @@ local _gui = {
 																	LayoutOrder = 0,
 																	Position = UDim2.fromOffset(37, 12),
 																	Size = UDim2.fromScale(0.1724, 0.625),
-																	Image = "rbxassetid://108986846988315",
+																	Image = "rbxassetid://123804836570291",
 																},
 																Attributes = {
 																	_ImageName = "1020_16__Gacha__CurrencyIcon_image",
@@ -2364,7 +2364,7 @@ local _gui = {
 																	LayoutOrder = 0,
 																	Position = UDim2.fromOffset(38, 12),
 																	Size = UDim2.fromScale(0.1724, 0.625),
-																	Image = "rbxassetid://108986846988315",
+																	Image = "rbxassetid://123804836570291",
 																},
 																Attributes = {
 																	_ImageName = "1020_16__Gacha__CurrencyIcon_image",
@@ -2607,7 +2607,7 @@ local _gui = {
 																	LayoutOrder = 0,
 																	Position = UDim2.fromOffset(37, 12),
 																	Size = UDim2.fromScale(0.1724, 0.625),
-																	Image = "rbxassetid://76353040161236",
+																	Image = "rbxassetid://98200575516825",
 																},
 																Attributes = {
 																	_ImageName = "1020_16__Gacha__CurrencyIcon_image",
@@ -2829,7 +2829,7 @@ local _gui = {
 																	LayoutOrder = 0,
 																	Position = UDim2.fromOffset(37, 12),
 																	Size = UDim2.fromScale(0.1724, 0.625),
-																	Image = "rbxassetid://76353040161236",
+																	Image = "rbxassetid://98200575516825",
 																},
 																Attributes = {
 																	_ImageName = "1020_16__Gacha__CurrencyIcon_image",
@@ -3051,7 +3051,7 @@ local _gui = {
 																	LayoutOrder = 0,
 																	Position = UDim2.fromOffset(38, 12),
 																	Size = UDim2.fromScale(0.1724, 0.625),
-																	Image = "rbxassetid://76353040161236",
+																	Image = "rbxassetid://98200575516825",
 																},
 																Attributes = {
 																	_ImageName = "1020_16__Gacha__CurrencyIcon_image",
@@ -4100,7 +4100,7 @@ local _gui = {
 															Position = UDim2.fromScale(0.1018, 0.2317),
 															Size = UDim2.fromScale(0.1485, 0.5366),
 															ZIndex = 2,
-															Image = "rbxassetid://108986846988315",
+															Image = "rbxassetid://123804836570291",
 														},
 														Attributes = {
 															_ImageName = "1020_16__Gacha__CurrencyIcon_image",
@@ -4244,7 +4244,7 @@ local _gui = {
 															Position = UDim2.fromScale(0.1018, 0.2317),
 															Size = UDim2.fromScale(0.1485, 0.5366),
 															ZIndex = 2,
-															Image = "rbxassetid://76353040161236",
+															Image = "rbxassetid://98200575516825",
 														},
 														Attributes = {
 															_ImageName = "1020_16__Gacha__CurrencyIcon_image",

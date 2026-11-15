@@ -9,6 +9,10 @@ local _localName = "MatchBoard"
 --- @type MatchBoard_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Rotation = require(script.Parent.Parent:FindFirstChild("Helpers"):FindFirstChild("Rotation")) --- @type MatchBoard_Rotation
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local random: Random = Random.new()
@@ -239,23 +243,13 @@ end
 
 --[[
 	**SERVER** |
-	Returns a random map from MAP_POOL made for a match size, or any map in the pool when none is; never `avoid` (the
-	map a row just had) while there's another.
+	Returns a random map from MAP_POOL made for a match size, or any map in the pool when none is.
 ]]
 --- @return string
-function Module.GetMap(size: number, avoid: string?)
+function Module.GetMap(size: number)
 	--[[ Local Variables ]]
 
-	local fitting = {} --- @type { string }
-	for _index: number, mapId: string in ipairs(_settings.MAP_POOL) do
-		if table.find(_settings.MAPS[mapId].Sizes, size) then
-			table.insert(fitting, mapId)
-		end
-	end
-	local pool = table.clone(if #fitting > 0 then fitting else _settings.MAP_POOL) --- @type { string }
-	if #pool > 1 and table.find(pool, avoid) then
-		table.remove(pool, table.find(pool, avoid))
-	end
+	local pool = Rotation.GetPool(size) --- @type { string }
 
 	--[[ Returning ]]
 

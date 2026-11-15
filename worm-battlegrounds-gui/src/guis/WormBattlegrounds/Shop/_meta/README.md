@@ -2,7 +2,7 @@
 
 The shop: the 5 diamond packs and the 4 game passes, every benefit listed, prices read live from Roblox, with the player's diamonds and coins and **Back** at the top.
 
-**Look.** The studio's `Shop` design (2026-11-12), ported 1:1 as `Primitive` nodes (its pictures, fonts and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive` ports"). It fills the screen: SHOP top left, the two balances and a red Back top right, a row of diamond pack cards over a row of game pass cards. Every price sits on a green button; an owned pass's button turns grey.
+**Look.** The studio's `Shop` design (2026-11-12), ported 1:1 as `Primitive` nodes (its pictures, fonts and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive` ports"). It fills the screen: SHOP top left, the two balances and a red Back top right, a row of diamond pack cards over a row of game pass cards. Every price sits on a green button, Roblox's Robux icon and the number filling it (one line, centred); an owned pass's button turns grey. The balances show the studio's diamond and coin; each pack and pass card shows its own picture (the Shop module's `Icon`), fitted above the pack's name and left of the pass's.
 
 |  |  |
 | --- | --- |
@@ -25,8 +25,8 @@ The shop: the 5 diamond packs and the 4 game passes, every benefit listed, price
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| Pack` | `U_Packs` | `S_Icon`, `S_Name`, `S_Info` (diamonds), `S_Buy` (ImageButton) with `S_Price` |
-| `PREFAB \| Pass` | `U_Passes` | `S_Icon`, `S_Name`, `S_Benefits`, `S_Buy` (ImageButton) with `S_RobuxIcon` and `S_Price` |
+| `PREFAB \| Pack` | `U_Packs` | `S_Icon` (empty until code sets it), `S_Name`, `S_Info` (diamonds), `S_Buy` (ImageButton) with `RobuxIcon` and `S_Price` |
+| `PREFAB \| Pass` | `U_Passes` | `S_Icon` (empty until code sets it), `S_Name`, `S_Benefits`, `S_Buy` (ImageButton) with `S_RobuxIcon` and `S_Price` |
 
 ## Driven by
 

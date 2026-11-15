@@ -17,7 +17,7 @@ attributes on the snail model, so the module creates no remotes.
 | Folder | `src/modules/Main_Game/Snails` |
 | Runs on | Server, Client |
 | Exposes | `I.Snails` (server: bodies and health; client: lookups) |
-| Uses | `I.Arena` (plane, hazards), `I.Create`, `I.Dirs.Assets` (skins), `I.G_Arsenal` (gear models), `I.Sound`, `I.Vfx`, `I.SnailRig` (skin animations), `I.PlayerBadges` (badges after the tag's name), `I.AdminPanel_CommandBar` |
+| Uses | `I.Arena` (plane, hazards), `I.Create`, `I.Dirs.Assets` (skins), `I.G_Arsenal` (gear models), `I.Sound`, `I.Vfx`, `I.SnailRig` (skin animations), `I.PlayerBadges` (badges after the tag's name), `I.Match` (commands: `FindParticipant`), `I.AdminPanel_CommandBar` |
 
 ## Files
 
@@ -146,11 +146,13 @@ No remotes: clients read the snail models' attributes. The server also writes `L
 
 ## Commands
 
-`snails` (server, level 255). Each acts on the invoker's snail unless it names a participant id:
+`snails` (server, level 255). Each acts on the invoker's snail unless it names another (`snail?`: its name, spaces as underscores, its
+player's username or its participant id, ignoring case; the start of one name is enough; autocompleted from Match's
+`Match_Snails`):
 
 | Subcommand | Arguments |
 | --- | --- |
-| `damage` | `amount`, `participantId?` |
-| `heal` | `amount`, `participantId?` |
-| `kill` | `participantId?` |
-| `push` | `x`, `y` (a speed change, in studs per second), `participantId?` |
+| `damage` | `amount`, `snail?` |
+| `heal` | `amount`, `snail?` |
+| `kill` | `snail?` |
+| `push` | `x`, `y` (a speed change, in studs per second), `snail?` |

@@ -87,7 +87,6 @@ function Module.AddRow(kind: "Public" | "Custom", mode: string, size: number, ma
 		Difficulty = _settings.PUBLIC_DIFFICULTY,
 		Players = {},
 		Owner = owner,
-		Targets = {},
 	}
 	rows[id] = row
 
@@ -194,9 +193,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Publish
 
 --[[
-	Writes a row into its Configuration for every client: Kind, Mode, Size, MapId, Difficulty, Players (JSON user
-	ids), Owner and, on a public card, Targets (JSON: the map a Join lands on, by group size; "" for a new match on
-	MapId).
+	Writes a row into its Configuration for every client: Kind, Mode, Size, MapId ("" on a public card, whose map is
+	the rotation's), Difficulty, Players (JSON user ids) and Owner.
 ]]
 --- @param row MatchBoard_Row
 function Module.Publish(row)
@@ -209,7 +207,6 @@ function Module.Publish(row)
 	row.Config:SetAttribute("Difficulty", row.Difficulty)
 	row.Config:SetAttribute("Players", I.S.HttpService:JSONEncode(row.Players))
 	row.Config:SetAttribute("Owner", row.Owner or 0)
-	row.Config:SetAttribute("Targets", I.S.HttpService:JSONEncode(row.Targets))
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

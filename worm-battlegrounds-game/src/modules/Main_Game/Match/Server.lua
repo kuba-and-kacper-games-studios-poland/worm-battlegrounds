@@ -103,6 +103,7 @@ function Module.Init()
 		GetParticipant = Roster.GetParticipant,
 		GetParticipantOf = Roster.GetParticipantOf,
 		GetParticipants = Roster.GetParticipants,
+		FindParticipant = Roster.FindParticipant,
 		GetActive = Module.GetActive,
 		GetPhase = Module.GetPhase,
 		GetWind = Module.GetWind,

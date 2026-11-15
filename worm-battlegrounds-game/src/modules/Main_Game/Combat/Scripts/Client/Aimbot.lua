@@ -11,13 +11,8 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
-local guideFolder: Folder
-
--- The guides showing now, for MatchHud's right-click lock-on
-local shownGuides = {} --- @type { Combat_AimGuide }
-
--- The game's font (the GUI kit's Londrina Solid Black)
-local LABEL_FONT: Font = Font.new("rbxassetid://113086061264643", Enum.FontWeight.Heavy)
+-- The snails marked now, as the aimbot can hit them
+local marked = {} --- @type { Model }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -38,140 +33,57 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Start
 
 function Module.Start()
-	--[[ Local Variables ]]
-
-	guideFolder = I.Create("Folder")({
-		Name = "Aimbot",
-		Parent = I.Dirs.UmeWorkspace:WaitForChild(_localName),
-	})
-
 	--[[ Connections ]]
 
-	I.Network.Fired("Combat_AimbotGuide", Module._onGuide)
+	I.Network.Fired("Combat_AimbotTargets", Module._onTargets)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
---%%%%%%%%%%%%%%%%%%%% On Guide
+--%%%%%%%%%%%%%%%%%%%% On Targets
 
 --[[
-	Draws the guides the server solved for the player (only while an admin turned their aimbot on), replacing the last
-	ones; an empty list clears them.
+	Marks the snails the server found the player can hit (only while an admin turned their aimbot on, on their turn)
+	with a faint fill on their team outline, and takes it off the ones marked before; an empty list clears them.
 ]]
---- @param guides { Combat_AimGuide }
-function Module._onGuide(guides)
-	--[[ Saving ]]
+--- @param targets { Model }
+function Module._onTargets(targets)
+	--[[ Clearing ]]
 
-	shownGuides = guides
+	for _index: number, model: Model in ipairs(marked) do
+		Module._mark(model, false)
+	end
 
-	--[[ Drawing ]]
+	--[[ Marking ]]
 
-	guideFolder:ClearAllChildren()
-	--- @param guide Combat_AimGuide
-	for _index: number, guide in ipairs(guides) do
-		Module._draw(guide)
+	marked = targets
+	for _index: number, model: Model in ipairs(marked) do
+		Module._mark(model, true)
 	end
 end
 
---%%%%%%%%%%%%%%%%%%%% Draw
+--%%%%%%%%%%%%%%%%%%%% Mark
 
 --[[
-	Draws one guide in the guide folder: a dot every stud and a half along its path, and its angle and power over the
-	target, in the hit colour when the server found it lands on it.
+	Turns a snail's mark on or off: the fill of the TeamOutline Highlight Snails' tags give it (none until its tag is
+	made, nor once it's gone).
 ]]
---- @param guide Combat_AimGuide
-function Module._draw(guide)
-	--[[ Local Variables ]]
+function Module._mark(model: Model?, on: boolean)
+	--[[ Data ]]
 
-	local color: Color3 = if guide.Hit then _settings.AIMBOT_HIT_COLOR else _settings.AIMBOT_MISS_COLOR
-	local last: Vector3? = nil
+	local outline: Highlight? = model and model:FindFirstChild("TeamOutline")
 
-	--[[ Path ]]
+	--[[ Checks ]]
 
-	for _index: number, point: Vector3 in ipairs(guide.Points) do
-		if last and (point - last).Magnitude < 1.5 then
-			continue
-		end
-		last = point
-		I.Create("Part")({
-			Name = "Dot",
-			Shape = Enum.PartType.Ball,
-			Size = Vector3.one * 0.4,
-			Position = point,
-			Color = color,
-			Material = Enum.Material.Neon,
-			Anchored = true,
-			CanCollide = false,
-			CanQuery = false,
-			CanTouch = false,
-			CastShadow = false,
-			Parent = guideFolder,
-		})
+	-- Skip a snail that has no outline (yet, or any more)
+	if not outline then
+		return
 	end
 
-	--[[ Label ]]
+	--[[ Applying ]]
 
-	local holder: Part = I.Create("Part")({
-		Name = "Label",
-		Size = Vector3.one,
-		Position = guide.Target + Vector3.yAxis * 4,
-		Transparency = 1,
-		Anchored = true,
-		CanCollide = false,
-		CanQuery = false,
-		CanTouch = false,
-		Parent = guideFolder,
-	})
-
-	-- Sized in studs, so it keeps to the world at every zoom and screen
-	local billboard: BillboardGui = I.Create("BillboardGui")({
-		Size = UDim2.fromScale(8, 1.8),
-		AlwaysOnTop = true,
-		Parent = holder,
-	})
-	local label: TextLabel = I.Create("TextLabel")({
-		Size = UDim2.fromScale(1, 1),
-		BackgroundTransparency = 1,
-		FontFace = LABEL_FONT,
-		TextScaled = true,
-		TextColor3 = color,
-		Text = Module._getLabel(guide),
-		Parent = billboard,
-	})
-	I.Create("UIStroke")({
-		Thickness = 2,
-		ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-		Parent = label,
-	})
-end
-
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
-
---%%%%%%%%%%%%%%%%%%%% Get Guides
-
---[[
-	Returns the aim guides showing now: empty unless an admin turned the player's aimbot on and it's their turn.
-]]
---- @return { Combat_AimGuide }
-function Module.GetGuides()
-	return shownGuides
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Label
-
---[[
-	Returns a guide's angle and power as the HUD writes them ("45° 72%"); a gun's angle alone.
-]]
---- @param guide Combat_AimGuide
---- @return string
-function Module._getLabel(guide)
-	--[[ Local Variables ]]
-
-	local angle: number = math.round(math.deg(math.asin(math.sin(guide.Angle))))
-
-	--[[ Returning ]]
-
-	return if guide.Power then `{angle}° {math.round(guide.Power * 100)}%` else `{angle}°`
+	outline.FillColor = _settings.AIMBOT_FILL_COLOR
+	outline.FillTransparency = if on then _settings.AIMBOT_FILL_TRANSPARENCY else 1
 end
 
 return Module

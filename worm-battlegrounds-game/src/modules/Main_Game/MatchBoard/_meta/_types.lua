@@ -37,8 +37,4 @@ local _matchBoard_MapRow = {}
 ---
 --- @field Players { number }
 --- @field Owner number?
----
---- # Public #
----
---- @field Targets { string }
 local _matchBoard_Row = {}

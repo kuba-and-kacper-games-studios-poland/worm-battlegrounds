@@ -585,7 +585,7 @@ local _gui = {
 										Size = UDim2.fromScale(1.3, 1.3),
 										SizeConstraint = Enum.SizeConstraint.RelativeYY,
 										ZIndex = 4,
-										Image = "rbxassetid://111931430831562",
+										Image = "rbxassetid://123804836570291",
 										ScaleType = Enum.ScaleType.Fit,
 									},
 								},

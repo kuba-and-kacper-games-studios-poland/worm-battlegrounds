@@ -156,6 +156,7 @@ checks that both play alike. The code folder's `train-bots` skill is the procedu
 | `CreateParticipant(difficulty: string, number: number)` | `Match_Participant` | A new bot (`Id` `B_<number>`) with an unused name, its difficulty's loadout plus the potion it rolled (`POTIONS`, maybe none; never the tutorial bot) and `MaxHealth` (`HEALTH`'s, or nil for Snails' `MAX_HEALTH`). Number 1 starts the names and the bots' memory over |
 | `TakeTurn(participantId: string)` | | Plays a bot's turn, or a dropped player's (a participant with no `Difficulty` plays at `TAKEOVER_DIFFICULTY`); with no plan it still fires the Bazooka toward the nearest enemy; gives up quietly when the turn ends meanwhile |
 | `GetStart(difficulty: string, spots: { Vector3 }, taken: { Vector3 })` | `Vector3` | The land spot a bot parachutes onto: never within `START_GAP` of a spot taken (with none that far, the farthest), a safe one first (no deadly drop right beside it, no blast at its feet dropping it into the sea), then the one its genome likes (away from edges and thin ground, high) with its skill's `StartNoise` on top, so no map has a spot bots always take |
+| `GetShotHits(model: Model, itemId: string, angle: number, power: number, target: Vector3?)` | `{ [string]: number }?` | The snails a shot from a snail in play would hurt and how much, by id, as `Predict` foresees it in the match's wind (`GetShot`, then `GetEffects`); nil for a weapon it can't foresee. Combat's admin aimbot uses it |
 
 ## Usage
 

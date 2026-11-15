@@ -13,6 +13,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Setup = require(script.Parent:FindFirstChild("Setup")) --- @type MatchBoard_Client_Setup
+local Rotation = require(script.Parent.Parent:FindFirstChild("Helpers"):FindFirstChild("Rotation")) --- @type MatchBoard_Rotation
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -26,6 +27,12 @@ local boardFolder: Folder
 
 -- Each public row's card on the board, by row id
 local lines = {} --- @type { [string]: Frame }
+
+-- The seconds the cards' timers last showed, so the board redraws once a second
+local shownSeconds: number = -1
+
+-- The map each public card shows, by row id, which its Join asks for
+local shownMaps = {} --- @type { [string]: string }
 
 --[[ Play ]]
 
@@ -88,7 +95,7 @@ function Module.Start()
 		end
 	end)
 
-	-- A card's map depends on how many travel with the player, so any player's party change redraws the board
+	-- Whether the player leads or follows a party greys the buttons out, so any player's party change redraws the board
 	I.S.Players.PlayerAdded:Connect(Module._watchPlayer)
 	I.S.Players.PlayerRemoving:Connect(Module._refresh)
 	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
@@ -100,6 +107,10 @@ function Module.Start()
 	-- On a pad the selection rests on SOLO VS BOTS while nothing else wants it (the Console module's home)
 	I.Console.SetHome(elems["Solo"])
 	Module._refresh()
+
+	--[[ Timers ]]
+
+	I.DoEvery.Every(_settings.TIMER_TICK, Module._tick)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -131,7 +142,7 @@ function Module._watchRow(config: Instance)
 				I.WidgetManager.ShowMessage("Your party's leader picks the match.")
 				return
 			end
-			I.Network.Fire("MatchBoard_Join", config.Name)
+			I.Network.Fire("MatchBoard_Join", config.Name, shownMaps[config.Name])
 		end)
 	end
 
@@ -191,20 +202,44 @@ function Module._onPlay()
 	Setup.Open(localPlayer:GetAttribute("PartyId") ~= nil)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Tick
+
+--[[
+	Redraws the board each time the cards' timers reach another second, while it shows: the timers count down, and
+	the maps change with the rotation at 0.
+]]
+function Module._tick()
+	--[[ Checks ]]
+
+	-- Check if the board shows
+	if not moduleGui.Enabled or not playShown then
+		return
+	end
+
+	-- Check if the timers show another second
+	if math.ceil(Rotation.GetSecondsLeft()) == shownSeconds then
+		return
+	end
+
+	--[[ Drawing ]]
+
+	Module._refresh()
+end
+
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the board: Solo vs bots (Play with party in a party), and each public card's mode, the map a Join would land
-	on for the player's group (the open match it'd join, or a new one on the card's map), its picture, and Join. The
-	setup panel shows in the board's place, which slides away for it. A party member's Join, Play and Custom are greyed
-	out (their leader picks), but Custom opens their leader's lobby once they're in it.
+	Draws the board: Solo vs bots (Play with party in a party), and each public card's mode, the map it plays now (the
+	rotation's, the same on every server), its picture, how long until the next map, and Join. The setup panel shows
+	in the board's place, which slides away for it. A party member's Join, Play and Custom are greyed out (their leader
+	picks), but Custom opens their leader's lobby once they're in it.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
 
 	local member: boolean = Module._isPartyMember()
 	local mine: Instance? = Module._getMyRow()
-	local groupSize: number = Module._getGroupSize()
+	shownSeconds = math.ceil(Rotation.GetSecondsLeft())
 
 	--[[ Lines ]]
 
@@ -213,16 +248,16 @@ function Module._refresh()
 		if not config then
 			continue
 		end
-		local targets = I.S.HttpService:JSONDecode(config:GetAttribute("Targets") or "[]") --- @type { string }
-		local target: string = targets[groupSize] or ""
-		local mapRow = _settings.MAPS[if target ~= "" then target else config:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
+		shownMaps[rowId] = Rotation.GetMap(config:GetAttribute("Mode"), config:GetAttribute("Size"))
+		local mapRow = _settings.MAPS[shownMaps[rowId]] --- @type MatchBoard_MapRow
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
-		line:FindFirstChild("S_Map", true).Text = if mapRow then mapRow.Name else ""
+		line:FindFirstChild("S_Map", true).Text = mapRow.Name
+		line:FindFirstChild("S_Timer", true).Text = string.format("%d:%02d", shownSeconds // 60, shownSeconds % 60)
 		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if member then "Host picks" else "Join"
 		Module._setLocked(line:FindFirstChild("S_Join"), member)
 
 		-- A map with no Thumbnail yet shows a plain card
-		line:FindFirstChild("S_MapIcon", true).Image = if mapRow then mapRow.Thumbnail else ""
+		line:FindFirstChild("S_MapIcon", true).Image = mapRow.Thumbnail
 	end
 
 	--[[ Play ]]
@@ -335,31 +370,6 @@ function Module._getMyRow()
 	--[[ Returning ]]
 
 	return nil
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Group Size
-
---[[
-	Returns how many travel with the local player: their party's members in this server, or just them.
-]]
---- @return number
-function Module._getGroupSize()
-	--[[ Local Variables ]]
-
-	local partyId: string? = I.S.Players.LocalPlayer:GetAttribute("PartyId")
-	local count: number = 0
-
-	--[[ Counting ]]
-
-	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
-		if player == I.S.Players.LocalPlayer or (partyId and player:GetAttribute("PartyId") == partyId) then
-			count += 1
-		end
-	end
-
-	--[[ Returning ]]
-
-	return count
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Players

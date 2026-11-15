@@ -1979,6 +1979,99 @@ local _gui = {
 						{ Primitive = "UIPadding" },
 					},
 				},
+				-- How long until every server's card moves on to its next map (the rotation), over Join
+				{
+					Primitive = "Frame",
+					Props = {
+						Name = "Timer",
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+						LayoutOrder = 6,
+						Position = UDim2.fromScale(0.6802, 0.03),
+						Size = UDim2.fromScale(0.2562, 0.19),
+						ZIndex = 7,
+					},
+					Children = {
+						{
+							Primitive = "UIListLayout",
+							Props = {
+								FillDirection = Enum.FillDirection.Horizontal,
+								HorizontalAlignment = Enum.HorizontalAlignment.Center,
+								VerticalAlignment = Enum.VerticalAlignment.Center,
+								SortOrder = Enum.SortOrder.LayoutOrder,
+								Padding = UDim.new(0.0536, 0),
+							},
+						},
+						{
+							Primitive = "Frame",
+							Props = {
+								Name = "TimerIcon",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 0,
+								Size = UDim2.fromScale(0.177, 0.8612),
+							},
+							Children = {
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "TimerIcon",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										ClipsDescendants = true,
+										LayoutOrder = 0,
+										Position = UDim2.fromScale(-0.1, -0.0909),
+										Size = UDim2.fromScale(1.2, 1.1818),
+										Image = "rbxassetid://119838940397311",
+									},
+									Attributes = { _ImageName = "1117_79__LobbyInventory__TimerIcon_image" },
+									Children = {
+										-- The picture's hand is black inside the dial, unseen on the dark card: a white one over it
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Hand",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.51, 0.5),
+												Rotation = 15,
+												Size = UDim2.fromScale(0.06, 0.19),
+											},
+											Children = { { Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } } },
+										},
+									},
+								},
+							},
+						},
+						{
+							Primitive = "TextLabel",
+							Id = "S_Timer",
+							Props = {
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 1,
+								Size = UDim2.fromScale(0.4554, 1),
+								ZIndex = 2,
+								Text = "0:30",
+								FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+								TextColor3 = Color3.fromRGB(255, 255, 255),
+								TextSize = 22,
+								TextScaled = true,
+								TextWrapped = true,
+								RichText = true,
+								TextXAlignment = Enum.TextXAlignment.Left,
+							},
+							Children = {
+								{
+									Primitive = "UIStroke",
+									Props = { Thickness = 0.1364, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+								},
+								{ Primitive = "UIPadding" },
+							},
+						},
+					},
+				},
 				{
 					Primitive = "ImageButton",
 					Id = "S_Join",

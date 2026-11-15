@@ -286,7 +286,7 @@ function Module._getPassPrice(passName: string)
 
 	passPrices[passName] = "..."
 	task.spawn(function()
-		local price: (string | number)? = I.G_Marketplace.GetProductPrice(passName, Enum.InfoType.GamePass, true)
+		local price: (string | number)? = I.G_Marketplace.GetProductPrice(passName, Enum.InfoType.GamePass, false)
 		passPrices[passName] = if price then I.Format.Text(tostring(price)) else "-"
 		Module._refresh()
 	end)

@@ -6,6 +6,7 @@
 ---
 --- @field Product string
 --- @field Name string
+--- @field Icon string
 ---
 --- # Reward #
 ---
@@ -18,6 +19,7 @@ local _shop_Pack = {}
 ---
 --- @field GamePass string
 --- @field Name string
+--- @field Icon string
 ---
 --- # Reward #
 ---

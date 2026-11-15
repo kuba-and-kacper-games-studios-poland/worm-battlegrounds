@@ -26,6 +26,7 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | `Client.lua` | Starts the panel and the picker |
 | `Scripts/Client/Panel.lua` | The `Loadout` panel's cards: the basic weapon and the slots, the selected look while the picker is open; EMOTES (`U_EmoteSection`) moved up under the last row shown |
 | `Scripts/Client/Picker.lua` | The `LoadoutPicker` widget |
+| `Scripts/AdminPanel/CommandBar/Server.lua` | The `loadout` command |
 | `Settings.lua` | `Loadout_Settings` |
 
 ## API
@@ -36,6 +37,7 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | --- | --- | --- |
 | `Set(player, slot: number, itemId: string?)` | `boolean` | Puts an owned weapon or utility in an open slot, or empties it; refuses an item another slot already holds |
 | `UnlockSlot(player, slot: number)` | `boolean` | Opens the coin slot as the next locked slot, once per player |
+| `OpenAllSlots(player)` | `boolean` | Opens every slot for good, whatever passes they own, by saving each slot past the base as a coin slot (the `loadout unlock_slots` command) |
 | `GetUnlocked(player)` | `number` | How many slots are open: base, plus the coin slot, plus one per slot pass owned |
 | `GetMatchLoadout(player)` | `{ string }, { [string]: boolean }` | The items in open slots, and which are shiny |
 
@@ -56,7 +58,7 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | Where | Key | What |
 | --- | --- | --- |
 | Profile | `Loadout.Slots` | Six item ids, `""` when empty (older profiles have five) |
-| Profile | `Loadout.CoinSlots` | `{ Slot4 = false }`: the coin slot. Each `true` opens one slot, so a `Slot5` saved before 2026-11-13 (when slot 5 cost 6,000 coins) still counts |
+| Profile | `Loadout.CoinSlots` | `{ Slot4 = false }`: the coin slot. Each `true` opens one slot, so a `Slot5` saved before 2026-11-13 (when slot 5 cost 6,000 coins) still counts; the `loadout unlock_slots` command saves `Slot4` to `Slot6` |
 | Replicator `Loadout` | `Slot1` … `Slot6`, `Unlocked`, `CoinSlotOpen` | For the panel and the tutorial |
 
 ## Settings
@@ -72,3 +74,14 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | `BASIC_WEAPON` | `"Bazooka"` | The weapon every loadout has: first on the panel, never in the picker |
 | `SLOTS_PER_ROW`, `ITEMS_PER_ROW` | `2`, `3` | Cards in each of the panel's rows, and in each of the picker's rows |
 | `COIN_ICON`, `ROBUX_ICON` | asset ids | The picture beside a locked slot's price |
+
+## Commands
+
+`loadout` (server, level 255):
+
+| Subcommand | Arguments | What |
+| --- | --- | --- |
+| `unlock_weapons` | `player` | Gives one copy of every weapon and utility (`SLOT_CATEGORIES`) the player doesn't own yet |
+| `unlock_slots` | `player` | Opens all `MAX_SLOTS` slots for good (`OpenAllSlots`) |
+
+Giving one item, or more copies of it, is the Inventory's `inventory add_standard player itemId quantity?`.

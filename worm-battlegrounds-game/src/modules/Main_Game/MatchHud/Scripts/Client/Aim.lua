@@ -25,17 +25,12 @@ local prefabs = {} --- @type { [string]: Instance }
 local angle: number = math.rad(45)
 local power: number = 0
 
--- How the player aims now: "Charge" (a held press fills the power), "Lock" (eased onto an aim guide), or nil
+-- How the player aims now: "Charge" (a held press fills the power), or nil
 local aiming: string? = nil
 
 -- The press that charges the shot (the mouse button, a finger on FIRE or RT) and when it started: letting it go fires
 local chargeInput: InputObject? = nil
 local chargeStart: number = 0
-
--- A right-click lock-on: the angle (X) and power (Y) it eases from, the guide it eases to, and when it started
-local lockFrom: Vector2 = Vector2.zero
-local lockGuide = nil --- @type Combat_AimGuide?
-local lockStart: number = 0
 
 -- Where the mouse or finger last pointed, in screen pixels: the aim points from the snail toward it (nil on a pad)
 local pointer: Vector2? = nil
@@ -73,7 +68,7 @@ local targetMarker: Part
 
 --[[ Prediction ]]
 
--- The tutorial's path dots and the dot where it lands, the shot raycasts (a shot's own collision group), and the power last fired
+-- The prediction's path dots (the tutorial's, and the aimbot's) and the dot where it lands, the shot raycasts (a shot's own collision group), and the power last fired
 local predictionDots = {} --- @type { Part }
 local predictionEnd: Part
 local predictionParams: RaycastParams
@@ -225,7 +220,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Make Dot
 
 --[[
-	Returns a hidden neon ball for the tutorial's prediction line.
+	Returns a hidden neon ball for the prediction line.
 ]]
 --- @return Part
 function Module._makeDot(name: string, size: number, color: Color3, parent: Instance)
@@ -252,20 +247,13 @@ end
 --[[
 	A press on the player's turn: the mouse button or RT shoots (Start Shot), or uses a utility the snail holds (any
 	press, a finger's too), and a finger on the arena points the aim
-	(a homing missile's first click or tap picks its target instead). With an admin's aim guide showing, a right click
-	locks on to it and the next press fires; otherwise right click, Esc and the pad's CancelAim drop the aim, and a second
-	finger stops pointing (the camera pans).
+	(a homing missile's first click or tap picks its target instead). Right click, Esc and the pad's CancelAim drop the
+	aim, and a second finger stops pointing (the camera pans).
 ]]
 function Module._onInputBegan(input: InputObject, processed: boolean)
 	--[[ Local Variables ]]
 
 	local press: boolean = input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch
-
-	--[[ Locking On ]]
-
-	if input.UserInputType == Enum.UserInputType.MouseButton2 and Module._lockOn(Vector2.new(input.Position.X, input.Position.Y)) then
-		return
-	end
 
 	--[[ Cancelling ]]
 
@@ -290,14 +278,6 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 	-- A press while my black hole grenade rolls blows it up
 	if firedItem == "BlackHoleGrenade" and I.Match.GetPhase() == "Flight" then
 		I.Network.Fire("Combat_Detonate")
-		return
-	end
-
-	-- A press while locked on fires at the guide's aim, even before the ease reaches it
-	if aiming == "Lock" and press then
-		angle = lockGuide.Angle
-		power = lockGuide.Power or 1
-		Module._fire()
 		return
 	end
 
@@ -473,10 +453,8 @@ function Module._step()
 
 	--[[ Pointing ]]
 
-	-- Every frame, as the camera and the snail move under a still mouse too; a lock-on ignores the mouse
-	if aiming == "Lock" then
-		Module._easeLock()
-	elseif pointer then
+	-- Every frame, as the camera and the snail move under a still mouse too
+	if pointer then
 		Module._aimAtPointer(mine)
 	end
 
@@ -555,74 +533,6 @@ function Module._aimAtPointer(model: Model)
 	--[[ Aiming ]]
 
 	angle = math.atan2(toPointer.Y, toPointer.X)
-end
-
---%%%%%%%%%%%%%%%%%%%% Lock On
-
---[[
-	On the player's turn with an admin's aim guide showing, starts easing the aim onto the guide whose target is nearest
-	the mouse on the screen (a homing missile's target becomes that snail). Returns whether it locked on.
-]]
---- @return boolean
-function Module._lockOn(position: Vector2)
-	--[[ Data ]]
-
-	local guides = I.Combat.GetAimGuides() --- @type { Combat_AimGuide }
-
-	--[[ Checks ]]
-
-	-- Check if the player may aim now, with a guide to lock on to
-	if #guides == 0 or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" then
-		return false
-	end
-
-	--[[ Picking ]]
-
-	local camera: Camera = I.S.Workspace.CurrentCamera
-	local nearest: number = math.huge
-	--- @param guide Combat_AimGuide
-	for _index: number, guide in ipairs(guides) do
-		local screen: Vector3 = camera:WorldToScreenPoint(guide.Target)
-		local distance: number = (Vector2.new(screen.X, screen.Y) - position).Magnitude
-		if distance < nearest then
-			nearest = distance
-			lockGuide = guide
-		end
-	end
-
-	--[[ Locking ]]
-
-	lockFrom = Vector2.new(angle, power)
-	lockStart = os.clock()
-	aiming = "Lock"
-	if I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target" then
-		Module._setTarget(lockGuide.Target)
-	end
-
-	--[[ Returning ]]
-
-	return true
-end
-
---%%%%%%%%%%%%%%%%%%%% Ease Lock
-
---[[
-	Moves the aim from where the lock-on started toward its guide's angle and power, easing out over AIMBOT_EASE
-	seconds (a gun's guide has no power, so it fills).
-]]
-function Module._easeLock()
-	--[[ Local Variables ]]
-
-	local share: number = math.clamp((os.clock() - lockStart) / _settings.AIMBOT_EASE, 0, 1)
-	local eased: number = 1 - (1 - share) ^ 3
-
-	-- The short way round, so a lock across the top never swings through the ground
-	local turn: number = (lockGuide.Angle - lockFrom.X + math.pi) % (2 * math.pi) - math.pi
-
-	--[[ Aiming ]]
-
-	angle = lockFrom.X + turn * eased
-	power = lockFrom.Y + ((lockGuide.Power or 1) - lockFrom.Y) * eased
 end
 
 --%%%%%%%%%%%%%%%%%%%% Draw
@@ -725,7 +635,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Draw Prediction
 
 --[[
-	In the tutorial match, draws where an arced weapon's shot would fly from the player's snail: the path at the power
+	In the tutorial match, and for a player an admin gave the aimbot (the `Aimbot` Player attribute), draws where an
+	arced weapon's shot would fly from the player's snail: the path at the power
 	held while charging, or faded at the power last fired before the press, wind and all, to the first terrain or snail
 	it meets. shortcut: it ignores the shot's slowdown in water and its bounces, so it's exact to the first thing a
 	shot touches out of liquid; follow Combat's Ballistics if a later step needs more.
@@ -733,8 +644,8 @@ end
 function Module._drawPrediction(model: Model, itemId: string)
 	--[[ Checks ]]
 
-	-- Check if it's the tutorial and an arced weapon
-	if I.Match.GetFolder():GetAttribute("Kind") ~= "Tutorial" or I.G_Arsenal.Get(itemId).Aim ~= "Arc" or not model.PrimaryPart then
+	-- Check if it's the tutorial or the aimbot, and an arced weapon
+	if (I.Match.GetFolder():GetAttribute("Kind") ~= "Tutorial" and not I.S.Players.LocalPlayer:GetAttribute("Aimbot")) or I.G_Arsenal.Get(itemId).Aim ~= "Arc" or not model.PrimaryPart then
 		Module._hidePrediction(1)
 		return
 	end
@@ -821,7 +732,7 @@ function Module._fire()
 		shotPower = 1
 	end
 
-	-- A homing missile fired with no target picked (the pad's RT, FIRE on touch, a lock-on) homes on where it was aimed
+	-- A homing missile fired with no target picked (the pad's RT, FIRE on touch) homes on where it was aimed
 	if aim == "Target" and not target and mine and mine.PrimaryPart then
 		target = if pointer then Module._getPlanePoint(pointer) else mine.PrimaryPart.Position + Vector3.new(math.cos(shotAngle), math.sin(shotAngle), 0) * _settings.HOMING_AIM_REACH
 	end

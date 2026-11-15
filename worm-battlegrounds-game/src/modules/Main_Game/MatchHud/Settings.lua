@@ -193,14 +193,12 @@ local _settings = {
 	-- On a pad: how far the right stick must lean to aim
 	STICK_DEADZONE = 0.3,
 
-	-- With an admin's aim guide on, a right click eases the aim onto the guide nearest the mouse over this many seconds
-	AIMBOT_EASE = 0.4,
-
 	--%%%%%%%%%%%%%%%%%%%% Prediction
 
 	--[[
-		In the tutorial match an arced weapon's path shows as a line of dots (the testers, 2026-11-15: "a line that
-		predicts where the shot is gonna go… make the line move depending on power"): followed PREDICTION_STEP seconds
+		In the tutorial match, and for a player with the admin aimbot on, an arced weapon's path shows as a line of
+		dots (the testers, 2026-11-15: "a line that predicts where the shot is gonna go… make the line move depending
+		on power"): followed PREDICTION_STEP seconds
 		at a time, up to PREDICTION_SECONDS, to the first thing it hits, a dot every PREDICTION_DOT_GAP studs (at most
 		PREDICTION_DOTS) and a bigger one where it lands. While charging it shows the power held; before, faded to
 		PREDICTION_IDLE_TRANSPARENCY, the power last fired (PREDICTION_IDLE_POWER at first)

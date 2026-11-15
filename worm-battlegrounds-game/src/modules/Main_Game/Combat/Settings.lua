@@ -256,9 +256,9 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Aimbot
 
-	-- The aim guide (the admin `aimbot` command) draws a path that lands on its target in the hit colour, the best miss in the other
-	AIMBOT_HIT_COLOR = Color3.fromRGB(80, 255, 120),
-	AIMBOT_MISS_COLOR = Color3.fromRGB(255, 170, 40),
+	-- The aimbot (the admin `aimbot` command) fills the team outline of each snail its player can hit faintly in this colour
+	AIMBOT_FILL_COLOR = Color3.fromRGB(255, 255, 255),
+	AIMBOT_FILL_TRANSPARENCY = 0.82,
 
 	--%%%%%%%%%%%%%%%%%%%% Placeholders
 

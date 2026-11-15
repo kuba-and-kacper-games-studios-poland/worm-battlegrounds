@@ -22,8 +22,8 @@ local EMOTES_TOP: number = 0.7764
 -- The locked slot's price and picture: coins for slot 4, Robux for slots 5 and 6, as Loadout's Panel shows them
 local COIN_PRICE: string = "2,500"
 local ROBUX_PRICE: string = "149"
-local COIN_ICON: string = "rbxassetid://111931430831562"
-local ROBUX_ICON: string = "rbxassetid://95337213544429"
+local COIN_ICON: string = "rbxassetid://123804836570291"
+local ROBUX_ICON: string = "rbxasset://textures/ui/common/robux@3x.png"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __

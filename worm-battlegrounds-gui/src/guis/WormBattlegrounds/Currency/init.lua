@@ -81,7 +81,7 @@ local _gui = {
 															Position = UDim2.fromScale(0.176, 0.5),
 															Size = UDim2.fromScale(0.2159, 0.78),
 															ZIndex = 2,
-															Image = "rbxassetid://111931430831562",
+															Image = "rbxassetid://123804836570291",
 															ScaleType = Enum.ScaleType.Fit,
 														},
 														Children = {
@@ -196,7 +196,7 @@ local _gui = {
 															Position = UDim2.fromScale(0.176, 0.5),
 															Size = UDim2.fromScale(0.2159, 0.78),
 															ZIndex = 2,
-															Image = "rbxassetid://107933415897221",
+															Image = "rbxassetid://98200575516825",
 															ScaleType = Enum.ScaleType.Fit,
 														},
 														Children = {

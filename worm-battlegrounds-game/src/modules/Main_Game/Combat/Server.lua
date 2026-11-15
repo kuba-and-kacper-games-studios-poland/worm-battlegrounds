@@ -69,7 +69,7 @@ function Module.Init()
 	I.Network.GetEvent("Combat_Explosion")
 	I.Network.GetEvent("Combat_Hit")
 	I.Network.GetEvent("Combat_Tracer")
-	I.Network.GetEvent("Combat_AimbotGuide")
+	I.Network.GetEvent("Combat_AimbotTargets")
 
 	----------------------------
 	---- ASSIGN TO INSTANCE ----

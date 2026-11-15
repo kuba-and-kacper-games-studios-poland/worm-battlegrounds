@@ -53,19 +53,21 @@ the knockout's ding plays (`Match_Knockout`). A
 stop already running isn't stretched. A lobbed shot (`WHISTLE_KINDS`) whistles once from its part as it first comes
 down faster than `WHISTLE_FALL_SPEED`, and hushes as it lands, rests, sinks, rises again or ends.
 
-An admin can give a player an aim guide for the match they're in (the `aimbot` command, level 255): on their turn,
-their screen draws, for every enemy snail, the path of the shot that lands on it with the weapon held (dots, green when
-it hits, orange for the nearest miss) and the angle and power to set, as the HUD writes them. The server solves the
-guide and sends it to that player alone, so the solver never reaches clients. A right click locks the aim on to the
-guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, which reads the guides through
-`GetAimGuides`).
+An admin can give a player an aimbot for the match they're in (the `aimbot` command, level 255), quiet enough that
+nobody watching their screen sees it: on their turn an arced weapon shows the tutorial's prediction line, where the
+shot at the power held will fly and land (MatchHud's `Aim`), and each enemy snail some aim with the weapon held would
+hurt gets a faint fill on its team outline (`AIMBOT_FILL_*`). The aim stays the player's: nothing snaps it. The server
+finds those snails and sends them to that player alone, so the solver never reaches clients: for an arc weapon it
+ranks the arcs from `GetArcs` by where they first touch, then runs the nearest `AIMBOT_SIMULATED` through the bots'
+full prediction (`I.Bots.GetShotHits`: bounces, fuses, bomblets, crawls, pulls and blast reach); a gun or a swing is
+tried straight at the snail, a homing shot fired up toward its side.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Combat` |
 | Runs on | Server, Client, Global · Match map |
 | Exposes | `I.Combat` (server), `I.G_Combat` (both) |
-| Uses | `I.Match`, `I.Snails`, `I.Arena`, `I.G_Arsenal`, `I.Replicator`, `I.CameraShake`, `I.Haptic`, `I.Sound`, `I.Vfx`, `I.SnailRig`, `I.MatchCamera` (client: `Freeze`, `PunchIn`), `I.AdminPanel_CommandBar` |
+| Uses | `I.Match`, `I.Snails`, `I.Arena`, `I.G_Arsenal`, `I.Replicator`, `I.CameraShake`, `I.Haptic`, `I.Sound`, `I.Vfx`, `I.SnailRig`, `I.MatchCamera` (client: `Freeze`, `PunchIn`), `I.Bots` (server: the aimbot's `GetShotHits`), `I.AdminPanel_CommandBar` |
 
 ## Files
 
@@ -73,23 +75,23 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | --- | --- |
 | `Server.lua` | Remotes, Topics, the `I` table; starts the handlers |
 | `Scripts/Server/Fire.lua` | Selecting, aiming, firing, utilities. A player's fire, utility and detonate need `I.Match.IsActivePlayer` (never while a bot plays their dropped snail's turn: `I.Match.IsAutopilot`), and selecting is refused while one does. |
-| `Scripts/Server/Arcs.lua` | The exact arc solver (`GetArcs`) and arc prediction (`PredictArc`), for bots and the aim guide |
-| `Scripts/Server/Aimbot.lua` | The aim guide, while the server has the player's `Aimbot` attribute on: on their turn, for each enemy snail, the arc (from `GetArcs` at `AIMBOT_POWERS`, the one whose path lands nearest it), a gun's straight line, or a homing shot's launch, solved again every `AIMBOT_REFRESH` seconds once something moved and sent to that player (`Combat_AimbotGuide`) |
+| `Scripts/Server/Arcs.lua` | The exact arc solver (`GetArcs`) and arc prediction (`PredictArc`), for bots and the aimbot |
+| `Scripts/Server/Aimbot.lua` | The aimbot, while the server has the player's `Aimbot` attribute on: on their turn, the enemy snails the weapon held can hurt (arcs from `GetArcs` at `AIMBOT_POWERS`, the `AIMBOT_SIMULATED` nearest run through `I.Bots.GetShotHits`; a gun's or a swing's straight aim; a homing shot's launch), found again every `AIMBOT_REFRESH` seconds once something moved and sent to that player (`Combat_AimbotTargets`) |
 | `Scripts/Server/Uses.lua` | Uses and cooldowns per participant, the `Combat` Replicator folder |
 | `Scripts/Helpers/Ballistics.lua` | `Combat_Ballistics`, the shot simulation both sides run: `New`, `Step`, `Load`, `GetState`, `GetCFrame`, `GetSnail`, `MakePart` (the placeholder ball) |
 | `Scripts/Server/Projectiles.lua` | Simulated shots (`Launch`, `Fly`, `Land`, `GetOptions`, `GetStart`, `IsGone`), crawling shots' parts (`Spawn`), raycasts (`Cast`, and `CastTerrain` for crawlers), a crawler's step (`GetCrawlStep`), lost shots |
 | `Scripts/Server/Blast.lua` | Explosions: tells clients first (`Combat_Explosion`), hurts every snail in reach at once (`Combat_Hit`) while the crater is cut, then throws them once it is (so a thrown snail flies the new ground; a `None` knockback throws nobody); never hurts or throws the shooter's teammates, always the shooter. `Hit` for one snail (guns, swings, the spear) |
 | `Scripts/Server/Behaviors/*.lua` | One file per `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, Hitscan, Melee), and `Snail.lua`, the variety grenade's worms |
-| `Global.lua` | Launch velocity and wind, shared with the aim dots, the aim guide and bots |
-| `Client.lua` | Starts the client handlers; `I.Combat` on the client (`SetAim`, `GetAimGuides`) |
+| `Global.lua` | Launch velocity and wind, shared with the aim dots, the aimbot and bots |
+| `Client.lua` | Starts the client handlers; `I.Combat` on the client (`SetAim`) |
 | `Scripts/Client/Effects.lua` | Blasts (the `BLAST_VFX` effect for the blast's size, scaled by its radius, and chunks of the ground that bounce on the terrain in the `Chip` collision group, then fade), tracers (a gun's `MUZZLE_VFX` flash where it fires, `Flash_Bullet` and `Explosion_Gun` where each bullet lands; One Punch plays `Punch` at the snail it hits), the blast sound (`Explosion_Big` from `BIG_BLAST_SOUND_RADIUS`, else `Explosion_Small`), the camera shake (`_shake`: a jolt, then a rumble; for blasts, hits on snails and gunshots) and the haptics (`Combat_BlastBig`, `Combat_BlastSmall`, `Combat_Hurt` in `src/global_data/Haptic/Preset.lua`), and the hit stop (`_onHit`, `_hitStop`: particles' `TimeScale` 0 and `Debris` chunks anchored, then put back with their speed) |
 | `Scripts/Client/Flight.lua` | Shots in flight drawn as their weapon's model (`GetProjectileModel`) over the hidden placeholder part: rockets and missiles along their flight, thrown and rolled weapons turning with the part, the spider bomb upright facing its crawl, worms (`Projectiles/Worm`, unused since the variety grenade bursts into minis) head first along their tunnel, swaying (`WORM_SWAY`). Models are drawn `PROJECTILE_DRAW_SCALE` times their size (a placed Dynamite at its own; a part's `DrawScale` attribute, set by Shots, wins); models of parts the server moves glide after them (`CRAWL_GLIDE`). A bomb's bomblets with `Mini` are named after their bomb and drawn as small copies of it, with its trail; other bomblets and weapons without a model keep the placeholder. A weapon in `PROJECTILE_TRAILS` draws its trail (a Vfx effect) on an invisible carrier part that follows the shot without turning (its attachments along Z, so the ribbon keeps its width), its exhaust's emitters streaming (a missile's smoke puffs and thruster), and a rocket's carrier rides `TRAIL_TAIL` behind it; all left to fade where the shot ends |
 | `Scripts/Client/Shots.lua` | Each simulated shot's copy on this client: a local placeholder part in `Workspace.Ume.Combat`, `PROJECTILE_DRAW_SCALE` (or its `PROJECTILE_DRAW_SCALES`) times its size and marked `Simulated`, its `LAUNCH_VFX` played as it starts (Flight draws on it, the camera follows it), stepped to the server's clock as `I.Match.GetDrawTime` draws it and corrected by its states; a bounce on the way plays `Shot_Bounce`, and a lobbed shot whistles as it comes down (`_whistle`: `Shot_Whistle` from its part, volume 0.5, kept in the shot's `Whistle` and played once, `Whistled`) |
 | `Scripts/Client/Held.lua` | The active snail's held weapon: a copy of its model in `Workspace.Ume.Combat`, in the snail's hands in the weapon's pose (`I.SnailRig.Hold`), pitched to the aim this screen draws (MatchHud's crosshair, at once, and after the shot is sent its angle, until the next turn) or else to the snail's replicated aim. On its player's screen a snail standing still turns to face its aim. When the shot is away, a gun with a `HoldPose` plays its shot (`I.SnailRig.Shoot`, at least `Pellets` × `BurstInterval`), again for each of its `Volleys`, before it goes. Once a shot is away (`Match_PhaseChanged` to `Flight`) the active snail's emote ends (`I.SnailRig.StopEmote`) |
-| `Scripts/Client/Aimbot.lua` | Draws the aim guide the server sends (dots and a label in `Workspace.Ume.Combat.Aimbot`) and keeps it for `GetAimGuides` |
+| `Scripts/Client/Aimbot.lua` | Marks the snails the server says the player can hit: a faint fill (`AIMBOT_FILL_COLOR`, `AIMBOT_FILL_TRANSPARENCY`) on each one's `TeamOutline` Highlight (Snails' tags), taken off the next time the list changes |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `combat` and `aimbot` commands, and the `Combat_ItemIds` dictionary (every weapon and utility id, from both of `I.G_Arsenal.GetAll()`'s tables) |
 | `Settings.lua` | `Combat_Settings` |
-| `ServerSettings.lua` | `Combat_ServerSettings`: the aim guide's solver, under a server name so clients never get it |
+| `ServerSettings.lua` | `Combat_ServerSettings`: the aimbot's solver, under a server name so clients never get it |
 
 ## API
 
@@ -108,7 +110,7 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `CanUse(participantId, itemId)` | `boolean` | Uses left and no cooldown |
 | `GetUses(participantId, itemId)` | `number` | Uses left (−1 unlimited) |
 | `IsIdle()` | `boolean` | No shot is still moving |
-| `GetArcs(origin, aimAt, itemId, windAcceleration, powers)` | `{ Vector2 }` | The angles (X) and powers (Y) whose arcs pass through `aimAt` in open air: a low and a high arc for each share of power in `powers` that reaches it, corrected for the muzzle. Bots and the aim guide use it |
+| `GetArcs(origin, aimAt, itemId, windAcceleration, powers)` | `{ Vector2 }` | The angles (X) and powers (Y) whose arcs pass through `aimAt` in open air: a low and a high arc for each share of power in `powers` that reaches it, corrected for the muzzle. Bots and the aimbot use it |
 | `PredictArc(origin, velocity, windAcceleration, seconds, step?)` | `{ Vector3 }` | Points along the flight |
 | `GetShotStart(origin, direction, shooter)` | `Vector3` | Where a shot leaves a snail's ball (`origin`) along `direction`: `MUZZLE_GAP` past the ball, or short of the terrain or snail in the way (a raycast that ignores `shooter`), so a shot aimed into the ground starts on it. `Fire` and the bots' predictions use it |
 | `GetCrawlStep(position, side, distance)` | `Vector3` | Where a crawling spider bomb goes next, one step of `distance` toward `side` (-1, 1, or 0 to stay): up a wall, along the ground or falling, by terrain alone. The spider bomb's crawl and the bots' predictions use it |
@@ -118,7 +120,6 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | Function | Returns | What it does |
 | --- | --- | --- |
 | `SetAim(angle?)` | | Points the held weapon along the aim this screen draws, at once (MatchHud's crosshair, every frame it draws); nil hands it back to the snail's replicated aim |
-| `GetAimGuides()` | `{ Combat_AimGuide }` | The aim guides showing now (`Angle`, `Power`, `Target`, `Hit`, `Points`): empty unless the player's aimbot is on and it's their turn |
 
 ### Global: `I.G_Combat`
 
@@ -153,7 +154,7 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 - `Combat_Explosion @ (position: Vector3, radius: number, itemId: string, shiny: boolean)`: to everyone
 - `Combat_Hit @ (participantId: string, damage: number, position: Vector3, knockout: boolean)`: to everyone; `knockout` when the blow took the snail's `Health` from above 0 to 0
 - `Combat_Tracer @ (itemId: string, origin: Vector3, points: { Vector3 }, struck: { Vector3 }?)`: to everyone; a gun's `struck` holds the bullets that hit a snail or the terrain (MatchCamera glides only to those), a swing sends none
-- `Combat_AimbotGuide @ (guides: { Combat_AimGuide })`: to a player whose aimbot is on, when their guide changes (empty to clear it)
+- `Combat_AimbotTargets @ (targets: { Model })`: to a player whose aimbot is on, the enemy snails they can hit, when that changes (empty to clear it)
 - `Combat_Shot @ (id: number, kind: string, name: string, start: number, position: Vector3, velocity: Vector3, options: Combat_ShotOptions)`: to everyone, when a simulated shot leaves (`start` is the server time of its step 0)
 - `Combat_ShotState @ (id: number, state: Combat_BodyState)` (unreliable): to everyone, every `STATE_INTERVAL` while it flies
 - `Combat_ShotEnd @ (id: number, position: Vector3)`: to everyone, when it's over
@@ -165,7 +166,7 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 - `Combat_Explosion`: drawn, shaken and felt by `Effects`
 - `Combat_Hit`: shakes the camera by the damage; a hit of `HITSTOP_DAMAGE` or more, or a knockout, stops the world for a beat (`Effects`); a hit on the player's own snail vibrates
 - `Combat_Tracer`: drawn by `Effects`, and a gun's kicks the camera
-- `Combat_AimbotGuide`: drawn by `Aimbot`
+- `Combat_AimbotTargets`: marked by `Aimbot`
 - `Combat_Shot`, `Combat_ShotState` (unreliable), `Combat_ShotEnd`: simulated, corrected and removed by `Shots`
 
 ## Data
@@ -223,20 +224,20 @@ guide nearest the mouse, eased, and a left click fires it (MatchHud's `Aim`, whi
 | `BIG_BLAST_SOUND_RADIUS` | `6` | Blasts this big or bigger play `Explosion_Big`, smaller ones `Explosion_Small` |
 | `BOUNCE_SOUND_SPEED`, `BOUNCE_SOUND_GAP` | `15`, `0.12` | A bounce that changes a shot's speed by this much plays `Shot_Bounce`, at most once per gap in seconds |
 | `WHISTLE_KINDS`, `WHISTLE_FALL_SPEED` | `{ Bouncer = true, Rocket = true, Crawler = true }`, `25` | Shots of these kinds whistle (`Shot_Whistle`) once as they first come down faster than this, in studs a second of their flight |
-| `AIMBOT_HIT_COLOR`, `AIMBOT_MISS_COLOR` | green, orange | The aim guide's colours: a path that lands on its target, and the best miss |
+| `AIMBOT_FILL_COLOR`, `AIMBOT_FILL_TRANSPARENCY` | white, `0.82` | The fill the aimbot gives the team outline of each snail its player can hit |
 
 ### Server settings (`ServerSettings.lua`)
 
 | Key | Default | What |
 | --- | --- | --- |
-| `AIMBOT_REFRESH` | `0.2` | How often the aim guide solves again while its snail or a target moves, in seconds |
-| `AIMBOT_POWERS` | `0.1` to `1` by `0.05` | The shares of power the guide tries for arc weapons, a low and a high arc each |
-| `AIMBOT_ARC_SECONDS`, `AIMBOT_ARC_STEP` | `5`, `1 / 30` | How long a guided arc is followed looking for what it hits, and its step |
-| `AIMBOT_HIT_MARGIN` | `2.5` | A path landing this close to its target counts as a hit |
+| `AIMBOT_REFRESH` | `0.2` | How often the aimbot looks again while its snail or a target moves, in seconds |
+| `AIMBOT_POWERS` | `0.1` to `1` by `0.05` | The shares of power it tries for arc weapons, a low and a high arc each |
+| `AIMBOT_ARC_SECONDS`, `AIMBOT_ARC_STEP` | `5`, `1 / 30` | How long an arc is followed looking for what it first touches, and its step |
+| `AIMBOT_SIMULATED` | `4` | How many of the arcs that first touch nearest a snail run the bots' full prediction |
 
 ## In the place
 
-Creates `Workspace.Ume.Combat` for projectiles (placeholder balls: each client's own copies of simulated shots, and the server's crawling shots), the clients' aim dots, their `Debris` and `Tracer` parts, the aim guide's `Aimbot` folder, and the effects `I.Vfx` plays (prefabs in `Assets/Vfx`: the Vfx library's README).
+Creates `Workspace.Ume.Combat` for projectiles (placeholder balls: each client's own copies of simulated shots, and the server's crawling shots), the clients' aim dots, their `Debris` and `Tracer` parts, and the effects `I.Vfx` plays (prefabs in `Assets/Vfx`: the Vfx library's README).
 
 ## Sounds
 
@@ -244,12 +245,14 @@ By name from `src/global_data/Sound/SoundsList.lua`, in the `SFX` group: when a 
 
 ## Commands
 
-`combat` (server, level 255). Each acts on the invoker's snail unless it names a participant id:
+`combat` (server, level 255). Each acts on the invoker's snail unless it names another (`snail?`: its name, spaces as
+underscores, its player's username or its participant id, ignoring case; the start of one name is enough; autocompleted
+from Match's `Match_Snails`):
 
 | Subcommand | Arguments |
 | --- | --- |
-| `give` | `itemId` (any weapon or utility: the jetpack, the potions, the bandage, the medkit, the parachute; autocompleted from `Combat_ItemIds`), `participantId?` |
-| `refill` | `participantId?` |
+| `give` | `itemId` (any weapon or utility: the jetpack, the potions, the bandage, the medkit, the parachute; autocompleted from `Combat_ItemIds`), `snail?` |
+| `refill` | `snail?` |
 
-`aimbot` (server, level 255) `player`: turns that player's aim guide on or off (the `Aimbot` Player attribute) for
+`aimbot` (server, level 255) `player`: turns that player's aimbot on or off (the `Aimbot` Player attribute) for
 the match they're in; refused outside a match, and off again when they leave it (`InMatch` changes).

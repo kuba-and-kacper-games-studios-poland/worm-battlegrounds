@@ -41,8 +41,14 @@ local _settings = {
 	-- The bots' difficulty in public matches
 	PUBLIC_DIFFICULTY = "Medium",
 
-	-- How often each card reads the open matches of its mode again, for the map a Join would land on, in seconds
-	TARGETS_SECONDS = 3,
+	-- How long each public card keeps its map, the same on every server (the rotation), in seconds
+	MAP_SECONDS = 30,
+
+	-- A Join this many seconds after the cards moved on still plays the map the player's card showed, in seconds
+	JOIN_GRACE = 2,
+
+	-- How often the board checks whether its cards' timers reached another second, in seconds
+	TIMER_TICK = 0.2,
 
 	-- What a Join that couldn't reach the matches says
 	JOIN_FAILED_MESSAGE = "Couldn't find a match. Try again!",

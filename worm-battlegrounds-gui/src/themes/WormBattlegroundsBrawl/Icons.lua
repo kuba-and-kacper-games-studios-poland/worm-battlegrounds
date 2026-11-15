@@ -15,8 +15,8 @@ local _icons = {
 	--[[ Game Icons ]]
 
 	["wb-crate"] = "rbxassetid://125525087532535",
-	["wb-coin"] = "rbxassetid://111931430831562",
-	["wb-diamond"] = "rbxassetid://107933415897221",
+	["wb-coin"] = "rbxassetid://123804836570291",
+	["wb-diamond"] = "rbxassetid://98200575516825",
 	["wb-diamonds-2"] = "rbxassetid://82440517108730",
 	["wb-diamonds-3"] = "rbxassetid://94013726477938",
 	["wb-diamonds-4"] = "rbxassetid://128846581006188",

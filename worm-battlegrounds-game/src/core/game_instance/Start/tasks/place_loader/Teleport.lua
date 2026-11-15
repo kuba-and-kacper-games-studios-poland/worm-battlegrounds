@@ -348,9 +348,13 @@ return function(_task)
 
 			--[[ Teleport Options ]]
 
+			-- Only the one given: Roblox refuses nil on either property
 			local teleportOptions: TeleportOptions = Instance.new("TeleportOptions")
-			teleportOptions.ServerInstanceId = jobId
-			teleportOptions.ReservedServerAccessCode = accessCode
+			if jobId then
+				teleportOptions.ServerInstanceId = jobId
+			else
+				teleportOptions.ReservedServerAccessCode = accessCode
+			end
 
 			--[[ Teleporting ]]
 

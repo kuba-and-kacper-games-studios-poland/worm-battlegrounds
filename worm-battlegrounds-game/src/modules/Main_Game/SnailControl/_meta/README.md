@@ -20,7 +20,7 @@ applies, and the match HUD's touch buttons press the controls through `Hold`.
 | Folder | `src/modules/Main_Game/SnailControl` |
 | Runs on | Server, Client |
 | Exposes | `I.SnailControl` (server, client) |
-| Uses | `I.Snails`, `I.Console`, `ContextActionService`, `I.AdminPanel_CommandBar` |
+| Uses | `I.Snails`, `I.Console`, `ContextActionService`, `I.Match` (commands: `FindParticipant`), `I.AdminPanel_CommandBar` |
 
 ## Files
 
@@ -116,10 +116,12 @@ Snail attributes it writes: `CanMove` (the owner may move it), `Stamina` (studs 
 
 ## Commands
 
-`snailcontrol` (server, level 255). Each acts on the invoker's snail unless it names a participant id:
+`snailcontrol` (server, level 255). Each acts on the invoker's snail unless it names another (`snail?`: its name, spaces as underscores, its
+player's username or its participant id, ignoring case; the start of one name is enough; autocompleted from Match's
+`Match_Snails`):
 
 | Subcommand | Arguments |
 | --- | --- |
-| `turn` | `participantId?` |
-| `end` | `participantId?` |
-| `refill` | `participantId?` |
+| `turn` | `snail?` |
+| `end` | `snail?` |
+| `refill` | `snail?` |

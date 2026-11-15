@@ -46,10 +46,6 @@ function Module.Init()
 		--[[ Control ]]
 
 		SetAim = Held.SetAim,
-
-		--[[ Methods ]]
-
-		GetAimGuides = Aimbot.GetGuides,
 	}
 end
 
