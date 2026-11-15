@@ -6,8 +6,8 @@ was the Cowboy skin). Owned pieces and emotes are Inventory items; this module s
 player the starter pieces and emote, swaps the whole skins a player owned for their sets' pieces once, builds a snail in
 any outfit for every screen, sells emotes for coins once the player's level is high enough, and plays emotes for
 everyone. The client draws the `Skins` widget (the lobby's STYLE: a deck per slot, the snail in the middle, the open
-slot's pieces; pressing an owned piece wears it), the `EmoteShop` widget, the
-emote row in the lobby's `Loadout` panel, the emote wheel in `MatchHud`, and a played emote's icon in a thought cloud
+slot's pieces; pressing an owned piece wears it), the `EmoteShop` widget (opened from the lobby `Loadout` panel's
+EMOTES +; pressing an owned emote plays it), the emote wheel in `MatchHud`, and a played emote's icon in a thought cloud
 over the player's snail (in a match and on the lobby's stage) and beside their name in the lobby's party list.
 
 | | |
@@ -27,8 +27,8 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 | `Client.lua` | Starts the three client handlers |
 | `Scripts/Client/Skins.lua` | The full-screen `Skins` widget (the lobby's STYLE): a deck per slot on the left (its owned count, the worn piece, its first three pieces on cards that fan out while it's open), the open slot's pieces on the right (no hat or neck piece first, then owned by rarity, then locked with where to get them; the tiles stay while the list does, so wearing a piece only changes their looks), and the picked piece in a detail bar with EQUIP, WORN or GET (opens the Skin crate). NEW tags on the lobby's STYLE button, the decks and the tiles show owned pieces the player hasn't seen; leaving a deck, or closing the screen, sees its pieces (`Cosmetics_See`) |
 | `Scripts/Client/SkinsStage.lua` | The snail in the middle of the Style screen, with the player's name under it: a drag (mouse or finger) spins it all the way round, and the camera eases to the open or picked slot's view (`STAGE_FOCUS`): round to the shell, down onto the hat, in on the neck piece, back for the body. The camera moves only while it has somewhere to go, and only while the screen shows |
-| `Scripts/Client/EmoteShop.lua` | The `EmoteShop` widget: a card per emote (`PREFAB \| EmoteCard`: its icon, name and rarity badge), cheapest first; one not owned wears the locked cover with its price in coins and the level it needs ("Any level" from level 1), and a press buys it |
-| `Scripts/Client/Emotes.lua` | The emote row, the emote wheel (it closes on a pick, a click or tap anywhere but a button, and when the hud hides the emote button; on a pad it holds the selection while open, `I.Console.Focus`, and B closes it), and playing played emotes on every screen: the player's snail plays it (`I.SnailRig.Emote`: in a match, or on the lobby's stage), its icon pops up in a thought cloud over that snail's head (`I.ChatBubbles.ShowIcon`, in their chat stack: in a match, and on the lobby's stage), and in the lobby also in a speech bubble beside their name on their party card (`I.ChatBubbles.BuildIconBubble`, its tail pointing at the name) |
+| `Scripts/Client/EmoteShop.lua` | The `EmoteShop` widget: a card per emote (`PREFAB \| EmoteCard`: its icon, name and rarity badge), cheapest first; one not owned wears the locked cover with its price in coins and the level it needs ("Any level" from level 1), and a press buys it; a press on an owned one closes the panel and plays it (the lobby's only place to pick an emote, since 2026-11-15) |
+| `Scripts/Client/Emotes.lua` | The emote wheel (it closes on a pick, a click or tap anywhere but a button, and when the hud hides the emote button; on a pad it holds the selection while open, `I.Console.Focus`, and B closes it), and playing played emotes on every screen: the player's snail plays it (`I.SnailRig.Emote`: in a match, or on the lobby's stage), its icon pops up in a thought cloud over that snail's head (`I.ChatBubbles.ShowIcon`, in their chat stack: in a match, and on the lobby's stage), and in the lobby also in a speech bubble beside their name on their party card (`I.ChatBubbles.BuildIconBubble`, its tail pointing at the name) |
 | `Settings.lua` | `Cosmetics_Settings` |
 | `Data/Sets/<SetId>.lua` | `Cosmetics_SetData`: `Name`, `LayoutOrder`, `Model` (the snail in `Assets.Skins` holding its pieces), `Skin` (the whole skin it was) |
 | `Data/Pieces/<PieceId>.lua` | `Cosmetics_PieceData`: `Slot` (`Hat`, `Neck`, `Body`, `Shell`), `Set`. Its name, picture and rarity are its Inventory row's (`Data/Items/<Slot>/`) |
@@ -111,7 +111,7 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 | `STAGE_PITCH` | `-10` to `55` | How low and high a drag tilts the camera, in degrees |
 | `SKINS_GUI_NAME`, `EMOTE_SHOP_GUI_NAME` | `"Skins"`, `"EmoteShop"` | The widgets |
 | `LOBBY_GUI_NAME` | `"Lobby"` | The gui whose STYLE button (`S_Style` › `S_New`) shows NEW while a piece is unseen |
-| `LOADOUT_GUI_NAME`, `MATCH_HUD_GUI_NAME`, `PARTY_GUI_NAME` | | The guis that hold the emote row, the emote wheel and the party list |
+| `MATCH_HUD_GUI_NAME`, `PARTY_GUI_NAME` | | The guis that hold the emote wheel and the party list |
 
 ## In the place
 

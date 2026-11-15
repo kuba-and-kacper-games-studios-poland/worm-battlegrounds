@@ -1,7 +1,7 @@
 # Party
 
 The lobby's **PARTY** column at the left: a card per party member (avatar, name, level, the leader's crown, Kick),
-then a **+** card per free place that opens the invite box, and the red Leave button by the title.
+then a **+** card per free place that opens the invite box, and the red Leave button just after the title (hung from its left edge so it never covers the title, 2026-11-15).
 
 **Look.** Ported 1:1 from the studio's `LobbyInventory` gui (its `Left` frame, 2026-11-09) as `Primitive` nodes: its
 dark slanted cards (a member's outlined orange, a + card grey), pictures and fonts, laid out in screen fractions with

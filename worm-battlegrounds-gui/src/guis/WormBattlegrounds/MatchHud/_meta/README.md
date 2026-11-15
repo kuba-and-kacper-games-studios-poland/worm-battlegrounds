@@ -9,7 +9,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | Path | `"WormBattlegrounds/MatchHud"` |
 | Theme | `WormBattlegroundsBrawl` (for the kept blocks; the design's frames are `Primitive` nodes) |
 | Modes | Night only |
-| Devices | Desktop, Mobile (shows `U_Touch` and `U_Fire`), Console (shows the pad hints: LB / RB, X on EMOTES, Y on a utility slot, `U_PadControls`) |
+| Devices | Desktop, Mobile (shows `U_Touch`, `U_TouchJump` and `U_Fire`), Console (shows the pad hints: LB / RB, X on EMOTES, Y on a utility slot, `U_PadControls`) |
 | Export | A ScreenGui named `MatchHud`: `Enabled` off, `DisplayOrder` 0, `ScreenInsets` `DeviceSafeInsets` (the MatchHud module switches it to `CoreUISafeInsets` on Mobile, below Roblox's top bar) |
 
 ## Elements
@@ -26,7 +26,8 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_TurnList` | Frame (vertical list), left | Holds one `TurnEntry` per snail: the one playing, then the next ones |
 | `U_EmoteButton` › `Button` | ImageButton (EMOTES), right | Opens `U_EmoteWheel` (the Cosmetics module) |
 | `U_Touch` | Frame, bottom left, `Utils_HideOnPlatform` (Mobile only) | Touch controls |
-| `U_Touch` › `S_Left`, `S_Right`, `S_Jump` | ImageButton | Walk left, walk right, jump (above them, wider, its card drawn in three slices so the corners keep their shape: the gui maker's, 2026-11-11); shown on the player's turn |
+| `U_Touch` › `S_Left`, `S_Right` | ImageButton | Walk left, walk right; shown on the player's turn |
+| `U_TouchJump` › `S_Jump` | Frame in `BottomRight`, over FIRE, `Utils_HideOnPlatform` (Mobile only) › ImageButton | Jump (its card drawn in three slices so the corners keep their shape: the gui maker's, 2026-11-11; moved over FIRE in the place, then into the gui, 2026-11-15); shown on the player's turn |
 | `U_Aim` | Frame, the whole screen, see-through, ZIndex 0 (under the rest of the HUD) | The aim layer: MatchHud's Aim places the crosshair and the power circles in it, in pixels over the snail |
 | `U_Aim` › `S_Crosshair` | Frame (hidden; sized and placed by code), ZIndex 100 | Worms Armageddon's crosshair: a ring (`RingOutline`, then `S_Ring` › `S_RingLine`, UIStrokes centred on the edge, `ScaledSize`) under an X (`ArmOutline` bars, then `S_ArmA`, `S_ArmB`), outlined in dark (20, 14, 10); it spins |
 | `U_LoadoutBar` | Frame, bottom middle | Shown while the player's snail plays |
@@ -96,7 +97,7 @@ The game's `MatchHud` module: it turns the ScreenGui on while the player is in a
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchHud`, `Enabled` off. Its module turns it on while the player is in a match. The kept blocks' `S_ScreenScale` UIScales are set by the game's ScreenScale module (`MatchHud` is in its `GUIS` list), laid out for a 1920 × 1080 screen, times the device scale their `Utils_PlatformScale` tag keeps; the design's frames need nothing. Capitals texts carry `TextCase_Upper`, so what code writes there shows in capitals. Last exported to StarterGui on 2026-11-13 (`UmeGui.Export`, with "You play in N turns"); the exports before are kept in `ServerStorage.!dump` as `MatchHud_before_2026-11-10` and `MatchHud_before_2026-11-13`.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchHud`, `Enabled` off. Its module turns it on while the player is in a match. The kept blocks' `S_ScreenScale` UIScales are set by the game's ScreenScale module (`MatchHud` is in its `GUIS` list), laid out for a 1920 × 1080 screen, times the device scale their `Utils_PlatformScale` tag keeps; the design's frames need nothing. Capitals texts carry `TextCase_Upper`, so what code writes there shows in capitals. Last exported to StarterGui on 2026-11-15 (`UmeGui.Export`, with `U_TouchJump`); the exports before are kept in `ServerStorage.!dump` as `MatchHud_before_2026-11-10`, `MatchHud_before_2026-11-13` and `MatchHud_before_2026-11-15`.
 
 ### Input
 

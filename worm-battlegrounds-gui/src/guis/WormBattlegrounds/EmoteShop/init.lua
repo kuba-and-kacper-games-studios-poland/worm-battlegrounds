@@ -53,7 +53,7 @@ local _gui = {
 									AnchorPoint = Vector2.new(1, 0.5),
 									BackgroundTransparency = 1,
 									LayoutOrder = 0,
-									Position = UDim2.fromScale(0.8906, 0.4898),
+									Position = UDim2.fromScale(0.9756, 0.4898),
 									Size = UDim2.fromScale(0.2365, 0.5014),
 								},
 								Children = {

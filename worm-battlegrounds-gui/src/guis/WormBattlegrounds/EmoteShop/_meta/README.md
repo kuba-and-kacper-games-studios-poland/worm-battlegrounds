@@ -1,12 +1,13 @@
 # EmoteShop
 
-The **EMOTES** panel, opened from the lobby Loadout's + by the emote row: a card per emote (its rarity badge, icon and
+The **EMOTES** panel, opened from the lobby Loadout's EMOTES + button: a card per emote (its rarity badge, icon and
 name), three across. An emote not owned yet wears a locked cover with its price in coins and the level it needs, and
-a press buys it.
+a press buys it; a press on an owned one closes the panel and plays it.
 
 **Look.** Ported 1:1 from the gui maker's `Emotes` design (2026-11-11, built from the studio's Customise cards) as
 `Primitive` nodes laid out by screen fractions with aspect-ratio constraints (no `S_ScreenScale`, not in ScreenScale's
-`GUIS`): the panel stands in the Loadout's place on the right (the Lobby module hides Loadout while it's open, its
+`GUIS`): the panel stands in the Loadout's place on the right, its right edge on the Loadout column's (0.9756 of the
+screen, since 2026-11-15; the Lobby module hides Loadout while it's open, its
 `PANEL_WIDGETS`). Added to the design: the locked cover (the Skins tile's `S_Locked`, with the lock), the price under
 the lock (white Londrina with the coin, as Loadout's locked slot) and the level at its top right in yellow, and a close
 button (the Party card's red kick button), since the design has none. Before, it was the GUI kit's list window.
@@ -59,6 +60,7 @@ opens it: the Loadout gui's `S_Shop` (+) toggles it (its tags). It keeps its `Na
 | --- | --- | --- | --- | --- |
 | Close | Click X, or + again | Tap | B | `S_Close` tags (`Interact_Button` → WidgetManager `CloseCurrent`, `Utils_ButtonKey`) |
 | Buy | Click a locked card | Tap | Select and A | Cosmetics (`I.Interact.OnPress` on each card) |
+| Play an emote (closes the panel) | Click an owned card | Tap | Select and A | Cosmetics (`I.Interact.OnPress` on each card) |
 
 ### Looks
 

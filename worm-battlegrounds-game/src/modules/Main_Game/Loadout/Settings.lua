@@ -32,8 +32,8 @@ local _settings = {
 	-- The basic weapon every loadout has, first on the panel and never in the picker
 	BASIC_WEAPON = "Bazooka",
 
-	-- Cells in the panel's top row (the basic weapon, then the slots; the rest go below), and cards in each of the picker's rows
-	SLOTS_PER_ROW = 4,
+	-- Cards in each of the panel's rows (U_Row1 to U_Row4, the last card of an odd count on the right), and in each of the picker's rows
+	SLOTS_PER_ROW = 2,
 	ITEMS_PER_ROW = 3,
 
 	-- The picture beside a locked slot's price: coins for the coin slot, Robux for a pass

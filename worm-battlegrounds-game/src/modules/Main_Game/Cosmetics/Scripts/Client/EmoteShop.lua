@@ -92,7 +92,7 @@ end
 
 --[[
 	Draws one card per emote, cheapest first: its icon, name and rarity; one not owned yet wears the locked cover with
-	its price and the level it needs, and a press buys it.
+	its price and the level it needs, and a press buys it. A press on an owned one closes the panel and plays it.
 ]]
 function Module._draw()
 	--[[ Clearing ]]
@@ -132,7 +132,10 @@ function Module._draw()
 		I.Interact.OnPress(card, function()
 			if not owned then
 				Module._buy(emoteId)
+				return
 			end
+			I.WidgetManager.Close(_settings.EMOTE_SHOP_GUI_NAME)
+			I.Network.Fire("Cosmetics_PlayEmote", emoteId)
 		end)
 	end
 end

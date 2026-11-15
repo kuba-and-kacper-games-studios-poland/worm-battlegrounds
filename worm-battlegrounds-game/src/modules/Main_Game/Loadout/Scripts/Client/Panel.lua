@@ -32,6 +32,12 @@ local openPicker: (slot: number) -> ()
 -- The slot passes' live Robux prices, by pass, once Roblox answers
 local passPrices = {} --- @type { [string]: string }
 
+-- The panel's rows of cards, top first
+local rows = {} --- @type { Frame }
+
+-- Where EMOTES sits in the gui, under every row of cards
+local emotesTop: number
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -55,9 +61,13 @@ function Module.Start(opener)
 	--[[ Elements ]]
 
 	moduleGui = I.UserInterface.UI[_settings.PANEL_GUI_NAME]
-	elems["TopRow"] = moduleGui:FindFirstChild("U_TopRow", true) --- @type Frame
-	elems["BottomRow"] = moduleGui:FindFirstChild("U_BottomRow", true) --- @type Frame
-	prefabs["Slot"] = elems["TopRow"]:FindFirstChild("PREFAB | Slot") --- @type ImageButton
+	elems["Slots"] = moduleGui:FindFirstChild("U_Slots", true) --- @type Frame
+	elems["EmoteSection"] = moduleGui:FindFirstChild("U_EmoteSection", true) --- @type Frame
+	while elems["Slots"]:FindFirstChild(`U_Row{#rows + 1}`) do
+		table.insert(rows, elems["Slots"]:FindFirstChild(`U_Row{#rows + 1}`))
+	end
+	prefabs["Slot"] = rows[1]:FindFirstChild("PREFAB | Slot") --- @type ImageButton
+	emotesTop = elems["EmoteSection"].Position.Y.Scale
 	openPicker = opener
 
 	--[[ Basic Weapon ]]
@@ -116,8 +126,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Make Card
 
 --[[
-	Clones a slot card into its place on the panel: the first SLOTS_PER_ROW cells on the top row, the rest below,
-	numbered from 1 like the match's loadout bar.
+	Clones a slot card into its row on the panel (SLOTS_PER_ROW a row, right-aligned), numbered from 1 like the
+	match's loadout bar.
 ]]
 --- @return ImageButton
 function Module._makeCard(cell: number)
@@ -130,7 +140,7 @@ function Module._makeCard(cell: number)
 	card.LayoutOrder = cell
 	card.Visible = true
 	card:FindFirstChild("S_Number").Text = tostring(cell)
-	card.Parent = if cell <= _settings.SLOTS_PER_ROW then elems["TopRow"] else elems["BottomRow"]
+	card.Parent = rows[math.ceil(cell / _settings.SLOTS_PER_ROW)]
 
 	--[[ Returning ]]
 
@@ -144,7 +154,7 @@ end
 --[[
 	Draws every slot: its item's picture, name in its rarity's colour, copies and shiny mark; a + on an empty open
 	slot; the lock and price on the next slot to open (later ones hide): coins while the coin slot is closed, else the
-	next slot pass's Robux price; the selected look while its picker is open.
+	next slot pass's Robux price; the selected look while its picker is open. EMOTES follows the last row shown.
 ]]
 function Module._refresh()
 	--[[ Checks ]]
@@ -185,6 +195,14 @@ function Module._refresh()
 		stroke.Image = box:GetAttribute(if selected then "Look_SelectedStroke" else "Look_Stroke")
 		stroke.ImageColor3 = box:GetAttribute(if selected then "Look_SelectedStrokeColor" elseif empty then "Look_EmptyStrokeColor" else "Look_StrokeColor")
 	end
+
+	--[[ Emotes ]]
+
+	-- EMOTES moves up a row for each row of cards not shown (the basic weapon, the open slots and the next one)
+	local shownRows: number = math.ceil((1 + math.min(unlocked + 1, _settings.MAX_SLOTS)) / _settings.SLOTS_PER_ROW)
+	local padding: number = elems["Slots"]:FindFirstChildOfClass("UIListLayout").Padding.Scale
+	local rowStep: number = (rows[1].Size.Y.Scale + padding) * elems["Slots"].Size.Y.Scale
+	elems["EmoteSection"].Position = UDim2.fromScale(0, emotesTop - (#rows - shownRows) * rowStep)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Slot Pressed

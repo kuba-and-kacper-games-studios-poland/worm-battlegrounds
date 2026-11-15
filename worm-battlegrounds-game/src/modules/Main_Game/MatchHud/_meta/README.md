@@ -42,7 +42,7 @@ left and `TIMER_DANGER_COLOR` from `TICK_SOUND_FROM`, when `Turn_Tick` plays eac
 `TICK_FAST_FROM`, its pitch rising from 1 to 1.3, and `U_Tension`, a red band along the screen's sides, pulses
 `TENSION_PULSE_RATE` times a second, up to twice as fast at the end.
 
-Devices: the move, jump and FIRE buttons show only on touch screens (`U_Touch`'s `Utils_HideOnPlatform`, FIRE by
+Devices: the move, jump and FIRE buttons show only on touch screens (`U_Touch`'s and `U_TouchJump`'s `Utils_HideOnPlatform`, FIRE by
 `I.Platform.Current`), on the player's turn; the power slider shows on every device while the player aims; the slot
 key numbers only on Desktop; the gamepad hints only on Console (`Console_Hint`, drawn by the Console module: LB and RB
 at the bar's ends, Y on the utility the pad's cursor rests on, X on the emote button and the `U_PadControls` strip of

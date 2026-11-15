@@ -20,8 +20,8 @@ local prefabs = {} --- @type { [string]: Instance }
 --%%%%%%%%%%%%%%%%%%%% Get Button
 
 --[[
-	Returns the button of a card: the card itself when it is one (the lobby's ported cards), else the ImageButton a
-	theme control keeps inside it (the match hud's).
+	Returns the button of a card: the card itself when it is one, else the ImageButton a theme control keeps inside it
+	(the match hud's).
 ]]
 local function getButton(card: Instance): GuiButton
 	return if card:IsA("GuiButton") then card else card:FindFirstChild("Button", true)
@@ -49,11 +49,9 @@ function Module.Start()
 	--[[ Elements ]]
 
 	local hud: ScreenGui = I.UserInterface.UI[_settings.MATCH_HUD_GUI_NAME]
-	elems["Row"] = I.UserInterface.UI[_settings.LOADOUT_GUI_NAME]:FindFirstChild("U_Emotes", true) --- @type ScrollingFrame
 	elems["EmoteButton"] = hud:FindFirstChild("U_EmoteButton", true) --- @type GuiObject
 	elems["Wheel"] = hud:FindFirstChild("U_EmoteWheel", true) --- @type Frame
 	elems["Party"] = I.UserInterface.UI[_settings.PARTY_GUI_NAME]:FindFirstChild("U_Members", true) --- @type Frame
-	prefabs["Emote"] = elems["Row"]:FindFirstChild("PREFAB | Emote") --- @type ImageButton
 	prefabs["WheelEmote"] = elems["Wheel"]:FindFirstChild("PREFAB | WheelEmote") --- @type GuiObject
 
 	--[[ Applying ]]
@@ -82,17 +80,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the owned emotes twice: in the lobby's emote row (before its + for the emote shop), and around the match's
-	emote wheel.
+	Draws the owned emotes around the match's emote wheel.
 ]]
 function Module._refresh()
 	--[[ Clearing ]]
 
-	for _index: number, holder: Instance in ipairs({ elems["Row"], elems["Wheel"] }) do
-		for _childIndex: number, child: Instance in ipairs(holder:GetChildren()) do
-			if child:IsA("GuiObject") and child.Name:sub(1, 6) == "Emote_" then
-				child:Destroy()
-			end
+	for _index: number, child: Instance in ipairs(elems["Wheel"]:GetChildren()) do
+		if child:IsA("GuiObject") and child.Name:sub(1, 6) == "Emote_" then
+			child:Destroy()
 		end
 	end
 
@@ -111,10 +106,6 @@ function Module._refresh()
 
 	for index: number, emoteId: string in ipairs(owned) do
 		local angle: number = math.rad(index / #owned * 360 - 90)
-		local rowEmote: GuiObject = Module._makeEmote(prefabs["Emote"], emoteId)
-		rowEmote.LayoutOrder = index
-		rowEmote.Visible = true
-		rowEmote.Parent = elems["Row"]
 		local wheelEmote: GuiObject = Module._makeEmote(prefabs["WheelEmote"], emoteId)
 		wheelEmote.Position = UDim2.fromScale(0.5 + math.cos(angle) * _settings.WHEEL_RADIUS, 0.5 + math.sin(angle) * _settings.WHEEL_RADIUS)
 		wheelEmote.Visible = true

@@ -1762,3 +1762,20 @@ buttons for coins and under them do 3 buttons for gems") and the same chances wh
   reels and the golden reel all read the same table and can't drift apart.
 
 Rules: Crates open on the GACHA screen (One crate per kind, paid in coins or diamonds).
+
+## The jump button moved in the place, not in the gui (2026-11-15)
+
+Matches broke on every screen with `TouchControls:42: attempt to index nil with 'InputBegan'`. MatchHud's exported
+copy in the place had the jump button moved by hand from `U_Touch` (bottom left) into `BottomRight.U_TouchJump`, over
+FIRE, while the gui's source still had it in `U_Touch`; TouchControls looked for `S_Jump` inside `U_Touch` and found
+nothing.
+
+- **A layout change goes into the gui's table, then gets exported.** An edit made only on the export is thrown away
+  by the next export, and the code that reads the gui never hears of it. The move was copied into `MatchHud`'s source
+  so the next export keeps it.
+- **Look buttons up from the gui, not from the frame they happen to sit in,** when the frame isn't part of what the
+  code means: TouchControls now finds `S_Left`, `S_Right` and `S_Jump` anywhere in MatchHud.
+- **Compare the place against a fresh export before re-exporting a gui** (`UmeGui.Export` beside the copy in
+  StarterGui): it shows hand edits that a re-export would lose.
+
+Rules: `gui/code.md` → Changing a gui (the gui module is the source).

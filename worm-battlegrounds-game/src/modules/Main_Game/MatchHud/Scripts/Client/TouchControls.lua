@@ -32,13 +32,16 @@ local Module = {}
 function Module.Start(gui: ScreenGui)
 	--[[ Elements ]]
 
-	elems["Touch"] = gui:FindFirstChild("U_Touch") --- @type Frame
+	-- Walk sits in U_Touch at the bottom left, jump in U_TouchJump over FIRE
+	elems["Left"] = gui:FindFirstChild("S_Left", true) --- @type ImageButton
+	elems["Right"] = gui:FindFirstChild("S_Right", true) --- @type ImageButton
+	elems["Jump"] = gui:FindFirstChild("S_Jump", true) --- @type ImageButton
 	elems["PadControls"] = gui:FindFirstChild("U_PadControls") --- @type Frame
 
 	--[[ Connections ]]
 
 	for _index: number, control: string in ipairs({ "Left", "Right", "Jump" }) do
-		local button: ImageButton = elems["Touch"]:FindFirstChild(`S_{control}`, true)
+		local button: ImageButton = elems[control]
 		button.InputBegan:Connect(function(input: InputObject)
 			Module._hold(control, input, true)
 		end)
@@ -73,14 +76,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the buttons during the player's turn only (Utils_HideOnPlatform keeps the frame to touch screens), and the
+	Shows the buttons during the player's turn only (Utils_HideOnPlatform keeps their frames to touch screens), and the
 	pad's controls strip then too (a Console_Hint, so only on Console).
 ]]
 function Module._refresh(myTurn: boolean)
 	--[[ Applying ]]
 
 	for _index: number, control: string in ipairs({ "Left", "Right", "Jump" }) do
-		elems["Touch"]:FindFirstChild(`S_{control}`, true).Visible = myTurn
+		elems[control].Visible = myTurn
 	end
 	elems["PadControls"]:SetAttribute("Console_HintHidden", not myTurn)
 end

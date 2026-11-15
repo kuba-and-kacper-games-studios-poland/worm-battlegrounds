@@ -1,15 +1,18 @@
 # Loadout
 
-The lobby's **LOADOUT** at the right: two rows of numbered cards (four on top, three below), the Bazooka then slots 1 to 6 (an item's
-picture, name and copies, a + on an empty slot, the lock and price on the next slot to open), and under it the
-**EMOTES** row (the owned emotes, + for the emote shop).
+The lobby's **LOADOUT**, a column hanging from the right edge under the corner menu: numbered cards two a row, the
+Bazooka then slots 1 to 6 (an item's picture, name and copies, a + on an empty slot, the lock and price on the next
+slot to open), and under them **EMOTES**, one + button that opens the emote panel. Both headings are right-aligned
+(the owner, 2026-11-15).
 
 **Look.** Ported 1:1 from the studio's `LobbyInventory` gui (its `Right` frame, 2026-11-09) as `Primitive` nodes,
 laid out in screen fractions with aspect-ratio constraints (no `S_ScreenScale`). The design's slot looks are kept as
 attributes on the slot prefab (normal, selected, the + slot's darker outline). Added: the shiny mark, the lock cover
-(the design's locked inventory card) with the price, and the EMOTES row, which the design lacks, built from copies of
+(the design's locked inventory card) with the price, and EMOTES, which the design lacks, built from copies of
 its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker polished the lock cover
-(2026-11-11): the design's darker locked card with a coin before the price.
+(2026-11-11): the design's darker locked card with a coin before the price. Changed from the design (2026-11-15): a
+column two cards wide instead of rows of four and three, and the emote row is the + button alone. EMOTES is placed
+under all four rows; Loadout moves it up to sit under the last row shown.
 
 |  |  |
 | --- | --- |
@@ -22,33 +25,31 @@ its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`)
 
 | Element | Kind | What game code does with it |
 | --- | --- | --- |
-| `U_Loadout` | Frame | The panel (the design's `Right`) |
-| `U_Slots` | Frame | Both rows; the tutorial's arrow points at its top |
-| `U_TopRow`, `U_BottomRow` | Frame (horizontal lists) | Loadout clones the basic weapon and slots 1 to 3 into the top row, slots 4 to 6 into the bottom one |
-| `U_Emotes` | ScrollingFrame (horizontal) | The emote row: an `Emote` card per owned emote, then `S_Shop` |
+| `U_Loadout` | Frame, top right (anchored at its top-right corner) | The panel (the design's `Right`) |
+| `U_Slots` | Frame (a vertical list of four rows) | The cards; the tutorial points at it |
+| `U_Row1` to `U_Row4` | Frame (horizontal list, right-aligned) | Loadout clones the cards two a row into them, in order, so a lone last card sits on the right |
+| `U_EmoteSection` | Frame | EMOTES: its heading and `U_Emotes`. Loadout moves it up a row for each row of cards not shown |
+| `U_Emotes` | Frame | Holds `S_Shop`, at the right |
 | `U_Emotes` › `S_Shop` | ImageButton (+) | Opens `EmoteShop` (its tags) |
 
 ## Prefabs
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| Slot` | `U_TopRow` | An ImageButton: `S_Number`, `S_Icon`, `S_Name`, `S_Amount` ("x5"), `S_Plus` (empty slot), `S_Shiny`, `S_Lock` (the gui maker's locked card, 2026-11-11: `Main`, `Stroke`, `LockIcon`) › `S_Price` (white, with its `CurrencyIcon` coin). `Background` › `Stroke2` / `Stroke` take the looks in its attributes |
-| `PREFAB \| Emote` | `U_Emotes` | An ImageButton: `S_Icon`, `S_Name`; a press plays the emote |
+| `PREFAB \| Slot` | `U_Row1` | An ImageButton: `S_Number`, `S_Icon`, `S_Name`, `S_Amount` ("x5"), `S_Plus` (empty slot), `S_Shiny`, `S_Lock` (the gui maker's locked card, 2026-11-11: `Main`, `Stroke`, `LockIcon`) › `S_Price` (white, with its `CurrencyIcon` coin). `Background` › `Stroke2` / `Stroke` take the looks in its attributes |
 
 ## Driven by
 
-The game's `Loadout` module (`Scripts/Client/Panel.lua`) and `Cosmetics` (`Scripts/Client/Emotes.lua`, the emote row);
-`Tutorial` points at `U_Slots`.
+The game's `Loadout` module (`Scripts/Client/Panel.lua`); `Tutorial` points at `U_Slots`.
 
 ## Preview
 
-`Preview.lua` fills the cards and the emote row.
+`Preview.lua` fills the cards and moves EMOTES under the last row, as Loadout does.
 
 | Setting | What it does |
 | --- | --- |
 | `S_Unlocked` (Slider, 3 to 5) | Open slots; the next one shows its lock and price, later ones hide |
 | `S_Selected` (Slider, 0 to 5) | The slot whose picker is open (selected look) |
-| `S_Emotes` (Slider, 1 to 9) | Owned emotes |
 | `S_Shiny` (Toggle) | The first slot's item shiny |
 
 ## Integration
@@ -63,8 +64,7 @@ turns it on outside matches (and off while a full-screen widget is open). It kee
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
 | Pick a slot (opens `LoadoutPicker`, or asks to open a locked slot) | Click | Tap | Select and A | Loadout (`I.Interact.OnPress`) |
-| Play an emote | Click | Tap | Select and A | Cosmetics |
-| Open the emote shop | Click + | Tap + | Select and A | `S_Shop` tags (WidgetManager `Toggle`) |
+| Open the emote panel (owned emotes play from there) | Click + | Tap + | Select and A | `S_Shop` tags (WidgetManager `Toggle`) |
 
 ### Looks
 

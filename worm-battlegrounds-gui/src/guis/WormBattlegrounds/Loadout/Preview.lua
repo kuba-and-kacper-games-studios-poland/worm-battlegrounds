@@ -13,8 +13,11 @@ local _localName: string = "LoadoutPreview"
 --- @type { string }
 local ITEMS = { "Bazooka", "Grenade", "Shotgun", "", "Uzi", "Dynamite", "Jetpack" }
 
--- Cells in the top row, as Loadout's SLOTS_PER_ROW
-local SLOTS_PER_ROW: number = 4
+-- Cards in each row, as Loadout's SLOTS_PER_ROW
+local SLOTS_PER_ROW: number = 2
+
+-- U_EmoteSection's top in the gui, under all four rows of cards (Loadout's Panel moves it up a row per row not shown)
+local EMOTES_TOP: number = 0.7764
 
 -- The locked slot's price and picture: coins for slot 4, Robux for slots 5 and 6, as Loadout's Panel shows them
 local COIN_PRICE: string = "2,500"
@@ -44,7 +47,6 @@ local Module = {
 	Settings = {
 		{ Control = "Slider", Id = "S_Unlocked", Label = "Open slots", Value = 3, Min = 3, Max = 6, Step = 1 },
 		{ Control = "Slider", Id = "S_Selected", Label = "Picking slot (0: none)", Value = 1, Min = 0, Max = 6, Step = 1 },
-		{ Control = "Slider", Id = "S_Emotes", Label = "Emotes", Value = 4, Min = 1, Max = 9, Step = 1 },
 		{ Control = "Toggle", Id = "S_Shiny", Label = "First item shiny", Value = false },
 	},
 }
@@ -54,15 +56,14 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the panel as Loadout's Panel does: the basic weapon, filled, empty, picked and locked slots over two rows,
-	then the emote row.
+	Fills the panel as Loadout's Panel does: the basic weapon, then filled, empty, picked and locked slots, two a row
+	(a lone last card on the right), and EMOTES right under the last row shown.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
 	--[[ Local Variables ]]
 
 	local unlocked: number = preview.Values.S_Unlocked
-	local bottomRow: Instance = preview.View:Get("U_BottomRow").Instance
 
 	--[[ Slots ]]
 
@@ -80,9 +81,7 @@ function Module.Apply(preview)
 
 		root.LayoutOrder = cell
 		root.Visible = slot <= unlocked + 1
-		if cell > SLOTS_PER_ROW then
-			root.Parent = bottomRow
-		end
+		root.Parent = preview.View:Get(`U_Row{math.ceil(cell / SLOTS_PER_ROW)}`).Instance
 		card:Get("S_Number").Instance.Text = tostring(cell)
 		card:Get("S_Number").Instance.Visible = item ~= "" and not locked
 		card:Get("S_Name").Instance.Text = if locked then "" else item
@@ -100,13 +99,12 @@ function Module.Apply(preview)
 
 	--[[ Emotes ]]
 
-	local emotes = preview.Fill("PREFAB | Emote", preview.Values.S_Emotes) --- @type { UmeGui_Subview }
-
-	--- @param emote UmeGui_Subview
-	for index: number, emote in ipairs(emotes) do
-		emote.Root.Instance.LayoutOrder = index
-		emote:Get("S_Name").Instance.Text = `Emote {index}`
-	end
+	local slots: Frame = preview.View:Get("U_Slots").Instance
+	local shownRows: number = math.ceil((1 + math.min(unlocked + 1, #ITEMS - 1)) / SLOTS_PER_ROW)
+	local maxRows: number = math.ceil(#ITEMS / SLOTS_PER_ROW)
+	local padding: number = slots:FindFirstChildOfClass("UIListLayout").Padding.Scale
+	local rowStep: number = (preview.View:Get("U_Row1").Instance.Size.Y.Scale + padding) * slots.Size.Y.Scale
+	preview.View:Get("U_EmoteSection").Instance.Position = UDim2.fromScale(0, EMOTES_TOP - (maxRows - shownRows) * rowStep)
 end
 
 return Module
