@@ -28,9 +28,11 @@ local _data = {
 	--[[ Extras ]]
 
 	Pellets = 5,
-	PerBulletDamage = 10,
+	PerBulletDamage = 4,
 	Spread = 8,
 	Range = 60,
+	Volleys = 2,
+	VolleyInterval = 1,
 }
 
 return _data

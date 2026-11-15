@@ -27,7 +27,7 @@ attribute), and takes down only the spotlight it put up, so on the Studio map th
 | --- | --- |
 | `Server.lua` | Saved progress, the match's end, the crate, the equip step |
 | `Client.lua` | Starts the spotlight, the match guide on the Match map, the lobby guide on the Lobby map, both on the Studio map |
-| `Scripts/Client/Spotlight.lua` | The `TutorialHint` gui: the hole over a gui element, a part, a world spot or a screen area (a `Rect`), the blockers around it, the hint panel beside it |
+| `Scripts/Client/Spotlight.lua` | The `TutorialHint` gui: the hole over a gui element, a part, a world spot or a screen area (a `Rect`), the blockers around it, the hint panel beside it; the first time a funnel step shows it reports it (`Tutorial_Step`) |
 | `Scripts/Client/MatchHints.lua` | The guide during the tutorial match (`TOUCH_HINTS` on touch, `PAD_HINTS` with the pad's button names on a pad) |
 | `Scripts/Client/LobbyHints.lua` | The guide to the crate and the loadout in the lobby (the waiting crate's screen area from the Crates viewport's camera); reports the equip step |
 | `Settings.lua` | `Tutorial_Settings` |
@@ -50,8 +50,11 @@ attribute), and takes down only the spotlight it put up, so on the Studio map th
 
 **Receive: RemoteEvents**
 
-- `Tutorial_Step @ (player: Player, step: string)`: `"Equipped"` finishes the tutorial once the server sees both
-  starter weapons in the loadout. Rate limit 5 per second.
+- `Tutorial_Step @ (player: Player, step: string)`: a step of `FUNNEL_STEPS` whose hint the player saw for the first time
+  (the spotlight reports it), which the server logs once in the Roblox onboarding funnel
+  (`AnalyticsService:LogOnboardingFunnelStepEvent`, its number its place in the list) while the tutorial isn't done;
+  `"Equipped"` finishes the tutorial once the server sees both starter weapons in the loadout, its last funnel step.
+  Rate limit 5 per second.
 
 It listens to `Match_Ended` (Match map) and `Crates_Opened` (Lobby map) when those modules run.
 
@@ -71,6 +74,7 @@ It listens to `Match_Ended` (Match map) and `Crates_Opened` (Lobby map) when tho
 | `STARTER_WEAPONS` | `{ "Grenade", "Shotgun" }` | What the crate gives, and what the equip step checks |
 | `MATCH_MAP`, `LOBBY_MAP`, `MATCH_KIND` | `"Match"`, `"Lobby"`, `"Tutorial"` | The maps that run only the match guide or only the lobby guide, and the match kind |
 | `HINTS` | Drop, Aim, BotTurn, Retry, Lobby, Crate, OpenCrate, Tap, Opening, Continue, CloseCrates, Equip, Pick | What each step's hint says (`Pick`'s `%s` is the weapon's name) |
+| `FUNNEL_STEPS` | Drop, Aim, Lobby, Crate, OpenCrate, Tap, Opening, Continue, CloseCrates, Equip, Pick, Equipped | The tutorial's onboarding funnel (Creator Hub → Analytics → Funnels), in order; hints only some players see (BotTurn, Retry, Fire) aren't in it |
 | `TOUCH_HINTS` | Drop, Aim, Fire, Retry | What those match steps say on a touch screen, where touch aims by a tap and shoots with FIRE |
 | `PAD_HINTS` | Drop, Aim, Retry | What those match steps say on a pad: each `{Action}` becomes that action's button in the Console module's scheme, named for the player's pad (`I.Console.GetButtonName`: "RT" or "R2") |
 | `HOLE_PADDING`, `WORLD_HOLE_RADIUS`, `HOLE_MIN`, `RING_PULSE_RATE` | `10`, `4`, `72`, `4` | The hole: pixels past a gui element, studs around a world spot or snail, its smallest size in pixels, and its ring's pulse |

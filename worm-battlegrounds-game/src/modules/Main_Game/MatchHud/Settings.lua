@@ -39,6 +39,9 @@ local _settings = {
 	TIMER_DANGER_COLOR = Color3.fromRGB(255, 70, 50),
 	TENSION_PULSE_RATE = 1.5,
 
+	-- Once the shot is away the timer stays on the time that was left, dimmed to this colour, until the turn ends
+	TIMER_SPENT_COLOR = Color3.fromRGB(140, 140, 150),
+
 	--[[
 		A turn's callout banner: its band opens (CALLOUT_BAND_TWEENINFO) while its content slides CALLOUT_SLIDE of the
 		screen in and settles from CALLOUT_START_SCALE (CALLOUT_IN_TWEENINFO), stays CALLOUT_HOLD seconds, then slides on
@@ -179,9 +182,9 @@ local _settings = {
 	-- The marker on a homing missile's target
 	TARGET_COLOR = Color3.fromRGB(255, 70, 70),
 
-	-- The power slider's text with a homing missile in hand: before its target is picked, then until the player aims
+	-- The power slider's text with a homing missile in hand: before its target is picked (by a click, or a tap on touch), then until the player aims
 	--- @type { [string]: string }
-	TARGET_HINTS = { Pick = "Click on a target", Shoot = "Shoot!" },
+	TARGET_HINTS = { Pick = "Click on a target", TouchPick = "Tap on a target", Shoot = "Shoot!" },
 
 	-- On a pad: how far the right stick must lean to aim
 	STICK_DEADZONE = 0.3,

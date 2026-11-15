@@ -65,6 +65,13 @@ local _settings = {
 	-- The wind is a whole number from -WIND_MAX to WIND_MAX, rolled again once every snail in play has played on it
 	WIND_MAX = 10,
 
+	--[[
+		How often each strength of wind is rolled (the owner, 2026-11-15: strong wind is rare, -10 or +10 about 1% of
+		rolls): the weight of 0, 1, 2… up to WIND_MAX, out of their sum; a strength above 0 blows either way at even odds
+	]]
+	--- @type { number }
+	WIND_WEIGHTS = { 16, 16, 15, 13, 11, 9, 7, 5.5, 4, 2.5, 1 },
+
 	-- Sudden death starts at SUDDEN_DEATH_ROUND (after 10 rounds): the liquid rises SUDDEN_DEATH_RISE half-stud rows every turn
 	SUDDEN_DEATH_ROUND = 11,
 	SUDDEN_DEATH_RISE = 4,

@@ -265,8 +265,9 @@ end
 	**SERVER** |
 	Returns what knocks out a snail at a position: "Water" or "Lava" in the open sea (the liquid at the map's floor,
 	which sudden death raises, under a surface SEA_MIN_WIDTH studs across or more, or up to SEA_SLACK studs over it as
-	it ripples; a pond, a puddle or a small hole it seeped into is safe), "Bounds" beside or below the play area, or nil
-	when it's safe there.
+	it ripples; a pond, a puddle or a small hole it seeped into is safe), the same past the play area's sides once it
+	falls to the sea's level (the sea is drawn out there: the owner, 2026-11-15, "fell into the water normally"),
+	"Bounds" below the play area, or nil when it's safe there.
 ]]
 --- @return string?
 function Module.GetHazard(position: Vector3)
@@ -284,8 +285,11 @@ function Module.GetHazard(position: Vector3)
 
 	--[[ Returning ]]
 
-	if math.abs(inside.X) > bounds.Size.X / 2 or inside.Y < -bounds.Size.Y / 2 then
+	if inside.Y < -bounds.Size.Y / 2 then
 		return "Bounds"
+	end
+	if math.abs(inside.X) > bounds.Size.X / 2 then
+		return if position.Y <= Liquid.GetSeaLevel() + _settings.SEA_SLACK then Liquid.GetLiquidKind() or "Bounds" else nil
 	end
 	return if Liquid.IsOpenSea(position) then Liquid.GetLiquid(position) elseif Liquid.IsOpenSea(below) then Liquid.GetLiquid(below) else nil
 end

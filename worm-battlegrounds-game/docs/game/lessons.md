@@ -1779,3 +1779,24 @@ nothing.
   StarterGui): it shows hand edits that a re-export would lose.
 
 Rules: `gui/code.md` → Changing a gui (the gui module is the source).
+
+## The owner's match changes of 15 Nov (2026-11-15)
+
+The owner played a round of matches and sent fifteen changes at once. The ones that changed a rule:
+
+- **Hurt no longer ends a turn.** The Worms rule (2026-11-12) cut a turn short whenever the snail lost health before its
+  shot, so a fall or a lava dip took the player's turn away. Now only the shot or the timer ends it.
+- **Throw, then run.** Thrown shots used to take the snail back the moment they left. Now the player keeps moving with
+  the stamina left until the shot bursts. The server must own a snail before it throws it, so every blast (and a hit, or
+  an open black hole drawing it) takes the shooter back first; that's Combat's `Blast._takeBack`, not a timer, since a
+  grenade's flight has no fixed length.
+- **One jetpack, a tank of fuel.** The jetpack had two uses of 3 s each, emptied at every turn's end, and flying sideways
+  spent stamina. Now one use puts on 6 s of fuel that lasts the match. The client burns fuel frame by frame, so it
+  reports what's left (`SnailControl_Fuel`), and the server keeps its own lower bound from the height climbed, so a
+  lost or skipped report can't give free fuel.
+- **Off the map is into the sea.** A shot or snail past the play area's sides vanished at once as "Bounds". The sea is
+  drawn 50 studs past the sides, so now they fly on and go out where they meet the sea's level, as a fall into the sea.
+
+Rules: Getting hurt doesn't end your turn; A thrown shot leaves the snail moving until it bursts; One jetpack a match,
+on fuel; Used-up items lock on the bar; Only the open sea knocks snails out (past the sides); Strong weapons start on their
+cooldown.

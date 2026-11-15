@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -26,6 +27,9 @@ local moduleGui: ScreenGui
 local target: (GuiObject | BasePart | Vector3 | Rect)? = nil
 local shownText: string = ""
 local stepConnection: RBXScriptConnection?
+
+-- The funnel steps already reported to the server this session (the Roblox onboarding funnel counts each once)
+local reported = {} --- @type { [string]: boolean }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -62,12 +66,20 @@ end
 
 --[[
 	Shows a hint, and blacks out the screen around what to press: a gui element, a part, a world spot or a screen
-	area (nil: the hint alone). Presses outside the hole are blocked while it shows.
+	area (nil: the hint alone). Presses outside the hole are blocked while it shows. A step (a name in FUNNEL_STEPS)
+	is reported to the server the first time it shows, for the tutorial's funnel.
 ]]
-function Module.Show(text: string, newTarget: (GuiObject | BasePart | Vector3 | Rect)?)
+function Module.Show(text: string, newTarget: (GuiObject | BasePart | Vector3 | Rect)?, step: string?)
 	--[[ Saving ]]
 
 	target = newTarget
+
+	--[[ Reporting ]]
+
+	if step and not reported[step] and table.find(_settings.FUNNEL_STEPS, step) then
+		reported[step] = true
+		I.Network.Fire("Tutorial_Step", step)
+	end
 
 	--[[ Text ]]
 

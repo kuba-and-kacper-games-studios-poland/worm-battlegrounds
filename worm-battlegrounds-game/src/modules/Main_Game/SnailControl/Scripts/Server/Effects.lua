@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -45,7 +46,7 @@ end
 --[[
 	**SERVER** |
 	Gives a snail a movement effect: "Parachute" (falls slowly and takes no fall damage until it lands), "Jetpack" (fuel
-	its player flies with while holding jump), "Speed" (walks faster and further this turn) or "LowGravity" (jumps
+	its player flies with while holding jump, kept from turn to turn until it's spent), "Speed" (walks faster and further this turn) or "LowGravity" (jumps
 	higher and falls slower this turn). Shiny copies give a little more. Returns whether it applied.
 ]]
 --- @return boolean
@@ -97,7 +98,8 @@ end
 
 --[[
 	**SERVER** |
-	Ends the effects that last a turn (jetpack, speed, low gravity); an open parachute stays until the snail lands.
+	Ends the effects that last a turn (speed, low gravity); an open parachute stays until the snail lands, and jetpack
+	fuel until it's spent.
 ]]
 function Module.ClearTurnEffects(participantId: string)
 	--[[ Data ]]
@@ -112,7 +114,6 @@ function Module.ClearTurnEffects(participantId: string)
 	-- Back to the weight every snail feels (the ball's own mass: an anchored assembly's, mid-throw, is infinite)
 	local root: BasePart = model.PrimaryPart
 	root:FindFirstChild("Lift").Force = Vector3.yAxis * root:GetMass() * I.S.Workspace.Gravity * (1 - I.Settings["Snails"].GRAVITY_SCALE)
-	model:SetAttribute("JetpackFuel", nil)
 	model:SetAttribute("SpeedMultiplier", nil)
 	model:SetAttribute("LowGravity", nil)
 end

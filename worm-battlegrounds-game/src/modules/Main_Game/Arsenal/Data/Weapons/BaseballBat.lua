@@ -14,8 +14,8 @@ local _data = {
 
 	--[[ Damage ]]
 
-	DamageMax = 60,
-	DamageEdge = 60,
+	DamageMax = 12,
+	DamageEdge = 12,
 	BlastRadius = 0,
 	Knockback = "VeryHigh",
 

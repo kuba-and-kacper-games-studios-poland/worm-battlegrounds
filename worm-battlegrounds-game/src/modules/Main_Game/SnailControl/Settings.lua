@@ -24,9 +24,15 @@ local _settings = {
 	-- A parachute caps the fall at this speed, in studs per second
 	PARACHUTE_FALL_SPEED = 6,
 
-	-- Seconds of flight a jetpack holds, and how fast it climbs while its player holds jump, in studs per second
-	JETPACK_FUEL = 3,
+	--[[
+		Seconds of flight a jetpack holds for the whole match (the owner, 2026-11-15: one jetpack a game, its fuel kept from
+		turn to turn until it's spent), and how fast it climbs while its player holds jump, in studs per second. Flying
+		spends fuel, never stamina; the player's screen tells the server what's left every FUEL_REPORT_INTERVAL seconds
+		while it flies
+	]]
+	JETPACK_FUEL = 6,
 	JETPACK_SPEED = 16,
+	FUEL_REPORT_INTERVAL = 0.2,
 
 	-- The Speed potion's walking speed and stamina multiplier
 	SPEED_MULTIPLIER = 1.5,

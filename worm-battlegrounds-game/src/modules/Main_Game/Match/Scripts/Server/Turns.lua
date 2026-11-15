@@ -177,7 +177,7 @@ function Module.RunTurn()
 
 	--[[ Waiting ]]
 
-	-- As in Worms, getting hurt ends the turn (a fall, a mine, a barrel), until the shot is away
+	-- Getting hurt (a fall, lava) no longer ends the turn (the owner, 2026-11-15): only the shot or the timer does; it still holds the settle
 	local hurt: boolean = false
 	local health: number = model:GetAttribute("Health")
 	local hurtConnection: RBXScriptConnection = model:GetAttributeChangedSignal("Health"):Connect(function()
@@ -186,8 +186,8 @@ function Module.RunTurn()
 		health = now
 	end)
 
-	-- The turn ends with a shot, the timer (or an admin skipping it), the snail getting hurt, or it going out
-	while os.clock() < turnDeadline and not shotFired and not hurt and model:GetAttribute("Alive") do
+	-- The turn ends with a shot, the timer (or an admin skipping it), or the snail going out
+	while os.clock() < turnDeadline and not shotFired and model:GetAttribute("Alive") do
 		-- A player who drops during their turn hands it to a bot, with at least TAKEOVER_SECONDS left to play it
 		if not autopilot and not participant.Connected then
 			autopilot = true
@@ -200,7 +200,7 @@ function Module.RunTurn()
 	end
 	hurtConnection:Disconnect()
 
-	-- Firing took the snail back already, or left it running from its Dynamite until the shot is over
+	-- Firing took the snail back already, or left it running from its Dynamite or its thrown shot until the shot is over
 	if shotFired then
 		setPhase("Flight")
 		local flightEnd: number = os.clock() + _settings.MAX_FLIGHT
@@ -254,7 +254,7 @@ function Module._rollWind(participantId: string)
 
 	if everyonePlayed or matchFolder:GetAttribute("Wind") == nil then
 		windPlayed = {}
-		matchFolder:SetAttribute("Wind", random:NextInteger(-_settings.WIND_MAX, _settings.WIND_MAX))
+		matchFolder:SetAttribute("Wind", Module._getRandomWind())
 	end
 	windPlayed[participantId] = true
 end
@@ -574,6 +574,38 @@ function Module._findNext(order, index: number)
 	--[[ Returning ]]
 
 	return nil, index, wrapped
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Random Wind
+
+--[[
+	Returns a new wind, its strength picked by WIND_WEIGHTS (strong wind is rare) and its side at even odds.
+]]
+--- @return number
+function Module._getRandomWind()
+	--[[ Local Variables ]]
+
+	local weights = _settings.WIND_WEIGHTS --- @type { number }
+	local total: number = 0
+	for _strength: number, weight: number in ipairs(weights) do
+		total += weight
+	end
+
+	--[[ Rolling ]]
+
+	local roll: number = random:NextNumber(0, total)
+	local strength: number = _settings.WIND_MAX
+	for index: number, weight: number in ipairs(weights) do
+		roll -= weight
+		if roll < 0 then
+			strength = index - 1
+			break
+		end
+	end
+
+	--[[ Returning ]]
+
+	return if random:NextInteger(0, 1) == 0 then strength else -strength
 end
 
 return Module

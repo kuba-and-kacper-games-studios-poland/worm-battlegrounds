@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -40,6 +41,15 @@ local groundParams = RaycastParams.new()
 
 --- @class SnailControl_Server_Control
 local Module = {}
+
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	--[[ Network ]]
+
+	I.Network.GetEvent("SnailControl_Fuel", { "Player", "number" })
+	I.Network.Fired("SnailControl_Fuel", Module._onFuel)
+end
 
 --%%%%%%%%%%%%%%%%%%%% Start
 
@@ -98,6 +108,7 @@ function Module.StartTurn(participantId: string)
 		GoodTime = os.clock(),
 		Ground = position.Y,
 		Lift = 0,
+		Spent = 0,
 	}
 	model:SetAttribute("Stamina", _settings.STAMINA_STUDS)
 	model:SetAttribute("CanMove", true)
@@ -116,12 +127,13 @@ end
 --[[
 	**SERVER** |
 	Takes a snail back from its player: CanMove turns off and the server owns its physics again, facing the way the
-	player left it. Call it before anything hits the snail.
+	player left it, and its jetpack keeps what fuel is left. Call it before anything hits the snail.
 ]]
 function Module.EndTurn(participantId: string)
 	--[[ Data ]]
 
 	local model: Model? = I.Snails.Get(participantId)
+	local control = controls[participantId] --- @type SnailControl_Control?
 
 	--[[ Saving ]]
 
@@ -132,6 +144,15 @@ function Module.EndTurn(participantId: string)
 	-- Check if the snail still exists
 	if not model then
 		return
+	end
+
+	--[[ Fuel ]]
+
+	-- The fuel its climb took at the least, when its screen reported less (a report lost, or never sent)
+	local fuel: number? = model:GetAttribute("JetpackFuel")
+	if control and fuel then
+		local burned: number = math.max(control.Lift / _settings.JETPACK_SPEED - control.Spent, 0)
+		Module._setFuel(model, fuel - burned)
 	end
 
 	--[[ Applying ]]
@@ -201,6 +222,50 @@ function Module.Refill(participantId: string)
 	--[[ Returning ]]
 
 	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Fuel
+
+--[[
+	A player's screen saying how much jetpack fuel their snail has left as it flies: the fuel only ever goes down, and
+	what it burned counts toward how high the snail may climb this turn.
+]]
+function Module._onFuel(player: Player, left: number)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Data ]]
+
+	local participantId: string = `P_{player.UserId}`
+	local control = controls[participantId] --- @type SnailControl_Control?
+	local model: Model? = I.Snails.Get(participantId)
+
+	--[[ Checks ]]
+
+	-- Check if they move their snail, and it has fuel
+	if not control or control.Player ~= player or not model or not model:GetAttribute("JetpackFuel") then
+		return
+	end
+
+	--[[ Saving ]]
+
+	local fuel: number = model:GetAttribute("JetpackFuel")
+	local burned: number = fuel - math.clamp(left, 0, fuel)
+	control.Spent += burned
+	Module._setFuel(model, fuel - burned)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Fuel
+
+--[[
+	Sets a snail's jetpack fuel; an empty tank takes the jetpack off, for the rest of the match.
+]]
+function Module._setFuel(model: Model, fuel: number)
+	--[[ Saving ]]
+
+	model:SetAttribute("JetpackFuel", if fuel > 1e-3 then fuel else nil)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Check
@@ -289,16 +354,18 @@ function Module._checkSnail(participantId: string, control)
 	local from: number = math.max(control.Last.Y, reach)
 	control.Lift += math.max(position.Y - from, 0)
 
-	-- Snap it back when it climbed higher than its jetpack's fuel lifts it
-	if control.Lift > _settings.JETPACK_SPEED * (model:GetAttribute("JetpackFuel") or 0) + _serverSettings.LIFT_GRACE then
+	-- Snap it back when it climbed higher than its jetpack's fuel (what's left, and what it burned this turn) lifts it
+	local fuel: number = model:GetAttribute("JetpackFuel") or 0
+	if control.Lift > _settings.JETPACK_SPEED * (fuel + control.Spent) + _serverSettings.LIFT_GRACE then
 		Module._snapBack(participantId, control, "flew higher than its jump and jetpack reach")
 		return
 	end
 
 	--[[ Stamina ]]
 
-	-- An empty bar only stops the walk on its client: the snail keeps its turn, and can still jump; speed stretches it
-	local moved: number = math.abs(position.X - control.Last.X) / speedMultiplier
+	-- An empty bar only stops the walk on its client: the snail keeps its turn, and can still jump; speed stretches it, and flying on fuel costs none
+	local flying: boolean = (fuel > 0 or control.Spent > 0) and not Module._isGrounded(position)
+	local moved: number = if flying then 0 else math.abs(position.X - control.Last.X) / speedMultiplier
 	local stamina: number = model:GetAttribute("Stamina")
 	control.Last = position
 	control.Overdraft += math.max(moved - stamina, 0)

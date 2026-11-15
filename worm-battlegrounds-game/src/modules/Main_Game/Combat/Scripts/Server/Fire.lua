@@ -192,8 +192,8 @@ end
 --[[
 	**SERVER** |
 	Fires a participant's weapon (players through their remote, bots directly): checks it's their turn and they may
-	use it, takes a use, takes their snail back (or, for a weapon with a Retreat, lets it run first), ends their turn,
-	runs the weapon, and publishes Combat_ShotResolved with the damage it dealt once everything it spawned is done. `angle` is in radians (0 is right, counterclockwise);
+	use it, takes a use, takes their snail back (or, for a weapon with a Retreat, lets it run first; a thrown shot leaves
+	it moving until the shot bursts), ends their turn, runs the weapon, and publishes Combat_ShotResolved with the damage it dealt once everything it spawned is done. `angle` is in radians (0 is right, counterclockwise);
 	`target` is for the homing missile. Returns whether it fired.
 ]]
 --- @return boolean
@@ -230,11 +230,15 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 
 	--[[ Taking ]]
 
-	-- A weapon with a Retreat leaves the snail its turn a while longer, to run from it; any other ends it now
+	--[[
+		A weapon with a Retreat leaves the snail its turn a while longer, to run from it; a thrown or launched shot leaves
+		it moving with the stamina it has left until the shot bursts (Blast takes it back first, Match at the shot's end);
+		a gun or a swing ends it now
+	]]
 	Uses.Take(participantId, itemId)
 	if row.Retreat then
 		I.SnailControl.Retreat(participantId, row.Retreat)
-	else
+	elseif row.Aim ~= "Arc" and row.Aim ~= "Target" then
 		I.SnailControl.EndTurn(participantId)
 	end
 	root:FindFirstChild("Upright").CFrame = CFrame.lookAlong(Vector3.zero, Vector3.xAxis * facing)

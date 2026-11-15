@@ -123,15 +123,15 @@ function Module._tick()
 	--[[ Showing ]]
 
 	if phase == "Drop" and not mine:GetAttribute("Placed") then
-		Module._show(Module._getHint("Drop"), Vector3.new(mine:GetAttribute("DropX") or 0, mine:GetAttribute("DropY") or 0, 0))
+		Module._show(Module._getHint("Drop"), Vector3.new(mine:GetAttribute("DropX") or 0, mine:GetAttribute("DropY") or 0, 0), "Drop")
 	elseif phase == "Turn" and myTurn and bot and bot.PrimaryPart then
 		local touchFire: boolean = I.Platform.Current == "Mobile" and touchAimed
 		local step: string = if touchFire then "Fire" elseif fired then "Retry" else "Aim"
-		Module._show(Module._getHint(step), if touchFire then elems["Fire"] else bot.PrimaryPart)
+		Module._show(Module._getHint(step), if touchFire then elems["Fire"] else bot.PrimaryPart, step)
 	elseif phase == "Turn" and not myTurn then
-		Module._show(Module._getHint("BotTurn"), nil)
+		Module._show(Module._getHint("BotTurn"), nil, "BotTurn")
 	elseif phase == "Ended" then
-		Module._show(Module._getHint("Lobby"), elems["Lobby"])
+		Module._show(Module._getHint("Lobby"), elems["Lobby"], "Lobby")
 	else
 		Module._hide()
 	end
@@ -140,13 +140,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Show
 
 --[[
-	Shows a step through the spotlight and remembers this guide put it up.
+	Shows a step through the spotlight (reporting it for the funnel) and remembers this guide put it up.
 ]]
-function Module._show(text: string, target: (GuiObject | BasePart | Vector3 | Rect)?)
+function Module._show(text: string, target: (GuiObject | BasePart | Vector3 | Rect)?, step: string)
 	--[[ Applying ]]
 
 	showing = true
-	Spotlight.Show(text, target)
+	Spotlight.Show(text, target, step)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Hide

@@ -94,10 +94,6 @@ function Module.Run(shot)
 		return
 	end
 
-	-- A snail still running from its Dynamite is the server's again before the blast can throw it
-	if row.Retreat then
-		I.SnailControl.EndTurn(shot.ParticipantId)
-	end
 	shot.Damage += Blast.Explode(burst, row.BlastRadius, shot.ItemId, shot.ParticipantId, shot.Shiny, row.DamageMax, row.DamageEdge, row.Knockback)
 
 	--[[ Splitting ]]

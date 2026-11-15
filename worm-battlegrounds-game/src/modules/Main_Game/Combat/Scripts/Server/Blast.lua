@@ -49,6 +49,14 @@ function Module.Explode(center: Vector3, radius: number, itemId: string, sourceI
 	local carved: boolean = false
 	local dealt: number = 0
 
+	--[[ Taking Back ]]
+
+	-- A shooter still running from its throw stops as the shot bursts, and is the server's before the blast can throw it
+	local activeId: string? = I.Match.GetActive()
+	if activeId then
+		Module._takeBack(activeId)
+	end
+
 	--[[ Publishing ]]
 
 	I.Network.FireAll("Combat_Explosion", position, radius, itemId, shiny == true)
@@ -112,6 +120,10 @@ end
 ]]
 --- @return number
 function Module.Hit(participantId: string, damage: number, velocityChange: Vector3, itemId: string, sourceId: string?, position: Vector3)
+	--[[ Taking Back ]]
+
+	Module._takeBack(participantId)
+
 	--[[ Hurting ]]
 
 	local taken: number
@@ -168,6 +180,29 @@ function Module._hurt(participantId: string, damage: number, itemId: string, sou
 	--[[ Returning ]]
 
 	return if participantId ~= sourceId then taken else 0, true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Take Back
+
+--[[
+	Takes a snail its player still moves (the shooter running from a thrown shot) back to the server, so a blast can
+	hurt and throw it.
+]]
+function Module._takeBack(participantId: string)
+	--[[ Data ]]
+
+	local model: Model? = I.Snails.Get(participantId)
+
+	--[[ Checks ]]
+
+	-- Check if its player still moves it
+	if not model or not model:GetAttribute("CanMove") then
+		return
+	end
+
+	--[[ Applying ]]
+
+	I.SnailControl.EndTurn(participantId)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

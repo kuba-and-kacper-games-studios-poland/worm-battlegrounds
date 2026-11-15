@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -33,6 +34,12 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Init
 
 function Module.Init()
+	----------------------------
+	------ INITIALIZATION ------
+	----------------------------
+
+	Control.Init()
+
 	----------------------------
 	---- ASSIGN TO INSTANCE ----
 	----------------------------

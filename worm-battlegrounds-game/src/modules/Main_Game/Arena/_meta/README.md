@@ -69,7 +69,7 @@ use, and the plane snails are held on, and tells others when a map is ready (`Ar
 | `IsInLava(position: Vector3, radius: number)` | `boolean` | Whether a ball of `radius` centered there dips into lava, even a cell of it under the ball (Snails' burn, the bots' lava sense) |
 | `GetLiquidKind()` | `string?` | The loaded map's sea liquid, `"Water"` or `"Lava"`; `nil` when it has no sea |
 | `GetSeaLevel()` | `number` | The sea's surface height, raised by sudden death (`-math.huge` on a map without a sea) |
-| `GetHazard(position: Vector3)` | `string?` | What knocks a snail out there: `"Water"` or `"Lava"` in the open sea (joined to the sea, no higher than its level plus `SEA_SLACK`, under a surface `SEA_MIN_WIDTH` studs across or more, or under the land's floor), `"Bounds"` beside or below the play area (above it is fine), `nil` when safe (a pond, a puddle, a small hole the sea seeped into, lava on the map, which burns instead) |
+| `GetHazard(position: Vector3)` | `string?` | What knocks a snail out there: `"Water"` or `"Lava"` in the open sea (joined to the sea, no higher than its level plus `SEA_SLACK`, under a surface `SEA_MIN_WIDTH` studs across or more, or under the land's floor), the same past the play area's sides once a snail or shot falls to the sea's level (the sea is drawn out there, so it falls in as into the sea; a map with no sea: `"Bounds"`), `"Bounds"` below the play area (above it and beside it over the sea are fine), `nil` when safe (a pond, a puddle, a small hole the sea seeped into, lava on the map, which burns instead) |
 | `IsSettled()` | `boolean` | Whether no carved-off debris is still falling |
 
 ## Usage

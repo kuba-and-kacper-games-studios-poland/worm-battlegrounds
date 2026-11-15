@@ -30,6 +30,9 @@ local bound: boolean = false
 -- The utility box the pad's LB and RB rest on (they pass utilities without using them; Y uses it), nil on the held weapon
 local padCursor: string? = nil
 
+-- The player's snail whose jetpack fuel the Jetpack box shows
+local watchedSnail: Model? = nil
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -252,9 +255,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Boxes
 
 --[[
-	Shows each box's uses left, its cooldown (the icon darkened under the turns left) and whether it's the selected one
-	(the design's white outline, from the box's Look_ attributes; the pad's utility box instead while LB or RB rest
-	there, with its Y hint); the key numbers only on Desktop.
+	Shows each box's uses left, its cooldown (the icon darkened under the turns left), a lock over one used up for the
+	rest of the match (darkened the same way; the Jetpack only once its fuel is gone too, its box showing the fuel left
+	meanwhile) and whether it's the selected one (the design's white outline, from the box's Look_ attributes; the
+	pad's utility box instead while LB or RB rest there, with its Y hint); the key numbers only on Desktop.
 ]]
 function Module._refreshBoxes()
 	--[[ Checks ]]
@@ -267,6 +271,8 @@ function Module._refreshBoxes()
 	--[[ Local Variables ]]
 
 	local picked: string = padCursor or selected
+	local mine: Model? = I.Snails.GetMine()
+	local fuel: number? = if mine then mine:GetAttribute("JetpackFuel") else nil
 
 	--[[ Applying ]]
 
@@ -274,13 +280,16 @@ function Module._refreshBoxes()
 		box:FindFirstChild("S_UseHint"):SetAttribute("Console_HintHidden", itemId ~= padCursor)
 		local uses: number = combatRep:GetAttribute(`Uses_{itemId}`) or 0
 		local cooldown: number = combatRep:GetAttribute(`Cooldown_{itemId}`) or 0
+		local fueled: boolean = itemId == "Jetpack" and fuel ~= nil and fuel > 0
+		local locked: boolean = uses == 0 and not fueled
 		local icon: ImageLabel = box:FindFirstChild("S_Icon")
 		local model: ViewportFrame? = icon:FindFirstChild("S_Model")
 		local turns: TextLabel = box:FindFirstChild("S_Turns")
-		local iconColor: Color3 = if cooldown > 0 then box:GetAttribute("Look_CooldownIconColor") else Color3.new(1, 1, 1)
-		box:FindFirstChild("S_Uses").Text = if uses < 0 then "" else `x{uses}`
+		local iconColor: Color3 = if cooldown > 0 or locked then box:GetAttribute("Look_CooldownIconColor") else Color3.new(1, 1, 1)
+		box:FindFirstChild("S_Uses").Text = if fueled then `{math.ceil((fuel or 0) / I.Settings["SnailControl"].JETPACK_FUEL * 100)}%` elseif uses < 0 then "" else `x{uses}`
 		box:FindFirstChild("S_Key").Visible = I.Platform.Current == "Desktop"
-		turns.Visible = cooldown > 0
+		box:FindFirstChild("S_Lock").Visible = locked
+		turns.Visible = cooldown > 0 and not locked
 		turns.Text = tostring(cooldown)
 		icon.ImageColor3 = iconColor
 		if model then
@@ -293,7 +302,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On My Turn
 
 --[[
-	At the start of the player's turn, holds the Bazooka again when the selected weapon has no uses left or cools down.
+	At the start of the player's turn, follows their snail's jetpack fuel, and holds the Bazooka again when the selected
+	weapon has no uses left or cools down.
 ]]
 function Module._onMyTurn(myTurn: boolean)
 	--[[ Checks ]]
@@ -301,6 +311,15 @@ function Module._onMyTurn(myTurn: boolean)
 	-- Check if the turn is starting
 	if not myTurn or not combatRep then
 		return
+	end
+
+	--[[ Watching ]]
+
+	-- The Jetpack box shows the fuel left in the player's snail as it burns
+	local mine: Model? = I.Snails.GetMine()
+	if mine and mine ~= watchedSnail then
+		watchedSnail = mine
+		mine:GetAttributeChangedSignal("JetpackFuel"):Connect(Module._refreshBoxes)
 	end
 
 	--[[ Selecting ]]

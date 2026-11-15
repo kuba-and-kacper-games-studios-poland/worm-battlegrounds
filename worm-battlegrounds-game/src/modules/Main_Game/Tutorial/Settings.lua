@@ -61,6 +61,14 @@ local _settings = {
 		Retry = "So close! Aim at the bot with {Aim} and fire with {Fire}",
 	},
 
+	--[[
+		The tutorial's steps in the Roblox onboarding funnel (Creator Hub → Analytics → Funnels), in order: each is
+		logged once a player first sees its hint (the server's AnalyticsService), "Equipped" when the tutorial is done.
+		Hints that show only to some players (BotTurn, Retry, the touch screens' Fire) aren't funnel steps
+	]]
+	--- @type { string }
+	FUNNEL_STEPS = { "Drop", "Aim", "Lobby", "Crate", "OpenCrate", "Tap", "Opening", "Continue", "CloseCrates", "Equip", "Pick", "Equipped" },
+
 	--%%%%%%%%%%%%%%%%%%%% Spotlight
 
 	--[[

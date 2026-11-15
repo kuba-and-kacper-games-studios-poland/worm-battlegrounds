@@ -12,7 +12,7 @@ local _data = {
 
 	--[[ Limits ]]
 
-	Uses = 2,
+	Uses = 1,
 }
 
 return _data

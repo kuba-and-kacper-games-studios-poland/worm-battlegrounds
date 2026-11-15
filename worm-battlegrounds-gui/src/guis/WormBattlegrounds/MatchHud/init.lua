@@ -3493,6 +3493,24 @@ local _gui = {
 						TextScaled = true,
 					},
 				},
+				-- The lock over an item used up for the rest of the match (LoadoutBar), the Loadout card's lock picture
+				{
+					Primitive = "ImageLabel",
+					Id = "S_Lock",
+					Props = {
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+						LayoutOrder = 2,
+						Position = UDim2.fromScale(0.5, 0.45),
+						Size = UDim2.fromScale(0.4, 0.42),
+						Visible = false,
+						ZIndex = 6,
+						Image = "rbxassetid://131803930638166",
+						ScaleType = Enum.ScaleType.Fit,
+					},
+					Attributes = { _ImageName = "1055_97__LobbyInventory__LockIcon_image" },
+				},
 			},
 		},
 		["PREFAB | TurnEntry"] = {

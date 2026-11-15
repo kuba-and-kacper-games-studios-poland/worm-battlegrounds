@@ -135,14 +135,14 @@ function Module._tick()
 			elseif I.Utils.IsGuiShown(elems["Tap"]) then "Tap"
 			else "Opening"
 		local targets = { OpenCrate = elems["BuyOne"], Continue = elems["Continue"], CloseCrates = elems["Close"] } --- @type { [string]: GuiObject }
-		Spotlight.Show(_settings.HINTS[step], if step == "Tap" then Module._getCrateArea() else targets[step])
+		Spotlight.Show(_settings.HINTS[step], if step == "Tap" then Module._getCrateArea() else targets[step], step)
 	elseif crateReady then
-		Spotlight.Show(_settings.HINTS.Crate, elems["Weapons"])
+		Spotlight.Show(_settings.HINTS.Crate, elems["Weapons"], "Crate")
 	elseif elems["Picker"].Enabled and missing then
 		local card: GuiObject? = elems["Items"]:FindFirstChild(missing, true)
-		Spotlight.Show(string.format(_settings.HINTS.Pick, I.G_Inventory.Items[missing].Name), card)
+		Spotlight.Show(string.format(_settings.HINTS.Pick, I.G_Inventory.Items[missing].Name), card, "Pick")
 	else
-		Spotlight.Show(_settings.HINTS.Equip, Module._getFreeSlot())
+		Spotlight.Show(_settings.HINTS.Equip, Module._getFreeSlot(), "Equip")
 	end
 end
 

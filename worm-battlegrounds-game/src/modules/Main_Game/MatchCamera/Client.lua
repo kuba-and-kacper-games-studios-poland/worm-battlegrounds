@@ -458,10 +458,17 @@ end
 
 --[[
 	Takes the camera to where a gun's bullets (or a swing) landed, when it follows shots: bullets are too fast to follow,
-	so it glides to the middle of their hits and stays there like a blast until the next turn starts.
+	so it glides to the middle of the bullets that struck a snail or the map and stays there like a blast until the
+	next turn starts. Bullets that flew off into the air leave the camera where it is.
 ]]
---- @param hits { Vector3 }
-function Module._onTracer(_itemId: string, _from: Vector3, hits)
+--- @param tracers { Vector3 }
+--- @param struck { Vector3 }?
+function Module._onTracer(_itemId: string, _from: Vector3, tracers, struck)
+	--[[ Local Variables ]]
+
+	-- A gun says which bullets struck something: one that hit neither a snail nor the map doesn't move the camera
+	local hits = struck or tracers
+
 	--[[ Checks ]]
 
 	-- Skip when the camera doesn't follow shots, or nothing landed

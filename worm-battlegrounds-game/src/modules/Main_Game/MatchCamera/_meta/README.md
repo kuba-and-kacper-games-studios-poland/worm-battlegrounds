@@ -14,7 +14,8 @@ followed a shot into (Combat's `Combat_Explosion`, while `CameraFollowsShot` is 
 next turn starts (Match's `Match_TurnStarted`), and for at least `BLAST_HOLD` seconds, or `BIG_BLAST_HOLD` for a
 blast of `BIG_BLAST_RADIUS` or more, so it moves once, to the next snail; a shot flying meanwhile takes it. Guns and
 swings (Combat's `Combat_Tracer`) are too fast to follow, so the camera glides to the middle of where their bullets
-landed and holds there the same way; a followed shot that ends with no blast on this screen (it sank, or this screen's
+struck a snail or the map and holds there the same way (a gun that hit nothing leaves the camera where it is: the
+owner, 2026-11-15); a followed shot that ends with no blast on this screen (it sank, or this screen's
 copy landed before the server's blast) holds where it ended. While it holds, a snail in play (its `Alive` attribute: a knocked-out snail's anchored ball keeps its last speed)
 moving faster than `CHASE_SPEED` (a blow sent it flying, or it fell) is followed until it slows, and the hold lasts `CHASE_HOLD` after. Moving on to a
 new snail, or to where bullets landed, it glides at `TRAVEL_SPEED` (for at most `TRAVEL_MAX` seconds, or until it's

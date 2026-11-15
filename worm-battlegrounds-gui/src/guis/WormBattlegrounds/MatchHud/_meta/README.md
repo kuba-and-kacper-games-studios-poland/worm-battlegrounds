@@ -66,7 +66,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| BarSlot` | `U_Slots` | An ImageButton: `S_Icon`, `S_Key` ("1"–"7", Desktop only), `S_Uses` ("x5"), `S_Name`, `S_Turns` (the cooldown's turns left, hidden), `S_Plus` (an empty slot's "+", hidden), `S_UseHint` (Y on Console, a `Console_Hint` with `Console_Action` `UseUtility`, hidden by `Console_HintHidden` until the pad's cursor rests on the slot), `Background` › `Stroke` (the outline the looks recolour) |
+| `PREFAB \| BarSlot` | `U_Slots` | An ImageButton: `S_Icon`, `S_Key` ("1"–"7", Desktop only), `S_Uses` ("x5"), `S_Name`, `S_Turns` (the cooldown's turns left, hidden), `S_Lock` (the Loadout card's lock picture over an item used up for the match, hidden), `S_Plus` (an empty slot's "+", hidden), `S_UseHint` (Y on Console, a `Console_Hint` with `Console_Action` `UseUtility`, hidden by `Console_HintHidden` until the pad's cursor rests on the slot), `Background` › `Stroke` (the outline the looks recolour) |
 | `PREFAB \| TurnEntry` | `U_TurnList` | `S_Name` (with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name, whose `UITextSizeConstraint` it lowers so the name stays on one line), `Background` › `Main`, `S_Avatar` (square, under the outlines), `Stroke`, `S_Mask` (the current look's shine) |
 | `PREFAB \| Team` | `U_TeamsLeft` (clones go on either side) | `S_Players` (a horizontal list holding the nested `PREFAB \| TeamPlayer`), `S_Name` (`TextCase_Upper`) |
 | `PREFAB \| TeamPlayer` | nested in `Team` › `S_Players`, hidden | `Background` › `Main`, `S_Avatar` (square, under the outlines), `Stroke2`, `Stroke` |
@@ -97,7 +97,7 @@ The game's `MatchHud` module: it turns the ScreenGui on while the player is in a
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchHud`, `Enabled` off. Its module turns it on while the player is in a match. The kept blocks' `S_ScreenScale` UIScales are set by the game's ScreenScale module (`MatchHud` is in its `GUIS` list), laid out for a 1920 × 1080 screen, times the device scale their `Utils_PlatformScale` tag keeps; the design's frames need nothing. Capitals texts carry `TextCase_Upper`, so what code writes there shows in capitals. Last exported to StarterGui on 2026-11-15 (`UmeGui.Export`, with `U_TouchJump`); the exports before are kept in `ServerStorage.!dump` as `MatchHud_before_2026-11-10`, `MatchHud_before_2026-11-13` and `MatchHud_before_2026-11-15`.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `MatchHud`, `Enabled` off. Its module turns it on while the player is in a match. The kept blocks' `S_ScreenScale` UIScales are set by the game's ScreenScale module (`MatchHud` is in its `GUIS` list), laid out for a 1920 × 1080 screen, times the device scale their `Utils_PlatformScale` tag keeps; the design's frames need nothing. Capitals texts carry `TextCase_Upper`, so what code writes there shows in capitals. Last exported to StarterGui on 2026-11-15 (`UmeGui.Export`, with `U_TouchJump` and the bar slot's `S_Lock`); the exports before are kept in `ServerStorage.!dump` as `MatchHud_before_2026-11-10`, `MatchHud_before_2026-11-13` and `MatchHud_before_2026-11-15`.
 
 ### Input
 
@@ -121,6 +121,7 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 | Selected item | `BarSlot` › `Background` › `Stroke` | `ImageColor3` = `Look_SelectedStrokeColor` (white); others `Look_StrokeColor` (grey) |
 | Empty slot | `BarSlot` | `S_Plus` shown, the rest hidden, `Stroke` = `Look_EmptyStrokeColor`, not interactable |
 | Cooling down | `BarSlot` › `S_Icon` (and a model's `S_Model`) | `ImageColor3` = `Look_CooldownIconColor`, `S_Turns` shown |
+| Used up for the match | `BarSlot` › `S_Icon` (and a model's `S_Model`) | `ImageColor3` = `Look_CooldownIconColor`, `S_Lock` shown (the Jetpack only once its fuel is gone; until then `S_Uses` shows the fuel left, "75%") |
 | Turn callout, the player's own | `S_TitleGradient`; `S_LineTop`, `S_LineBottom`, `S_AvatarStroke` | Gold `CALLOUT_MINE_GRADIENT`; orange `CALLOUT_ACCENT_COLOR` |
 | Turn callout, anyone else's | `S_TitleGradient`; `S_LineTop`, `S_LineBottom`, `S_AvatarStroke`; `S_Pop` | White `CALLOUT_OTHER_GRADIENT`; the snail's `Color`; at `CALLOUT_OTHER_SCALE` |
 | Current snail | `TurnEntry` › `Background` | `Main` takes `Look_CurrentMain` and `Look_CurrentMainColor` (orange), `Stroke` `Look_CurrentStrokeColor`, `S_Mask` shown; others `Look_Main`, `Look_MainColor` and their team colour on `Stroke` |

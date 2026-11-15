@@ -25,6 +25,9 @@ local matchFolder: Folder
 local tickConnection: RBXScriptConnection?
 local shownTimer: string?
 
+-- The turn's clock as the shot left (or the time ran out), held dimmed while the shot flies and the arena settles
+local spentTimer: string?
+
 -- The banner's, timer's and wait line's colours from the gui, put back after a turn's own looks
 local bannerColor: Color3
 local timerColor: Color3
@@ -110,7 +113,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the turn panel and the turn list while turns run, the stamina bar on the player's own turn, and whose turn it
+	Shows the turn panel and the turn list while turns run, the stamina bar on the player's own turn (and after a throw
+	while they still move), and whose turn it
 	is: "Your turn!", or another snail's name in its team colour with how many turns until the player's own; ticks only
 	while it shows.
 ]]
@@ -136,7 +140,9 @@ function Module._refresh()
 
 	elems["Turn"].Visible = inTurns
 	elems["TurnList"].Visible = inTurns
-	elems["Stamina"].Visible = myTurn and phase == "Turn"
+	-- After a throw the player runs on with what's left until it bursts (SnailControl's CanMove)
+	local mine: Model? = I.Snails.GetMine()
+	elems["Stamina"].Visible = myTurn and (phase == "Turn" or phase == "Flight" and mine ~= nil and mine:GetAttribute("CanMove") == true)
 
 	--[[ Turn List ]]
 
@@ -390,7 +396,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Tick
 
 --[[
-	Counts the turn down on the timer ("0:30"), blank while a shot flies and settles, and fills the stamina bar from the
+	Counts the turn down on the timer ("0:30"), held dimmed on the time left while a shot flies and settles (the owner,
+	2026-11-15), blank between turns, and fills the stamina bar from the
 	player's snail. The player's own last seconds tighten: the timer turns orange, then red as it ticks aloud (faster
 	and higher at the very end), a band pulses along the screen's sides, and Turn_TimeUp sounds when it runs out.
 ]]
@@ -404,8 +411,16 @@ function Module._tick(deltaTime: number?)
 	local tense: boolean = inTurn and I.Match.IsMyTurn() and left > 0
 	local ticking: boolean = tense and seconds <= _settings.TICK_SOUND_FROM
 
-	-- Only the Turn phase has a clock: a 0 while a shot flies reads as time running out
-	local timerText: string = if inTurn then string.format("%d:%02d", seconds // 60, seconds % 60) else ""
+	local phase: string = I.Match.GetPhase()
+	local spent: boolean = phase == "Flight" or phase == "Settle"
+
+	-- The clock stops where the shot left it, and stays there dimmed until the turn is over
+	if inTurn then
+		spentTimer = string.format("%d:%02d", seconds // 60, seconds % 60)
+	elseif not spent then
+		spentTimer = nil
+	end
+	local timerText: string = if inTurn or spent then spentTimer or "" else ""
 
 	--[[ Timer ]]
 
@@ -413,7 +428,7 @@ function Module._tick(deltaTime: number?)
 		shownTimer = timerText
 		elems["Timer"].Text = timerText
 	end
-	elems["Timer"].TextColor3 = if ticking then _settings.TIMER_DANGER_COLOR elseif tense and seconds <= _settings.TIMER_WARN_FROM then _settings.TIMER_WARN_COLOR else timerColor
+	elems["Timer"].TextColor3 = if spent then _settings.TIMER_SPENT_COLOR elseif ticking then _settings.TIMER_DANGER_COLOR elseif tense and seconds <= _settings.TIMER_WARN_FROM then _settings.TIMER_WARN_COLOR else timerColor
 
 	--[[ Ticking ]]
 

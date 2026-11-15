@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -104,7 +105,8 @@ end
 --[[
 	One frame of an open black hole: every snail within the row's PullRadius of it (the shooter's teammates aside) moves
 	toward it at BLACK_HOLE_DRAG_SPEED, sliding on the ground and drifting through the air, and sticks within
-	BLACK_HOLE_STICK of its middle (I.Snails.Drag). Each one it ever drew is noted in `dragged`, to let go of after.
+	BLACK_HOLE_STICK of its middle (I.Snails.Drag), taking a snail its player still moves back first. Each one it ever
+	drew is noted in `dragged`, to let go of after.
 ]]
 --- @param shot Combat_Shot
 --- @param dragged { [string]: boolean }
@@ -119,6 +121,10 @@ function Module._drag(shot, center: Vector3, deltaTime: number, dragged)
 		local inReach: boolean = (center - model.PrimaryPart.Position).Magnitude <= radius
 		if (dragged[model.Name] or inReach) and not Blast.IsTeammate(model.Name, shot.ParticipantId) then
 			dragged[model.Name] = true
+			-- The shooter still running from its throw is the server's again before the hole moves it
+			if model:GetAttribute("CanMove") then
+				I.SnailControl.EndTurn(model.Name)
+			end
 			I.Snails.Drag(model.Name, center, _settings.BLACK_HOLE_DRAG_SPEED, deltaTime, _settings.BLACK_HOLE_STICK)
 		end
 	end

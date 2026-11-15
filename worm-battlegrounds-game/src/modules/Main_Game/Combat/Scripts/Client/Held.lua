@@ -229,7 +229,8 @@ end
 
 --[[
 	Takes a weapon out of a snail's hands. When its shot is away (the match is in its Flight) and it's a gun with its
-	own pose, it plays the shot first, for at least the gun's burst, then goes.
+	own pose, it plays the shot first, for at least the gun's burst, again for each of its Volleys (the Shotgun's
+	second blast), then goes.
 ]]
 function Module._putAway(snail: Model, itemId: string?, weapon: Model)
 	--[[ Data ]]
@@ -250,7 +251,16 @@ function Module._putAway(snail: Model, itemId: string?, weapon: Model)
 
 	--[[ Shooting ]]
 
-	local seconds: number = I.SnailRig.Shoot(skin, (row.Pellets or 1) * (row.BurstInterval or 0))
+	local burst: number = (row.Pellets or 1) * (row.BurstInterval or 0)
+	local length: number = I.SnailRig.Shoot(skin, burst)
+	local seconds: number = ((row.Volleys or 1) - 1) * (row.VolleyInterval or 1) + length
+	for volley: number = 2, row.Volleys or 1 do
+		task.delay((volley - 1) * (row.VolleyInterval or 1), function()
+			if skin.Parent then
+				I.SnailRig.Shoot(skin, burst)
+			end
+		end)
+	end
 	task.delay(seconds, function()
 		-- The snail may hold a new weapon by now, which replaced this one's hold
 		if holder ~= snail and skin.Parent then

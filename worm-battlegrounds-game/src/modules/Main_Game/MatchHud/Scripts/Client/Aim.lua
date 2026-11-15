@@ -40,8 +40,9 @@ local lockStart: number = 0
 -- Where the mouse or finger last pointed, in screen pixels: the aim points from the snail toward it (nil on a pad)
 local pointer: Vector2? = nil
 
--- The finger pointing the aim on a touch screen, while it's down
+-- The finger pointing the aim on a touch screen, while it's down, and whether a finger last set the pointer
 local pointingTouch: InputObject? = nil
+local pointerByTouch: boolean = false
 
 local target: Vector3? = nil
 local lastSent: number = 0
@@ -264,11 +265,10 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 
 	--[[ Target ]]
 
-	-- A homing missile's first click or tap picks its target
-	if press and I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target" and not target then
-		target = Module._getPlanePoint(Vector2.new(input.Position.X, input.Position.Y))
-		targetMarker.Position = target
-		targetMarker.Transparency = 0.2
+	-- A homing missile's first click picks its target; on touch a finger places it and drags it until FIRE (Step)
+	local homing: boolean = I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target"
+	if press and homing and not target and input.UserInputType ~= Enum.UserInputType.Touch then
+		Module._setTarget(Module._getPlanePoint(Vector2.new(input.Position.X, input.Position.Y)))
 		return
 	end
 
@@ -277,7 +277,11 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 	-- A finger points the aim while it's down; on touch only FIRE shoots
 	if input.UserInputType == Enum.UserInputType.Touch then
 		pointingTouch = input
+		pointerByTouch = true
 		pointer = Vector2.new(input.Position.X, input.Position.Y)
+		if homing then
+			Module._setTarget(Module._getPlanePoint(pointer))
+		end
 		return
 	end
 
@@ -297,6 +301,11 @@ function Module._onInputChanged(input: InputObject, _processed: boolean)
 
 	if input.UserInputType == Enum.UserInputType.MouseMovement or input == pointingTouch then
 		pointer = Vector2.new(input.Position.X, input.Position.Y)
+		pointerByTouch = input == pointingTouch
+		-- A finger dragging a homing missile's target moves it along
+		if input == pointingTouch and target and I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target" then
+			Module._setTarget(Module._getPlanePoint(pointer))
+		end
 		return
 	end
 
@@ -462,7 +471,7 @@ function Module._step()
 
 	-- A homing missile asks for its target first, then to shoot
 	if I.G_Arsenal.Get(itemId).Aim == "Target" and not aiming then
-		elems["Info"].Text = if target then _settings.TARGET_HINTS.Shoot else _settings.TARGET_HINTS.Pick
+		elems["Info"].Text = if target then _settings.TARGET_HINTS.Shoot elseif I.Platform.Current == "Mobile" then _settings.TARGET_HINTS.TouchPick else _settings.TARGET_HINTS.Pick
 	end
 
 	--[[ Sending ]]
@@ -535,9 +544,7 @@ function Module._lockOn(position: Vector2)
 	lockStart = os.clock()
 	aiming = "Lock"
 	if I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target" then
-		target = lockGuide.Target
-		targetMarker.Position = target
-		targetMarker.Transparency = 0.2
+		Module._setTarget(lockGuide.Target)
 	end
 
 	--[[ Returning ]]
@@ -736,11 +743,27 @@ function Module._cancel()
 	power = 0
 end
 
+--%%%%%%%%%%%%%%%%%%%% Set Target
+
+--[[
+	Places a homing missile's target (its crosshair) on a point of the arena's plane, with its marker.
+]]
+function Module._setTarget(point: Vector3)
+	--[[ Saving ]]
+
+	target = point
+
+	--[[ Applying ]]
+
+	targetMarker.Position = point
+	targetMarker.Transparency = 0.2
+end
+
 --%%%%%%%%%%%%%%%%%%%% On My Turn
 
 --[[
-	Shows the angle marker through the player's turn, starting the way their snail faces, and clears it and a picked
-	target when the turn ends.
+	Shows the angle marker through the player's turn, starting the way their snail faces, and clears it, a picked
+	target and a finger's last point when the turn starts or ends.
 ]]
 function Module._onMyTurn(myTurn: boolean)
 	--[[ Clearing ]]
@@ -751,6 +774,13 @@ function Module._onMyTurn(myTurn: boolean)
 	targetMarker.Transparency = 1
 	elems["Power"].Visible = false
 	elems["Fire"].Visible = false
+
+	-- Where a finger last lifted means nothing next turn (the camera moved): the aim and a homing crosshair start fresh
+	if pointerByTouch then
+		pointer = nil
+		pointingTouch = nil
+		pointerByTouch = false
+	end
 	if stepConnection then
 		stepConnection:Disconnect()
 		stepConnection = nil

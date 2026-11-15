@@ -72,12 +72,15 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   but if there's a smaller hole the water is good"), only where it's open: the surface over the snail is at least
   `SEA_MIN_WIDTH` (16) studs across, or the snail is under the land's floor (a hole cut through the land drops it into
   the sea below). A pond on its own (Desert's oasis, Lakeside's lake), a puddle, or a crater up to a Grenade's that
-  the sea seeps into is safe to fall in; a Dynamite or Black hole crater it floods is the sea.
+  the sea seeps into is safe to fall in; a Dynamite or Black hole crater it floods is the sea. **Past the map's sides
+  everything falls into the sea** (the owner, 2026-11-15: "do not disappear but fell into the water normally"): a
+  snail or shot beside the play area flies on and goes out only once it falls to the sea's level, where the sea is
+  drawn (Arena's `GetHazard`); on a map with no sea, at the play area's bottom.
 - **Lava on the map burns** (the owner, 2026-11-13: "you can move for 2s and then your turn ends and you'll loose
   like 5-10hp every second for few seconds"): lava that doesn't knock a snail out (Volcano Isle's chamber and crater
   pools, the lava sea in a small hole, Rockslide Ridge's lava between its pillars, 5 to 14 studs across: the owner's
-  pick, 2026-11-14, "Keep the burn") sets it `Burning` with a flame aura; 2 s later it loses 8 health, which ends its
-  turn as any hurt does, then 8 more each second, 24 in all (Snails' `BURN_*`, `Hazards`). One burn per dip: staying in
+  pick, 2026-11-14, "Keep the burn") sets it `Burning` with a flame aura; 2 s later it loses 8 health (its turn goes on: hurt no
+  longer ends a turn), then 8 more each second, 24 in all (Snails' `BURN_*`, `Hazards`). One burn per dip: staying in
   the pool or dipping again while it burns adds nothing, so a snail left in lava walks out on its next turn. Bots
   avoid standing or landing in lava and count the burn on snails a shot throws in (Bots' `Move`, `Predict`). **Lava turns the water it touches into obsidian** (2026-11-10), on
   a map holding both: those cells leave the liquid and become terrain parts that blasts cut like any ground (Arena's
@@ -189,7 +192,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   blends normally (`LightEmission` 0): additive smoke vanishes on sand.
 - **The match camera shows every shot to its end** (the owner, 2026-11-10: "make sure all is shown, the camera
   works and is not confusing"): with the player's `CameraFollowsShot` on, it flies with a shot (led a little), glides
-  to where a gun's bullets or a swing landed, follows a snail a blow sent flying or that fell, and holds on what
+  to where a gun's bullets struck a snail or the map or a swing landed (a gun that hit nothing leaves it be: the
+  owner, 2026-11-15), follows a snail a blow sent flying or that fell, and holds on what
   happened until the next turn starts, then glides (never snaps) to the next snail (MatchCamera's `TRAVEL_*`,
   `CHASE_*`, `BLAST_HOLD`). The player's pan is only what they moved; the arena's edges limit the view but never
   build up into the pan. **It moves calmly** (the owner, 2026-11-12: "too rapid… doesn't track the grenade"): every
@@ -222,7 +226,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
 - **Strong weapons start on their cooldown** (2026-11-08): a weapon with a `Cooldown` waits that many of the player's
   own turns before its first use too (Combat's `Uses.Reset`, mirrored in the bots' `Sim`), so nobody opens a match
   with the strongest weapons. One Punch waits 5 (the owner, 2026-11-13: "only accessible after 5 turns"), usable from
-  the player's 6th turn. Admin `give` and `refill` clear it, for testing. **Heals wait between uses** (the owner,
+  the player's 6th turn, and the black hole grenade too (the owner, 2026-11-15). Bots obey it like players: their
+  brain only sees what `I.Combat.CanUse` allows, and the server refuses any other shot. Admin `give` and `refill` clear it, for testing. **Heals wait between uses** (the owner,
   2026-11-12): a utility's `Cooldown` starts at its first use, so it's ready on the first turn; the Bandage (40)
   waits 3 turns, once every 4 of the player's turns, and the Medkit (100) 5, once every 6, with 2 uses a match.
 - **Server-moved shots glide on clients:** the spider bomb's crawl moves as a server part after landing; clients draw their models gliding after them (Combat's `CRAWL_GLIDE`), and the spider bomb walks
@@ -234,7 +239,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   (`WIND_ACCEL_GROWTH`, the owner, 2026-11-13: "on wind 6… the projectile will get swept by the wind in another
   direction"): a shot into the wind lands visibly short, and in strong wind a steep shot is blown back over the
   shooter's head (at 6, steeper than about 64°). The
-  wind stays for a whole round: Match rolls it again only once every snail in play has played on it, and a change
+  wind stays for a whole round: Match rolls it again only once every snail in play has played on it, strong wind
+  rarely (`WIND_WEIGHTS`, the owner, 2026-11-15: ±10 about 1% of rolls), and a change
   gusts across the screen (Atmosphere's `WIND_CHANGE_BURST`) and flashes the HUD's number.
 - **Teammates are never hurt by each other** (the testers, 2026-11-13): Combat's `Blast.Hit` skips a snail on the
   shooter's team (not the shooter: your own blows always hurt you), and an open black hole doesn't pull them.
@@ -248,6 +254,17 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   lag… and deals damage after a lag"): Blast hurts every snail the moment it shows, while the server cuts the crater,
   and throws them only once it's cut. Craters cut with one merged cutter (Arena's `Cutter.Merge`), and a client's own
   pieces skip precise collision, so its hole shows in the blast's frame. The variety grenade bursts into four mini variety grenades (its `Bomblets`' `Mini`), no longer worms.
+- **A thrown shot leaves the snail moving until it bursts** (the owner, 2026-11-15: "throw it and run away"): after an
+  `Arc` or `Target` shot the player keeps moving their snail with the stamina it has left; the shot's blast, a hit on
+  that snail or an open black hole drawing it takes the snail back first (Combat's `Blast._takeBack`), so the server
+  owns it before anything throws it, and Match at the shot's end. Guns and swings end the move at once. The HUD's
+  timer stays on the time left, dimmed (MatchHud's `TIMER_SPENT_COLOR`), from the shot to the turn's end.
+- **One jetpack a match, on fuel** (the owner, 2026-11-15): the Jetpack's single use puts it on with SnailControl's
+  `JETPACK_FUEL` (6 s) of flight that lasts from turn to turn (`JetpackFuel`) until it's spent, then it comes off and
+  the bar's slot locks. Flying spends fuel, never stamina; the flying client reports what's left
+  (`SnailControl_Fuel`) and the server takes at least what its climb burned.
+- **Used-up items lock on the bar** (the owner, 2026-11-15): a slot with no uses left for the match shows a lock over
+  its darkened icon (MatchHud's `BarSlot` › `S_Lock`), as a cooling one is darkened.
 - **Dynamite is placed, not thrown:** it drops at the snail's feet (`Aim = "Feet"`, no launch speed), the stamina bar
   fills again and the player keeps moving for its `Retreat` (3 s) before the server takes the snail back, and the fuse
   (3.5 s) goes off after that.
@@ -312,9 +329,9 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   with its head under a liquid that doesn't knock it out (Desert's oasis) loses 5 health (Match's `UNDERWATER_DAMAGE`,
   the head's top `UNDERWATER_HEAD_HEIGHT` over the ball), never going below 1: a pond weakens a snail, and something
   else has to finish it. Only its body under, its head above the surface, does nothing.
-- **Getting hurt ends your turn, as in Worms** (the owner, 2026-11-12): while a snail's turn is on and its shot isn't
-  away, any loss of health (a fall, a mine, a barrel, leftover fire) ends the turn at once, like its timer running
-  out (Match's `Turns`, watching the snail's `Health`). Damage after the shot belongs to the shot's flight.
+- **Getting hurt doesn't end your turn** (the owner, 2026-11-15, replacing 2026-11-12's Worms rule): a turn ends only
+  with its shot or its timer; a fall, lava or a mine only hurts. A hurt still holds the settle after the turn
+  (Match's `Turns`).
 - **An emote turns the snail to face the camera, and a hit or a shot wins** (the owner, 2026-11-12): while it emotes,
   the snail eases round to face this screen's camera and back after (SnailRig's `FACE_TURN_EASE`, the whole rig
   turned about the ball's upright axis on each client), its held weapon hidden. A snail hidden in its shell (hit or

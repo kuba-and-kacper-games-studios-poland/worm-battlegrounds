@@ -383,11 +383,19 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Lost
 
 --[[
-	Returns whether a projectile has left the arena (beside or below it) or flown longer than MAX_PROJECTILE_TIME.
+	Returns whether a projectile has left the arena (below it, or into the sea drawn past its sides) or flown longer
+	than MAX_PROJECTILE_TIME.
 ]]
 --- @return boolean
 function Module.IsLost(position: Vector3, elapsed: number)
-	return elapsed > _settings.MAX_PROJECTILE_TIME or I.Arena.GetHazard(position) == "Bounds"
+	--[[ Local Variables ]]
+
+	local hazard: string? = I.Arena.GetHazard(position)
+
+	--[[ Returning ]]
+
+	-- The sea past the sides is only drawn, so a shot that falls into it is gone; in the arena's own sea it sinks on
+	return elapsed > _settings.MAX_PROJECTILE_TIME or hazard == "Bounds" or hazard ~= nil and I.Arena.GetLiquid(position) == nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Gone

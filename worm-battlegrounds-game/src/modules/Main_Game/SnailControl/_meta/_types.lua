@@ -14,4 +14,5 @@
 --- @field GoodTime number
 --- @field Ground number
 --- @field Lift number
+--- @field Spent number
 local _snailControl_Control = {}

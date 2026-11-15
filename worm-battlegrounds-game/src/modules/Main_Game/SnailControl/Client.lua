@@ -33,8 +33,10 @@ local held = { Left = false, Right = false } --- @type { [string]: boolean }
 local stick: number = 0
 local jumpHeld: boolean = false
 
--- Seconds of jetpack flight left this turn
+-- Seconds of jetpack flight left (the whole match's), the server's last word on it, and the last report sent of it
 local fuel: number = 0
+local serverFuel: number = 0
+local reportedAt: number = 0
 
 -- Casts that hit only what snails stand on
 --- @type RaycastParams
@@ -124,8 +126,9 @@ end
 
 --[[
 	Drives the local player's snail before each physics step while they may move it: flies it up while jump is held
-	and jetpack fuel lasts, walks it along the plane at WALK_SPEED (faster under the Speed potion) until its Stamina
-	runs out, turns it to face the way it walks, and pushes it up low ledges in front.
+	and jetpack fuel lasts (telling the server what's left), walks it along the plane at WALK_SPEED (faster under the
+	Speed potion) until its Stamina runs out, though a snail in the air on its jetpack steers with no stamina, turns
+	it to face the way it walks, and pushes it up low ledges in front.
 ]]
 function Module._step(deltaTime: number)
 	--[[ Checks ]]
@@ -145,17 +148,25 @@ function Module._step(deltaTime: number)
 		direction = math.clamp(direction + stick, -1, 1)
 	end
 
-	-- Stand still once the stamina runs out
-	if mySnail:GetAttribute("Stamina") <= 0 then
+	-- Stand still once the stamina runs out, unless it flies on its jetpack's fuel
+	if mySnail:GetAttribute("Stamina") <= 0 and not (fuel > 0 and not Module._isGrounded(root.Position)) then
 		direction = 0
 	end
 
 	--[[ Flying ]]
 
-	if jumpHeld and fuel > 0 then
-		fuel -= deltaTime
+	local flying: boolean = jumpHeld and fuel > 0
+	if flying then
+		fuel = math.max(fuel - deltaTime, 0)
 		local velocity: Vector3 = root.AssemblyLinearVelocity
 		root.AssemblyLinearVelocity = Vector3.new(velocity.X, math.max(velocity.Y, _settings.JETPACK_SPEED), 0)
+	end
+
+	-- What's left reaches the server while it flies, and once more when it stops
+	if fuel < serverFuel and (not flying or os.clock() - reportedAt >= _settings.FUEL_REPORT_INTERVAL) then
+		reportedAt = os.clock()
+		serverFuel = fuel
+		I.Network.Fire("SnailControl_Fuel", fuel)
 	end
 
 	--[[ Walking ]]
@@ -207,8 +218,20 @@ function Module._onSnailAdded(model: Instance)
 	model:GetAttributeChangedSignal("CanMove"):Connect(function()
 		Module._setMoving(model:GetAttribute("CanMove") == true)
 	end)
+	-- A new jetpack fills the tank; the server's echoes of reports never put back fuel this screen already burned
+	local tank: number? = model:GetAttribute("JetpackFuel")
+	fuel = tank or 0
+	serverFuel = fuel
 	model:GetAttributeChangedSignal("JetpackFuel"):Connect(function()
-		fuel = model:GetAttribute("JetpackFuel") or 0
+		local now: number? = model:GetAttribute("JetpackFuel")
+		if now and not tank then
+			fuel = now
+			serverFuel = now
+		else
+			fuel = math.min(fuel, now or 0)
+			serverFuel = math.min(serverFuel, now or 0)
+		end
+		tank = now
 	end)
 	Module._setMoving(model:GetAttribute("CanMove") == true)
 end

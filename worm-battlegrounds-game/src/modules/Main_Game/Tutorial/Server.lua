@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -8,6 +9,11 @@ local _localName = "Tutorial"
 
 --- @type Tutorial_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
+
+-- The funnel steps logged for each player in this server (weak, so players who left go)
+local funnelLogged = setmetatable({}, { __mode = "k" }) --- @type { [Player]: { [number]: boolean } }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -245,7 +251,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Step
 
 --[[
-	A client reports a tutorial step: "Equipped" finishes the tutorial once both starter weapons are in the loadout.
+	A client reports a tutorial step: a hint it showed for the first time goes to the funnel, and "Equipped" finishes
+	the tutorial once both starter weapons are in the loadout.
 ]]
 function Module._onStep(player: Player, step: string)
 	-- Check if player is valid | SERVER
@@ -258,6 +265,12 @@ function Module._onStep(player: Player, step: string)
 	--- @type Player_ProfileData
 	local profileData = I.Player.GetProfile(player).Data
 	local moduleData = profileData["Tutorial"]
+
+	--[[ Funnel ]]
+
+	if not moduleData["Done"] and step ~= "Equipped" then
+		Module._logFunnel(player, step)
+	end
 
 	--[[ Checks ]]
 
@@ -277,10 +290,43 @@ function Module._onStep(player: Player, step: string)
 	--[[ Saving ]]
 
 	moduleData["Done"] = true
+	Module._logFunnel(player, "Equipped")
 
 	--[[ Publishing ]]
 
 	Module._publish(player)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Log Funnel
+
+--[[
+	Logs a tutorial step in the Roblox onboarding funnel, by its place in FUNNEL_STEPS, once per player in this server.
+]]
+function Module._logFunnel(player: Player, step: string)
+	--[[ Local Variables ]]
+
+	local index: number? = table.find(_settings.FUNNEL_STEPS, step)
+	local logged = funnelLogged[player] or {} --- @type { [number]: boolean }
+
+	--[[ Checks ]]
+
+	-- Check if it's a funnel step not logged yet
+	if not index or logged[index] then
+		return
+	end
+
+	--[[ Logging ]]
+
+	logged[index] = true
+	funnelLogged[player] = logged
+	local success: boolean
+	local result: any | string?
+	success, result = pcall(function()
+		I.S.AnalyticsService:LogOnboardingFunnelStepEvent(player, index, step)
+	end)
+	if not success then
+		warn(`[{_localName}::{script.Name}]: Failed to log the funnel step ({step}) for ({player.Name})! - ({result})`)
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Publish
