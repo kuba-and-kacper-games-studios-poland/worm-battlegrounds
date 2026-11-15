@@ -29,4 +29,6 @@ block in the MatchHud gui (`U_TouchJump`).
 JUMP shows over FIRE on the player's turn and makes the snail jump.
 
 **For the wiki.** Match screen and Controls & platforms already say Jump is at the bottom right: no change there,
-maybe a line that it sits over FIRE. Architecture's MatchHud notes can name `U_TouchJump`.
+maybe a line that it sits over FIRE. Architecture's MatchHud notes can name `U_TouchJump`. The move itself is also in
+`2026-11-15-hud-phone-and-bar` (the same change, from the commit that built it); merge it once, from either entry.
+This entry adds the crash and TouchControls' lookup.
