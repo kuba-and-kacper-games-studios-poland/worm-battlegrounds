@@ -8,9 +8,12 @@ local _localName: string = "MatchBoardPreview"
 
 --[[ Examples ]]
 
--- One public row per mode, as the game shows them
+-- One public card per mode, as the game shows them, each with a map
 --- @type { string }
-local MODES = { "Deathmatch", "Duos", "Trios", "Quads" }
+local MODES = { "Deathmatch", "Duo", "Trio", "Quads" }
+
+--- @type { string }
+local MAPS = { "Picnic Plains", "Rolling Plains", "Echo Caverns", "Volcano Isle" }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -32,17 +35,8 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Dropdown", Id = "S_Panel", Label = "Panel", Options = { "Play", "Setup", "Waiting room" }, Value = "Play" },
+		{ Control = "Dropdown", Id = "S_Panel", Label = "Panel", Options = { "Play", "Setup" }, Value = "Play" },
 		{ Control = "Toggle", Id = "S_Party", Label = "Leads a party", Value = false },
-		{
-			Control = "Slider",
-			Id = "S_Players",
-			Label = "Players in the waiting room",
-			Value = 5,
-			Min = 1,
-			Max = 8,
-			Step = 1,
-		},
 	},
 }
 
@@ -51,8 +45,8 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Shows the picked panel: the board with one lobby card per public mode, the setup (with No bots and the party's
-	title for a party leader), or the waiting room with its players.
+	Shows the picked panel: the board with one lobby card per public mode, or the setup (with No bots and the party's
+	title for a party leader).
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -64,7 +58,6 @@ function Module.Apply(preview)
 
 	preview.View:Get("U_Play").Instance.Visible = preview.Values.S_Panel == "Play"
 	preview.View:Get("U_Setup").Instance.Visible = preview.Values.S_Panel == "Setup"
-	preview.View:Get("U_WaitingRoom").Instance.Visible = preview.Values.S_Panel == "Waiting room"
 
 	--[[ Play ]]
 
@@ -75,7 +68,7 @@ function Module.Apply(preview)
 	for index: number, row in ipairs(rows) do
 		row.Root.Instance.LayoutOrder = index
 		row:Get("S_Mode").Instance.Text = MODES[index]
-		row:Get("S_Players").Instance.Text = `{index}/{index * 2 + 2} players`
+		row:Get("S_Map").Instance.Text = MAPS[index]
 		row:Get("S_Join").Instance:FindFirstChild("Name1").Text = "Join"
 	end
 
@@ -84,16 +77,6 @@ function Module.Apply(preview)
 	preview.View:Get("U_Setup", "S_Title").Instance.Text = if party then "Play with party" else "Play solo"
 	preview.View:Get("U_Setup", "S_None").Instance.Visible = party
 	preview.View:Get("U_Setup", "S_RewardAmount").Instance.Visible = not party
-
-	--[[ Waiting Room ]]
-
-	local players = preview.Fill("PREFAB | PlayerName", preview.Values.S_Players) --- @type { UmeGui_Subview }
-
-	--- @param player UmeGui_Subview
-	for index: number, player in ipairs(players) do
-		player.Root.Instance.LayoutOrder = index
-	end
-	preview.View:Get("U_WaitingRoom", "S_Info").Instance.Text = `Deathmatch  |  Picnic Plains  |  {preview.Values.S_Players} / 8 players`
 end
 
 return Module

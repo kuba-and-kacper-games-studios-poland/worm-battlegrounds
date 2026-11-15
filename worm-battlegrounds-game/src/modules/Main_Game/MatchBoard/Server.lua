@@ -15,6 +15,7 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 local Rows = require(_scripts:FindFirstChild("Server"):FindFirstChild("Rows")) --- @type MatchBoard_Server_Rows
 local Custom = require(_scripts:FindFirstChild("Server"):FindFirstChild("Custom")) --- @type MatchBoard_Server_Custom
 local Launch = require(_scripts:FindFirstChild("Server"):FindFirstChild("Launch")) --- @type MatchBoard_Server_Launch
+local Public = require(_scripts:FindFirstChild("Server"):FindFirstChild("Public")) --- @type MatchBoard_Server_Public
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -41,6 +42,7 @@ function Module.Init()
 	Rows.Init()
 	Custom.Init()
 	Launch.Init()
+	Public.Init()
 
 	----------------------------
 	---- ASSIGN TO INSTANCE ----
@@ -66,6 +68,7 @@ function Module.Start()
 	----------------------------
 
 	Rows.Start()
+	Public.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

@@ -90,6 +90,16 @@ local _settings = {
 	PROP_FADE_DELAY = 3,
 	PROP_FADE_TWEENINFO = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
 
+	--[[
+		A prop a snail stands inside (on the plane, within PROP_SEE_THROUGH_MARGIN studs of the prop's box) turns this
+		see-through on every screen, so the snail is never lost behind a tree, a bush or a cactus; it fades in and out at
+		PROP_SEE_THROUGH_SPEED a second, and the props' boxes are read again every PROP_SEE_THROUGH_REFRESH seconds
+	]]
+	PROP_SEE_THROUGH = 0.7,
+	PROP_SEE_THROUGH_MARGIN = 1,
+	PROP_SEE_THROUGH_SPEED = 5,
+	PROP_SEE_THROUGH_REFRESH = 0.5,
+
 	--%%%%%%%%%%%%%%%%%%%% Liquid
 
 	-- One liquid block's width and height, in studs, and how many times a second the liquid moves

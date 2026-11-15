@@ -168,17 +168,10 @@ function Module.TakeTurn(participantId: string)
 		return
 	end
 
-	-- The tutorial bot doesn't know how to shoot
-	if participant.Difficulty == "Tutorial" then
-		task.wait(thinkUntil - os.clock())
-		Module._playTutorial(participantId, model)
-		return
-	end
-
 	--[[ Healing ]]
 
 	local difficulty: string = participant.Difficulty or if participant.IsBot then "Easy" else _settings.TAKEOVER_DIFFICULTY
-	local genome = Brains[difficulty] or Brains.Hard --- @type Bots_Genome
+	local genome = Brains[if difficulty == "Tutorial" then _settings.TUTORIAL_BRAIN else difficulty] or Brains.Hard --- @type Bots_Genome
 	local skill = _settings.SKILLS[difficulty] or _settings.SKILLS.Easy --- @type Bots_Skill
 	model:SetAttribute("Stamina", I.Settings["SnailControl"].STAMINA_STUDS)
 	local heal: string? = Brain.GetHeal(Module._getView(participantId, model), genome)
@@ -325,28 +318,6 @@ function Module._land(participantId: string, model: Model)
 	task.wait(_settings.ACTION_PAUSE)
 	while not I.Snails.IsGrounded(model.Name) and os.clock() < deadline and Module._isTurn(participantId) do
 		task.wait(0.1)
-	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Play Tutorial
-
---[[
-	The tutorial bot's turn: it doesn't know how to shoot, so it raises the Bazooka at the sky, charges a little, gives
-	up without firing and passes the turn back.
-]]
-function Module._playTutorial(participantId: string, _model: Model)
-	--[[ Fumbling ]]
-
-	local angle: number = math.rad(random:NextNumber(70, 110))
-	if not Module._showAim(participantId, "Bazooka", angle, _settings.TUTORIAL_FUMBLE_POWER) then
-		return
-	end
-
-	--[[ Passing ]]
-
-	task.wait(_settings.ACTION_PAUSE)
-	if Module._isTurn(participantId) then
-		I.Match.SkipTurn()
 	end
 end
 

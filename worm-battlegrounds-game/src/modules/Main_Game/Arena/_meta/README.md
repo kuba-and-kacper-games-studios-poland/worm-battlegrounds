@@ -16,7 +16,7 @@ broken basins, level out (also under debris that dips into them, as if under pre
 landing in them. Each run of liquid merges with the same run in the rows above into one rectangle in the
 `2022 Small Stud` material, so still water is a few big parts. On a map holding both water and lava (from its
 markers), each step the water cells touching lava (above, below or beside) leave the liquid and turn solid, built into
-`Obsidian` terrain parts in the map's `Terrain` that blasts cut like any ground (Desert's oasis, where sudden death's
+`Obsidian` terrain parts in the map's `Terrain` that blasts cut like any ground (Mirage Mesa's oasis, where sudden death's
 lava reaches it). The liquid joined to the sea counts as the sea: after a build, after `RaiseLiquid` and every
 `SEA_MARK_STEPS` steps, the liquid of the sea's kind at or under its level along the grid's sides and floor, and all
 of that kind touching it, is marked, so a pond the rising sea reaches is the sea's (water pooled low in a hole on the
@@ -48,6 +48,7 @@ use, and the plane snails are held on, and tells others when a map is ready (`Ar
 | `Scripts/Server/Obsidian.lua` | `Build`: the cells that turned to obsidian, merged like the liquid (each row's runs with the same run in the row below) into `Obsidian` parts in the map's `Terrain`: `OBSIDIAN_COLOR`, SmoothPlastic with `OBSIDIAN_VARIANT`, anchored, in the `Terrain` group |
 | `Scripts/Client/Carver.lua` | The hole on this screen: on `Arena_Carve` it cuts the terrain parts there itself (one carve at a time), hides each part (`LocalTransparencyModifier`) and shows its local pieces in `Predicted`; a server piece arriving from an earlier carve is cut again at once by the later ones; the local pieces go when the server removes their part, or after `PREDICT_TIMEOUT` when it never does |
 | `Scripts/Client/Falling.lua` | On `Arena_Fall`, moves the group down every frame by the same gravity on the server's clock (`I.Match.GetDrawTime`), so it falls smoothly |
+| `Scripts/Client/PropSeeThrough.lua` | Every frame a snail is in play, fades each prop a snail stands inside (its box on the plane, `PROP_SEE_THROUGH_MARGIN` around it) to `PROP_SEE_THROUGH` on this screen (`LocalTransparencyModifier`, leaving parts the carver hid), and back when it leaves |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `arena` command |
 | `_meta/_types.lua` | `Arena_LiquidRect`, one drawn rectangle of liquid (or of obsidian); `Arena_PendingCarve` and `Arena_Prediction`, the client's carves waiting on the server and its hidden parts |
 
@@ -109,6 +110,7 @@ end
 | `PROP_BASE_HEIGHT` | `0.6` | After a cut, the pieces still joined (boxes within `CONTACT_MARGIN`) to a part starting at most this far above the prop's base stand; the rest is thrown |
 | `PROP_KNOCK_SPEED`, `PROP_KNOCK_SPIN` | `35`, `6` | How fast a blast throws what it cuts off a prop, or a one-part prop it reaches (away from the blast and up), and the most it spins it (radians per second) |
 | `PROP_FADE_DELAY`, `PROP_FADE_TWEENINFO` | `3`, 1 s Quad In | How long a fallen prop lies, then its fade before it's removed |
+| `PROP_SEE_THROUGH`, `PROP_SEE_THROUGH_MARGIN`, `PROP_SEE_THROUGH_SPEED`, `PROP_SEE_THROUGH_REFRESH` | `0.7`, `1`, `5`, `0.5` | How see-through a prop gets while a snail stands inside it (within the margin of its box on the plane, in studs), how fast it fades in and out (a second), and how often the props' boxes are read again (seconds) |
 | `DEBRIS_KILL_DEPTH` | `20` | A falling group with no terrain under it falls this far below the bounds, then is removed |
 | `LIQUID_CELL` | `0.5` | A liquid cell's width and height, in studs |
 | `LIQUID_FPS` | `8` | Liquid steps per second |
@@ -116,7 +118,7 @@ end
 | `LIQUID_FALL` | `6` | How many cells a falling cell drops in one step |
 | `LIQUID_PROBE_SCALE` | `0.5` | A cell is solid when terrain reaches into a box this share of its size around its center |
 | `LIQUID_BUILD_ROWS_PER_FRAME` | `8` | How many grid rows a map's load probes before it gives the server a frame |
-| `SEA_SLACK`, `SEA_MIN_WIDTH` | `1`, `16` | Liquid knocks snails out only in the open sea (liquid joined to the sea, whose marker starts at the bounds' bottom, raised by sudden death), up to `SEA_SLACK` studs above its level as it ripples, where the surface over it is at least `SEA_MIN_WIDTH` studs across (or under the land's floor). A pond (Desert's oasis, Lakeside's lake), a puddle or a small crater the sea seeps into is safe; a Dynamite or Black hole crater it floods isn't |
+| `SEA_SLACK`, `SEA_MIN_WIDTH` | `1`, `16` | Liquid knocks snails out only in the open sea (liquid joined to the sea, whose marker starts at the bounds' bottom, raised by sudden death), up to `SEA_SLACK` studs above its level as it ripples, where the surface over it is at least `SEA_MIN_WIDTH` studs across (or under the land's floor). A pond (Mirage Mesa's oasis, Lakeside's lake), a puddle or a small crater the sea seeps into is safe; a Dynamite or Black hole crater it floods isn't |
 | `SEA_EDGE_WIDTH` | `120` (from 50 on 2026-11-13, as the match camera now goes half a view past the sides) | How far the sea is drawn past the map's left and right sides, up to its level, so the camera never shows where it ends: the sea's blocks at the sides reach out, and a block outside tops it up where land stands at a side. Only drawn: the grid stops at the sides, and out there is out of bounds |
 | `SEA_MARK_STEPS` | `8` | Every this many liquid steps (and after a build and each `RaiseLiquid`) the liquid joined to the sea is marked again |
 | `OBSIDIAN_COLOR`, `OBSIDIAN_VARIANT` | `(38, 28, 52)`, `"2022 Stud"` | The obsidian parts lava makes of the water it touches: their colour and MaterialService variant (on SmoothPlastic, like the terrain) |
@@ -147,29 +149,45 @@ The arena plays on the X–Y plane at Z = 0 (snails spawn and the drop picks the
 bounds' depth on Z. The liquid is drawn as deep as the map's ground, measured at load: from the middle of its bedrock
 blocks' backs to the middle of their fronts (Loader's `GetGroundDepth`, the bounds' depth on a map without bedrock),
 so it never sticks out in front of the ground or behind it (about Z −5 to 5 on every map, their land 10 studs deep). In Studio the templates stand in MapLab's grid, so none overlaps another: four to a row, 500 studs apart, each row
-300 studs behind the last (X = column × 500, Z = −row × 300, in slot order): `PicnicPlains` at X 0, `Desert` 500,
-`RockslideRidge` 1000, `VolcanoIsle` 1500 on Z 0; `TutorialMeadow` 0, `LakesideShowdown` 500, `RollingPlains` 1000,
-`EchoCaverns` 1500 on Z −300. Each carries `MapLab_Slot` and `MapLab_Version`. A match plays at X 0 on the plane
+300 studs behind the last (X = column × 500, Z = −row × 300, in slot order): `PicnicPlains` at X 0, `MirageMesa`
+500, `RockslideRidge` 1000, `VolcanoIsle` 1500 on Z 0; `TutorialMeadow` 0, `LakesideShowdown` 500, `RollingPlains`
+1000, `EchoCaverns` 1500 on Z −300; `Desert` 0, `FluffyFallout` 500 on Z −600. Each carries `MapLab_Slot` and
+`MapLab_Version`. A match plays at X 0 on the plane
 whatever the slot: the Loader moves each template so its Bounds stand at X 0 and Z 0 when it caches it, by the spawn,
 since until a player's snail drops streaming sends them only what's within `StreamingTargetRadius` (1024) of their
 parked avatar (Volcano Isle, at X 1200 then, didn't show before). Inside `Terrain` and `Decor`, folders only organize
 the map: everything reads their descendants, and carved pieces go to `Terrain` itself. Every map is made in MapLab (the
 game home's map kit), and every map's land has the depth effect: its front is cut into rows of slabs that jut toward
-the camera, up to 1.4 studs, in front of the plane. The templates each map replaced are kept in the place's
+the camera, up to 1.4 studs, in front of the plane. The current `Desert` and `VolcanoIsle` are MapLab builds made
+outside this place, put in as they were built (2026-11-15); `EchoCaverns`, `PicnicPlains` and `RollingPlains` were too,
+then reshaped in MapLab the same day (their ends made cliffs), their props carried over as built. So their props and
+Picnic Plains' stalactites aren't all on the grid. The templates each map replaced are kept in the place's
 `Workspace._Labs.MapLab._Iterations` (`<MapId>_arena_<n>`); Picnic Plains' greybox in `ServerStorage.!dump`. The
 x below are from the map's middle, where it plays.
 
-`PicnicPlains` (the first map, built by the studio, cleaned and rebuilt in MapLab) is three islands at the waterline
-and four floating ledges over a 282-stud sea (`Terrain/Island_1`–`3`, `Ledge_1`–`4`, left to right, 728 parts on the
-1-stud grid named `Grass`, `Dirt`, `DarkDirt`, `Stone`, `DarkStone`; `Decor/Backdrop` (101 parts), `Trees`,
-`Bushes`, `Rocks`): each island's bedrock (Y 4 to 8, half in the sea, whose surface is at Y 6.5) is a `DarkStone`
-part with `Arena_Indestructible`, every ledge part has `Arena_Floats`, and its 18 trees, bushes and rocks are
-part-built `Arena_Prop` Models (parts named `Trunk`, `Leaves`, `Needles`, `Spot`, `Bush`, `Rock`). Every map's
-backdrop eases down to its liquid at the ends instead of standing as a straight wall (2026-11-12).
-`Desert` is two storeys over lava: one main island standing on the lava (`Terrain/Island_1`, x −109 to 112, its
+`PicnicPlains` (the first map, built by the studio, rebuilt in MapLab, widened 2026-11-15) is three islands at the
+waterline and four floating ledges over a 380-stud sea (`Terrain/Island_1`–`3`, x −190 to −93, −73 to 63 and 100 to
+184; `Ledge_1`–`4`, Y 27 to 57), each island hollowed by a cave with stalactites and stalagmites
+(`Terrain/Speleothems`, 52 parts, off the grid and with no flags). The east island ends in a cliff (2026-11-15) that
+rises from the sea at x 184 and leans back to x 175 at Y 26. 1,093 parts named `Grass`, `Dirt`, `DarkDirt`, `Stone`,
+`DarkStone`, `Stalactite_t1`–`3`, `Stalagmite`; each island's `DarkStone` bedrock (Y 4 to 8, half in the sea, whose
+surface is at Y 6.5) has `Arena_Indestructible`, every ledge part `Arena_Floats`. Markers: `Sea` (`Water`, Y −8 to
+6.5), a small pond on the middle island (`Pond_1`–`8`, eight `Water` rows, Y 12 to 20) and `Bounds` (380 × 114).
+`Decor`: `Backdrop` (90 parts), five block clouds in the sky (`Clouds`, plain Models, not props) and 49 `Arena_Prop` Models in
+`Trees`, `Bushes`, `Flowers` (two lilies on the pond), `Rocks` and `Picnic` (the studio's picnic set). A scenery
+backdrop eases down to its liquid at the ends instead of standing as a straight wall (2026-11-12); since
+2026-11-15 new backdrops are only a cave's back wall or a block behind a pond.
+`Desert` (2026-11-15) is one sandy island over lava, five dune peaks from x −109 to 112 (tops up to Y 45), its
+`DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`; no ledges, no pond, no backdrop. 1,233 parts named
+`Sand`, `DarkSand`, `Sandstone`, `DarkSandstone`, `DarkStone`. Markers: `Lava` (Y −8 to 4, the sea) and `Bounds` (282
+× 114). Its 9 props are cacti in `Decor/Cacti` (`Saguaro`, `OrganPipe`, `Candelabra`, `PricklyPear`,
+`CactusCluster`, parts named `Cactus`, `Spike`, `Flower`), each with `Arena_Hazard` = `Cactus` and `CactusVariant`
+attributes that no code reads yet.
+`MirageMesa` (the Desert until 2026-11-15) is two storeys over lava: one main island standing on the lava (`Terrain/Island_1`, x −109 to 112, its
 `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`) with an oasis pool, and two long floating islands
 above it (`Ledge_1`, x −128 to −35, `Ledge_2`, x −6 to 123, every part with `Arena_Floats`); 705 parts named `Sand`,
-`DarkSand`, `Sandstone`, `DarkSandstone`, `Clay`, `DarkStone`, and 70 backdrop parts. Markers: `Lava` (Y −8 to 4,
+`DarkSand`, `Sandstone`, `DarkSandstone`, `Clay`, `DarkStone`, and one backdrop part, behind the oasis only (its
+red mesa removed 2026-11-15). Markers: `Lava` (Y −8 to 4,
 across the map: the sea, which knocks snails out and sudden death raises) and `Oasis` (`Water`, x −30 to 0, Y 16 to
 23), so the oasis water the lava reaches turns to obsidian. Its 24 props are part-built `Arena_Prop` Models in
 `Decor/Cacti`, `Trees` (palms), `Bushes`, `Rocks` (parts named `Cactus`, `Flower`, `Trunk`, `Ring`, `Leaves`,
@@ -183,22 +201,22 @@ shelves, and six rock slabs float in the middle (`Ledge_1`–`6`, with `Arena_Fl
 Markers: `Sea` (`Lava`, Y −5 to 15, `Arena_LiquidNeon`) and `Bounds` (290 × 111 × 11). The lava between the pillars
 is 5 to 14 studs across at its surface, under `SEA_MIN_WIDTH`, so it burns rather than knocks out until sudden death
 raises it.
-`VolcanoIsle` is a volcano over a sea of lava: three islands standing on it (`Terrain/Island_1`, the west islet, x
-−133 to −96; `Island_2`, the volcano's base, x −76 to 84; `Island_3`, the east islet, x 103 to 136; their
-`DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`) and four floating ledges with `Arena_Floats`: a basalt
-shelf over each islet (`Ledge_1`, Y 51 to 62; `Ledge_4`, Y 54 to 66), a small rock between the west islet and the
-volcano (`Ledge_2`), and the volcano's cone (`Ledge_3`, x −42 to 44, Y 34 to 73, 195 parts), which floats over a lava
-tube running right through the volcano from porch to porch (Y 26 to 36), through a magma chamber. A cave with one
-mouth sits at each of the volcano's feet and in each islet's face toward it. 621 parts named `Ash`, `Basalt`,
-`DarkBasalt`, `Scoria` (lining the passages), `Ember` (round the lava), `DarkStone`, and 57 backdrop parts. Markers:
-`Sea` (Y −8 to 6.5, the sea, which knocks snails out and sudden death raises), `Crater` (x −2 to 10, Y 63 to 67) and
-`Chamber` (x −3 to 3, Y 27 to 28), all `Lava` in Arena's own colour with `Arena_LiquidNeon`. Its 17 props are
+`VolcanoIsle` (184 studs wide since 2026-11-15, was 282) is a volcano over a sea of lava: three islands standing on
+it (`Terrain/Island_1`, the west islet, x −86 to −62; `Island_2`, the volcano's base, x −49 to 55; `Island_3`, the
+east islet, x 67 to 88; their `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`) and four floating ledges
+with `Arena_Floats`: a basalt shelf over each islet (`Ledge_1`, Y 51 to 62; `Ledge_4`, Y 54 to 66), a small rock
+between the west islet and the volcano (`Ledge_2`), and the volcano's cone (`Ledge_3`, x −27 to 29, Y 34 to 73, 169
+parts), which floats over a lava tube running right through the volcano from porch to porch, through a magma chamber.
+A cave with one mouth sits at each of the volcano's feet and in each islet's face toward it. 561 parts named `Ash`,
+`Basalt`, `DarkBasalt`, `Scoria` (lining the passages), `Ember` (round the lava), `DarkStone`, and 57 backdrop parts.
+Markers: `Sea` (Y −8 to 6.5, the sea, which knocks snails out and sudden death raises), `Crater` (x −1 to 6, Y 63 to
+67) and `Chamber` (x −2 to 2, Y 27 to 28), all `Lava` in Arena's own colour with `Arena_LiquidNeon`. Its 17 props are
 part-built `Arena_Prop` Models in `Decor/Trees` (dead trees), `Bushes`, `Rocks` (rocks and basalt columns).
 `TutorialMeadow`, the tutorial's map and in no rotation, is one small grassy island in a calm sea
 (`Terrain/Island_1`, x −86 to 87, its `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`): a tall hill in
 the west (top about Y 28), a lower one in the east (about Y 24) and a meadow between them, x −34 to 34 at Y 18 to 19,
 where the tutorial's player and bot start. No ledges, no ponds. 253 parts named `Grass`, `Dirt`, `DarkDirt`, `Stone`,
-`DarkStone`, and 53 `Decor/Backdrop` parts (low hills). Markers: `Sea` (`Water`, Y −8 to 6.5) and `Bounds` (200 × 80
+`DarkStone`, and no backdrop (its low hills removed 2026-11-15). Markers: `Sea` (`Water`, Y −8 to 6.5) and `Bounds` (200 × 80
 × 11). Its 7 props are part-built `Arena_Prop` Models (an oak, two pines and a birch, two bushes, a rock).
 `LakesideShowdown` is a lake between two grassy banks: one wide island standing on the sea (`Terrain/Island_1`, x
 −135 to 137, its `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`), a rolling bank on each side (tops
@@ -208,28 +226,35 @@ Y 11). The beaches and the lake bed are sand 2 to 4 studs deep over a stud of `D
 `Arena_Floats`, left to right: four small floating islands over the banks (`Ledge_1`, x −122 to −102; `Ledge_2`, x
 −65 to −47; `Ledge_5`, x 47 to 65; `Ledge_6`, x 102 to 122; Y 48 to 79) and the two lily pads on the lake (`Ledge_3`,
 x −28 to −10; `Ledge_4`, x 10 to 28; Y 20 to 22, half under the water). 635 parts named `Grass`, `Dirt`, `DarkDirt`,
-`Stone`, `DarkStone`, `Sand`, `DarkSand`, `LilyPad`, `DarkLilyPad`, and 54 `Decor/Backdrop` parts (a forest
-treeline). Markers: `Sea` (`Water`, Y −8 to 6.5), `Lake` (`Water`, Y 11 to 21, a pond) and `Bounds` (282 × 114 ×
+`Stone`, `DarkStone`, `Sand`, `DarkSand`, `LilyPad`, `DarkLilyPad`, and one `Decor/Backdrop` part,
+behind the lake only (its forest treeline removed 2026-11-15). Markers: `Sea` (`Water`, Y −8 to 6.5), `Lake` (`Water`, Y 11 to 21, a pond) and `Bounds` (282 × 114 ×
 11). Its 26 props are part-built `Arena_Prop` Models in `Decor/Trees`, `Bushes`, `Rocks` and `Flowers`: big oaks
 between the floating islands, oaks and logs under the outer ones, cattails at the water's edge, ferns, grass and
 flowers, a plant on each floating island, and a water lily on each pad (parts named `Flower`; the cattails' heads
 `Head`).
-`RollingPlains` (the studio's Studio build, imported into MapLab) is the widest map, 406 studs: one island from side
-to side (`Terrain/Island_1`), a long grassy plain on rock with dark strata lines, a raised shoulder at each end (tops
-about Y 31 and 29) and a rock arch in the middle. 602 parts named `Grass`, `DarkGrass`, `Rock`, `Strata`, `Bedrock`
-(the bedrock from Y −8 to 0 with `Arena_Indestructible`), and 79 `Decor/Backdrop` parts (rolling hills). Markers:
-`Sea` (`Water`, Y −8 to −4, inside the rock, so no water shows until sudden death raises it) and `Bounds` (406 × 114
-× 11). Its 47 props are `Arena_Prop` Models in `Decor/Trees`, `Bushes`, `Rocks`, `Flowers` and `Picnic`: 44 MapLab
+`RollingPlains` (the studio's Studio build, imported into MapLab; 264 studs wide since 2026-11-15, was 406) is one
+island from side to side (`Terrain/Island_1`, x −132 to 123), a long smooth grassy plain on rock with dark strata
+lines, a raised shoulder at each end (tops about Y 34) and a rock arch in the middle; the west shoulder eases down to
+the bedrock, and the east end is a cliff (2026-11-15) leaning back from x 123 at the bottom to x 112 at Y 24. 509 parts named `Grass`, `DarkGrass`,
+`Rock`, `Strata`, `Bedrock` (the bedrock from Y −8 to 0 with `Arena_Indestructible`), and no backdrop. Markers:
+`Sea` (`Water`, Y −8 to −4, inside the rock, so no water shows until sudden death raises it) and `Bounds` (264 × 114
+× 13). Its 47 props are `Arena_Prop` Models in `Decor/Trees`, `Bushes`, `Rocks`, `Flowers` and `Picnic`: 44 MapLab
 ones (big oaks on the shoulders, an acacia, a pine, a log, ferns, grass tufts, flowers, bushes, rocks) and the
 studio's picnic set, rebuilt part for part (`PicnicTable`, `PicnicBlanket`, `Basket`).
-`EchoCaverns` (the studio's Studio build, imported into MapLab) is a cavern under a snow-capped rock dome over a
-water sea: six islands standing on its bed (`Terrain/Island_1`–`6`; `Island_3` is the dome and the right wall, x −95
-to 148, up to Y 81), stalactites hanging from the dome over rock columns and leaning slabs, no ledges. 921 parts
-named `Rock`, `LightRock`, `DarkRock`, `DarkStone`, `Cap`, `Snow`, `Strata`, `Clay`, `Bedrock` (the bedrock from Y
-−8 to 0 with `Arena_Indestructible`), and 80 `Decor/Backdrop` parts (a dark back wall under the dome, so no sky shows
-through). Markers: `Sea` (`Water`, Y −8 to −2, Arena's own colour) and
-`Bounds` (296 × 114 × 11). The water between the islands is ponds except x 0 to 18, the one stretch of open sea. Its
-21 props are the studio's, rebuilt part for part (`GrassTuft` in `Decor/Grass`, `RockPile` in `Decor/Rocks`).
+`EchoCaverns` (the studio's Studio build, imported into MapLab; 192 studs wide and taller since 2026-11-15, was 296)
+is a cavern under a snow-capped rock dome over a water sea: six islands standing on its bed (`Terrain/Island_1`–`6`;
+`Island_1` is the west cliff since 2026-11-15, a solid rock wall from x −92 leaning back to x −85, its top at Y 36 to
+41 joining the dome; `Island_3` is the dome and the right wall, x −62 to 96, up to Y 81), stalactites hanging from the
+dome over rock columns and leaning slabs, no ledges. 773 parts named `Rock`, `LightRock`, `DarkRock`, `DarkStone`, `Cap`, `Snow`,
+`Strata`, `Clay`, `Bedrock` (the bedrock from Y −8 to 0 with `Arena_Indestructible`), and 70 `Decor/Backdrop` parts
+(a dark back wall under the dome, so no sky shows through, stopping behind the west cliff). Markers: `Sea` (`Water`, Y −8 to −2, Arena's own colour)
+and `Bounds` (192 × 114 × 11). Its 21 props are the studio's, rebuilt part for part (`GrassTuft` in `Decor/Grass`,
+`RockPile` in `Decor/Rocks`).
+`FluffyFallout` (2026-11-15, MapLab, from a build of loose cloud parts) is ten block clouds floating in two rows over
+a glowing sea, nothing standing on it: `Terrain/Ledge_1`–`10` (Y 9 to 33 and 35 to 65), every part with
+`Arena_Floats`, no bedrock, so the whole sea is open and its floor is the bounds' depth. 446 parts named `Cloud`,
+`CloudShade`, `DarkCloud`; no backdrop, no props. Markers: `Sea` (`Water`, Y −8 to 6.5, `Arena_LiquidNeon`) and
+`Bounds` (282 × 114 × 11).
 
 ## Commands
 

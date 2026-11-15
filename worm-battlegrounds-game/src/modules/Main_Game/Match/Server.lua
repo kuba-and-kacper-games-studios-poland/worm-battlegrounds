@@ -132,7 +132,7 @@ end
 
 --[[
 	**SERVER** |
-	Sets the wind, kept between -WIND_MAX and WIND_MAX, until every snail has played on it. For testing.
+	Sets the wind, kept between -WIND_MAX and WIND_MAX, until the next roll (WIND_ROUNDS). For testing.
 ]]
 function Module.SetWind(wind: number)
 	matchFolder:SetAttribute("Wind", math.clamp(math.round(wind), -_settings.WIND_MAX, _settings.WIND_MAX))
@@ -221,7 +221,7 @@ end
 
 --[[
 	**SERVER** |
-	Returns this turn's wind, from -WIND_MAX (blowing left) to WIND_MAX (blowing right).
+	Returns the wind, from -WIND_MAX (blowing left) to WIND_MAX (blowing right).
 ]]
 --- @return number
 function Module.GetWind()

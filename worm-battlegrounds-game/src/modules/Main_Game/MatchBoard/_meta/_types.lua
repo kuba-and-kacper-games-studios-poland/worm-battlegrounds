@@ -15,6 +15,7 @@ local _matchBoard_RowOption = {}
 --- @field Name string
 --- @field Sizes { number }
 --- @field Thumbnail string
+--- @field TileThumbnail string
 local _matchBoard_MapRow = {}
 
 --- @class MatchBoard_Row
@@ -35,7 +36,9 @@ local _matchBoard_MapRow = {}
 --- # Players #
 ---
 --- @field Players { number }
---- @field Votes { [number]: boolean }
---- @field EndsAt number
 --- @field Owner number?
+---
+--- # Public #
+---
+--- @field Targets { string }
 local _matchBoard_Row = {}

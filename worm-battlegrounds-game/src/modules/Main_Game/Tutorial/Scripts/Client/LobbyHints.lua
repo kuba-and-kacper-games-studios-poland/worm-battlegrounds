@@ -45,13 +45,6 @@ local Module = {}
 function Module.Start()
 	--[[ Elements ]]
 
-	elems["Crates"] = I.UserInterface.UI[_settings.CRATES_GUI_NAME] --- @type ScreenGui
-	elems["Weapons"] = I.UserInterface.UI[_settings.LOBBY_GUI_NAME]:FindFirstChild("U_Menu", true):FindFirstChild("S_Weapons", true) --- @type ImageButton
-	elems["BuyOne"] = elems["Crates"]:FindFirstChild("U_CoinsX1", true) --- @type ImageButton
-	elems["Continue"] = elems["Crates"]:FindFirstChild("U_Continue", true) --- @type ImageButton
-	elems["Close"] = elems["Crates"]:FindFirstChild("S_Close", true) --- @type ImageButton
-	elems["Tap"] = elems["Crates"]:FindFirstChild("S_Tap", true) --- @type TextLabel
-	elems["Viewport"] = elems["Crates"]:FindFirstChild("S_Viewport", true) --- @type ViewportFrame
 	elems["Loadout"] = I.UserInterface.UI[_settings.LOADOUT_GUI_NAME] --- @type ScreenGui
 	elems["Picker"] = I.UserInterface.UI[_settings.PICKER_GUI_NAME] --- @type ScreenGui
 	elems["Items"] = elems["Picker"]:FindFirstChild("U_Items", true) --- @type ScrollingFrame
@@ -92,14 +85,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Runs the guide while a lobby step waits (the free crate, then equipping its weapons), and stops it once the
-	tutorial is done or while the player is in a match.
+	Runs the guide while the starter weapons wait to be equipped, and stops it once the tutorial is done or while the
+	player is in a match.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
 
 	local inLobby: boolean = not I.S.Players.LocalPlayer:GetAttribute("InMatch")
-	local waiting: boolean = moduleRep ~= nil and (moduleRep:GetAttribute("CrateReady") == true or moduleRep:GetAttribute("EquipReady") == true)
+	local waiting: boolean = moduleRep ~= nil and moduleRep:GetAttribute("EquipReady") == true
 
 	--[[ Connections ]]
 
@@ -115,30 +108,16 @@ end
 --%%%%%%%%%%%%%%%%%%%% Tick
 
 --[[
-	Lights what to press next: the Weapons button, then the crate's x1, the crate while it waits for its tap, Continue
-	after the reels and the crates' close, then a loadout slot and, in the picker, each starter weapon not yet in. While
-	the reels roll the hint shows alone.
+	Points at what to press next: a loadout slot and, in the picker, each starter weapon not yet in.
 ]]
 function Module._tick()
 	--[[ Local Variables ]]
 
-	local crateReady: boolean = moduleRep ~= nil and moduleRep:GetAttribute("CrateReady") == true
 	local missing: string? = Module._getMissingWeapon()
 
 	--[[ Showing ]]
 
-	if elems["Crates"].Enabled then
-		local step: string = if crateReady and I.Utils.IsGuiShown(elems["BuyOne"])
-			then "OpenCrate"
-			elseif not crateReady and I.Utils.IsGuiShown(elems["Continue"]) then "Continue"
-			elseif not crateReady and I.Utils.IsGuiShown(elems["Close"]) then "CloseCrates"
-			elseif I.Utils.IsGuiShown(elems["Tap"]) then "Tap"
-			else "Opening"
-		local targets = { OpenCrate = elems["BuyOne"], Continue = elems["Continue"], CloseCrates = elems["Close"] } --- @type { [string]: GuiObject }
-		Spotlight.Show(_settings.HINTS[step], if step == "Tap" then Module._getCrateArea() else targets[step], step)
-	elseif crateReady then
-		Spotlight.Show(_settings.HINTS.Crate, elems["Weapons"], "Crate")
-	elseif elems["Picker"].Enabled and missing then
+	if elems["Picker"].Enabled and missing then
 		local card: GuiObject? = elems["Items"]:FindFirstChild(missing, true)
 		Spotlight.Show(string.format(_settings.HINTS.Pick, I.G_Inventory.Items[missing].Name), card, "Pick")
 	else
@@ -195,60 +174,6 @@ function Module._getMissingWeapon()
 	--[[ Returning ]]
 
 	return nil
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Crate Area
-
---[[
-	Returns the screen area the crates waiting for their tap cover in the Crates gui's viewport, with the TAP TO OPEN
-	line under them, or nil while the viewport has no crates.
-]]
---- @return Rect?
-function Module._getCrateArea()
-	--[[ Local Variables ]]
-
-	local viewport: ViewportFrame = elems["Viewport"]
-	local camera: Camera? = viewport.CurrentCamera
-	local world: WorldModel? = viewport:FindFirstChildWhichIsA("WorldModel")
-
-	--[[ Checks ]]
-
-	-- Check if the viewport holds the crates
-	if not camera or not world then
-		return nil
-	end
-
-	--[[ Local Variables ]]
-
-	local size: Vector2 = viewport.AbsoluteSize
-	local focal: number = 1 / math.tan(math.rad(camera.FieldOfView) / 2)
-	local textCenter: Vector2 = elems["Tap"].AbsolutePosition + elems["Tap"].AbsoluteSize / 2
-	local min: Vector2 = textCenter - elems["Tap"].TextBounds / 2
-	local max: Vector2 = textCenter + elems["Tap"].TextBounds / 2
-
-	--[[ Projecting ]]
-
-	-- A viewport's camera reports a 1 × 1 view, so its own WorldToViewportPoint gets the width wrong
-	--- @param model Instance
-	for _index: number, model in ipairs(world:GetChildren()) do
-		if model:IsA("Model") then
-			local cframe: CFrame
-			local extents: Vector3
-			cframe, extents = model:GetBoundingBox()
-			for corner: number = 0, 7 do
-				local sign: Vector3 = Vector3.new(if corner % 2 == 0 then -1 else 1, if corner % 4 < 2 then -1 else 1, if corner < 4 then -1 else 1)
-				local point: Vector3 = camera.CFrame:PointToObjectSpace(cframe * (extents / 2 * sign))
-				local ndc: Vector2 = Vector2.new(point.X * size.Y / size.X, -point.Y) * focal / -point.Z
-				local pixel: Vector2 = viewport.AbsolutePosition + (ndc + Vector2.one) / 2 * size
-				min = min:Min(pixel)
-				max = max:Max(pixel)
-			end
-		end
-	end
-
-	--[[ Returning ]]
-
-	return Rect.new(min, max)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Free Slot

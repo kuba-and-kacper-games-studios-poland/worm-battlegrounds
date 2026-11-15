@@ -32,6 +32,9 @@ local shotFired: boolean = false
 local shotResolved: boolean = false
 local random: Random = Random.new()
 
+-- The round the wind blowing now was rolled on
+local windRound: number = 0
+
 -- When the turn playing now runs out (os.clock), and the length an admin set for every turn (nil is TURN_SECONDS)
 local turnDeadline: number = 0
 local turnSeconds: number? = nil
@@ -230,18 +233,29 @@ end
 --%%%%%%%%%%%%%%%%%%%% Roll Wind
 
 --[[
-	Rolls a new wind for every turn, never the one the turn before had (the owner, 2026-11-15: "the wind power changes
-	every turn").
+	Rolls a new wind on the first turn of every WIND_ROUNDS-th round, never the one before (the owner, 2026-11-15: "make
+	the wind last for 2 turns for everyone"), so every snail plays the same wind that many turns. The tutorial blows
+	TUTORIAL_WINDS first.
 ]]
 function Module._rollWind()
 	--[[ Local Variables ]]
 
 	local last: number? = matchFolder:GetAttribute("Wind")
-	local wind: number = Module._getRandomWind()
+	local round: number = matchFolder:GetAttribute("Round")
+
+	--[[ Checks ]]
+
+	-- Check if the wind still has rounds to blow
+	if last ~= nil and round < windRound + _settings.WIND_ROUNDS then
+		return
+	end
 
 	--[[ Rolling ]]
 
-	while wind == last do
+	local tutorialWind: number? = if Roster.GetMetadata().Kind == "Tutorial" then _settings.TUTORIAL_WINDS[(round - 1) // _settings.WIND_ROUNDS + 1] else nil
+	local wind: number = tutorialWind or Module._getRandomWind()
+	windRound = round
+	while wind == last and not tutorialWind do
 		wind = Module._getRandomWind()
 	end
 	matchFolder:SetAttribute("Wind", wind)
@@ -363,7 +377,7 @@ end
 
 --[[
 	At the end of every turn, hurts each snail in play whose head is under a liquid that doesn't knock it out (a pond,
-	like Desert's oasis) by UNDERWATER_DAMAGE, as Worms Armageddon's poison: it never takes a snail below 1 health. A
+	like Mirage Mesa's oasis) by UNDERWATER_DAMAGE, as Worms Armageddon's poison: it never takes a snail below 1 health. A
 	snail with only its body under is fine. Returns whether it hurt any.
 ]]
 --- @return boolean

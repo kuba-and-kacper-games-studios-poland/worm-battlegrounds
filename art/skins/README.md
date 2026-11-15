@@ -106,6 +106,27 @@ each snail's `Body` replaced by the cut one and `Hat` and `Neck` added, each a M
 SurfaceAppearance and a Motor6D inside it from the RootPart (C0 the part's place on the root, as `Body` and `Shell`
 had), scaled with the snail (0.45). Every piece wears its own set's texture wherever it's worn.
 
+### Shell textures (2026-11-15)
+
+The artist's new snails (Studio's `Workspace.New`, now `ServerStorage.!dump.NewSnails_2026-11-15`) brought new shell
+art: each shell the same mesh with the same UVs (checked face by face with `EditableMesh`), on a texture of its own
+instead of the set's. So each set snail's rigged `Shell` stayed, and only its `SurfaceAppearance` was swapped for the
+new one; the old ones are in `ServerStorage.!dump.Shells_Old_2026-11-15`. Classic's new snail is one merged mesh whose
+UVs match its old shell's on most faces, and its texture fits the old shell cleanly from every side.
+
+| Snail | Shell | Old colour map | New colour map |
+| --- | --- | --- | --- |
+| `Classic` | Garden Swirl | 125229238198363 | 117602802672684 (roughness 133899454741472) |
+| `Clown` | Confetti Coil | 100620239995881 | 90192621720837 |
+| `Cowboy` | Saddlebag | 107291981118573 | 134593135980938 |
+| `Devil` | Hellfire Spiral | 70709763983482 | 87621700985714 (roughness 112573711483989) |
+| `Knight` | Rampart | 71397994829990 | 140289091709832 |
+| `Robot` | Reactor Core | 90609263337717 | 123825510307227 |
+| `Skeleton` | Ossuary | 112654720222933 | 137000313156527 |
+
+Ninja's, Pirate's and Soldier's new shells were the ones they had. The seven shells' piece pictures and item icons
+still show the old art until they're made and uploaded again (Piece pictures, below).
+
 ## Pictures
 
 The Crates reel cards show each snail as a picture while they roll (the owner's pick, 2026-11-11). A rolling reel can't

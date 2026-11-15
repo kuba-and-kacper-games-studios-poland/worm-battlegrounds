@@ -21,7 +21,7 @@ local _config = {
 		Indicates whether the game is in a production/live state.
 		When set to `true`, the game will use the production/live store names.
 	]]
-	IsProductionReady = false,
+	IsProductionReady = true,
 }
 
 return _config

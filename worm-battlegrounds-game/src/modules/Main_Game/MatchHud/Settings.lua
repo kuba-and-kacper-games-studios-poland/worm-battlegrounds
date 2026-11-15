@@ -191,6 +191,26 @@ local _settings = {
 
 	-- With an admin's aim guide on, a right click eases the aim onto the guide nearest the mouse over this many seconds
 	AIMBOT_EASE = 0.4,
+
+	--%%%%%%%%%%%%%%%%%%%% Prediction
+
+	--[[
+		In the tutorial match an arced weapon's path shows as a line of dots (the testers, 2026-11-15: "a line that
+		predicts where the shot is gonna go… make the line move depending on power"): followed PREDICTION_STEP seconds
+		at a time, up to PREDICTION_SECONDS, to the first thing it hits, a dot every PREDICTION_DOT_GAP studs (at most
+		PREDICTION_DOTS) and a bigger one where it lands. While charging it shows the power held; before, faded to
+		PREDICTION_IDLE_TRANSPARENCY, the power last fired (PREDICTION_IDLE_POWER at first)
+	]]
+	PREDICTION_STEP = 1 / 30,
+	PREDICTION_SECONDS = 4,
+	PREDICTION_DOT_GAP = 1.5,
+	PREDICTION_DOTS = 80,
+	PREDICTION_DOT_SIZE = 0.6,
+	PREDICTION_END_SIZE = 1.4,
+	PREDICTION_COLOR = Color3.fromRGB(255, 215, 110),
+	PREDICTION_END_COLOR = Color3.fromRGB(235, 64, 52),
+	PREDICTION_IDLE_POWER = 0.6,
+	PREDICTION_IDLE_TRANSPARENCY = 0.4,
 }
 
 return _settings

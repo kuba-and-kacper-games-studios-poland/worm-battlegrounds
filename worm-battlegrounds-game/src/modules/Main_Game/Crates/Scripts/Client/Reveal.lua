@@ -574,8 +574,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Show Buttons
 
 --[[
-	Shows Open again (the pack's price in the paying currency, in its colours) and Continue. A free daily crate or the
-	tutorial's can't be opened again from here.
+	Shows Open again (the pack's price in the paying currency, in its colours) and Continue. A free daily crate can't
+	be opened again from here.
 ]]
 --- @param row Crates_CrateData
 function Module._showButtons(row, count: number, payWith: string)

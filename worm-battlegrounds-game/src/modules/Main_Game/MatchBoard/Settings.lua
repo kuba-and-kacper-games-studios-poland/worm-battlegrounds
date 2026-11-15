@@ -12,13 +12,10 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Public Rows
 
 	--[[
-		Every public row counts down this many seconds, always: at 0 it starts with whoever joined (or nobody) and a
-		fresh row on another map takes its place; it also starts once VOTE_FRACTION of its players voted, or when full
+		The public rows, one card per mode, always on the board. Join seats the player (and their party) in the fullest
+		open match of that mode on any server that has room for them all, on one team where it can (Matchmaking), or
+		opens a new one on the card's map; the match's server holds its waiting room
 	]]
-	ROW_SECONDS = 30,
-	VOTE_FRACTION = 2 / 3,
-
-	-- The public rows, one per mode, always on the board: a row that starts is replaced by a fresh one of its mode
 	--- @type { MatchBoard_RowOption }
 	PUBLIC_ROWS = {
 		{ Mode = "Deathmatch", Size = 4 },
@@ -31,7 +28,7 @@ local _settings = {
 	--- @type { [string]: number }
 	TEAM_SIZES = { Deathmatch = 1, Duo = 2, Trio = 3, Quads = 4 },
 
-	-- How each mode reads on the board's cards and in the waiting room
+	-- How each mode reads on the board's cards
 	--- @type { [string]: string }
 	MODE_NAMES = {
 		Deathmatch = "Deathmatch",
@@ -44,35 +41,57 @@ local _settings = {
 	-- The bots' difficulty in public matches
 	PUBLIC_DIFFICULTY = "Medium",
 
+	-- How often each card reads the open matches of its mode again, for the map a Join would land on, in seconds
+	TARGETS_SECONDS = 3,
+
+	-- What a Join that couldn't reach the matches says
+	JOIN_FAILED_MESSAGE = "Couldn't find a match. Try again!",
+
 	--%%%%%%%%%%%%%%%%%%%% Maps
 
 	--[[
-		Every arena: its name, the match sizes it's made for, and its picture (a landscape photo of the map, the game
-		home's assets/ui/map_thumbnails; empty until the map is built)
+		Every arena: its name, the match sizes it's made for, and its pictures, landscape photos of the map (the game
+		home's assets/ui/map_thumbnails; empty until the map is built): Thumbnail cut to the lobby card's shape,
+		TileThumbnail to the custom lobby's map tile
 	]]
 	--- @type { [string]: MatchBoard_MapRow }
 	MAPS = {
-		RockslideRidge = { Name = "Rockslide Ridge", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://101364558522354" },
-		PicnicPlains = { Name = "Picnic Plains", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://114380640476396" },
-		FluffyFallout = { Name = "Fluffy Fallout", Sizes = { 2, 4, 6 }, Thumbnail = "" },
-		LakesideShowdown = { Name = "Lakeside Showdown", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://73998072466850" },
-		MoltenSpires = { Name = "Molten Spires", Sizes = { 2, 4, 6 }, Thumbnail = "" },
-		TheBigMashup = { Name = "The Big Mashup", Sizes = { 8 }, Thumbnail = "" },
-		Desert = { Name = "Desert", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://140014161821553" },
-		VolcanoIsle = { Name = "Volcano Isle", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://110823072321769" },
-		RollingPlains = { Name = "Rolling Plains", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://118659936926806" },
-		EchoCaverns = { Name = "Echo Caverns", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://97183016065357" },
+		RockslideRidge = { Name = "Rockslide Ridge", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://101364558522354", TileThumbnail = "rbxassetid://76070824844534" },
+		PicnicPlains = { Name = "Picnic Plains", Sizes = { 6, 8 }, Thumbnail = "rbxassetid://114380640476396", TileThumbnail = "rbxassetid://70528973496836" },
+		FluffyFallout = { Name = "Fluffy Fallout", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://70830416217312", TileThumbnail = "rbxassetid://103570575490285" },
+		LakesideShowdown = { Name = "Lakeside Showdown", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://73998072466850", TileThumbnail = "rbxassetid://106543031741291" },
+		MoltenSpires = { Name = "Molten Spires", Sizes = { 2, 4, 6 }, Thumbnail = "", TileThumbnail = "" },
+		TheBigMashup = { Name = "The Big Mashup", Sizes = { 8 }, Thumbnail = "", TileThumbnail = "" },
+		Desert = { Name = "Desert", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://83756913609980", TileThumbnail = "rbxassetid://95484779686713" },
+		MirageMesa = { Name = "Mirage Mesa", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://140014161821553", TileThumbnail = "rbxassetid://85483220004379" },
+		VolcanoIsle = { Name = "Volcano Isle", Sizes = { 2, 4, 6 }, Thumbnail = "rbxassetid://110823072321769", TileThumbnail = "rbxassetid://72281204382629" },
+		RollingPlains = { Name = "Rolling Plains", Sizes = { 2, 4 }, Thumbnail = "rbxassetid://118659936926806", TileThumbnail = "rbxassetid://119350227368156" },
+		EchoCaverns = { Name = "Echo Caverns", Sizes = { 2, 4, 6, 8 }, Thumbnail = "rbxassetid://97183016065357", TileThumbnail = "rbxassetid://113242205351682" },
 
 		-- The tutorial's own map, never in MAP_POOL. shortcut: Picnic Plains' picture until Training Meadow has its own uploaded
-		TutorialMeadow = { Name = "Training Meadow", Sizes = { 2 }, Thumbnail = "rbxassetid://114380640476396" },
+		TutorialMeadow = { Name = "Training Meadow", Sizes = { 2 }, Thumbnail = "rbxassetid://114380640476396", TileThumbnail = "" },
 	},
 
 	--[[
-		The maps rows and lobbies pick from: only those with a template in SAssets.Arenas. A size no map in the pool is
-		made for plays on any map in it
+		The rotation: the maps the public rows and Solo vs bots pick from, each for the sizes its row says (only maps
+		with a template in SAssets.Arenas). A size no map in the pool is made for plays on any map in it
 	]]
 	--- @type { string }
-	MAP_POOL = { "PicnicPlains", "Desert", "RockslideRidge", "VolcanoIsle", "LakesideShowdown", "RollingPlains", "EchoCaverns" },
+	MAP_POOL = { "PicnicPlains", "Desert", "FluffyFallout", "RollingPlains", "EchoCaverns", "VolcanoIsle" },
+
+	-- The maps a custom lobby can pick, in the order the custom window lists them: the rotation, then the custom-only maps
+	--- @type { string }
+	CUSTOM_MAP_POOL = {
+		"PicnicPlains",
+		"Desert",
+		"FluffyFallout",
+		"RollingPlains",
+		"EchoCaverns",
+		"VolcanoIsle",
+		"MirageMesa",
+		"LakesideShowdown",
+		"RockslideRidge",
+	},
 
 	--%%%%%%%%%%%%%%%%%%%% Solo And Party
 

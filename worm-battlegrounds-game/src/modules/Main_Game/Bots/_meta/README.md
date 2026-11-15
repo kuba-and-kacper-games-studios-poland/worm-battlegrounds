@@ -72,9 +72,9 @@ short), the bot still fires the Bazooka at the nearest snail not on its team (it
 `I.Combat.GetArcs` gives at `POWER_STEPS`, or, when no arc reaches, on the arc that lands nearest it and not within
 `DIG_MIN` of itself (never a shot straight up that falls back on its head). Only with no enemy left does it fire nothing.
 
-The tutorial bot doesn't know how to shoot: it raises the Bazooka at the sky, charges it to
-`TUTORIAL_FUMBLE_POWER`, gives up without firing and passes its turn (`I.Match.SkipTurn`), the one bot that does. It
-starts with `HEALTH`'s 10 health, so any hit knocks it out.
+The tutorial bot plays a whole match like the others (the testers, 2026-11-15: "make a full fledge game vs a bot with
+turns"): Easy's brain (`TUTORIAL_BRAIN`) with a clumsier hand (`SKILLS.Tutorial`), the Bazooka alone (`LOADOUTS`), no
+potion, and half a snail's health (`HEALTH`: 100 of Snails' 200), so the Bazooka, the Grenade and the windy shot of the tutorial's first three turns can knock it out.
 
 **Difficulties.** Easy, Medium, Hard and the secret Nightmare (only in custom lobbies: `SKILLS`, `LOADOUTS`) share the brain
 and differ in their skill and genome. Harder bots read more of the wind, shake less, weigh more spots, targets and
@@ -159,18 +159,18 @@ A run or a probe needs the Studio map with no match playing: it loads each map i
 | Key | Default | What |
 | --- | --- | --- |
 | `BOT_NAMES` | a list of names | Picked without repeats in a match |
-| `LOADOUTS` | Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Spider bomb, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Golf Club, Spider bomb, Jetpack, Medkit · Nightmare: Hard's, a Grenade and the Black hole grenade | What each difficulty takes into a match (others use Easy's) |
+| `LOADOUTS` | Tutorial: none (the Bazooka alone) · Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Spider bomb, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Golf Club, Spider bomb, Jetpack, Medkit · Nightmare: Hard's, a Grenade and the Black hole grenade | What each difficulty takes into a match (others use Easy's) |
 | `POTIONS` | `{ "", "SpeedPotion", "LowGravityPotion" }` | One rolled at even odds onto every bot's loadout (`""`: none), the tutorial bot's aside |
 | `START_GAP` | `20` | No bot parachutes in within this many studs of a spot taken already |
 | `TAUNT_KILL`, `TAUNT_HIT` | Taunt, Laugh, Flex, Dance, Backflip, Victory trumpet · Laugh, Thumbs up, Flex, Taunt | The emotes a bot taunts with after a knockout, and after a hit on a player |
 | `TAUNT_DAMAGE`, `TAUNT_CHANCE`, `TAUNT_DELAY` | `20`, `0.6`, `1.2` | A hit taunts from this much damage to one player, this often, this many seconds after the shot lands |
-| `SKILLS` | Easy, Medium, Hard, Nightmare (below) | Each difficulty's skill (`Bots_Skill`); others use Easy's |
+| `SKILLS` | Tutorial, Easy, Medium, Hard, Nightmare (below) | Each difficulty's skill (`Bots_Skill`); others use Easy's |
 | `TAKEOVER_DIFFICULTY` | `"Medium"` | The difficulty a bot plays a dropped player's snail at, with that player's own loadout |
 | `THINK_TIME` | `{ 0.8, 1.5 }` | Seconds a bot thinks (and plans) before it moves and takes aim |
 | `ACTION_PAUSE` | `0.4` | Its pause after a heal or a walk |
 | `AIM_TIME`, `AIM_STEP` | `1.2`, `0.1` | How long its crosshair swings to the shot (the charge follows), and how often its aim is sent |
-| `HEALTH` | Tutorial 10 | The health a difficulty's bot starts with, where it isn't Snails' `MAX_HEALTH` (any hit knocks the tutorial bot out) |
-| `TUTORIAL_FUMBLE_POWER` | `0.3` | How far the tutorial bot charges its Bazooka before it gives up without firing |
+| `TUTORIAL_BRAIN` | `"Easy"` | The trained brain the tutorial's bot plays with; its hand is `SKILLS.Tutorial` |
+| `HEALTH` | Tutorial 100 | The health a difficulty's bot starts with, where it isn't Snails' `MAX_HEALTH` (200) |
 | `POWER_STEPS` | 0.3 to 1 by 0.1 | The powers arcs are solved for (a low and a high arc each), for plans and for a shot fired with no plan |
 | `ARC_SECONDS`, `ARC_STEP` | `4`, `1 / 20` | How far ahead a rough arc is checked against the terrain |
 | `PREDICT_SECONDS` | `6.4` | A full simulation's longest flight, in the shot's own (slowed) time |

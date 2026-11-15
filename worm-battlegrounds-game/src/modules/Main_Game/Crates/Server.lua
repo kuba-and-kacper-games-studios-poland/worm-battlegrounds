@@ -82,8 +82,8 @@ function Module.Open(player: Player, crateId: string, count: number, payWith: st
 		return nil
 	end
 
-	-- Check if a hidden crate is the tutorial's, still unopened
-	if row.Hidden and (crateId ~= _settings.TUTORIAL_CRATE or count ~= 1 or not I.Tutorial.CanOpenCrate(player)) then
+	-- Check if the crate is on sale (a hidden one never is)
+	if row.Hidden then
 		return nil
 	end
 

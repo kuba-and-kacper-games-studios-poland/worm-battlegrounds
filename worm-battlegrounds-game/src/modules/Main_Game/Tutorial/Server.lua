@@ -50,6 +50,7 @@ function Module.Init()
 	----------------------------
 
 	I.G_Player.OnPlayerAdded(I.Priority.Replicator, Module._createReplicator)
+	I.G_Player.OnPlayerAdded(I.Priority.Default, Module._giveStarters)
 
 	----------------------------
 	--------- REGISTRY ---------
@@ -74,7 +75,6 @@ function Module.Init()
 
 		IsMatchDone = Module.IsMatchDone,
 		IsDone = Module.IsDone,
-		CanOpenCrate = Module.CanOpenCrate,
 	}
 end
 
@@ -85,12 +85,9 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
-	-- Matches end on the Match map, and crates open on the Lobby map
+	-- Matches end on the Match map
 	if I.Topic.IsRegistered("Match_Ended") then
 		I.Topic.Subscribe("Match_Ended", Module._onMatchEnded)
-	end
-	if I.Topic.IsRegistered("Crates_Opened") then
-		I.Topic.Subscribe("Crates_Opened", Module._onCrateOpened)
 	end
 end
 
@@ -114,7 +111,7 @@ end
 
 --[[
 	**SERVER** |
-	Marks the tutorial match played and gives the coins for the tutorial crate, once.
+	Marks the tutorial match played and gives its coins and the starter weapons, once.
 ]]
 --- @return boolean
 function Module.CompleteMatch(player: Player)
@@ -140,6 +137,7 @@ function Module.CompleteMatch(player: Player)
 
 	moduleData["MatchDone"] = true
 	I.Currency.Add(player, "Coins", _settings.MATCH_COINS)
+	Module._giveStarters(player)
 
 	--[[ Publishing ]]
 
@@ -154,7 +152,7 @@ end
 
 --[[
 	**SERVER** |
-	Marks the whole tutorial done without playing it (no match, no coins, no crate, no equip step), for Studio
+	Marks the whole tutorial done without playing it (no match, no coins, no weapons, no equip step), for Studio
 	playtests that leave it off.
 ]]
 function Module.Skip(player: Player)
@@ -215,12 +213,14 @@ function Module._onMatchEnded(_placements: any, _stats: any, metadata)
 	end
 end
 
---%%%%%%%%%%%%%%%%%%%% On Crate Opened
+--%%%%%%%%%%%%%%%%%%%% Give Starters
 
 --[[
-	Marks the tutorial crate opened, which moves the player on to equipping its weapons.
+	Gives the starter weapons once the tutorial match is played (the testers, 2026-11-15: no crate opening in the
+	tutorial) and marks them given (`CrateOpened`, named for the crate that gave them before), which moves the player on
+	to equipping them. One who played the match before then and never opened the crate gets them on their next join.
 ]]
-function Module._onCrateOpened(player: Player, crateId: string)
+function Module._giveStarters(player: Player)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return
@@ -234,13 +234,16 @@ function Module._onCrateOpened(player: Player, crateId: string)
 
 	--[[ Checks ]]
 
-	-- Check if it's the tutorial crate
-	if crateId ~= _settings.CRATE_ID then
+	-- Check if the match is played and the weapons not given yet
+	if not moduleData["MatchDone"] or moduleData["CrateOpened"] then
 		return
 	end
 
 	--[[ Saving ]]
 
+	for _index: number, itemId: string in ipairs(_settings.STARTER_WEAPONS) do
+		I.Inventory.AddItem(player, itemId, "1", true)
+	end
 	moduleData["CrateOpened"] = true
 
 	--[[ Publishing ]]
@@ -274,7 +277,7 @@ function Module._onStep(player: Player, step: string)
 
 	--[[ Checks ]]
 
-	-- Check if it's the equip step, after the crate
+	-- Check if it's the equip step, after the weapons were given
 	if step ~= "Equipped" or not moduleData["CrateOpened"] or moduleData["Done"] then
 		return
 	end
@@ -332,8 +335,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Publish
 
 --[[
-	Writes where the player is in the tutorial into their Tutorial folder: MatchDone, CrateReady (the crate waits),
-	EquipReady (the weapons wait to be equipped) and Done.
+	Writes where the player is in the tutorial into their Tutorial folder: MatchDone, EquipReady (the weapons wait to
+	be equipped) and Done.
 ]]
 function Module._publish(player: Player)
 	--[[ Data ]]
@@ -345,7 +348,6 @@ function Module._publish(player: Player)
 	--[[ Publishing ]]
 
 	I.Replicator.Set(player, _localName, "MatchDone", moduleData["MatchDone"])
-	I.Replicator.Set(player, _localName, "CrateReady", moduleData["MatchDone"] and not moduleData["CrateOpened"])
 	I.Replicator.Set(player, _localName, "EquipReady", moduleData["CrateOpened"] and not moduleData["Done"])
 	I.Replicator.Set(player, _localName, "Done", moduleData["Done"])
 end
@@ -398,30 +400,6 @@ function Module.IsDone(player: Player)
 	--[[ Returning ]]
 
 	return moduleData["Done"]
-end
-
---%%%%%%%%%%%%%%%%%%%% Can Open Crate
-
---[[
-	**SERVER** |
-	Returns whether the tutorial crate waits for the player: after the tutorial match, before it's opened.
-]]
---- @return boolean
-function Module.CanOpenCrate(player: Player)
-	-- Check if player is valid | SERVER
-	if not I.Player.Valid(player) then
-		return false
-	end
-
-	--[[ Data ]]
-
-	--- @type Player_ProfileData
-	local profileData = I.Player.GetProfile(player).Data
-	local moduleData = profileData["Tutorial"]
-
-	--[[ Returning ]]
-
-	return moduleData["MatchDone"] and not moduleData["CrateOpened"]
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

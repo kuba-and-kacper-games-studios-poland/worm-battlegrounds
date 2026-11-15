@@ -33,7 +33,7 @@ A private lobby to play friends (pays no coins). First the player creates it (ma
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| MapChoice` | `U_Maps` | An ImageButton: `S_Icon` (map picture, `Crop`: the wide lobby card pictures fill it at their own shape, their sides cut off), `S_Name`, `S_Info` (player counts, "2 / 4") |
+| `PREFAB \| MapChoice` | `U_Maps` | An ImageButton: `Background` › `S_Icon` (the map's tile picture, MatchBoard's `TileThumbnail`, over the tile's whole fill, stretched: each picture is cut to the tile's slanted shape; above `Main`, under the outlines, fading out toward the bottom behind the name), `S_Name`, `S_Info` (player counts, "2 / 4") |
 | `PREFAB \| Member` | `U_Members` | `S_Avatar`, `S_Name`, `S_Username` |
 | `PREFAB \| Invitable` | `U_Invitable` | `S_Avatar`, `S_Name`, `S_Username`, `S_Invite` (ImageButton) |
 

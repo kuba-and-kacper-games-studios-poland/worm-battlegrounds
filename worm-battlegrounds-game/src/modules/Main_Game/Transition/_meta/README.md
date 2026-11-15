@@ -25,7 +25,7 @@ and tells them (`TELEPORT_FAILED_MESSAGE`), so nobody is left on a card that nev
 | --- | --- | --- |
 | `I.Transition.SetDestination(players, text, image)` | Server | Tells players where their next teleport goes, for the card: its line (`S_Text`) and picture (`S_Image`, hidden when `""`). Call it right before the teleport |
 
-Callers: MatchBoard's `Launch` ("Heading to <map>…", the map's `Thumbnail`), Match's `Connection.SendToLobby`
+Callers: MatchBoard's `Launch.Send` ("Heading to <map>…", the map's `Thumbnail`), Match's `Connection.SendToLobby`
 ("Back to the lobby…"), Lobby's rejoin ("Back to your match…").
 
 ## Network

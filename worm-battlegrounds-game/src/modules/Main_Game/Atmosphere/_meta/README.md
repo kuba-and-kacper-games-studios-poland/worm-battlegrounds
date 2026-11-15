@@ -49,7 +49,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 
 | Key | Default | What |
 | --- | --- | --- |
-| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow`, `LakesideShowdown` and `RollingPlains` (Picnic Plains' row), `Desert`, `RockslideRidge` (lava bubbles and embers since its lava sea, 2026-11-14), `EchoCaverns` (Rockslide Ridge's cave row, with water ripples), `VolcanoIsle` | Each mood, by MapId (below) |
+| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow`, `LakesideShowdown`, `RollingPlains` and `FluffyFallout` (Picnic Plains' row; Fluffy Fallout's pollen only), `Desert` and `MirageMesa` (the Desert's row), `RockslideRidge` (lava bubbles and embers since its lava sea, 2026-11-14), `EchoCaverns` (Rockslide Ridge's cave row, with water ripples), `VolcanoIsle` | Each mood, by MapId (below) |
 | `LOBBY_PROFILE` | `"Lobby"` | The mood outside matches |
 | `LOBBY_MAP`, `MATCH_MAP` | `"Lobby"`, `"Match"` | The place loader's maps with no matches and with only a match; the Studio map has both and follows `InMatch` |
 | `MOOD_TWEENINFO` | 2 s Sine InOut | How the lighting moves from one mood to the next |
@@ -61,7 +61,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 | `SUDDEN_DEATH_TWEENINFO` | 4 s Sine InOut | How the sudden-death layer comes and goes |
 | `AMBIENT_FRONT` | `8` | How far in front of the map's front face its ambient particles reach, toward the camera |
 | `LOBBY_AREA_DISTANCE`, `LOBBY_AREA_SIZE` | `30`, `70 × 34 × 40` | The lobby's ambient box, in front of the stage camera |
-| `WIND_PUSH` | `0.35` | The sideways pull on drifting particles per point of wind (studs/s²) |
+| `WIND_PUSH` | `0.175` | The sideways pull on drifting particles per point of wind (studs/s², halved when the wind went to ±20) |
 | `CLOUD_DRIFT`, `CLOUD_DRIFT_SECONDS` | `3`, `{ 9, 14 }` | How far the lobby stage's clouds drift and back, and over how long |
 | `CEILING_SHARE`, `CEILING_STEP` | `0.4`, `1` | Grit trickles from rock in the bounds' top 40 %, found by sampling every stud down |
 | `WIND_EFFECT` | `"Wind_Streak"` | The streaks' prefab (its look: texture, stretch, fade, base size and speed) |
@@ -76,7 +76,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 | `WIND_SOUND_TWEENINFO` | 2 s Sine InOut | How the loop eases to a new wind, and fades out when the map goes |
 | `WIND_GUST_SOUND`, `WIND_GUST_SOUND_FROM` | `"Wind_Gust"`, `0.4` | The whoosh at a gust's peak, in wind of 40 % of the strongest or more, as likely as the wind's share |
 | `WIND_GUST_SOUND_VOLUME` | `{ 0.15, 0.5 }` | The whoosh's volume, from just past `WIND_GUST_SOUND_FROM` to the strongest wind |
-| `WIND_CHANGE_BURST`, `WIND_CHANGE_BURST_MIN` | `40`, `8` | Streaks each emitter bursts when the wind changes (every turn), at the strongest wind and at least |
+| `WIND_CHANGE_BURST`, `WIND_CHANGE_BURST_MIN` | `40`, `8` | Streaks each emitter bursts when the wind changes (every second round), at the strongest wind and at least |
 | `PROP_EFFECTS` | `Leaves`, `Needles`, `Bush`, `Cactus`, `Twig` → `"Leaves"`; `Rock` → `"Dust"` | The burst a blast plays from each kind of prop part, by part name |
 | `PROP_PARTS_FULL` | `6` | Parts a blast must reach for a prop's full burst; fewer play a smaller one (down to half) |
 | `PROP_WIND_SHARE` | `0.5` | The share of the wind's pull that bends a burst |

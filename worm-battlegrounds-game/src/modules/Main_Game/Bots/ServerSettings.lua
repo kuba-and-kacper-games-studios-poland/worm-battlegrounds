@@ -38,6 +38,7 @@ local _settings = {
 	-- What each difficulty takes into a match: weapons, and the jetpack and heals it moves and heals with
 	--- @type { [string]: { string } }
 	LOADOUTS = {
+		Tutorial = {},
 		Easy = { "Grenade", "Shotgun", "Jetpack" },
 		Medium = { "Grenade", "Shotgun", "Dynamite", "SpiderBomb", "Jetpack", "Bandage" },
 		Hard = { "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "Jetpack", "Medkit" },
@@ -88,10 +89,28 @@ local _settings = {
 		  arc at a target misses by more than BANK_MISS: landing beside or past it, to bounce and roll in
 		- Hunt: how much nearer players (not bots) count when it picks its targets, from 0 to 1
 		- StartNoise: how loosely it picks where it parachutes in (GetStart), on top of what its genome likes there
-		Nightmare is secret: it isn't on the board.
+		Nightmare is secret: it isn't on the board. The tutorial's bot plays Easy's brain (TUTORIAL_BRAIN) with a
+		clumsier hand, so a new player can win their first match while it shoots back.
 	]]
 	--- @type { [string]: Bots_Skill }
 	SKILLS = {
+		Tutorial = {
+			AimNoise = 14,
+			PowerNoise = 0.15,
+			WindRead = 0.2,
+			Ranging = 0.9,
+			RangingMin = 0.6,
+			Spots = 2,
+			Targets = 1,
+			Finalists = 3,
+			AimPoints = 1,
+			MapSense = 0.5,
+			Choice = 0.5,
+			AirShots = 0,
+			Banks = 0,
+			Hunt = 0,
+			StartNoise = 1,
+		},
 		Easy = {
 			AimNoise = 9,
 			PowerNoise = 0.1,
@@ -179,12 +198,15 @@ local _settings = {
 	AIM_TIME = 1.2,
 	AIM_STEP = 0.1,
 
-	-- The health a difficulty's bot starts with, where it isn't Snails' MAX_HEALTH: any hit knocks the tutorial bot out
-	--- @type { [string]: number }
-	HEALTH = { Tutorial = 10 },
+	-- The trained brain the tutorial's bot plays with (its hand is SKILLS.Tutorial)
+	TUTORIAL_BRAIN = "Easy",
 
-	-- How far the tutorial bot charges its Bazooka before it gives up without firing
-	TUTORIAL_FUMBLE_POWER = 0.3,
+	--[[
+		The health a difficulty's bot starts with, where it isn't Snails' MAX_HEALTH: the tutorial's bot has half, so the
+		player's Bazooka, Grenade and windy shot can knock it out in the tutorial's first three turns
+	]]
+	--- @type { [string]: number }
+	HEALTH = { Tutorial = 100 },
 
 	--%%%%%%%%%%%%%%%%%%%% Planning
 

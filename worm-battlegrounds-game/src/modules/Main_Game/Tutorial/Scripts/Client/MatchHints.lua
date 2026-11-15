@@ -25,11 +25,7 @@ local snailsFolder: Instance
 
 --[[ State ]]
 
--- Whether the player has fired once (later turns say try again), and on touch whether they've tapped the bot to aim
-local fired: boolean = false
-local touchAimed: boolean = false
-
--- Whether this guide put the spotlight up, so it only takes down its own (the Studio map runs the lobby guide too)
+-- Whether this guide put the hint up, so it only takes down its own (the Studio map runs the lobby guide too)
 local showing: boolean = false
 local tickConnection: RBXScriptConnection?
 
@@ -54,7 +50,8 @@ local Module = {}
 function Module.Start()
 	--[[ Elements ]]
 
-	elems["Fire"] = I.UserInterface.UI[_settings.MATCH_HUD_GUI_NAME]:FindFirstChild("U_Fire", true) --- @type ImageButton
+	elems["Slots"] = I.UserInterface.UI[_settings.MATCH_HUD_GUI_NAME]:FindFirstChild("U_Slots", true) --- @type Frame
+	elems["Wind"] = I.UserInterface.UI[_settings.MATCH_HUD_GUI_NAME]:FindFirstChild("S_Wind", true) --- @type TextLabel
 	elems["Lobby"] = I.UserInterface.UI[_settings.RESULTS_GUI_NAME]:FindFirstChild("S_Lobby", true) --- @type ImageButton
 	matchFolder = I.Match.GetFolder()
 	snailsFolder = I.Dirs.UmeWorkspace:WaitForChild("Snails")
@@ -62,7 +59,6 @@ function Module.Start()
 	--[[ Connections ]]
 
 	matchFolder:GetAttributeChangedSignal("Kind"):Connect(Module._checkKind)
-	I.S.UserInputService.InputBegan:Connect(Module._onInputBegan)
 	Module._checkKind()
 end
 
@@ -81,8 +77,6 @@ function Module._checkKind()
 	--[[ Connections ]]
 
 	if tutorial and not tickConnection then
-		fired = false
-		touchAimed = false
 		tickConnection = I.S.RunService.Heartbeat:Connect(Module._tick)
 	elseif not tutorial and tickConnection then
 		tickConnection:Disconnect()
@@ -94,8 +88,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Tick
 
 --[[
-	Shows the step the match is at: the lit spot to land on, the bot to shoot (on touch the bot, then FIRE), the
-	bot's turn, a retry after a miss, and the Return button once the results show.
+	Shows the step the match is at: the lit spot to land on, then a step for each of the player's turns (the player
+	plays first, so their turn is the round): shooting the bot, picking the Grenade and throwing it, the strong wind
+	(Match's TUTORIAL_WINDS) and finishing the bot; the bot's turns, and the Return button once the results show.
 ]]
 function Module._tick()
 	--[[ Local Variables ]]
@@ -103,7 +98,9 @@ function Module._tick()
 	local phase: string = I.Match.GetPhase()
 	local myTurn: boolean = I.Match.IsMyTurn()
 	local mine: Configuration? = I.Match.GetParticipantInfo(I.Match.GetMyParticipantId())
+	local snail: Model? = I.Snails.GetMine()
 	local bot: Model? = Module._getBot()
+	local round: number = matchFolder:GetAttribute("Round") or 1
 
 	--[[ Checks ]]
 
@@ -113,21 +110,24 @@ function Module._tick()
 		return
 	end
 
-	--[[ Stepping ]]
-
-	if phase == "Flight" and myTurn then
-		fired = true
-		touchAimed = false
-	end
-
 	--[[ Showing ]]
 
 	if phase == "Drop" and not mine:GetAttribute("Placed") then
 		Module._show(Module._getHint("Drop"), Vector3.new(mine:GetAttribute("DropX") or 0, mine:GetAttribute("DropY") or 0, 0), "Drop")
 	elseif phase == "Turn" and myTurn and bot and bot.PrimaryPart then
-		local touchFire: boolean = I.Platform.Current == "Mobile" and touchAimed
-		local step: string = if touchFire then "Fire" elseif fired then "Retry" else "Aim"
-		Module._show(Module._getHint(step), if touchFire then elems["Fire"] else bot.PrimaryPart, step)
+		local grenadeSlot: GuiObject? = elems["Slots"]:FindFirstChild(_settings.GRENADE)
+		local holdsGrenade: boolean = snail ~= nil and snail:GetAttribute("HeldItem") == _settings.GRENADE
+		if round == 1 then
+			Module._show(Module._getHint("Aim"), bot.PrimaryPart, "Aim")
+		elseif round == 2 and grenadeSlot and not holdsGrenade then
+			Module._show(Module._getHint("Grenade"), grenadeSlot, "Grenade")
+		elseif round == 2 then
+			Module._show(Module._getHint("Throw"), bot.PrimaryPart, "Throw")
+		elseif round == 3 then
+			Module._show(Module._getHint("Wind"), elems["Wind"], "Wind")
+		else
+			Module._show(Module._getHint("Finish"), bot.PrimaryPart, "Finish")
+		end
 	elseif phase == "Turn" and not myTurn then
 		Module._show(Module._getHint("BotTurn"), nil, "BotTurn")
 	elseif phase == "Ended" then
@@ -140,9 +140,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Show
 
 --[[
-	Shows a step through the spotlight (reporting it for the funnel) and remembers this guide put it up.
+	Shows a step through the guide (reporting it for the funnel) and remembers this guide put it up.
 ]]
-function Module._show(text: string, target: (GuiObject | BasePart | Vector3 | Rect)?, step: string)
+function Module._show(text: string, target: (GuiObject | BasePart | Vector3)?, step: string)
 	--[[ Applying ]]
 
 	showing = true
@@ -152,7 +152,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Hide
 
 --[[
-	Takes the spotlight down if this guide put it up, leaving the lobby guide's alone.
+	Takes the guide down if this guide put it up, leaving the lobby guide's alone.
 ]]
 function Module._hide()
 	--[[ Checks ]]
@@ -166,29 +166,6 @@ function Module._hide()
 
 	showing = false
 	Spotlight.Hide()
-end
-
---%%%%%%%%%%%%%%%%%%%% On Input Began
-
---[[
-	On a touch screen, a tap on the bot (the only place the spotlight lets a tap through) moves the guide on to FIRE.
-]]
-function Module._onInputBegan(input: InputObject, processed: boolean)
-	--[[ Checks ]]
-
-	-- Check if it's an unblocked tap while the guide asks for one
-	if not tickConnection or processed or input.UserInputType ~= Enum.UserInputType.Touch then
-		return
-	end
-
-	-- Check if it's the player's turn to aim
-	if I.Match.GetPhase() ~= "Turn" or not I.Match.IsMyTurn() then
-		return
-	end
-
-	--[[ Saving ]]
-
-	touchAimed = true
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

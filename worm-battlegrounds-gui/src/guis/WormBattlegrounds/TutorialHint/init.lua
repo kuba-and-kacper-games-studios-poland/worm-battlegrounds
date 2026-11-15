@@ -7,9 +7,9 @@ local _gui = {
 
 	--[[ General ]]
 
-	-- The Tutorial module turns it on and places the hole and the panel, as I.UserInterface.UI["TutorialHint"]
+	-- The Tutorial module turns it on and places the ring, the arrow and the panel, as I.UserInterface.UI["TutorialHint"]
 	Name = "TutorialHint",
-	-- Over every other gui but the teleport card, across the whole screen, so the hole lines up with world and gui spots
+	-- Over every other gui but the teleport card, across the whole screen, so the ring lines up with world and gui spots
 	Screen = { DisplayOrder = 50, Enabled = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None },
 
 	--[[ Tree ]]
@@ -18,42 +18,87 @@ local _gui = {
 		Primitive = "Folder",
 		Children = {
 			--[[
-				The spotlight: a lighter rounded square over what to press, whose huge dark outline blacks out the rest
-				of the screen; the gold ring inside it pulses
+				The ring around what to press: a gold rounded square that pulses, over a faint light; nothing else on
+				the screen is darkened or blocked (the testers, 2026-11-15: "no blackout just red arrow")
 			]]
 			{
 				Primitive = "Frame",
 				Id = "U_Spotlight",
 				Props = {
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-					BackgroundTransparency = 0.88,
+					BackgroundTransparency = 0.9,
 					BorderSizePixel = 0,
 					Size = UDim2.fromOffset(160, 160),
 					Visible = false,
 				},
 				Children = {
 					{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0, 18) } },
-					{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(8, 8, 14), Thickness = 4000, Transparency = 0.3 } },
 					{
 						Primitive = "Frame",
 						Id = "S_Ring",
 						Props = { BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromScale(1, 1) },
 						Children = {
 							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0, 18) } },
-							{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(255, 215, 110), Thickness = 3, Transparency = 0.2 } },
+							{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(255, 215, 110), Thickness = 4, Transparency = 0.2 } },
 						},
 					},
 				},
 			},
-			-- The blockers around the hole, placed by code: presses there never reach the world or the guis under them
+			--[[
+				The red arrow pointing down at the ring (code turns it over to point up, and bobs it): a rounded shaft
+				and a ▼ head, both outlined in the panel's dark; its tip is the bottom middle (the anchor)
+			]]
 			{
-				Primitive = "Folder",
-				Id = "U_Blockers",
+				Primitive = "Frame",
+				Id = "U_Arrow",
+				Props = {
+					AnchorPoint = Vector2.new(0.5, 1),
+					BackgroundTransparency = 1,
+					BorderSizePixel = 0,
+					Size = UDim2.fromOffset(64, 88),
+					Visible = false,
+				},
 				Children = {
-					{ Primitive = "Frame", Props = { Name = "Top", Active = true, BackgroundTransparency = 1, BorderSizePixel = 0 } },
-					{ Primitive = "Frame", Props = { Name = "Bottom", Active = true, BackgroundTransparency = 1, BorderSizePixel = 0 } },
-					{ Primitive = "Frame", Props = { Name = "Left", Active = true, BackgroundTransparency = 1, BorderSizePixel = 0 } },
-					{ Primitive = "Frame", Props = { Name = "Right", Active = true, BackgroundTransparency = 1, BorderSizePixel = 0 } },
+					{ Primitive = "UIScale", Id = "S_ScreenScale" },
+					{
+						Primitive = "Frame",
+						Id = "S_Shaft",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0),
+							BackgroundColor3 = Color3.fromRGB(235, 64, 52),
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0),
+							Size = UDim2.fromOffset(20, 50),
+						},
+						Children = {
+							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0, 6) } },
+							{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(25, 25, 35), Thickness = 3 } },
+						},
+					},
+					{
+						Primitive = "TextLabel",
+						Id = "S_Head",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 1),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 1),
+							Size = UDim2.new(1, 0, 0, 56),
+							ZIndex = 2,
+							FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Heavy),
+							Text = "▼",
+							TextColor3 = Color3.fromRGB(235, 64, 52),
+							TextScaled = true,
+							TextSize = 56,
+							TextWrapped = true,
+						},
+						Children = {
+							{
+								Primitive = "UIStroke",
+								Props = { ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual, Color = Color3.fromRGB(25, 25, 35), Thickness = 3 },
+							},
+						},
+					},
 				},
 			},
 			--[[

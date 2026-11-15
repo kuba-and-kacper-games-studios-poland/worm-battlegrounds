@@ -1861,3 +1861,120 @@ were"), a hit snail's health bar stutter while it moved, AssetsPreload fail on e
   simulated lag (`IncomingReplicationLag` 0.15): the balls moved cleanly.
 
 Rules: Snails (Shots fly by the game's own simulation; Every thrown shot flies like the rocket).
+
+## New versions of five maps, and two new maps (2026-11-15)
+
+**What happened.** The owner left finished maps in the dev place's `Workspace.New`: new versions of Volcano Isle, Echo
+Caverns, Picnic Plains and Rolling Plains (Volcano Isle, Echo Caverns and Rolling Plains narrowed, Picnic Plains
+widened with caves), a new Desert (dune peaks with cacti) and Fluffy Fallout (loose cloud parts over a water box).
+The old Desert was renamed Mirage Mesa, so the new one could take the name.
+
+- **A finished build goes in as built.** Turning the five MapLab builds back into pictures would have lost what the
+  kit can't make (the new cactus kinds, Picnic Plains' tapered stalactites, its clouds) and re-rolled their depth
+  slabs. They went in as they were, with small fixes only.
+- **A build from another place may carry another place's settings.** Their stud parts were Plastic with the `2022 Stud`
+  variant, which shows no studs in this place (the lobby stage's lesson), so they became SmoothPlastic. The new
+  Desert's cacti had collidable, touchable spikes, which snails would have bumped into; props are never collidable.
+- **Validate what comes in, even as built.** `Kit.validate` on the templates found the spikes and 61 props a stud or
+  two in or over their ground; they were stood on it by `pack`'s own rule (the higher of the two columns under the
+  trunk). The lilies stay on their pond.
+- **A map with no island needs saying so.** `pack` calls any land touching the picture's lowest row an island, and an
+  island needs bedrock, so Fluffy Fallout's lowest clouds would have failed the check. `map.json`'s `floating` makes
+  every piece a ledge. With no bedrock the Arena's floor is out of reach, so the whole sea is open: any snail in it is
+  out.
+
+Rules: Arena (Maps are made in MapLab).
+
+## A tutorial that plays a real match, and wind on a wider scale (2026-11-15)
+
+**What happened.** A tester's notes on the tutorial: the spotlight's blackout made it unclear what to do, the match was
+too short (a bot that couldn't shoot, with 10 health), and the crate opening (with its close button) got in the way.
+The same day the owner widened the wind to ±20, held it two rounds, and turned off the favourite prompts.
+
+- **Point, don't black out.** A dark screen with one hole read as "something is wrong" rather than "press here". A ring,
+  a red arrow and a hint leave the game readable, and the steps still know what to point at. The arrow turns over to
+  point up when its target is near the screen's top (the wind, a loadout slot), and the hint moves past it.
+- **Teach by turns, not by steering.** The old tutorial steered every shot onto the bot, so the player learnt nothing
+  about aiming. Now one thing per round: aim, the Grenade, then wind. The player plays first, so their turn is the
+  round, and the Grenade's cooldown makes it ready exactly on turn 2. The prediction line (MatchHud, tutorial only)
+  teaches power and wind without steering. It ignores water and bounces, so it's exact to the first thing a shot
+  touches.
+- **Size the bot to the lesson.** At Snails' 200 health the tutorial ran long. Half that lets the first three shots
+  (35 + 55 + 35) knock it out, and misses stretch the match without ending it early.
+- **A wider scale keeps its push.** `wind × (a + g × |wind|)` keeps the same push at twice the numbers when `a` halves
+  and `g` quarters, so 20 now pushes as 10 did and bots' genomes, which read the push and not the number, didn't need
+  retraining. Atmosphere's per-point particle pull was halved to match.
+- **A renamed meaning keeps its saved key.** The crate's `CrateOpened` flag now means "starter weapons given"; it stays
+  under its old name so nobody's progress resets, and anyone between the match and the crate gets the weapons on
+  their next join.
+- **Click gui buttons by their path when testing.** A scripted click at a bar slot's screen position went through to
+  the aim and fired a Bazooka, while a click on the Results button by its instance path pressed it.
+
+Rules: Snails (Every thrown shot flies like the rocket; The tutorial is a whole first match); Guis (The tutorial points
+with a red arrow); Maps and placeholders (The game never asks players to favourite it).
+
+## Public matches across every server, and a waiting room on the match server (2026-11-15)
+
+**What happened.** The owner asked for active lobbies to be global: Join sends the party straight to a match server,
+fills matches that have room (a pair into one with two seats left, a party of 4 in Duo into a 2v2 of its own), never
+overfills one, holds a 15-second waiting room there with Ready, fills the rest with bots, keeps the drop at its full 15
+seconds, and lets a bot stand in for anyone still loading. The cards were made minimal at the same time.
+
+- **One step per change, or the match overfills.** Two lobby servers can both read "two seats left" and both send a
+  pair. Every seat is claimed in one MemoryStore `UpdateAsync` whose transform checks the room and takes the seats
+  together, so the second claim sees the first and is refused; the lobby then tries the next match or opens a new
+  one. The transform may run more than once, so it changes nothing outside its value.
+- **The match server owns its entry, and closing is a claim too.** It opens its entry when its room opens, keeps it
+  alive and reads the new seats in the same refresh, and closes it in one step: whatever the closed entry holds is the
+  final roster, since no claim can land after. A player who arrives anyway (a claim the store refused, a stale
+  teleport) has no seat and goes back to the lobby.
+- **Seat people before they arrive.** A teleport takes seconds and a slow device longer, so the lobby writes each
+  player's card (name, loadout, outfit) into their seat, and the match seats them from it with `Connected` false: the
+  dropped-player bot plays them until their data loads, and the match always starts with every snail.
+- **Studio gets its own store.** Studio's MemoryStore isn't the live one, and the Studio map runs lobby and match on
+  one server, so the module keeps a JSON copy on the server with the same single steps. A test claimed seats for
+  fake players and checked the duplicate, overfill, full and after-close claims were all refused.
+- **A card picture made big needs the real picture.** The design's small placeholder looked broken stretched over a
+  card, so a map with no lobby picture shows a plain card until it gets one.
+
+Rules: Guis (A lobby card is minimal; Public matches are global; Every match starts with all its snails; The drop
+always runs its whole 15 seconds).
+
+## Production stores on a game that was already live (2026-11-15)
+
+**What happened.** The owner asked whether the game was set to production ready. It wasn't: ume's
+`IsProductionReady` had been off since the scaffold, so the live game had saved every player under the place
+loader's `UmeTesting_-1` store name. Turning it on moved live servers to `Production`, a fresh store, which starts
+every player over. The owner chose that.
+
+- **Turn the flag on before the first public release.** After players have saves, turning it on either resets them or
+  needs code that copies each old profile over on its first load.
+- **A config in `core/` is the framework's file.** A newer ume replaces it, flag and all, so the game's practices say
+  to set it again after an update.
+
+**Then, the same day.** The owner took the reset back ("so no-one will lose their data"): the start task now renames
+live servers' store names to `UmeTesting_-1`, the name the players' saves already live under, and Studio moved to
+`UmeTesting_-2` in the place loader's config. Live and Studio still use different stores, and nobody starts over.
+
+- **Separating Studio from live doesn't need a new live store.** Give the side without real saves the new name (here,
+  Studio), and keep live on the name its players' data is under.
+
+Rules: Maps and placeholders (Live servers keep the players' saves).
+
+## Shots in the open sea, and new shell art (2026-11-15)
+
+**What happened.** The owner: "make the turn end when the projectiles hit the outer water that instakills you, right
+now it takes too long for the projectile to fall". Shots sank through the open sea as through a pond (2026-11-10's
+rule), except that `IsLost` caught a slow one in the 1-stud band over the surface (`SEA_SLACK`), where the sea counts
+and the liquid doesn't; a fast shot stepped over the band in one step and sank for up to `SINK_SECONDS`, so the same
+shot ended at once or seconds later depending on its speed. Measured in Studio: a shot
+falling at 150 studs/s was gone after 1.87 s, 25 studs down; now 0.40 s, at the surface. The same day the artist's new
+snails brought new shells, which turned out to be the old meshes on new textures.
+
+- **Test a rule at the speeds it meets.** A check on a thin band holds for slow things and misses fast ones; ask
+  whether the thing is inside the zone at all (`GetHazard ~= nil`), not whether it's in the band over it.
+- **Compare meshes before re-rigging.** `AssetService:CreateEditableMeshAsync` reads a mesh's vertices, faces and UVs
+  in Edit mode: the new shells matched the rigged ones face for face, so swapping their `SurfaceAppearance` was the
+  whole job, with no Blender, upload or rig.
+
+Rules: Arena (The open sea takes a shot at once).

@@ -17,6 +17,7 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local DropPicker = require(_scripts:FindFirstChild("Client"):FindFirstChild("DropPicker")) --- @type Match_Client_DropPicker
+local WaitingRoom = require(_scripts:FindFirstChild("Client"):FindFirstChild("WaitingRoom")) --- @type Match_Client_WaitingRoom
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -87,6 +88,7 @@ function Module.Start()
 
 	Module._createConnections()
 	DropPicker.Start(matchFolder)
+	WaitingRoom.Start(matchFolder)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization

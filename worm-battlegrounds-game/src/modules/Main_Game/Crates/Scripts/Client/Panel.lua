@@ -19,7 +19,6 @@ local prefabs = {} --- @type { [string]: Instance }
 
 local moduleGui: ScreenGui
 local shopRep: Folder?
-local tutorialRep: Folder?
 local policyRep: Folder?
 
 --[[ State ]]
@@ -150,20 +149,18 @@ end
 --%%%%%%%%%%%%%%%%%%%% Connect Replicator
 
 --[[
-	Follows the Shop folder (VIP's free crate), the Tutorial folder (the tutorial crate) and the Policy folder (paid
-	random items).
+	Follows the Shop folder (VIP's free crate) and the Policy folder (paid random items).
 ]]
 function Module._connectReplicator()
 	--[[ Data ]]
 
 	shopRep = I.Replicator.GetFolder("Shop")
-	tutorialRep = I.Replicator.GetFolder("Tutorial")
 	policyRep = I.Replicator.GetFolder("Policy")
 
 	--[[ Connections ]]
 
 	--- @param folder Folder?
-	for _index: number, folder in ipairs({ shopRep, tutorialRep, policyRep }) do
+	for _index: number, folder in ipairs({ shopRep, policyRep }) do
 		if folder then
 			folder.AttributeChanged:Connect(Module._refresh)
 		end
@@ -317,7 +314,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Draw
 
 --[[
-	Draws the selected crate: the tabs shown (only the tutorial crate while it waits), the crate's picture, the balance
+	Draws the selected crate: the tabs shown, the crate's picture, the balance
 	chips and buy button rows of the currencies it takes, their prices, and the odds.
 ]]
 function Module._draw()
@@ -330,7 +327,7 @@ function Module._draw()
 
 	--[[ Selection ]]
 
-	-- A hidden tab (the tutorial crate opened, diamonds restricted) gives way to the first one shown
+	-- A hidden tab (diamonds restricted) gives way to the first one shown
 	if not Module._isShown(selected) then
 		local first: number = math.huge
 		for crateId: string, tab: ImageButton in pairs(tabs) do
@@ -378,11 +375,10 @@ function Module._draw()
 
 	--[[ Buy Buttons ]]
 
-	-- A row per currency the crate takes; a hidden crate (the tutorial's) opens only one at a time; VIP's free crate is the first row's x1
+	-- A row per currency the crate takes; VIP's free crate is the first row's x1
 	for _index: number, currency: string in ipairs(currencies) do
 		for count: number, button: ImageButton in pairs(buyButtons[currency]) do
 			local freeOne: boolean = free and count == 1 and currency == _settings.PAY_CURRENCIES[1]
-			button.Visible = not row.Hidden or count == 1
 			button:FindFirstChild("S_Price", true).Text = if freeOne then _settings.PRICE_FREE else I.Format.Text(I.G_Crates.GetPrice(selected, currency, count))
 			button:FindFirstChild("S_Icon", true).Visible = not freeOne
 		end
@@ -399,14 +395,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Badge
 
 --[[
-	Shows the badge on the lobby menu's Weapons button: BADGE_FREE while a free crate waits (the tutorial's, or VIP's
-	daily one), else how many of the cheapest coin crate the player's coins open (BADGE_MAX+ past BADGE_MAX), hidden at
+	Shows the badge on the lobby menu's Weapons button: BADGE_FREE while VIP's free daily crate
+	waits, else how many of the cheapest coin crate the player's coins open (BADGE_MAX+ past BADGE_MAX), hidden at
 	none.
 ]]
 function Module._refreshBadge()
 	--[[ Local Variables ]]
 
-	local free: boolean = Module._isTutorialReady() or Module._isFree(_settings.VIP_CRATE)
+	local free: boolean = Module._isFree(_settings.VIP_CRATE)
 	local price: string? = Module._getCheapestCoinPrice()
 	local count = if price then I.BN.DivideWithPrecision(I.Currency.Get("Coins") or "0", price) else I.BN.new(0) --- @type BigNum_Instance
 	local max = I.BN.new(_settings.BADGE_MAX) --- @type BigNum_Instance
@@ -455,7 +451,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Cheapest Coin Price
 
 --[[
-	Returns the lowest price of one crate in coins, among the crates the tabs show (not the hidden tutorial crate).
+	Returns the lowest price of one crate in coins, among the crates the tabs show (not hidden ones).
 ]]
 --- @return string?
 function Module._getCheapestCoinPrice()
@@ -481,8 +477,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Shown
 
 --[[
-	Returns whether a crate's tab shows: only the tutorial crate while it waits, else every crate on the panel that
-	can be paid in some currency now.
+	Returns whether a crate's tab shows: every crate on the panel that isn't hidden and can be paid in some currency
+	now.
 ]]
 --- @return boolean
 function Module._isShown(crateId: string)
@@ -495,7 +491,7 @@ function Module._isShown(crateId: string)
 
 	--[[ Returning ]]
 
-	return if Module._isTutorialReady() then crateId == _settings.TUTORIAL_CRATE else not row.Hidden and #Module._getCurrencies(crateId) > 0
+	return not row.Hidden and #Module._getCurrencies(crateId) > 0
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Free
@@ -506,16 +502,6 @@ end
 --- @return boolean
 function Module._isFree(crateId: string)
 	return crateId == _settings.VIP_CRATE and shopRep ~= nil and shopRep:GetAttribute("VipCrateReady") == true
-end
-
---%%%%%%%%%%%%%%%%%%%% Is Tutorial Ready
-
---[[
-	Returns whether the tutorial crate waits for the player.
-]]
---- @return boolean
-function Module._isTutorialReady()
-	return tutorialRep ~= nil and tutorialRep:GetAttribute("CrateReady") == true
 end
 
 return Module

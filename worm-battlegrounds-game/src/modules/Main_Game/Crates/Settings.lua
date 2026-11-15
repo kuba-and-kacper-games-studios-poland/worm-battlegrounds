@@ -19,9 +19,6 @@ local _settings = {
 	-- The crate VIP players open free once a day
 	VIP_CRATE = "Skin",
 
-	-- The crate the tutorial gives, once
-	TUTORIAL_CRATE = "Tutorial",
-
 	--%%%%%%%%%%%%%%%%%%%% Intro
 
 	-- Seconds the shop takes to make way for the crates
@@ -117,7 +114,7 @@ local _settings = {
 	--%%%%%%%%%%%%%%%%%%%% Reels
 
 	--[[
-		How long the reels roll, by how many there are (the tutorial's fixed crate gives two): the first reel's
+		How long the reels roll, by how many there are (a fixed crate gives as many as it holds): the first reel's
 		seconds and how much later each next one stops (the rarest result stops last); QUICK_* while Quick open is on
 	]]
 	--- @type { [number]: number }

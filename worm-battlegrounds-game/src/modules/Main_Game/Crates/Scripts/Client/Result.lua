@@ -30,6 +30,9 @@ local homeDisk: UDim2 = UDim2.new()
 -- The big card's place (the result's S_CardSlot), and the seconds before its words come in, by entrance
 local CARD_HOME: UDim2 = UDim2.fromScale(0.5, 0.39)
 
+-- The big card's share of S_CardSlot: the slot's CanvasGroup clips, so the margin leaves room for the NEW tag
+local CARD_SHARE: number = 1 / 1.2
+
 --- @type { [string]: number }
 local TEXT_DELAYS = { Fly = 0.42, Pop = 0.6, Squash = 0.7, Ghost = 1.1, Float = 1.3 }
 
@@ -101,7 +104,9 @@ function Module.ShowBig(result, entrance: string, from: Frame?, mood: string?)
 			child:Destroy()
 		end
 	end
-	local card: Frame = Reel.MakeCard(slot, result.ItemId, false, false, UDim2.fromScale(1, 1))
+	local card: Frame = Reel.MakeCard(slot, result.ItemId, false, false, UDim2.fromScale(CARD_SHARE, CARD_SHARE))
+	card.AnchorPoint = Vector2.new(0.5, 0.5)
+	card.Position = UDim2.fromScale(0.5, 0.5)
 	card:FindFirstChild("S_New", true).Visible = result.Copies == 1
 	single.Visible = true
 
@@ -142,7 +147,7 @@ function Module.ShowBig(result, entrance: string, from: Frame?, mood: string?)
 		local slotCentre: Vector2 = slot.AbsolutePosition + slot.AbsoluteSize / 2
 		local fromCentre: Vector2 = from.AbsolutePosition + from.AbsoluteSize / 2
 		slot.Position = CARD_HOME + UDim2.fromOffset(fromCentre.X - slotCentre.X, fromCentre.Y - slotCentre.Y)
-		scale.Scale = from.AbsoluteSize.X / math.max(1, slot.AbsoluteSize.X)
+		scale.Scale = from.AbsoluteSize.X / math.max(1, slot.AbsoluteSize.X * CARD_SHARE)
 		local Fly_TweenGoal = { Position = CARD_HOME }
 		local Fly_Tween: Tween = I.S.TweenService:Create(slot, Enter_TweenInfo, Fly_TweenGoal)
 		Fly_Tween:Play()

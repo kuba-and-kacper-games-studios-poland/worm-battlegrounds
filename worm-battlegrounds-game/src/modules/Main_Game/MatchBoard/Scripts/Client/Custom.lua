@@ -22,7 +22,7 @@ local boardFolder: Folder
 
 --[[ Choices ]]
 
-local pickedMap: string = _settings.MAP_POOL[1]
+local pickedMap: string = _settings.CUSTOM_MAP_POOL[1]
 local pickedMode: string = "Deathmatch"
 local pickedSize: number = 4
 local pickedDifficulty: string = "None"
@@ -67,13 +67,13 @@ function Module.Start()
 
 	--[[ Maps ]]
 
-	for index: number, mapId: string in ipairs(_settings.MAP_POOL) do
+	for index: number, mapId: string in ipairs(_settings.CUSTOM_MAP_POOL) do
 		local choice: ImageButton = prefabs["MapChoice"]:Clone()
 		local mapRow = _settings.MAPS[mapId] --- @type MatchBoard_MapRow
 		choice.Name = mapId
 		choice.LayoutOrder = index
 		choice.Visible = true
-		choice:FindFirstChild("S_Icon", true).Image = mapRow.Thumbnail
+		choice:FindFirstChild("S_Icon", true).Image = mapRow.TileThumbnail
 		choice:FindFirstChild("S_Name", true).Text = mapRow.Name
 		choice:FindFirstChild("S_Info", true).Text = `{table.concat(mapRow.Sizes, " / ")} players`
 		choice.Parent = elems["Maps"]
@@ -160,7 +160,7 @@ end
 function Module._refreshChoices()
 	--[[ Applying ]]
 
-	for _index: number, mapId: string in ipairs(_settings.MAP_POOL) do
+	for _index: number, mapId: string in ipairs(_settings.CUSTOM_MAP_POOL) do
 		Module._setPicked(elems["Maps"]:FindFirstChild(mapId), mapId == pickedMap)
 	end
 	for _index: number, mode: string in ipairs({ "Deathmatch", "Teams" }) do

@@ -5,11 +5,12 @@ local _settings = {
 
 	--[[
 		Each point of wind pushes wind-affected shots WIND_ACCEL studs per second squared along X, plus WIND_ACCEL_GROWTH
-		for every point of the wind's strength, so strong wind sweeps a steep shot back the other way (at 6, any shot
-		steeper than about 64°; at 10, steeper than about 42°) while light wind stays gentle
+		for every point of the wind's strength, so strong wind sweeps a steep shot back the other way (at 12, any shot
+		steeper than about 64°; at 20, steeper than about 42°) while light wind stays gentle. Halved and quartered when
+		the wind's scale doubled to ±20 (2026-11-15), so 20 pushes as 10 did
 	]]
-	WIND_ACCEL = 7,
-	WIND_ACCEL_GROWTH = 1.5,
+	WIND_ACCEL = 3.5,
+	WIND_ACCEL_GROWTH = 0.375,
 
 	-- How far in front of the snail's ball a shot starts, in studs
 	MUZZLE_GAP = 0.8,
@@ -67,9 +68,10 @@ local _settings = {
 	REST_NORMAL_Y = 0.9,
 
 	--[[
-		A shot flies on through water or lava, slowed: it keeps SINK_ENTRY_KEEP of its speed as it splashes in, then
-		gravity pulls it at SINK_GRAVITY of its strength and it keeps SINK_KEEP of its speed each second of its flight
-		while under; it bursts on what it touches there, and it's gone after SINK_SECONDS (real seconds) under without one
+		A shot flies on through a pond of water or lava, slowed: it keeps SINK_ENTRY_KEEP of its speed as it splashes in,
+		then gravity pulls it at SINK_GRAVITY of its strength and it keeps SINK_KEEP of its speed each second of its flight
+		while under; it bursts on what it touches there, and it's gone after SINK_SECONDS (real seconds) under without one.
+		The open sea takes a shot at once
 	]]
 	SINK_ENTRY_KEEP = 0.5,
 	SINK_GRAVITY = 0.3,

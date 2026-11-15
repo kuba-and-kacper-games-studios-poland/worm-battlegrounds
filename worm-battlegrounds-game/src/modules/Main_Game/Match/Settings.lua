@@ -3,11 +3,29 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Phases
 
-	-- How long the match waits for every player in its roster before it starts without them, in seconds
+	--[[
+		How long a solo, party, custom or tutorial match waits for every player in its roster before it starts, in
+		seconds; a bot plays for anyone who isn't there yet until they arrive
+	]]
 	WAIT_FOR_PLAYERS = 20,
 
-	-- How long players have to pick where their snail lands, and the most the landing may take, in seconds
-	DROP_SECONDS = 10,
+	--[[
+		A public match's waiting room: it takes joins from every lobby server for WAITING_SECONDS, or until every
+		player in it pressed Ready, then starts with bots in the empty seats. It reads the seats lobbies claimed every
+		ROOM_REFRESH_SECONDS, and sends a player who arrived with no seat back after STRANGER_SECONDS
+	]]
+	WAITING_SECONDS = 15,
+	ROOM_REFRESH_SECONDS = 2,
+	STRANGER_SECONDS = 6,
+
+	-- The waiting room's gui, at the bottom middle
+	WAITING_GUI_NAME = "MatchWaiting",
+
+	--[[
+		How long players have to pick where their snail lands, always the whole time so they can move their spot (the
+		owner, 2026-11-15; the tutorial ends once its player placed), and the most the landing may take, in seconds
+	]]
+	DROP_SECONDS = 15,
 	MAX_LANDING = 12,
 
 	-- How fast the left stick moves the drop spot at full lean, in studs per second
@@ -29,13 +47,25 @@ local _settings = {
 		The tutorial's drop: the player and the bot start on land about TUTORIAL_GAP studs apart near the map's middle
 		(chosen from TUTORIAL_SPOT_COUNT land spots), lit TUTORIAL_DROP_HEIGHT studs over it, the player has
 		TUTORIAL_DROP_SECONDS to place theirs, and any press within TUTORIAL_PICK_RADIUS studs of the lit spot counts
-		(the spotlight's hole is at least HOLE_MIN pixels, wider than a few studs when the camera is far out)
+		(the guide's ring is at least HOLE_MIN pixels, wider than a few studs when the camera is far out)
 	]]
 	TUTORIAL_GAP = 30,
 	TUTORIAL_SPOT_COUNT = 16,
 	TUTORIAL_DROP_HEIGHT = 8,
 	TUTORIAL_DROP_SECONDS = 40,
 	TUTORIAL_PICK_RADIUS = 10,
+
+	--[[
+		The tutorial's wind, one for each WIND_ROUNDS rounds, before the usual rolls (the testers, 2026-11-15: "after 2
+		rounds change the wind and showcase how extreme wind can sway shot"): calm while the player learns to shoot and
+		throw, then a strong wind against them (they start left of the bot)
+	]]
+	--- @type { number }
+	TUTORIAL_WINDS = { 0, -16 },
+
+	-- What the player takes into the tutorial match beside the Bazooka, whatever their loadout: the Grenade it teaches
+	--- @type { string }
+	TUTORIAL_LOADOUT = { "Grenade" },
 
 	--%%%%%%%%%%%%%%%%%%%% Turns
 
@@ -64,15 +94,20 @@ local _settings = {
 	UNDERWATER_DAMAGE = 5,
 	UNDERWATER_HEAD_HEIGHT = 1.6,
 
-	-- The wind is a whole number from -WIND_MAX to WIND_MAX, rolled again every turn, never the same twice in a row
-	WIND_MAX = 10,
+	--[[
+		The wind is a whole number from -WIND_MAX to WIND_MAX, rolled again at the start of every WIND_ROUNDS-th round
+		(so every snail plays that many turns on it), never the same twice in a row
+	]]
+	WIND_MAX = 20,
+	WIND_ROUNDS = 2,
 
 	--[[
-		How often each strength of wind is rolled (the owner, 2026-11-15: strong wind is rare, -10 or +10 about 1% of
-		rolls): the weight of 0, 1, 2… up to WIND_MAX, out of their sum; a strength above 0 blows either way at even odds
+		How often each strength of wind is rolled (the owner, 2026-11-15: mostly -5 to 5, about 65% of rolls; -20 or
+		+20 about 0.3%): the weight of 0, 1, 2… up to WIND_MAX, out of their sum (100); a strength above 0 blows either
+		way at even odds
 	]]
 	--- @type { number }
-	WIND_WEIGHTS = { 16, 16, 15, 13, 11, 9, 7, 5.5, 4, 2.5, 1 },
+	WIND_WEIGHTS = { 12, 12, 11, 11, 10, 9, 6, 5, 4.5, 4, 3.5, 2.5, 2, 1.7, 1.4, 1.2, 1, 0.8, 0.6, 0.5, 0.3 },
 
 	-- Sudden death starts at SUDDEN_DEATH_ROUND (after 10 rounds): the liquid rises SUDDEN_DEATH_RISE half-stud rows every turn
 	SUDDEN_DEATH_ROUND = 11,

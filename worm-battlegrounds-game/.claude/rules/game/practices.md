@@ -35,12 +35,19 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   falls fades out. **Props stand behind the snails** (the testers and the owner, 2026-11-13: snails hid inside trees
   and rocks): at load each moves back until its front is half a snail's length behind the plane, its pivot still on
   the ground, and one too deep for that is flattened along Z, which the camera along −Z barely sees (Arena's
-  `PROP_BEHIND_GAP`).
+  `PROP_BEHIND_GAP`). **A prop a snail stands inside turns see-through** (the owner, 2026-11-15: "the prop gets
+  transparent when snail is inside of it"): each client fades it while any snail is within its box on the plane
+  (Arena's `PropSeeThrough`, `PROP_SEE_THROUGH`), never on the server.
+- **Backdrops only where they make sense** (the owner, 2026-11-15: "only for caves, water etc."): a cave's back wall,
+  or a block behind a pond so its water looks held (MapLab's `backdrop.only`); no distant hills or mesas behind open
+  land. Mirage Mesa, Lakeside Showdown and Training Meadow lost theirs that day.
 - **Maps are made in MapLab** (the game home's map kit, `assets/_tools/map-kit/`): the land drawn on the 1-stud grid
   and built into parts, props part-built, checked, then exported into the arena templates after the owner approves.
   A map the studio or the owner builds in Studio is imported into MapLab (Rolling Plains, Echo Caverns and the redone
   Rockslide Ridge, 2026-11-14): its front view rasterized onto the grid (`Kit.raster`), its hand-built props kept part
-  for part (`Kit.dumpProps`). **Every map's land has depth** (the owner, 2026-11-14: "so the maps gets depth but stays
+  for part (`Kit.dumpProps`). A finished MapLab build made outside this place goes in as it was built (the owner's
+  pick, 2026-11-15: Desert, Volcano Isle, Echo Caverns, Picnic Plains and Rolling Plains from `Workspace.New`), with
+  small fixes only: its stud parts SmoothPlastic, its props never collidable and standing on their ground. **Every map's land has depth** (the owner, 2026-11-14: "so the maps gets depth but stays
   relatively the same"): its front is cut into rows of slabs that jut toward the camera by a few levels, at most 1.5
   studs (MapLab's `jut`), less on grassy and sandy maps, more on rocky ones; the play plane doesn't move.
 - **Maps are authored in `Workspace.Ume.ServerStorage_Assets/Arenas/<MapId>`** (Terrain, Decor, Markers), standing in
@@ -71,7 +78,7 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   from the grid's sides and floor only). Since 2026-11-13 (the owner: "if the hole is big enough it insta kills you,
   but if there's a smaller hole the water is good"), only where it's open: the surface over the snail is at least
   `SEA_MIN_WIDTH` (16) studs across, or the snail is under the land's floor (a hole cut through the land drops it into
-  the sea below). A pond on its own (Desert's oasis, Lakeside's lake), a puddle, or a crater up to a Grenade's that
+  the sea below). A pond on its own (Mirage Mesa's oasis, Lakeside's lake), a puddle, or a crater up to a Grenade's that
   the sea seeps into is safe to fall in; a Dynamite or Black hole crater it floods is the sea. **Past the map's sides
   everything falls into the sea** (the owner, 2026-11-15: "do not disappear but fell into the water normally"): a
   snail or shot beside the play area flies on and goes out only once it falls to the sea's level, where the sea is
@@ -87,7 +94,10 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   `Obsidian`). It's the one terrain built in code, merged from the liquid's half-stud cells, an exception to "Terrain
   is authored parts". **Shots fly on through any liquid, ponds too, slowed** (the owner's pick, 2026-11-10: "projectiles move
 through water but slower"): water and lava never set a shot off; it bursts on what it touches under them, or by its
-fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
+fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid. **The open sea takes a shot at once** (the
+owner, 2026-11-15: "make the turn end when the projectiles hit the outer water that instakills you"): wherever Arena's
+`GetHazard` would knock a snail out, a shot is gone without a blast as it splashes in (Combat's `Projectiles.IsGone`,
+mirrored in the bots' `Predict`); ponds still only slow it.
 
 ## Snails
 
@@ -242,14 +252,15 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   drawn `PROJECTILE_DRAW_SCALE` (2) times their size, hits unchanged.
 - **Every thrown shot flies like the rocket** (the testers, 2026-11-13: "same physic weight as rocket"): every Arc and
   Target weapon launches at the Bazooka's speeds (`MinSpeed` 20 to `MaxSpeed` 180, up from 150 for more power) and
-  feels the wind (the spider bomb's throw and bomblets too, the owner, 2026-11-13), which pushes `WIND_ACCEL` (7) studs/s² per point, and each point harder the stronger the wind
+  feels the wind (the spider bomb's throw and bomblets too, the owner, 2026-11-13), which pushes `WIND_ACCEL` (3.5) studs/s² per point, and each point harder the stronger the wind
   (`WIND_ACCEL_GROWTH`, the owner, 2026-11-13: "on wind 6… the projectile will get swept by the wind in another
   direction"): a shot into the wind lands visibly short, and in strong wind a steep shot is blown back over the
-  shooter's head (at 6, steeper than about 64°). The
-  wind changes every turn (the owner, 2026-11-15: "the wind power changes every turn", replacing the testers' wind
-  for a whole round of 2026-11-13): Match rolls a new one as each turn starts, never the one before, strong wind
-  rarely (`WIND_WEIGHTS`, the owner, 2026-11-15: ±10 about 1% of rolls), and a change
-  gusts across the screen (Atmosphere's `WIND_CHANGE_BURST`) and flashes the HUD's number.
+  shooter's head (at 12, steeper than about 64°). **The wind runs from −20 to 20** (Match's `WIND_MAX`, the owner,
+  2026-11-15: "10 becomes 20 and the strength is more spread out"): 20 pushes as 10 did before, so the two settings
+  were halved and quartered. **Each wind blows for two rounds** (`WIND_ROUNDS`, the owner, 2026-11-15: "make the wind
+  last for 2 turns for everyone"): Match rolls a new one on the first turn of every second round, never the one
+  before, mostly −5 to 5 and strong wind rarely (`WIND_WEIGHTS`: about 65% of rolls within ±5, ±20 about 0.3%), and a
+  change gusts across the screen (Atmosphere's `WIND_CHANGE_BURST`) and flashes the HUD's number.
 - **Teammates are never hurt by each other** (the testers, 2026-11-13): Combat's `Blast.Hit` skips a snail on the
   shooter's team (not the shooter: your own blows always hurt you), and an open black hole doesn't pull them.
 - **The black hole grenade is thrown, and opens on a second press** (the testers, 2026-11-13): it opens on the first
@@ -280,14 +291,21 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   stamina (Bots' `Move`), never step into the sea or down a drop that hurts, walk to a spot their shot lands from,
   close in to swing or place Dynamite and run, and heal when hurt. Their snails stay server-owned. A bot never passes
   a turn (2026-11-10): when its brain finds no plan it still fires the Bazooka toward the nearest enemy (Bots'
-  `_fireAnyway`). The tutorial bot is the one exception (below).
-- **The tutorial is a guided first match, then the crate** (the testers, 2026-11-13): a new player's first join sends
-  them to a 1v1 against a bot that can't shoot (it raises the Bazooka, gives up and passes) and starts with 10 health
-  (Bots' `HEALTH`), so any hit wins. The player plays first (Match keeps the roster's order) and starts about 30 studs
-  from it near the map's middle (Match's `TUTORIAL_*`): the drop lights where to land, 8 studs over the land, and any press on the lit spot counts (2026-11-15: presses near its edge did nothing).
-  The results show Rematch grey and dead, so the player goes back by hand; in the lobby the guide leads to the free
-  crate, then to putting its two weapons in the loadout. Its map is Training Meadow, a small island made for it
-  (MapLab, exported 2026-11-13), in no rotation.
+  `_fireAnyway`).
+- **The tutorial is a whole first match against a bot, then the loadout** (the testers, 2026-11-15: "make a full
+  fledge game vs a bot with turns", "remove box opening part from tutorial", replacing 2026-11-13's bot that couldn't
+  shoot and the free crate): a new player's first join sends them to a 1v1 against a bot that plays and shoots back,
+  clumsily (Bots' `TUTORIAL_BRAIN`, `SKILLS.Tutorial`), with half a snail's health (Bots' `HEALTH`), and nothing
+  steers the player's shots. The player plays first (Match keeps the roster's order), with the Bazooka and a Grenade
+  whatever their loadout (Match's `TUTORIAL_LOADOUT`), and starts about 30 studs from it near the map's middle
+  (Match's `TUTORIAL_*`): the drop lights where to land, 8 studs over the land, and any press on the lit spot counts
+  (2026-11-15: presses near its edge did nothing). Each of their first turns teaches one thing: shooting the bot,
+  picking and throwing the Grenade, then strong wind against the shot (Match's `TUTORIAL_WINDS`: calm for two rounds,
+  then −16, "show the player he needs to add way more power"); a line shows where their arced shot will fly, moving
+  with the power held (MatchHud's `PREDICTION_*`, the tutorial only). The results show Rematch grey and dead, so the
+  player goes back by hand; the match gives the Grenade and the Shotgun, and in the lobby the guide leads to putting
+  them in the loadout. Its map is Training Meadow, a small island made for it (MapLab, exported 2026-11-13), in no
+  rotation.
 - **A dropped player's snail plays on under a bot** (2026-11-10): it's never knocked out for being away. A bot plays
   its turns with the player's loadout (Match's `Autopilot`, Bots' `TAKEOVER_DIFFICULTY`), taking over mid-turn too,
   and the player, back from the lobby's rejoin offer, plays from their snail's next turn as the bot left it. Only the
@@ -334,7 +352,7 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   mine that never goes off), and 20 s of settling always does (`MAX_SETTLE`). A new hazard (mines, fire) keeps the
   turn waiting by hurting or moving snails, or by joining the calm check in Match's `Turns._settle`.
 - **Ponds hurt like Worms' poison** (the owner, 2026-11-12): at the end of every turn, whoever's it was, each snail
-  with its head under a liquid that doesn't knock it out (Desert's oasis) loses 5 health (Match's `UNDERWATER_DAMAGE`,
+  with its head under a liquid that doesn't knock it out (Mirage Mesa's oasis) loses 5 health (Match's `UNDERWATER_DAMAGE`,
   the head's top `UNDERWATER_HEAD_HEIGHT` over the ball), never going below 1: a pond weakens a snail, and something
   else has to finish it. Only its body under, its head above the surface, does nothing.
 - **Getting hurt doesn't end your turn** (the owner, 2026-11-15, replacing 2026-11-12's Worms rule): a turn ends only
@@ -390,7 +408,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   `EmoteShop`, the gui maker's) converted node for node into
   `Primitive` nodes (their pictures, fonts and screen-fraction layout), with U_/S_ Ids, prefabs for lists, button tags
   and WidgetManager's widget shape added. Since 2026-11-12 the studio's `New_Guis` designs are ported the same way:
-  `PlaySolo` and `MatchWaiting` (MatchBoard's setup, at the bottom centre, and waiting room, beside Party), `KnockedOut`
+  `PlaySolo` (MatchBoard's setup, at the bottom centre) and `MatchWaiting` (its own gui since 2026-11-15, the public
+  match's waiting room at the bottom middle of the match server's screen), `KnockedOut`
   (MatchHud's `U_KnockedOut`), `MatchOver` (`Results`), `InvitePlayers` (`PartyInvite`), `CustomLobby` and
   `CustomLobbyPlayers` (`CustomLobby`'s two steps), `Shop`, and `Loading` (`TeleportGui`); the HUD's power and
   stamina bars are the studio's `PowerSlider` (the same pictures, the bar `Fit`, its mask cut with it). They override
@@ -409,11 +428,11 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   made for a small card is never stretched into a big panel: its outline and corners grow with it. The confirmation
   (`WidgetManager_Confirmation`, the game's copy of System's) is the pattern; the party invite popup (`PartyInvited`)
   follows it since 2026-11-13 (the owner: "it's using the old ui version").
-- **The tutorial points with a spotlight** (the testers, 2026-11-13: "the screen is blacked out around where you
-  need to click and like a lighter square with rounded corners"): the `TutorialHint` gui darkens everything but a
-  rounded hole over what to press next (a gui button, the bot, the spot to land on), blocks presses outside it, and
-  shows the step's hint in the confirmation dialog's dark panel beside it, worded for the player's device (Tutorial's
-  `HINTS`, `TOUCH_HINTS`, `PAD_HINTS`). A new step of the tutorial is a target and a hint, never an arrow of its own.
+- **The tutorial points with a red arrow, never a blackout** (the testers, 2026-11-15: "no blackout just red arrow",
+  replacing 2026-11-13's spotlight): the `TutorialHint` gui rings what to press next (a gui button, the bot, the spot
+  to land on, the wind) with a pulsing gold square, a red arrow bobbing toward it, and the step's hint in the
+  confirmation dialog's dark panel beside them, worded for the player's device (Tutorial's `HINTS`, `TOUCH_HINTS`,
+  `PAD_HINTS`); nothing else is darkened or blocked. A new step of the tutorial is a target and a hint.
 - **Turns are announced, and the end of a turn tightens** (the owner's pick, 2026-11-10): as a turn starts a dark
   banner opens across the screen with the snail's avatar (its headshot, or the bot picture) and whose turn it is
   (MatchHud's `U_TurnCallout`, the owner: "make it look professional"): "Your turn!" in gold over orange lines for the
@@ -512,6 +531,14 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   game (10774518479: lobby 83410278033601, Arena 118265066788984) and the dev copy (10776882453: [DEV] Snail Lobby
   82550122321970, [DEV] Snail Arena 75433175788458). A file in neither plays as the main game. Each experience has its
   own DataStores; products and passes, and group pictures with restricted permissions, are the main game's.
+- **Live servers keep the players' saves; Studio has its own stores** (the owner, 2026-11-15: "so no-one will lose
+  their data"): ume's `IsProductionReady` is on (`core/game_instance/Start/configs/general.lua`), and outside Studio,
+  in both experiences, the start task renames the store names to `UmeTesting_-1` (`tasks/config.lua`, ume's
+  `Production` changed by the game), the name every player's save has been under since the game went live: profiles
+  `PlayerProfile_<userId>_<namespace>_UmeTesting_-1` in the `PlayerProfiles` DataStore, leaderboards ending in
+  `_UmeTesting_-1`. Studio uses the place loader's `UmeTesting_-2` (`configs/place_loader.lua`), so tests never touch
+  live saves. Never point live servers at a new store name: every player would start over. Framework files changed by
+  the game: set all three again whenever a newer ume replaces `core/`.
 - **Every teleport between the places shows the card:** the server names the destination
   (`I.Transition.SetDestination`) right before a teleport, the `TeleportGui` card slides over the screen and Roblox
   carries it through the teleport; the next server's ReplicatedFirst script (`src/replicated_first/`, the code
@@ -523,10 +550,13 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   teleport's data there, since a Studio test gives reserved servers no id (ume's place loader reads it only in
   Studio); `"Match"` tests the match map alone. On the Studio map the lobby hands each match to `I.Match.Host`, and
   the `InMatch` Player attribute says which half a player is in: every screen, camera and hint that belongs to one
-  half follows it instead of assuming its map. Studio saves nothing, so a playtest skips the whole tutorial (its match,
-  the crate and the loadout steps) and opens on the lobby; the Workspace attribute `StudioTutorial` (true) plays it. A custom lobby picks its bots (Off to
+  half follows it instead of assuming its map. Studio saves nothing, so a playtest skips the whole tutorial (its match
+  and the loadout steps) and opens on the lobby; the Workspace attribute `StudioTutorial` (true) plays it. A custom lobby picks its bots (Off to
   Nightmare) and its owner may start it alone with bots; without bots it needs 2 or more players, and Start alone
   shows "You can't start a custom lobby by yourself", a WidgetManager message (the owner, 2026-11-13).
+- **Only the rotation's maps play outside custom lobbies** (the owner, 2026-11-15): new public matches, Solo and Party pick
+  from MatchBoard's `MAP_POOL` by each map's `Sizes`; the other built maps stay in the game for custom lobbies only
+  (`CUSTOM_MAP_POOL`). Taking a map out of rotation never removes it.
 - **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
@@ -534,6 +564,9 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
 - **Item ids are saved, so a renamed item keeps its id:** the Baseball bat became the Golf club on 2026-11-12 (its
   name, model, icon), and its id stays `BaseballBat` in the Inventory and Arsenal rows, so saved inventories and
   loadouts still find it.
+- **The game never asks players to favourite it** (the owner, 2026-11-15: "remove the favorite pop-up showing in the
+  game entirely, even after purchase"): the template's Favorite_Controller is off on every map (the place loader's
+  `ALWAYS_OFF`).
 - **Developer products and game passes are real** since 2026-11-13: the owner had them created on the Creator Hub,
   and their ids are in `src/global_data/Marketplace/`. Robux prices live only on the Creator Hub (Managed pricing off).
 - **Placeholders until the owner provides the real thing:** weapon
@@ -600,21 +633,34 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   CUSTOM; no logo and no welcome line. **The Loadout is a column two cards wide** hanging from the right edge under
   the menu, its LOADOUT and EMOTES headings right-aligned, EMOTES right under the last row of cards shown, and
   **EMOTES is one button with Wave's icon** that opens the EMOTES panel
-  (`EmoteShop`, its right edge on the column's), where an owned emote plays when pressed (the owner, 2026-11-15). The solo or party setup and the waiting room take the board's place, whose lobby
-  rows and buttons slide down off the screen for them and back after (MatchBoard's `PLAY_*` settings, the owner's
-  pick, 2026-11-12): the setup at the bottom centre (the owner's pick, 2026-11-12), the waiting room hanging from the
-  bottom left beside Party; custom
-  lobbies open in a window. Crates and Skins are full-screen widgets: while either is open the lobby's guis hide
+  (`EmoteShop`, its right edge on the column's), where an owned emote plays when pressed (the owner, 2026-11-15). **A lobby card is minimal** (the owner, 2026-11-15: "hide how many players are
+  playing, and make the image much much bigger, in the background fading out to the right, but keep it readable"):
+  the map's picture over the whole card (cut to its slanted frame), fading out before Join, the mode big and the map's name over it, no player
+  count or timer. The solo or party setup takes the board's place, whose lobby rows and buttons slide down off the
+  screen for it and back after (MatchBoard's `PLAY_*` settings, the owner's pick, 2026-11-12), at the bottom centre
+  (the owner's pick, 2026-11-12); custom lobbies open in a window. Crates and Skins are full-screen widgets: while either is open the lobby's guis hide
   (Lobby's `FULL_SCREEN_WIDGETS` and `LOBBY_GUIS`).
-- **Matchmaking fills with bots:** every public mode has a row on the board at all times, and its timer always runs
-  (the owner's pick, 2026-11-09, so the lobby looks active): at 0 the match starts with whoever joined, bots in every
-  empty seat (one player can play Trios), and a fresh row on another map takes its place, joined or not. A party can
-  also play alone (friends only): with bots it pays like a public match, without bots half (MatchRewards'
-  `PARTY_NO_BOTS_SHARE`).
+- **Public matches are global** (the owner, 2026-11-15, replacing the per-server rows and timers of 2026-11-09):
+  each public mode has one card, and Join sends the player and their party here straight to a match server: the
+  fullest open match of that mode on any server with a seat for each of them, on one team where it fits, or a new one
+  (a party of 4 in Duo gets a 2v2 of its own). The open matches live in MemoryStore (the Matchmaking module), and
+  **no match may ever hold more players than its size**: every seat is claimed in one `UpdateAsync`, which checks the
+  room and takes the seats in the same step, and the match server closes its entry the same way, so the roster it
+  closes with is final; it also sends back anyone who arrives without a seat. Never write a match's seats with
+  `SetAsync` or from a value read earlier. **The waiting room is on the match server** (Match's `WaitingRoom`, the
+  `MatchWaiting` gui at the bottom middle): 15 seconds for others to join, or until everyone there pressed Ready, then
+  bots fill every empty seat (one player can play Trios). A party can also play alone (friends only): with bots it
+  pays like a public match, without bots half (MatchRewards' `PARTY_NO_BOTS_SHARE`).
+- **Every match starts with all its snails** (the owner, 2026-11-15: "if someone hasn't loaded yet because of a bad
+  device, bot will play for him"): a seated player who hasn't arrived or loaded is seated from the card their lobby
+  made (Matchmaking's `GetCard`: name, loadout, outfit), and a bot plays their snail, as for a dropped player, until
+  their data has loaded; they're never out for arriving late.
+- **The drop always runs its whole 15 seconds** (the owner, 2026-11-15, Match's `DROP_SECONDS`): placing doesn't end
+  it, so players can move their spot until the time is up. Only the tutorial's ends once its player placed.
 - **A party's leader picks the match** (2026-11-10): members see Join, Solo vs bots and Custom greyed out (MatchBoard's
   `LOCKED_*`), and the server refuses their joins and lobbies. A custom lobby the leader makes takes the whole party
-  in at once, and a party shares a team where it fits; a party bigger than a public row's team (three in Duos) joins
-  it all the same, if the row has a seat for each, and spills onto the next team with room (the testers, 2026-11-13).
+  in at once, and a party shares a team where it fits; a party bigger than a public match's team (three in Duos) joins
+  it all the same, if the match has a seat for each, and spills onto the next team with room (the testers, 2026-11-13).
 - **Check guis shown together for overlaps** before calling a layout done: PC sizes from 1024 × 768 to 3840 × 2160,
   tablets, and phones down to 667 × 375.
 

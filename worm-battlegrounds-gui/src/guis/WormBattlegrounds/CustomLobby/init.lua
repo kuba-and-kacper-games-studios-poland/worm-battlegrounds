@@ -3189,6 +3189,38 @@ local _gui = {
 							},
 							Attributes = { _ImageName = "1210_306__CustomLobby__Main_gray" },
 						},
+						--[[
+							The map's picture over the tile's whole fill (Main), under its outline, fading out toward the bottom
+							behind the name (the owner, 2026-11-15): its own picture, cut to the tile's slanted shape
+						]]
+						{
+							Primitive = "ImageLabel",
+							Id = "S_Icon",
+							Props = {
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 1,
+								Position = UDim2.fromScale(0.0205, 0.0455),
+								Size = UDim2.fromScale(0.9589, 0.9091),
+								ZIndex = 2,
+								Image = "rbxassetid://93595977062782",
+								ScaleType = Enum.ScaleType.Stretch,
+							},
+							Attributes = { _ImageName = "1210_310__CustomLobby__MapIcon_image" },
+							Children = {
+								{
+									Primitive = "UIGradient",
+									Props = {
+										Rotation = 90,
+										Transparency = NumberSequence.new({
+											NumberSequenceKeypoint.new(0, 0),
+											NumberSequenceKeypoint.new(0.4, 0),
+											NumberSequenceKeypoint.new(1, 1),
+										}),
+									},
+								},
+							},
+						},
 						{
 							Primitive = "ImageLabel",
 							Props = {
@@ -3198,7 +3230,7 @@ local _gui = {
 								ClipsDescendants = true,
 								LayoutOrder = 1,
 								Size = UDim2.fromScale(1, 1),
-								ZIndex = 2,
+								ZIndex = 3,
 								Image = "rbxassetid://72328052384144",
 								ImageColor3 = Color3.fromRGB(25, 25, 35),
 								ScaleType = Enum.ScaleType.Fit,
@@ -3215,30 +3247,13 @@ local _gui = {
 								LayoutOrder = 2,
 								Position = UDim2.fromScale(0.0094, 0.0152),
 								Size = UDim2.fromScale(0.9811, 0.9697),
-								ZIndex = 3,
+								ZIndex = 4,
 								Image = "rbxassetid://83340563999778",
 								ScaleType = Enum.ScaleType.Fit,
 							},
 							Attributes = { _ImageName = "1244_53__CustomLobby__Stroke_gray" },
 						},
 					},
-				},
-				{
-					Primitive = "ImageLabel",
-					Id = "S_Icon",
-					Props = {
-						BackgroundTransparency = 1,
-						BorderSizePixel = 0,
-						ClipsDescendants = true,
-						LayoutOrder = 1,
-						Position = UDim2.fromScale(0.1379, 0.0833),
-						Size = UDim2.fromScale(0.7389, 0.7667),
-						ZIndex = 2,
-						Image = "rbxassetid://93595977062782",
-						-- The map pictures are wider than the box: they fill it at their own shape, their sides cut off
-						ScaleType = Enum.ScaleType.Crop,
-					},
-					Attributes = { _ImageName = "1210_310__CustomLobby__MapIcon_image" },
 				},
 				{
 					Primitive = "TextLabel",

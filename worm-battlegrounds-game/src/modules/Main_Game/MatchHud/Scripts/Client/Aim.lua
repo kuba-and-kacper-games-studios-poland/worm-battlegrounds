@@ -71,6 +71,14 @@ local powerSizes = {} --- @type { number }
 local powerShares = {} --- @type { number }
 local targetMarker: Part
 
+--[[ Prediction ]]
+
+-- The tutorial's path dots and the dot where it lands, the shot raycasts (a shot's own collision group), and the power last fired
+local predictionDots = {} --- @type { Part }
+local predictionEnd: Part
+local predictionParams: RaycastParams
+local lastPower: number = 0
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
 
 --%%%%%%%%%%%%%%%%%%%% Get Power Color
@@ -200,6 +208,40 @@ function Module._buildLook(combatFolder: Instance)
 		CanTouch = false,
 		Transparency = 1,
 		Parent = combatFolder,
+	})
+
+	--[[ Prediction ]]
+
+	for index: number = 1, _settings.PREDICTION_DOTS do
+		predictionDots[index] = Module._makeDot("PredictionDot", _settings.PREDICTION_DOT_SIZE, _settings.PREDICTION_COLOR, combatFolder)
+	end
+	predictionEnd = Module._makeDot("PredictionEnd", _settings.PREDICTION_END_SIZE, _settings.PREDICTION_END_COLOR, combatFolder)
+	predictionParams = RaycastParams.new()
+	predictionParams.CollisionGroup = "Projectile"
+	predictionParams.FilterType = Enum.RaycastFilterType.Exclude
+	lastPower = _settings.PREDICTION_IDLE_POWER
+end
+
+--%%%%%%%%%%%%%%%%%%%% Make Dot
+
+--[[
+	Returns a hidden neon ball for the tutorial's prediction line.
+]]
+--- @return Part
+function Module._makeDot(name: string, size: number, color: Color3, parent: Instance)
+	return I.Create("Part")({
+		Name = name,
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.one * size,
+		Color = color,
+		Material = Enum.Material.Neon,
+		Anchored = true,
+		CanCollide = false,
+		CanQuery = false,
+		CanTouch = false,
+		CastShadow = false,
+		Transparency = 1,
+		Parent = parent,
 	})
 end
 
@@ -448,6 +490,7 @@ function Module._step()
 		crosshairAt = target or (if pointer then Module._getPlanePoint(pointer) else nil)
 	end
 	Module._draw(mine, angle, power, crosshairAt)
+	Module._drawPrediction(mine, itemId)
 
 	--[[ Slider ]]
 
@@ -667,6 +710,82 @@ function Module._hideLook()
 	for _index: number, dot: Frame in ipairs(powerDots) do
 		dot.Visible = false
 	end
+	Module._hidePrediction(1)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Draw Prediction
+
+--[[
+	In the tutorial match, draws where an arced weapon's shot would fly from the player's snail: the path at the power
+	held while charging, or faded at the power last fired before the press, wind and all, to the first terrain or snail
+	it meets. shortcut: it ignores the shot's slowdown in water and its bounces, so it's exact to the first thing a
+	shot touches out of liquid; follow Combat's Ballistics if a later step needs more.
+]]
+function Module._drawPrediction(model: Model, itemId: string)
+	--[[ Checks ]]
+
+	-- Check if it's the tutorial and an arced weapon
+	if I.Match.GetFolder():GetAttribute("Kind") ~= "Tutorial" or I.G_Arsenal.Get(itemId).Aim ~= "Arc" or not model.PrimaryPart then
+		Module._hidePrediction(1)
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local charging: boolean = aiming == "Charge"
+	local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
+	local position: Vector3 = model.PrimaryPart.Position + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP)
+	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(itemId, angle, if charging then power else lastPower)
+	local acceleration: Vector3 = Vector3.new(I.G_Combat.GetWindAcceleration(itemId, I.Match.GetFolder():GetAttribute("Wind") or 0), -I.S.Workspace.Gravity, 0)
+	local transparency: number = if charging then 0 else _settings.PREDICTION_IDLE_TRANSPARENCY
+	local step: number = _settings.PREDICTION_STEP
+	local shown: number = 0
+	local sinceDot: number = _settings.PREDICTION_DOT_GAP
+	predictionParams.FilterDescendantsInstances = { model, predictionEnd.Parent }
+
+	--[[ Following ]]
+
+	for _index: number = 1, math.ceil(_settings.PREDICTION_SECONDS / step) do
+		local nextPosition: Vector3 = position + velocity * step + acceleration * (step * step / 2)
+		local hit: RaycastResult? = I.S.Workspace:Raycast(position, nextPosition - position, predictionParams)
+		local reached: Vector3 = if hit then hit.Position else nextPosition
+
+		-- A dot every PREDICTION_DOT_GAP studs along the way
+		sinceDot += (reached - position).Magnitude
+		if sinceDot >= _settings.PREDICTION_DOT_GAP and shown < #predictionDots then
+			sinceDot = 0
+			shown += 1
+			predictionDots[shown].Position = reached
+			predictionDots[shown].Transparency = transparency
+		end
+		position = reached
+		velocity += acceleration * step
+		if hit then
+			break
+		end
+	end
+
+	--[[ Applying ]]
+
+	predictionEnd.Position = position
+	predictionEnd.Transparency = transparency
+	Module._hidePrediction(shown + 1)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Hide Prediction
+
+--[[
+	Hides the prediction's dots from `first` on, and its end when they're all hidden.
+]]
+function Module._hidePrediction(first: number)
+	--[[ Hiding ]]
+
+	for index: number = first, #predictionDots do
+		predictionDots[index].Transparency = 1
+	end
+	if first == 1 then
+		predictionEnd.Transparency = 1
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Fire
@@ -701,6 +820,7 @@ function Module._fire()
 	--[[ Sending ]]
 
 	I.Network.Fire("Combat_Fire", itemId, shotAngle, shotPower, target)
+	lastPower = shotPower
 	I.Haptic.PlayOnce("Combat_Fire")
 	firedItem = itemId
 	if mine and mine.PrimaryPart then

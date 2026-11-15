@@ -1017,13 +1017,14 @@ local _gui = {
 											BorderSizePixel = 0,
 										},
 										Children = {
+											-- A fifth bigger than its card, so the card's NEW tag isn't clipped
 											{
 												Primitive = "CanvasGroup",
 												Id = "S_CardSlot",
 												Props = {
 													AnchorPoint = Vector2.new(0.5, 0.5),
 													Position = UDim2.fromScale(0.5, 0.39),
-													Size = UDim2.fromScale(1, 0.39),
+													Size = UDim2.fromScale(1, 0.468),
 													ZIndex = 6,
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,

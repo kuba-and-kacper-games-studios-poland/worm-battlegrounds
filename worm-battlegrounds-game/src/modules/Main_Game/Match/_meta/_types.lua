@@ -10,6 +10,10 @@
 ---
 --- @field Team number?
 --- @field PartyId string?
+---
+--- # Seat #
+---
+--- @field Card Matchmaking_Card?
 local _match_RosterEntry = {}
 
 --- @class Match_Metadata
@@ -27,7 +31,23 @@ local _match_RosterEntry = {}
 ---
 --- @field Roster { Match_RosterEntry }
 --- @field AccessCode string?
+--- @field LobbyId string?
 local _match_Metadata = {}
+
+--%%%%%%%%%%%%%%%%%%%% Waiting Room
+
+--- @class Match_RoomSeat
+---
+--- # General #
+---
+--- @field UserId number
+--- @field Name string
+---
+--- # State #
+---
+--- @field Ready boolean
+--- @field Here boolean
+local _match_RoomSeat = {}
 
 --%%%%%%%%%%%%%%%%%%%% Participants
 

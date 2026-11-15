@@ -401,13 +401,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Gone
 
 --[[
-	Returns whether a simulated shot is over without a blast: lost (IsLost), or sinking through liquid for SINK_SECONDS
-	(one resting on the ground under it is left to its behavior).
+	Returns whether a simulated shot is over without a blast: flown longer than MAX_PROJECTILE_TIME, anywhere that knocks
+	a snail out (the open sea takes it as it splashes in, past the sides and below the arena too), or sinking through
+	other liquid for SINK_SECONDS (one resting on the ground under it is left to its behavior).
 ]]
 --- @param body Combat_Body
 --- @return boolean
 function Module.IsGone(body, elapsed: number)
-	return Module.IsLost(body.Position, elapsed) or body.Sunk and not body.Grounded and (body.Step - body.SunkStep) * STEP >= _settings.SINK_SECONDS
+	return elapsed > _settings.MAX_PROJECTILE_TIME or I.Arena.GetHazard(body.Position) ~= nil or body.Sunk and not body.Grounded and (body.Step - body.SunkStep) * STEP >= _settings.SINK_SECONDS
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Liquid

@@ -736,8 +736,7 @@ function Module._fly(start: Vector3, velocity: Vector3, options, row, left: Mode
 		local hit: RaycastResult? = I.G_Combat.StepBody(body, world)
 		local elapsed: number = body.Step * combat.PROJECTILE_STEP
 		local sunkFor: number = if body.Sunk and not body.Grounded then (body.Step - body.SunkStep) * combat.PROJECTILE_STEP else 0
-		local hazard: string? = I.Arena.GetHazard(body.Position)
-		if hazard == "Bounds" or hazard and not I.Arena.GetLiquid(body.Position) or sunkFor >= combat.SINK_SECONDS then
+		if I.Arena.GetHazard(body.Position) or sunkFor >= combat.SINK_SECONDS then
 			return nil, body.Ignore
 		elseif body.Stopped then
 			return if hit then hit.Position else body.Position, body.Ignore

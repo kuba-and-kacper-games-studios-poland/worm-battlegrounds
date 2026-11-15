@@ -20,11 +20,8 @@ local moduleGui: ScreenGui
 
 --[[ State ]]
 
---[[
-	What the hole sits over: a gui element, a part (followed as it moves), a spot in the world or an area of the screen
-	(in AbsolutePosition's space); nil shows only the hint
-]]
-local target: (GuiObject | BasePart | Vector3 | Rect)? = nil
+-- What the ring sits over: a gui element, a part (followed as it moves) or a spot in the world; nil shows only the hint
+local target: (GuiObject | BasePart | Vector3)? = nil
 local shownText: string = ""
 local stepConnection: RBXScriptConnection?
 
@@ -55,7 +52,7 @@ function Module.Start()
 	moduleGui = I.UserInterface.UI[_settings.HINT_GUI_NAME]
 	elems["Spotlight"] = moduleGui:FindFirstChild("U_Spotlight", true) --- @type Frame
 	elems["Ring"] = elems["Spotlight"]:FindFirstChild("S_Ring") --- @type Frame
-	elems["Blockers"] = moduleGui:FindFirstChild("U_Blockers", true) --- @type Folder
+	elems["Arrow"] = moduleGui:FindFirstChild("U_Arrow", true) --- @type Frame
 	elems["Hint"] = moduleGui:FindFirstChild("U_Hint", true) --- @type Frame
 	elems["Text"] = elems["Hint"]:FindFirstChild("S_Text") --- @type TextLabel
 end
@@ -65,11 +62,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Show
 
 --[[
-	Shows a hint, and blacks out the screen around what to press: a gui element, a part, a world spot or a screen
-	area (nil: the hint alone). Presses outside the hole are blocked while it shows. A step (a name in FUNNEL_STEPS)
-	is reported to the server the first time it shows, for the tutorial's funnel.
+	Shows a hint, and rings what to press with a red arrow pointing at it: a gui element, a part or a world spot (nil:
+	the hint alone). Nothing else is darkened or blocked. A step (a name in FUNNEL_STEPS) is reported to the server the
+	first time it shows, for the tutorial's funnel.
 ]]
-function Module.Show(text: string, newTarget: (GuiObject | BasePart | Vector3 | Rect)?, step: string?)
+function Module.Show(text: string, newTarget: (GuiObject | BasePart | Vector3)?, step: string?)
 	--[[ Saving ]]
 
 	target = newTarget
@@ -101,7 +98,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Hide
 
 --[[
-	Hides the hint and the spotlight.
+	Hides the hint, the ring and the arrow.
 ]]
 function Module.Hide()
 	--[[ Applying ]]
@@ -117,8 +114,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Every frame while it shows: fits the hole over the target, the blockers around it, and the hint beside it (under
-	the hole in the screen's top half, over it in the bottom half), and pulses the hole's ring.
+	Every frame while it shows: fits the ring over the target and pulses it, points the arrow at it from above (from
+	under it when the ring is near the screen's top) bobbing toward it, and places the hint beside them (under the ring
+	in the screen's top half, over it in the bottom half, past the arrow on its side).
 ]]
 function Module._step()
 	--[[ Local Variables ]]
@@ -129,12 +127,10 @@ function Module._step()
 	local size: Vector2?
 	corner, size = Module._getHole()
 
-	--[[ Hole ]]
+	--[[ Ring ]]
 
 	elems["Spotlight"].Visible = corner ~= nil
-	for _index: number, blocker: Frame in ipairs(elems["Blockers"]:GetChildren()) do
-		blocker.Visible = corner ~= nil
-	end
+	elems["Arrow"].Visible = corner ~= nil
 	if not corner or not size then
 		elems["Hint"].Position = UDim2.fromOffset(screen.X / 2, screen.Y * _settings.HINT_TOP)
 		return
@@ -143,24 +139,24 @@ function Module._step()
 	elems["Spotlight"].Size = UDim2.fromOffset(size.X, size.Y)
 	elems["Ring"].UIStroke.Transparency = 0.2 + 0.5 * (0.5 + 0.5 * math.sin(os.clock() * _settings.RING_PULSE_RATE))
 
-	--[[ Blockers ]]
+	--[[ Arrow ]]
 
 	local bottom: number = corner.Y + size.Y
-	local right: number = corner.X + size.X
-	elems["Blockers"].Top.Position = UDim2.fromOffset(0, 0)
-	elems["Blockers"].Top.Size = UDim2.fromOffset(screen.X, corner.Y)
-	elems["Blockers"].Bottom.Position = UDim2.fromOffset(0, bottom)
-	elems["Blockers"].Bottom.Size = UDim2.fromOffset(screen.X, screen.Y - bottom)
-	elems["Blockers"].Left.Position = UDim2.fromOffset(0, corner.Y)
-	elems["Blockers"].Left.Size = UDim2.fromOffset(corner.X, size.Y)
-	elems["Blockers"].Right.Position = UDim2.fromOffset(right, corner.Y)
-	elems["Blockers"].Right.Size = UDim2.fromOffset(screen.X - right, size.Y)
+	local centerX: number = corner.X + size.X / 2
+	local flip: boolean = corner.Y + size.Y / 2 < screen.Y * _settings.ARROW_FLIP_SHARE
+	local bob: number = _settings.ARROW_BOB * (0.5 + 0.5 * math.sin(os.clock() * _settings.ARROW_BOB_RATE))
+	local arrowReach: number = _settings.ARROW_GAP + _settings.ARROW_BOB + elems["Arrow"].AbsoluteSize.Y
+
+	-- Turned over, it hangs from its top edge, so its tip (rotated to the top) still sits at the anchor
+	elems["Arrow"].AnchorPoint = if flip then Vector2.new(0.5, 0) else Vector2.new(0.5, 1)
+	elems["Arrow"].Rotation = if flip then 180 else 0
+	elems["Arrow"].Position = UDim2.fromOffset(centerX, if flip then bottom + _settings.ARROW_GAP + bob else corner.Y - _settings.ARROW_GAP - bob)
 
 	--[[ Hint ]]
 
 	local below: boolean = corner.Y + size.Y / 2 < screen.Y / 2
-	local x: number = math.clamp(corner.X + size.X / 2, hintSize.X / 2 + _settings.HINT_EDGE, math.max(screen.X - hintSize.X / 2 - _settings.HINT_EDGE, hintSize.X / 2))
-	local y: number = if below then bottom + _settings.HINT_GAP else corner.Y - _settings.HINT_GAP - hintSize.Y
+	local x: number = math.clamp(centerX, hintSize.X / 2 + _settings.HINT_EDGE, math.max(screen.X - hintSize.X / 2 - _settings.HINT_EDGE, hintSize.X / 2))
+	local y: number = if below then bottom + _settings.HINT_GAP + (if flip then arrowReach else 0) else corner.Y - _settings.HINT_GAP - hintSize.Y - (if flip then 0 else arrowReach)
 	elems["Hint"].Position = UDim2.fromOffset(x, math.clamp(y, _settings.HINT_EDGE, math.max(screen.Y - hintSize.Y - _settings.HINT_EDGE, 0)))
 end
 
@@ -202,7 +198,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Hole
 
 --[[
-	Returns the hole's top-left corner and size on this gui, padded by HOLE_PADDING and at least HOLE_MIN wide and
+	Returns the ring's top-left corner and size on this gui, padded by HOLE_PADDING and at least HOLE_MIN wide and
 	tall, or nil while there's no target or it isn't on the screen (a hidden gui element, a spot behind the camera).
 ]]
 --- @return Vector2?
@@ -223,9 +219,6 @@ function Module._getHole()
 		-- Every gui's AbsolutePosition counts from under the top bar, as this gui's own does
 		center = target.AbsolutePosition + target.AbsoluteSize / 2 - moduleGui.AbsolutePosition
 		extent = target.AbsoluteSize
-	elseif typeof(target) == "Rect" then
-		center = (target.Min + target.Max) / 2 - moduleGui.AbsolutePosition
-		extent = target.Max - target.Min
 	elseif target ~= nil then
 		local camera: Camera = I.S.Workspace.CurrentCamera
 		local position: Vector3 = if typeof(target) == "Vector3" then target else target.Position

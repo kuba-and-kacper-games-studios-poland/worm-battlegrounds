@@ -86,7 +86,7 @@ function Module._registerCommands()
 
 		--[[ Returning ]]
 
-		return true, `The wind is $|cr$|{I.Match.GetWind()}#| until the next turn`
+		return true, `The wind is $|cr$|{I.Match.GetWind()}#| until it's rolled again`
 	end
 
 	local function round(value: number)

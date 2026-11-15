@@ -18,6 +18,8 @@ local ALWAYS_OFF = {
 	"Group_Controller",
 	"Premium_Controller",
 	"Tool",
+	-- The favorite prompts after joining and after a purchase (the owner, 2026-11-15: removed entirely)
+	"Favorite_Controller",
 } --- @type { string }
 
 -- Off on the Lobby map
@@ -75,8 +77,8 @@ end
 local MAP_CONFIGS = {
 	["Lobby"] = {
 		-- Data
-		ProfileStoreName = "UmeTesting_-1",
-		LeaderboardStoreName = "UmeTesting_-1",
+		ProfileStoreName = "UmeTesting_-2",
+		LeaderboardStoreName = "UmeTesting_-2",
 
 		-- Accessibility
 		VRSupport = false,
@@ -116,8 +118,8 @@ local MAP_CONFIGS = {
 	},
 	["Match"] = {
 		-- Data
-		ProfileStoreName = "UmeTesting_-1",
-		LeaderboardStoreName = "UmeTesting_-1",
+		ProfileStoreName = "UmeTesting_-2",
+		LeaderboardStoreName = "UmeTesting_-2",
 
 		-- Accessibility
 		VRSupport = false,
@@ -157,8 +159,8 @@ local MAP_CONFIGS = {
 	},
 	["Studio"] = {
 		-- Data
-		ProfileStoreName = "UmeTesting_-1",
-		LeaderboardStoreName = "UmeTesting_-1",
+		ProfileStoreName = "UmeTesting_-2",
+		LeaderboardStoreName = "UmeTesting_-2",
 
 		-- Accessibility
 		VRSupport = false,
@@ -198,8 +200,8 @@ local MAP_CONFIGS = {
 	},
 	["UmeLobby"] = {
 		-- Data
-		ProfileStoreName = "UmeTesting_-1",
-		LeaderboardStoreName = "UmeTesting_-1",
+		ProfileStoreName = "UmeTesting_-2",
+		LeaderboardStoreName = "UmeTesting_-2",
 
 		-- Accessibility
 		VRSupport = false,

@@ -17,6 +17,7 @@ local Placement = require(script.Parent:FindFirstChild("Placement")) --- @type M
 local Stats = require(script.Parent:FindFirstChild("Stats")) --- @type Match_Server_Stats
 local Connection = require(script.Parent:FindFirstChild("Connection")) --- @type Match_Server_Connection
 local Rematch = require(script.Parent:FindFirstChild("Rematch")) --- @type Match_Server_Rematch
+local WaitingRoom = require(script.Parent:FindFirstChild("WaitingRoom")) --- @type Match_Server_WaitingRoom
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -51,6 +52,7 @@ function Module.Init(folder: Folder)
 	matchFolder = folder
 	Turns.Init(folder, Module.SetPhase)
 	Rematch.Init(folder)
+	WaitingRoom.Init(folder)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Start
@@ -66,8 +68,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Main Loop
 
 --[[
-	Runs the match: waits for its players, plays it to the end, then plays it again with whoever voted for a rematch
-	while the rest go back to the lobby. A match that can't play sends everyone to the lobby. A match server empties
+	Runs the match: waits for its players (a public match runs its waiting room, which lobbies keep seating players
+	in), plays it to the end, then plays it again with whoever voted for a rematch while the rest go back to the lobby. A match that can't play sends everyone to the lobby. A match server empties
 	when nobody votes; the Studio map clears the arena and waits for its lobby's next match. A stray server plays
 	nothing.
 ]]
@@ -94,12 +96,17 @@ function Module._mainLoop()
 		matchFolder:SetAttribute("Kind", metadata.Kind)
 		matchFolder:SetAttribute("Mode", metadata.Mode)
 		matchFolder:SetAttribute("MapId", metadata.MapId)
+		matchFolder:SetAttribute("Size", metadata.Size)
 		Module.SetPhase("Waiting")
 
 		-- The map shows while everyone arrives: a party's last member can take a while, and an empty arena looks broken
 		I.Snails.Clear()
 		local loaded: boolean = I.Arena.Load(metadata.MapId)
-		Roster.WaitForPlayers(matchFolder)
+		if metadata.LobbyId then
+			WaitingRoom.Run(metadata)
+		else
+			Roster.WaitForPlayers(matchFolder)
+		end
 
 		--[[ Playing ]]
 
@@ -214,7 +221,8 @@ end
 --[[
 	**SERVER** |
 	Plays a match the Studio map's lobby hands over, on this server: its players leave the lobby's screens for the
-	match's. Refused anywhere but the Studio map, and while another match plays. Returns whether it started.
+	match's. Players the lobby seated in the public match waiting here (Matchmaking's Studio store) join it instead.
+	Refused anywhere but the Studio map, and while another match plays. Returns whether they're in.
 ]]
 --- @param players { Player }
 --- @param metadata Match_Metadata
@@ -222,9 +230,19 @@ end
 function Module.Host(players, metadata)
 	--[[ Checks ]]
 
-	-- Check if this server can take a match now
-	if not Connection.IsStudioMap() or hosted then
+	-- Check if this server takes matches from its lobby
+	if not Connection.IsStudioMap() then
 		return false
+	end
+
+	--[[ Joining ]]
+
+	if hosted then
+		local joining: boolean = metadata.LobbyId ~= nil and metadata.LobbyId == Roster.GetMetadata().LobbyId and matchFolder:GetAttribute("RoomEndsAt") ~= nil
+		if joining then
+			Connection.Bring(players)
+		end
+		return joining
 	end
 
 	--[[ Hosting ]]
@@ -308,7 +326,7 @@ end
 
 --[[
 	The drop phase: everyone gets a spread-out random spot in the sky over land, and players have DROP_SECONDS to place
-	theirs anywhere in the play area; it ends early once every connected player has placed.
+	theirs anywhere in the play area, and to move it, all of that time; the tutorial ends once its player placed.
 ]]
 function Module._drop()
 	--[[ Data ]]
@@ -358,11 +376,11 @@ function Module._drop()
 
 	Module.SetPhase("Drop")
 	local deadline: number = os.clock() + dropSeconds
-	while os.clock() < deadline and not Module._isEveryonePlaced() do
+	while os.clock() < deadline and not (tutorial and Module._isEveryonePlaced()) do
 		task.wait(0.1)
 	end
 
-	-- Stops the drop timer on screen when everyone placed early
+	-- Stops the drop timer on screen when the tutorial's player placed early
 	matchFolder:SetAttribute("DropEndsAt", I.S.Workspace:GetServerTimeNow())
 end
 

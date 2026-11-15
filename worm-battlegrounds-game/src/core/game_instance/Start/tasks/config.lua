@@ -45,7 +45,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Update
 
 --[[
-	Updates store names in the current map configuration to `Production` if they contain `UmeTesting`.
+	Updates store names in the current map configuration to `UmeTesting_-1` if they contain `UmeTesting`.
 ]]
 function _task.Update(umeInstance)
 	--- @type Ume
@@ -63,12 +63,12 @@ function _task.Update(umeInstance)
 
 	-- Profile store
 	if string.find(I.Config.Map.ProfileStoreName, "UmeTesting") then
-		I.Config.Map.ProfileStoreName = "Production"
+		I.Config.Map.ProfileStoreName = "UmeTesting_-1"
 	end
 
 	-- Leaderboards store
 	if string.find(I.Config.Map.LeaderboardStoreName, "UmeTesting") then
-		I.Config.Map.LeaderboardStoreName = "Production"
+		I.Config.Map.LeaderboardStoreName = "UmeTesting_-1"
 	end
 end
 

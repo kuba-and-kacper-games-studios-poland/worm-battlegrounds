@@ -14,6 +14,7 @@ local _scripts = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
 
 local Carver = require(_scripts:FindFirstChild("Client"):FindFirstChild("Carver")) --- @type Arena_Client_Carver
 local Falling = require(_scripts:FindFirstChild("Client"):FindFirstChild("Falling")) --- @type Arena_Client_Falling
+local PropSeeThrough = require(_scripts:FindFirstChild("Client"):FindFirstChild("PropSeeThrough")) --- @type Arena_Client_PropSeeThrough
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -40,6 +41,7 @@ function Module.Start()
 	local arenaFolder: Instance = I.Dirs.UmeWorkspace:WaitForChild(_localName)
 	Carver.Start(arenaFolder)
 	Falling.Start()
+	PropSeeThrough.Start(arenaFolder)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

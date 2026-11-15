@@ -100,6 +100,38 @@ local _settings = {
 				{ Liquid = "Water", Effect = "Glint", Every = { 0.8, 2 }, Tint = false },
 			},
 		},
+
+		-- The Desert until 2026-11-15, renamed when a new map took its name: the Desert's mood and music
+		MirageMesa = {
+			Preset = "Desert",
+			Music = "Music_Desert",
+			SuddenDeathMusic = "Music_Desert_SuddenDeath",
+			WindColor = Color3.fromRGB(255, 240, 214),
+			WindSound = "Wind_Desert",
+			Ambient = {
+				{ Effect = "Ambient_Sand", Bottom = 0.05, Top = 0.6, RateScale = 1 },
+			},
+			Surface = {
+				{ Liquid = "Lava", Effect = "Lava_Bubble", Every = { 0.6, 1.6 }, Tint = false },
+				{ Liquid = "Lava", Effect = "Ember", Every = { 0.25, 0.7 }, Tint = false },
+				{ Liquid = "Water", Effect = "Glint", Every = { 0.8, 2 }, Tint = false },
+			},
+		},
+
+		-- shortcut: Picnic Plains' sky mood and music until Fluffy Fallout gets its own
+		FluffyFallout = {
+			Preset = "Plains",
+			Music = "Music_PicnicPlains",
+			SuddenDeathMusic = "Music_PicnicPlains_SuddenDeath",
+			WindColor = Color3.fromRGB(255, 255, 255),
+			WindSound = "Wind_OpenAir",
+			Ambient = {
+				{ Effect = "Ambient_Pollen", Bottom = 0.1, Top = 1, RateScale = 1 },
+			},
+			Surface = {
+				{ Liquid = "Water", Effect = "Glint", Every = { 0.15, 0.4 }, Tint = false },
+			},
+		},
 		RockslideRidge = {
 			Preset = "Cave",
 			Music = "Music_RockslideRidge",
@@ -187,8 +219,8 @@ local _settings = {
 	LOBBY_AREA_DISTANCE = 30,
 	LOBBY_AREA_SIZE = Vector3.new(70, 34, 40),
 
-	-- The sideways pull on drifting particles per point of the match's wind, in studs per second squared
-	WIND_PUSH = 0.35,
+	-- The sideways pull on drifting particles per point of the match's wind (±20), in studs per second squared
+	WIND_PUSH = 0.175,
 
 	-- The lobby stage's clouds drift sideways and back by up to CLOUD_DRIFT studs, each over a time in CLOUD_DRIFT_SECONDS
 	CLOUD_DRIFT = 3,
@@ -249,7 +281,7 @@ local _settings = {
 	WIND_GUST_SOUND_FROM = 0.4,
 
 	--[[
-		When the wind changes (every turn), each streak emitter bursts WIND_CHANGE_BURST streaks at the
+		When the wind changes (every second round), each streak emitter bursts WIND_CHANGE_BURST streaks at the
 		strongest wind, fewer as it drops but at least WIND_CHANGE_BURST_MIN, and the gust whooshes at its loudest
 	]]
 	WIND_CHANGE_BURST = 40,

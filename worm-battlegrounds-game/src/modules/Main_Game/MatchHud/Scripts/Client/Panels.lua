@@ -98,8 +98,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows each phase's panel: who has arrived while waiting, the drop timer, the knocked-out panel once the player's
-	snail is out, and the loadout bar while the player's snail is in play.
+	Shows each phase's panel: who has arrived while waiting (a public match's waiting room is Match's own panel), the
+	drop timer, the knocked-out panel once the player's snail is out, and the loadout bar while the player's snail is
+	in play.
 ]]
 function Module._refresh()
 	--[[ Data ]]
@@ -110,7 +111,7 @@ function Module._refresh()
 
 	--[[ Visibility ]]
 
-	elems["Waiting"].Visible = phase == "Waiting"
+	elems["Waiting"].Visible = phase == "Waiting" and matchFolder:GetAttribute("RoomEndsAt") == nil
 	elems["Drop"].Visible = phase == "Drop"
 	elems["KnockedOut"].Visible = out and not spectating and phase ~= "Ended"
 	elems["LoadoutBar"].Visible = entry ~= nil and not out and (phase == "Turn" or phase == "Flight" or phase == "Settle" or phase == "Landing")

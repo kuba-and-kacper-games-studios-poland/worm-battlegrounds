@@ -217,8 +217,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Player Added
 
 --[[
-	A dropped player came back: their snail is theirs again from its next turn, as the bot left it (its moves, shots and
-	uses stay), and the arena streams around it again.
+	A player's data loaded here. One who dropped and came back, or was seated before they arrived or loaded, takes
+	their snail from its next turn, as the bot left it (its moves, shots and uses stay), and the arena streams around
+	it again.
 ]]
 function Module._onPlayerAdded(player: Player)
 	--[[ Data ]]
@@ -241,15 +242,17 @@ function Module._onPlayerAdded(player: Player)
 
 	--[[ Strangers ]]
 
-	-- A match server only takes the players its lobby sent, and a stray one (no lobby sent it a match) takes nobody
-	if not participant and (Module.IsStray() or (I.Config.Metadata and not Module._isInRoster(player.UserId))) then
+	-- A match server only takes the players its lobby seated, and a stray one (no lobby sent it a match) takes nobody; a
+	-- public match's waiting room checks its own arrivals, since lobbies keep seating players while it's open
+	local roomOpen: boolean = matchFolder:GetAttribute("RoomEndsAt") ~= nil
+	if not participant and not roomOpen and (Module.IsStray() or (I.Config.Metadata and not Module._isInRoster(player.UserId))) then
 		Module.SendToLobby({ player })
 		return
 	end
 
 	--[[ Checks ]]
 
-	-- Check if they were dropped from this match
+	-- Check if they were dropped from this match, or seated before they arrived or loaded
 	if not participant or participant.Connected or participant.Out then
 		return
 	end
@@ -333,14 +336,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is In Roster
 
 --[[
-	Returns whether a user is in the roster the lobby sent with this match.
+	Returns whether a user is in the match's roster (a public match's, as its waiting room closed it).
 ]]
 --- @return boolean
 function Module._isInRoster(userId: number)
 	--[[ Searching ]]
 
 	--- @param entry Match_RosterEntry
-	for _index: number, entry in ipairs(I.Config.Metadata.Roster) do
+	for _index: number, entry in ipairs(Roster.GetMetadata().Roster) do
 		if entry.UserId == userId then
 			return true
 		end

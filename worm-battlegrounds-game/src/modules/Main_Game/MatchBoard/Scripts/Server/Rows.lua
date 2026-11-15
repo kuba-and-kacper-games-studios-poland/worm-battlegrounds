@@ -47,33 +47,16 @@ function Module.Init()
 		Name = _localName,
 		Parent = I.Dirs.UmeReplicated,
 	})
-
-	--[[ Network ]]
-
-	I.Network.GetEvent("MatchBoard_Join", { "Player", "string" }, { RateLimit = 2 })
-	I.Network.Fired("MatchBoard_Join", Module.Join)
-	I.Network.GetEvent("MatchBoard_Leave", { "Player" }, { RateLimit = 2 })
-	I.Network.Fired("MatchBoard_Leave", Module.Leave)
-	I.Network.GetEvent("MatchBoard_Vote", { "Player" }, { RateLimit = 2 })
-	I.Network.Fired("MatchBoard_Vote", Module._onVote)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Start
 
 function Module.Start()
-	--[[ Rows ]]
-
-	--- @param option MatchBoard_RowOption
-	for _index: number, option in ipairs(_settings.PUBLIC_ROWS) do
-		Module.AddRow("Public", option.Mode, option.Size, Launch.GetMap(option.Size))
-	end
-
 	--[[ Connections ]]
 
 	I.S.Players.PlayerRemoving:Connect(function(player: Player)
 		Module._removeUser(player.UserId)
 	end)
-	I.DoEvery.Every(0.25, Module._checkTimers)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -103,9 +86,8 @@ function Module.AddRow(kind: "Public" | "Custom", mode: string, size: number, ma
 		MapId = mapId,
 		Difficulty = _settings.PUBLIC_DIFFICULTY,
 		Players = {},
-		Votes = {},
-		EndsAt = if kind == "Public" then I.S.Workspace:GetServerTimeNow() + _settings.ROW_SECONDS else 0,
 		Owner = owner,
+		Targets = {},
 	}
 	rows[id] = row
 
@@ -116,64 +98,6 @@ function Module.AddRow(kind: "Public" | "Custom", mode: string, size: number, ma
 	--[[ Returning ]]
 
 	return row
-end
-
---%%%%%%%%%%%%%%%%%%%% Join
-
---[[
-	**SERVER** |
-	Puts a player, with their whole party, in a public row. Refused when they're in a party but not its leader, or
-	when the row has no seat for each of them; a party bigger than a team is split over teams at launch. A full row
-	starts at once.
-]]
---- @return boolean
-function Module.Join(player: Player, rowId: string)
-	-- Check if player is valid | SERVER
-	if not I.Player.Valid(player) then
-		return false
-	end
-
-	--[[ Data ]]
-
-	local row = rows[rowId] --- @type MatchBoard_Row?
-	local group = Module.GetGroup(player) --- @type { Player }
-
-	--[[ Checks ]]
-
-	-- Check if it's a public row
-	if not row or row.Kind ~= "Public" then
-		return false
-	end
-
-	-- Check if the player may bring the party
-	if player:GetAttribute("PartyId") and not player:GetAttribute("PartyLeader") then
-		Launch._tell({ player }, "Only your party's leader can join a match.")
-		return false
-	end
-
-	-- Check if the row has a seat for everyone
-	if #row.Players + #group > row.Size then
-		Launch._tell({ player }, "Your party doesn't fit in that match.")
-		return false
-	end
-
-	--[[ Joining ]]
-
-	for _index: number, member: Player in ipairs(group) do
-		Module._removeUser(member.UserId)
-		table.insert(row.Players, member.UserId)
-	end
-	Module.Publish(row)
-
-	--[[ Starting ]]
-
-	if #row.Players >= row.Size then
-		Module.StartRow(row)
-	end
-
-	--[[ Returning ]]
-
-	return true
 end
 
 --%%%%%%%%%%%%%%%%%%%% Leave
@@ -208,7 +132,6 @@ function Module._removeUser(userId: number)
 			continue
 		end
 		table.remove(row.Players, index)
-		row.Votes[userId] = nil
 
 		if row.Kind == "Custom" and row.Owner == userId then
 			Module.RemoveRow(id)
@@ -222,9 +145,8 @@ end
 
 --[[
 	**SERVER** |
-	Launches a row's match with its players still here (bots fill the empty seats); a public row is replaced by a fresh
-	one of its mode on another map, its timer starting over, and a custom lobby closes. Players who couldn't go stay
-	on the board.
+	Launches a custom lobby's match with its players still here (its bots fill the empty seats) and closes it. Players
+	who couldn't go stay on the board.
 ]]
 --- @param row MatchBoard_Row
 function Module.StartRow(row)
@@ -238,12 +160,9 @@ function Module.StartRow(row)
 		end
 	end
 
-	--[[ Replacing ]]
+	--[[ Closing ]]
 
 	Module.RemoveRow(row.Id)
-	if row.Kind == "Public" then
-		Module.AddRow("Public", row.Mode, row.Size, Launch.GetMap(row.Size, row.MapId))
-	end
 
 	--[[ Launching ]]
 
@@ -272,60 +191,12 @@ function Module.RemoveRow(rowId: string)
 	row.Config:Destroy()
 end
 
---%%%%%%%%%%%%%%%%%%%% On Vote
-
---[[
-	A player in a public row votes to start it now; the row starts once VOTE_FRACTION of its players voted.
-]]
-function Module._onVote(player: Player)
-	-- Check if player is valid | SERVER
-	if not I.Player.Valid(player) then
-		return
-	end
-
-	--[[ Data ]]
-
-	local row = Module.GetRowOf(player) --- @type MatchBoard_Row?
-
-	--[[ Checks ]]
-
-	-- Check if they wait in a public row
-	if not row or row.Kind ~= "Public" then
-		return
-	end
-
-	--[[ Voting ]]
-
-	row.Votes[player.UserId] = true
-	Module.Publish(row)
-	if Module._getVoteCount(row) >= Module._getVotesNeeded(row) then
-		Module.StartRow(row)
-	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Check Timers
-
---[[
-	Starts every public row whose timer ran out: with whoever joined, or with nobody, so the board keeps moving and its
-	maps change.
-]]
-function Module._checkTimers()
-	--[[ Checking ]]
-
-	local now: number = I.S.Workspace:GetServerTimeNow()
-	--- @param row MatchBoard_Row
-	for _id: string, row in pairs(rows) do
-		if row.Kind == "Public" and now >= row.EndsAt then
-			Module.StartRow(row)
-		end
-	end
-end
-
 --%%%%%%%%%%%%%%%%%%%% Publish
 
 --[[
 	Writes a row into its Configuration for every client: Kind, Mode, Size, MapId, Difficulty, Players (JSON user
-	ids), EndsAt, Votes, VotesNeeded and Owner.
+	ids), Owner and, on a public card, Targets (JSON: the map a Join lands on, by group size; "" for a new match on
+	MapId).
 ]]
 --- @param row MatchBoard_Row
 function Module.Publish(row)
@@ -337,10 +208,8 @@ function Module.Publish(row)
 	row.Config:SetAttribute("MapId", row.MapId)
 	row.Config:SetAttribute("Difficulty", row.Difficulty)
 	row.Config:SetAttribute("Players", I.S.HttpService:JSONEncode(row.Players))
-	row.Config:SetAttribute("EndsAt", row.EndsAt)
-	row.Config:SetAttribute("Votes", Module._getVoteCount(row))
-	row.Config:SetAttribute("VotesNeeded", Module._getVotesNeeded(row))
 	row.Config:SetAttribute("Owner", row.Owner or 0)
+	row.Config:SetAttribute("Targets", I.S.HttpService:JSONEncode(row.Targets))
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -396,37 +265,6 @@ function Module.GetGroup(player: Player)
 	--[[ Returning ]]
 
 	return I.Party.GetMembers(partyId)
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Vote Count
-
---[[
-	Returns how many of a row's players voted to start.
-]]
---- @param row MatchBoard_Row
---- @return number
-function Module._getVoteCount(row)
-	--[[ Counting ]]
-
-	local count: number = 0
-	for _userId: number, _voted: boolean in pairs(row.Votes) do
-		count += 1
-	end
-
-	--[[ Returning ]]
-
-	return count
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Votes Needed
-
---[[
-	Returns the votes that start a row now: VOTE_FRACTION of its players, rounded up (at least 1).
-]]
---- @param row MatchBoard_Row
---- @return number
-function Module._getVotesNeeded(row)
-	return math.max(math.ceil(#row.Players * _settings.VOTE_FRACTION), 1)
 end
 
 return Module

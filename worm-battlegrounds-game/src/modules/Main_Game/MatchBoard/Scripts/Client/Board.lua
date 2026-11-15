@@ -59,14 +59,7 @@ function Module.Start()
 	elems["Solo"] = elems["Play"]:FindFirstChild("S_Solo", true) --- @type ImageButton
 	elems["Custom"] = elems["Play"]:FindFirstChild("S_Custom", true) --- @type ImageButton
 	elems["Rows"] = elems["Play"]:FindFirstChild("U_Rows", true) --- @type ScrollingFrame
-	elems["WaitingRoom"] = moduleGui:FindFirstChild("U_WaitingRoom") --- @type Frame
-	elems["Countdown"] = elems["WaitingRoom"]:FindFirstChild("S_Countdown", true) --- @type TextLabel
-	elems["Info"] = elems["WaitingRoom"]:FindFirstChild("S_Info", true) --- @type TextLabel
-	elems["Players"] = elems["WaitingRoom"]:FindFirstChild("U_Players", true) --- @type ScrollingFrame
-	elems["Vote"] = elems["WaitingRoom"]:FindFirstChild("S_Vote", true) --- @type ImageButton
-	elems["Leave"] = elems["WaitingRoom"]:FindFirstChild("S_Leave", true) --- @type ImageButton
 	prefabs["Row"] = elems["Rows"]:FindFirstChild("PREFAB | Row") --- @type Frame
-	prefabs["PlayerName"] = elems["Players"]:FindFirstChild("PREFAB | PlayerName") --- @type Frame
 
 	--[[ Saving ]]
 
@@ -94,14 +87,13 @@ function Module.Start()
 			I.WidgetManager.ShowMessage("Your party's leader picks the match.")
 		end
 	end)
-	I.Interact.OnPress(elems["Vote"], function()
-		I.Network.Fire("MatchBoard_Vote")
-	end)
-	I.Interact.OnPress(elems["Leave"], function()
-		I.Network.Fire("MatchBoard_Leave")
-	end)
-	I.S.Players.LocalPlayer.AttributeChanged:Connect(Module._refresh)
-	I.DoEvery.Every(0.25, Module._tick)
+
+	-- A card's map depends on how many travel with the player, so any player's party change redraws the board
+	I.S.Players.PlayerAdded:Connect(Module._watchPlayer)
+	I.S.Players.PlayerRemoving:Connect(Module._refresh)
+	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
+		Module._watchPlayer(player)
+	end
 
 	--[[ Selection ]]
 
@@ -149,6 +141,18 @@ function Module._watchRow(config: Instance)
 	Module._refresh()
 end
 
+--%%%%%%%%%%%%%%%%%%%% Watch Player
+
+--[[
+	Redraws the board when a player's party changes.
+]]
+function Module._watchPlayer(player: Player)
+	--[[ Connections ]]
+
+	player.AttributeChanged:Connect(Module._refresh)
+	Module._refresh()
+end
+
 --%%%%%%%%%%%%%%%%%%%% On Row Removed
 
 --[[
@@ -190,16 +194,17 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the board: Solo vs bots (Play with party in a party), each public row's mode, map, players and Join, or the
-	waiting room of the row the player is in, with everyone in it and the votes. The setup
-	panel shows in the board's place, which slides away for it. A party member's Join, Play and Custom are greyed out (their leader picks), but
-	Custom opens their leader's lobby once they're in it.
+	Draws the board: Solo vs bots (Play with party in a party), and each public card's mode, the map a Join would land
+	on for the player's group (the open match it'd join, or a new one on the card's map), its picture, and Join. The
+	setup panel shows in the board's place, which slides away for it. A party member's Join, Play and Custom are greyed
+	out (their leader picks), but Custom opens their leader's lobby once they're in it.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
 
 	local member: boolean = Module._isPartyMember()
 	local mine: Instance? = Module._getMyRow()
+	local groupSize: number = Module._getGroupSize()
 
 	--[[ Lines ]]
 
@@ -208,18 +213,16 @@ function Module._refresh()
 		if not config then
 			continue
 		end
-		local players = Module._getPlayers(config) --- @type { number }
-		local mapRow = _settings.MAPS[config:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
+		local targets = I.S.HttpService:JSONDecode(config:GetAttribute("Targets") or "[]") --- @type { string }
+		local target: string = targets[groupSize] or ""
+		local mapRow = _settings.MAPS[if target ~= "" then target else config:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
 		line:FindFirstChild("S_Map", true).Text = if mapRow then mapRow.Name else ""
-		line:FindFirstChild("S_Players", true).Text = `{#players}/{config:GetAttribute("Size")} players`
 		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if member then "Host picks" else "Join"
 		Module._setLocked(line:FindFirstChild("S_Join"), member)
 
-		-- shortcut: a map with no Thumbnail yet keeps the design's picture; give each map its picture when drawn
-		if mapRow and mapRow.Thumbnail ~= "" then
-			line:FindFirstChild("S_MapIcon").Image = mapRow.Thumbnail
-		end
+		-- A map with no Thumbnail yet shows a plain card
+		line:FindFirstChild("S_MapIcon", true).Image = if mapRow then mapRow.Thumbnail else ""
 	end
 
 	--[[ Play ]]
@@ -238,54 +241,14 @@ function Module._refresh()
 
 	--[[ Panels ]]
 
-	-- Joining a public match closes the setup, which redraws the board again
-	local waiting: boolean = mine ~= nil and mine:GetAttribute("Kind") == "Public"
-	if waiting and Setup.IsOpen() then
-		Setup.Close()
-		return
-	end
-	Module._slidePlay(not waiting and not Setup.IsOpen())
-	elems["WaitingRoom"].Visible = waiting
-
-	-- On a pad the waiting room holds the selection while it shows
-	if waiting then
-		I.Console.Focus(elems["WaitingRoom"])
-	else
-		I.Console.Unfocus(elems["WaitingRoom"])
-	end
-
-	--[[ Waiting Room ]]
-
-	if not mine or not waiting then
-		return
-	end
-	local mapRow = _settings.MAPS[mine:GetAttribute("MapId")] --- @type MatchBoard_MapRow?
-	local players = Module._getPlayers(mine) --- @type { number }
-	elems["Info"].Text = `{_settings.MODE_NAMES[mine:GetAttribute("Mode")] or mine:GetAttribute("Mode")}  |  {if mapRow then mapRow.Name else ""}  |  {#players} / {mine:GetAttribute("Size")} players`
-	elems["Vote"]:FindFirstChild("S_Text").Text = `Vote to start {mine:GetAttribute("Votes")}/{mine:GetAttribute("VotesNeeded")}`
-	for _index: number, child: Instance in ipairs(elems["Players"]:GetChildren()) do
-		if child:IsA("Frame") and child ~= prefabs["PlayerName"] then
-			child:Destroy()
-		end
-	end
-	for index: number, userId: number in ipairs(players) do
-		local entry: Frame = prefabs["PlayerName"]:Clone()
-		local player: Player? = I.S.Players:GetPlayerByUserId(userId)
-		entry.Name = tostring(userId)
-		entry.LayoutOrder = index
-		entry.Visible = true
-		entry:FindFirstChild("S_Name", true).Text = if player then player.DisplayName else "?"
-		entry:FindFirstChild("S_Username", true).Text = if player then `@{player.Name}` else ""
-		entry:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={userId}&w=150&h=150`
-		entry.Parent = elems["Players"]
-	end
+	Module._slidePlay(not Setup.IsOpen())
 end
 
 --%%%%%%%%%%%%%%%%%%%% Slide Play
 
 --[[
-	Slides the play screen's parts (the lobby rows, SOLO VS BOTS and CUSTOM) down off the screen when the setup panel or
-	the waiting room takes its place, and back up after; once they're gone it's hidden, so nothing in it takes a press.
+	Slides the play screen's parts (the lobby rows, SOLO VS BOTS and CUSTOM) down off the screen when the setup panel
+	takes its place, and back up after; once they're gone it's hidden, so nothing in it takes a press.
 ]]
 function Module._slidePlay(shown: boolean)
 	--[[ Checks ]]
@@ -352,33 +315,6 @@ function Module._setLocked(button: ImageButton, locked: boolean)
 	button:SetAttribute("Utils_ClickScale", if locked then 1 else button:GetAttribute("Look_ClickScale"))
 end
 
---%%%%%%%%%%%%%%%%%%%% Tick
-
---[[
-	Counts the rows' timers down, on the board and in the waiting room.
-]]
-function Module._tick()
-	--[[ Local Variables ]]
-
-	local now: number = I.S.Workspace:GetServerTimeNow()
-
-	--[[ Lines ]]
-
-	for rowId: string, line: Frame in pairs(lines) do
-		local config: Instance? = boardFolder:FindFirstChild(rowId)
-		if config then
-			line:FindFirstChild("S_Timer", true).Text = Module._getTime(config, now)
-		end
-	end
-
-	--[[ Waiting Room ]]
-
-	local mine: Instance? = Module._getMyRow()
-	if mine and elems["WaitingRoom"].Visible then
-		elems["Countdown"].Text = `Match starts in {Module._getTime(mine, now)}`
-	end
-end
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
 --%%%%%%%%%%%%%%%%%%%% Get My Row
@@ -399,6 +335,31 @@ function Module._getMyRow()
 	--[[ Returning ]]
 
 	return nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Group Size
+
+--[[
+	Returns how many travel with the local player: their party's members in this server, or just them.
+]]
+--- @return number
+function Module._getGroupSize()
+	--[[ Local Variables ]]
+
+	local partyId: string? = I.S.Players.LocalPlayer:GetAttribute("PartyId")
+	local count: number = 0
+
+	--[[ Counting ]]
+
+	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
+		if player == I.S.Players.LocalPlayer or (partyId and player:GetAttribute("PartyId") == partyId) then
+			count += 1
+		end
+	end
+
+	--[[ Returning ]]
+
+	return count
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Players
@@ -430,23 +391,6 @@ function Module._getRowOrder(mode: string)
 	--[[ Returning ]]
 
 	return #_settings.PUBLIC_ROWS + 1
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Time
-
---[[
-	Returns the time left on a row as "0:29", or its full time while nobody has joined.
-]]
---- @return string
-function Module._getTime(config: Instance, now: number)
-	--[[ Local Variables ]]
-
-	local endsAt: number = config:GetAttribute("EndsAt") or 0
-	local left: number = if endsAt > 0 then math.ceil(math.max(endsAt - now, 0)) else _settings.ROW_SECONDS
-
-	--[[ Returning ]]
-
-	return string.format("%d:%02d", left // 60, left % 60)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Party Member

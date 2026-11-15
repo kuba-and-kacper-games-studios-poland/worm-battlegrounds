@@ -108,11 +108,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Build
 
 --[[
-	Makes the match's participants: the roster's players who are ready (every player on the Match map alone in Studio),
-	on the teams the lobby gave them or the first with room, then bots for every empty place up to the match's size
-	(a match without bots, a party's or a custom lobby's, drops its missing players instead). Gives everyone a colour,
-	makes the Roblox teams in team modes,
-	and writes each participant into Workspace.Ume.Match.Participants.
+	Makes the match's participants: the roster's players (every player on the Match map alone in Studio), on the teams
+	the lobby gave them or the first with room, then bots for every empty place up to the match's size (a match
+	without bots, a party's or a custom lobby's, plays without them). A player who hasn't arrived or loaded yet is
+	seated from the card their lobby made, and a bot plays for them until they have (Connection). Gives everyone a
+	colour, makes the Roblox teams in team modes, and writes each participant into Workspace.Ume.Match.Participants.
 ]]
 function Module.Build()
 	--[[ Clearing ]]
@@ -121,64 +121,43 @@ function Module.Build()
 
 	--[[ Local Variables ]]
 
-	local teamSize: number = Module._getTeamSize()
+	local teamSize: number = Module.GetTeamSize()
 	local teamCount: number = math.max(math.floor(metadata.Size / teamSize), 1)
 	local filled = table.create(teamCount, 0) --- @type { number }
 
-	-- The players to seat, in roster order (the Match map alone in Studio: everyone present)
-	local players = {} --- @type { Player }
-	local wanted = {} --- @type { [number]: number? }
-	if rematchPlayers then
-		players = rematchPlayers
-	elseif fromLobby then
-		--- @param entry Match_RosterEntry
-		for _index: number, entry in ipairs(metadata.Roster) do
-			local player: Player? = I.S.Players:GetPlayerByUserId(entry.UserId)
-			if player then
-				table.insert(players, player)
-				wanted[entry.UserId] = entry.Team
-			end
-		end
-	else
-		players = I.S.Players:GetPlayers()
-	end
-
 	--[[ Players ]]
 
-	for _index: number, player: Player in ipairs(players) do
-		-- Skip a player whose data hasn't loaded: their loadout and skin can't be read yet
-		if not I.Player.Valid(player) then
+	--- @param entry Match_RosterEntry
+	for _index: number, entry in ipairs(Module._getSeats()) do
+		local player: Player? = I.S.Players:GetPlayerByUserId(entry.UserId)
+		local loaded: boolean = I.Player.Valid(player)
+
+		-- What they take into the match, chosen in the lobby: read again once their data has loaded here
+		local card = if loaded and player then I.Matchmaking.GetCard(player) else entry.Card --- @type Matchmaking_Card?
+		if not card then
 			continue
 		end
 
-		local team: number? = Module._getTeamWithRoom(filled, teamSize, wanted[player.UserId])
+		local team: number? = Module._getTeamWithRoom(filled, teamSize, entry.Team)
 		if not team then
 			break
 		end
 
-		-- What they take into the match: their loadout and their snail's outfit, chosen in the lobby
-		local items = {} --- @type { string }
-		local shinyItems = {} --- @type { [string]: boolean }
-		local outfit = {} --- @type Cosmetics_Outfit
-		local skinShiny: boolean
-		items, shinyItems = I.Loadout.GetMatchLoadout(player)
-		outfit, skinShiny = I.Cosmetics.GetOutfit(player)
-
 		--- @type Match_Participant
 		local participant = {
-			Id = `P_{player.UserId}`,
-			UserId = player.UserId,
-			DisplayName = player.DisplayName,
+			Id = `P_{entry.UserId}`,
+			UserId = entry.UserId,
+			DisplayName = card.DisplayName,
 			Team = team,
 			Color = Color3.new(),
 			IsBot = false,
-			Loadout = items,
-			ShinyItems = shinyItems,
-			Skin = I.G_Cosmetics.GetOutfitText(outfit),
-			Shiny = skinShiny,
-			Vip = player:GetAttribute("Vip") == true,
-			Level = player:GetAttribute("Level") or 0,
-			Connected = true,
+			Loadout = if metadata.Kind == "Tutorial" then table.clone(_settings.TUTORIAL_LOADOUT) else card.Loadout,
+			ShinyItems = card.ShinyItems,
+			Skin = card.Skin,
+			Shiny = card.Shiny,
+			Vip = card.Vip,
+			Level = card.Level,
+			Connected = loaded,
 			Out = false,
 		}
 		Module._add(participant, filled)
@@ -248,6 +227,19 @@ function Module.SetMetadata(newMetadata)
 	rematchPlayers = nil
 end
 
+--%%%%%%%%%%%%%%%%%%%% Set Roster
+
+--[[
+	Seats these players instead of the roster the match came with: a public match's, as its waiting room grows and
+	shrinks.
+]]
+--- @param roster { Match_RosterEntry }
+function Module.SetRoster(roster)
+	--[[ Saving ]]
+
+	metadata.Roster = roster
+end
+
 --%%%%%%%%%%%%%%%%%%%% Set Info
 
 --[[
@@ -282,7 +274,7 @@ function Module.AssignTeam(participant)
 	--[[ Checks ]]
 
 	-- Check if it's a player here, in a team match
-	if participant.IsBot or not player or Module._getTeamSize() <= 1 then
+	if participant.IsBot or not player or Module.GetTeamSize() <= 1 then
 		return
 	end
 
@@ -331,7 +323,7 @@ function Module._write(participant)
 	entry:SetAttribute("Color", participant.Color)
 	entry:SetAttribute("IsBot", participant.IsBot)
 	entry:SetAttribute("Out", false)
-	entry:SetAttribute("Connected", true)
+	entry:SetAttribute("Connected", participant.Connected)
 	entry.Parent = participantsFolder
 end
 
@@ -392,13 +384,39 @@ end
 	Returns how many snails a team has in this match's mode (a custom Teams match splits the size in two).
 ]]
 --- @return number
-function Module._getTeamSize()
+function Module.GetTeamSize()
 	--[[ Returning ]]
 
 	if metadata.Mode == "Teams" then
 		return math.max(math.floor(metadata.Size / 2), 1)
 	end
 	return _settings.TEAM_SIZES[metadata.Mode] or 1
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Seats
+
+--[[
+	Returns who to seat, in order: a rematch's voters, the roster a lobby sent, or everyone here on the Match map alone in
+	Studio. Only the roster's entries carry cards.
+]]
+--- @return { Match_RosterEntry }
+function Module._getSeats()
+	--[[ Roster ]]
+
+	if fromLobby and not rematchPlayers then
+		return metadata.Roster
+	end
+
+	--[[ Players ]]
+
+	local seats = {} --- @type { Match_RosterEntry }
+	for _index: number, player: Player in ipairs(rematchPlayers or I.S.Players:GetPlayers()) do
+		table.insert(seats, { UserId = player.UserId })
+	end
+
+	--[[ Returning ]]
+
+	return seats
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Team With Room

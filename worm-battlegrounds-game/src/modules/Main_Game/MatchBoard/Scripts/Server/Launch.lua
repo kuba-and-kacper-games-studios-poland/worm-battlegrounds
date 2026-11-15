@@ -47,10 +47,9 @@ end
 --[[
 	**SERVER** |
 	Sends players to a new match server: puts them on teams (each party on one team, a party bigger than a team
-	spilling onto the next with room, then the solo players), builds the
-	match's metadata and teleports them together. The Studio map plays the match on this server instead; the Lobby
-	map alone in Studio, which can't teleport, prints the metadata. Players who couldn't go are told so. Returns
-	whether the match started.
+	spilling onto the next with room, then the solo players), each with the card the match seats them from until they
+	arrive, builds the match's metadata and sends them. Players who couldn't go are told so. Returns whether the
+	match started.
 ]]
 --- @param players { Player }
 --- @return boolean
@@ -58,7 +57,6 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 	--[[ Local Variables ]]
 
 	local teamSize: number = if mode == "Teams" then math.max(math.floor(size / 2), 1) else _settings.TEAM_SIZES[mode] or 1
-	local filled = {} --- @type { [number]: number }
 	local roster = {} --- @type { Match_RosterEntry }
 
 	--[[ Teams ]]
@@ -78,23 +76,24 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 		return #groups[a] > #groups[b]
 	end)
 
-	local teamCount: number = math.max(math.floor(size / teamSize), 1)
 	for _index: number, groupId: string in ipairs(order) do
-		local team: number = Module._getTeamWithRoom(filled, teamSize, #groups[groupId], teamCount)
+		local seats = {} --- @type { Match_RosterEntry }
 		for _index2: number, player: Player in ipairs(groups[groupId]) do
-			-- A party bigger than a team spills onto the team with the most room
-			if (filled[team] or 0) >= teamSize then
-				team = Module._getTeamWithRoom(filled, teamSize, 1, teamCount)
-			end
-			filled[team] = (filled[team] or 0) + 1
-			table.insert(roster, { UserId = player.UserId, Team = team, PartyId = player:GetAttribute("PartyId") })
+			table.insert(seats, { UserId = player.UserId, PartyId = player:GetAttribute("PartyId"), Card = I.Matchmaking.GetCard(player) })
 		end
+
+		-- Check if the group fits (callers check the size first)
+		local seated = I.Matchmaking.Seat(roster, seats, teamSize, size) --- @type { Match_RosterEntry }?
+		if not seated then
+			warn(`[{_localName}::{script.Name}]: Group ({groupId}) doesn't fit a {mode} match of {size}!`)
+			continue
+		end
+		table.move(seated, 1, #seated, #roster + 1, roster)
 	end
 
-	--[[ Metadata ]]
+	--[[ Returning ]]
 
-	--- @type Match_Metadata
-	local metadata = {
+	return Module.Send(players, {
 		MatchId = I.S.HttpService:GenerateGUID(false),
 		Kind = if tutorial then "Tutorial" else kind,
 		Mode = mode,
@@ -102,8 +101,22 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 		MapId = mapId,
 		Difficulty = difficulty,
 		Roster = roster,
-	}
+	})
+end
 
+--%%%%%%%%%%%%%%%%%%%% Send
+
+--[[
+	**SERVER** |
+	Teleports players to their match: a new server of the Match map with the match's metadata, or, with `accessCode`,
+	the server of an open public match they were seated in. The Studio map plays the match on this server instead
+	(`I.Match.Host`); the Lobby map alone in Studio, which can't teleport, only warns. Returns whether they're on their
+	way.
+]]
+--- @param players { Player }
+--- @param metadata Match_Metadata
+--- @return boolean
+function Module.Send(players, metadata, accessCode: string?)
 	--[[ Studio Map ]]
 
 	if I.Config.PlaceLoader.MapId == _settings.STUDIO_MAP then
@@ -116,13 +129,18 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 
 	--[[ Teleporting ]]
 
-	I.Transition.SetDestination(players, `Heading to {_settings.MAPS[mapId].Name}…`, _settings.MAPS[mapId].Thumbnail)
+	I.Transition.SetDestination(players, `Heading to {_settings.MAPS[metadata.MapId].Name}…`, _settings.MAPS[metadata.MapId].Thumbnail)
 
 	local success: boolean
 	local result: any | string?
-	success, result = pcall(I.Teleport, players, I.Config.PlaceLoader.MatchPlaceId, "Match", metadata, _settings.TELEPORT_GUI)
+	success, result = pcall(function()
+		if accessCode then
+			return I.TeleportToServer(players, I.Config.PlaceLoader.MatchPlaceId, nil, accessCode, _settings.TELEPORT_GUI)
+		end
+		return I.Teleport(players, I.Config.PlaceLoader.MatchPlaceId, "Match", metadata, _settings.TELEPORT_GUI)
+	end)
 	if not success or not result then
-		warn(`[{_localName}::{script.Name}]: Couldn't start match ({metadata.MatchId})! - ({result})`)
+		warn(`[{_localName}::{script.Name}]: Couldn't send players to match ({metadata.MatchId})! - ({result})`)
 		Module._tell(players, "Couldn't start the match. Try again!")
 		return false
 	end
@@ -242,31 +260,6 @@ function Module.GetMap(size: number, avoid: string?)
 	--[[ Returning ]]
 
 	return pool[random:NextInteger(1, #pool)]
-end
-
---%%%%%%%%%%%%%%%%%%%% Get Team With Room
-
---[[
-	Returns the team with the most room for a group of players (the first one, when a group is bigger than a team).
-]]
---- @param filled { [number]: number }
---- @return number
-function Module._getTeamWithRoom(filled, teamSize: number, groupSize: number, teamCount: number)
-	--[[ Searching ]]
-
-	local best: number = 1
-	local bestRoom: number = -math.huge
-	for team: number = 1, teamCount do
-		local room: number = teamSize - (filled[team] or 0)
-		if room >= groupSize and room > bestRoom then
-			best = team
-			bestRoom = room
-		end
-	end
-
-	--[[ Returning ]]
-
-	return best
 end
 
 return Module

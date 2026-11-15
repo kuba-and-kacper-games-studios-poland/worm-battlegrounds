@@ -10,15 +10,14 @@ screen as 3D models (one, three or ten) and wait for a tap, then rattle, spring 
 up a ball of light that flashes into the reels. A reel of item cards rolls under a fixed line (three stacked bands for a
 3-pack, ten columns for a 10-pack) and slows onto each result, then the results are revealed. A legendary first lands
 as a gold ★ card; then a golden crate drops in and is tapped open, a golden reel picks which legendary (when the crate
-holds more than one), and the legendary plays its own drop. The tutorial crate is a hidden, fixed crate that opens once, while
-`Tutorial` says it waits: its tab is then the only one.
+holds more than one), and the legendary plays its own drop. Hidden crates never show or open.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Crates` |
 | Runs on | Server, Client, Global · Lobby map |
 | Exposes | `I.Crates` (server and client), `I.G_Crates` (both) |
-| Uses | `I.Currency`, `I.Inventory`, `I.G_Inventory`, `I.Policy`, `I.Shop`, `I.Tutorial`, `I.Random`, `I.Rarity`, `I.WidgetManager`, `I.Replicator`, `I.Notify`, `I.Interact`, `I.Format`, `I.Console` (client: the pad's tab buttons), `I.Sound`, `I.UIEmitter` (client: every particle), `I.Topic`, `I.G_Cosmetics`, `I.SnailRig`, `I.Utils` (client: the skin snails on cards) |
+| Uses | `I.Currency`, `I.Inventory`, `I.G_Inventory`, `I.Policy`, `I.Shop`, `I.Random`, `I.Rarity`, `I.WidgetManager`, `I.Replicator`, `I.Notify`, `I.Interact`, `I.Format`, `I.Console` (client: the pad's tab buttons), `I.Sound`, `I.UIEmitter` (client: every particle), `I.Topic`, `I.G_Cosmetics`, `I.SnailRig`, `I.Utils` (client: the skin snails on cards) |
 
 ## Files
 
@@ -68,7 +67,7 @@ holds more than one), and the legendary plays its own drop. The tutorial crate i
 
 **Topics**
 
-- `Crates_Opened @ (player: Player, crateId: string, results: { Crates_Result })`: after a crate gave its items (Tutorial listens)
+- `Crates_Opened @ (player: Player, crateId: string, results: { Crates_Result })`: after a crate gave its items
 
 **Receive: RemoteFunctions**
 
@@ -81,17 +80,16 @@ Owned items are Inventory items. The widget reads three Replicator folders other
 | Where | Key | What |
 | --- | --- | --- |
 | Replicator `Shop` | `VipCrateReady` | Makes the Skin crate's x1 free (FREE, paid with `VipDaily`) and the badge FREE |
-| Replicator `Tutorial` | `CrateReady` | Shows the tutorial crate's tab alone, and the badge FREE |
 | Replicator `Policy` | `ArePaidRandomItemsRestricted` | Hides the diamonds chip while not `false` |
 
-A crate row: `Name`, `TabName` (its tab's text), `LayoutOrder` (its tab's place), `Hidden` (no tab unless
-it's the waiting tutorial crate; opens only one at a time), `Prices` (`{ [currency]: { One, Three, Ten } }`),
+A crate row: `Name`, `TabName` (its tab's text), `LayoutOrder` (its tab's place), `Hidden` (no tab, and
+it never opens), `Prices` (`{ [currency]: { One, Three, Ten } }`),
 `Odds` (`{ [itemId]: percent }`, adding up to 100, the same whichever currency pays), `Fixed` (items always given, in
 place of a roll), and its look: `Glow` (the showcase's glow, rays and beam, and its reel band's lines), `Accent` (the
 premium ring's colour), `Ambient` (`Crates_Ambient`: the particles around it, `"Embers"`, `"Glints"`, `"Bubbles"` or
 `"Sparkles"`), `Premium` (the PREMIUM tag, the halo, the violet backdrop and the premium reel's line) and `Model` (the
 3D crate on the pedestal and the one the opening drops in: `PREFAB | Crate_<Name>` in `ReplicatedStorage_Assets/Crates`;
-the tutorial crate uses `Crate_Starter`). The models are `art/crates`' (its README → Uploading has the ids).
+the old tutorial crate uses `Crate_Starter`). The models are `art/crates`' (its README → Uploading has the ids).
 
 | Crate | Prices (1, 3, 10) | Odds | Look |
 | --- | --- | --- | --- |
@@ -99,7 +97,7 @@ the tutorial crate uses `Crate_Starter`). The models are `art/crates`' (its READ
 | `Premium` | 250, 750, 2,250 diamonds | Cluster, Spider, Minigun 26 % each; Homing, One Punch 10 %; Variety, Black Hole 1 %. Hidden since 2026-11-13 (the testers: one crate, coins or diamonds), kept so its id stays known | Cyan glow, gold accent, glints, premium |
 | `Utility` | 100, 300, 1,000 coins or 50, 150, 500 diamonds | Parachute, Bandage 27.5 %; Jetpack, Speed 15 %; Medkit 10 %; Low Gravity 5 % | Mint glow, bubbles |
 | `Skin` | 100, 300, 1,000 coins or 50, 150, 500 diamonds | Snail pieces, each set sharing what its whole skin had: Frontline, High Seas, Wild West 20 % each (6.67 % a piece); Shadow Clan, Round Table, Big Top 10 %; Inferno 7 %; Circuit 2 %; Crypt 1 % | Pink glow, sparkles |
-| `Tutorial` | 100 coins (one only) | Fixed: Grenade and Shotgun. Hidden | Green glow, sparkles |
+| `Tutorial` | 100 coins (one only) | Fixed: Grenade and Shotgun. Hidden: the tutorial gave it once until 2026-11-15, when it began giving the two weapons straight away (the testers: no crate opening in the tutorial); kept so its id stays known | Green glow, sparkles |
 
 A 3-pack costs three single crates (no discount, unlike the 10-pack's 10 %).
 
@@ -153,7 +151,6 @@ reel. Closing the widget ends an opening at once.
 | `SHINY_COPIES` | `10` | Copies that make an item shiny |
 | `PAID_CURRENCIES` | `{ "Diamonds" }` | Currencies bought with Robux: rolls with them are paid random items |
 | `VIP_CRATE` | `"Skin"` | VIP's free daily crate (the coins row's x1) |
-| `TUTORIAL_CRATE` | `"Tutorial"` | The hidden crate the tutorial gives once |
 | `INTRO_TWEENINFO`, `QUICK_INTRO_TWEENINFO` | 0.56 s, 0.26 s | The shop making way |
 | `STAGE_LAYOUTS` | 1, 3 and 10 (`Crates_StageLayout`) | Where the 3D crates stand by pack size (studs; the camera looks along +Z at their fronts), their scale and turn, the camera and the point it looks at |
 | `STAGE_FOV`, `STAGE_ASPECT` | `26`, 16 / 9 | The stage camera's field of view, and the screen shape the layouts are framed for (a narrower screen backs the camera off) |
@@ -225,7 +222,7 @@ gui's README lists every element, prefab and `Look_*` attribute.
 
 The `Lobby` gui's corner menu opens it: `U_Menu` › `S_Weapons` and `S_Skins` (each with a `Crates_CrateId` attribute,
 `"Weapon"` and `"Skin"`) select that crate's tab, then `I.WidgetManager.Open("Crates")`. The badge on Weapons
-(`U_Menu` › `S_Badge` › `S_Count`) reads FREE while the tutorial crate or VIP's daily crate waits, else how many of
+(`U_Menu` › `S_Badge` › `S_Count`) reads FREE while VIP's daily crate waits, else how many of
 the cheapest coin crate the player's coins open (`9+` past 9, hidden at none), redrawn on `Currency_Changed`. The old
 `CrateOpen` and `CrateOdds` guis are no longer used.
 

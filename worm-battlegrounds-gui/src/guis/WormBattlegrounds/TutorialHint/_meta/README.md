@@ -1,13 +1,15 @@
 # TutorialHint
 
-The tutorial's guide: a spotlight that blacks out the screen around what to press next, and a hint panel beside it.
+The tutorial's guide: a gold ring around what to press next, a red arrow pointing at it, and a hint panel beside them.
+Nothing else is darkened or blocked (the testers, 2026-11-15: "no blackout just red arrow").
 
 **Look.** Built from `Primitive` nodes in the new screens' look, from the confirmation dialog's parts
 (`WidgetManager_Confirmation`): the dark panel (fill 25, 25, 35, a dark outer line and the grey 130 line inside, both
-`Utils_UIStroke`), a gold TUTORIAL title (255, 215, 110) and white Londrina text with a black outline. The spotlight
-is a lighter rounded square (white at 0.88 transparency, 18 px corners) whose 4000 px dark outline (8, 8, 14 at 0.3)
-covers the rest of the screen, with a gold ring inside that pulses (the testers, 2026-11-13: "the screen is blacked
-out around where you need to click and like a lighter square with rounded corners").
+`Utils_UIStroke`), a gold TUTORIAL title (255, 215, 110) and white Londrina text with a black outline. The ring is a
+faint rounded square (white at 0.9 transparency, 18 px corners) with a gold 4 px line that pulses. The arrow is red
+(235, 64, 52): a rounded shaft and a ▼ head in Builder Sans, both outlined in the panel's dark, 64 × 88 at design
+size. Until 2026-11-15 the square's 4000 px dark outline blacked out the rest of the screen and invisible blockers
+stopped presses around it (the testers, 2026-11-13).
 
 |  |  |
 | --- | --- |
@@ -21,10 +23,11 @@ out around where you need to click and like a lighter square with rounded corner
 
 | Element | Kind | What game code does with it |
 | --- | --- | --- |
-| `U_Spotlight` | Frame | The hole: Tutorial places and sizes it over the target every frame, hidden with no target |
+| `U_Spotlight` | Frame | The ring's square: Tutorial places and sizes it over the target every frame, hidden with no target |
 | `U_Spotlight` › `S_Ring` | Frame | The gold ring; Tutorial pulses its `UIStroke`'s transparency |
-| `U_Blockers` › `Top`, `Bottom`, `Left`, `Right` | Frame (`Active`) | Invisible; Tutorial fits them around the hole so presses elsewhere never reach the world or other guis |
-| `U_Hint` | Frame | The panel; Tutorial places it beside the hole (under it in the screen's top half, over it in the bottom half), and sets its height to the text. Has `S_ScreenScale` |
+| `U_Arrow` | Frame | The arrow, its tip the bottom middle; Tutorial places it over the ring pointing down (under it, turned over, near the screen's top) and bobs it. Has `S_ScreenScale` |
+| `U_Arrow` › `S_Shaft`, `S_Head` | Frame, TextLabel | Its shaft and ▼ head |
+| `U_Hint` | Frame | The panel; Tutorial places it beside the ring (under it in the screen's top half, over it in the bottom half, past the arrow on its side), and sets its height to the text. Has `S_ScreenScale` |
 | `U_Hint` › `S_Title` | TextLabel | TUTORIAL |
 | `U_Hint` › `S_Text` | TextLabel | The hint; Tutorial writes it and sets its height to its lines at 32 px |
 
@@ -38,13 +41,13 @@ Lobby map.
 ### Setup
 
 Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `TutorialHint`, `Enabled` off. Its module
-turns it on while a step shows. The panel is laid out for a 1920 × 1080 screen: the game's ScreenScale module (its
+turns it on while a step shows. The panel and the arrow are laid out for a 1920 × 1080 screen: the game's ScreenScale module (its
 `GUIS` list) sets `S_ScreenScale` to the screen's height / 1080 (width / 1920 on screens narrower than 16:9), ×1.3 on
 Mobile screens shorter than 500 px and never under 0.6 on other devices.
 
 ### Input
 
-None of its own: the blockers only stop presses outside the hole.
+None: it only shows.
 
 ### Looks
 

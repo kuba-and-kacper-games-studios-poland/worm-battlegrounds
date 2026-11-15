@@ -67,7 +67,7 @@ Londrina) as `Primitive` nodes. The showcase and effect pictures are `art/crates
 | `U_Reels` | Frame | Holds the `Band`s or `Column`s, and the line: `S_MarkerV` (down a band; diamond caps) or `S_MarkerH` (across the columns) |
 | `U_Skip` | ImageButton | SKIP: brings every reel in (`S_Stroke`, `S_Text`) |
 | `U_Result` | Frame, full screen | The result's layer: `S_Tint` (a colour over the screen), `S_Glow`, `S_Rays`, `S_Disk` and `S_Core` (the black hole's disk and core), `S_FxBack` (effects behind the cards), `S_FxFront` (in front), `S_Flash` (a full-screen flash) |
-| `U_Single` | Frame | The big card: `S_CardSlot` (a CanvasGroup the card is built in) › `S_CardScale`, then `S_RowPop` › `S_RarityBar` (`S_BarStroke`, `S_BarMask`, `S_Rarity`), `S_NamePop` › `S_Name`, `S_CopiesPop` › `S_Copies` (`S_Label`, `S_Bar` › `S_Fill`) |
+| `U_Single` | Frame | The big card: `S_CardSlot` (a CanvasGroup the card is built in, a fifth bigger than the card so the card's NEW tag isn't clipped) › `S_CardScale`, then `S_RowPop` › `S_RarityBar` (`S_BarStroke`, `S_BarMask`, `S_Rarity`), `S_NamePop` › `S_Name`, `S_CopiesPop` › `S_Copies` (`S_Label`, `S_Bar` › `S_Fill`) |
 | `U_Cards` | Frame | Holds a pack's cards, each over a `ResultInfo` |
 | `U_Summary` | Frame (a row) | Holds a `SummaryChip` per rarity, and one for new items |
 | `U_Buttons` | Frame | `U_Again` (OPEN AGAIN: `S_Main`, `S_Stroke`, `S_Icon`, `S_Price`, `S_Amount`) and `U_Continue` (`S_Stroke`, `S_Text`) |
