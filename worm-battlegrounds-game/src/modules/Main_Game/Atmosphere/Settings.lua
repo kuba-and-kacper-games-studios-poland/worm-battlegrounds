@@ -249,7 +249,7 @@ local _settings = {
 	WIND_GUST_SOUND_FROM = 0.4,
 
 	--[[
-		When the wind changes (once every snail played on it), each streak emitter bursts WIND_CHANGE_BURST streaks at the
+		When the wind changes (every turn), each streak emitter bursts WIND_CHANGE_BURST streaks at the
 		strongest wind, fewer as it drops but at least WIND_CHANGE_BURST_MIN, and the gust whooshes at its loudest
 	]]
 	WIND_CHANGE_BURST = 40,

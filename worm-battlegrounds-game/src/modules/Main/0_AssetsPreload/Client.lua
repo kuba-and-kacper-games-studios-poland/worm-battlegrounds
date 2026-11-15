@@ -56,7 +56,11 @@ function Module._preload()
 	end
 	Module._collectIds(I.G_Inventory.Items, ids, seen, _settings.SCAN_DEPTH)
 	Module._collectIds(I.G_Arsenal.GetAll(), ids, seen, _settings.SCAN_DEPTH)
-	Module._collectIds(I.G_Crates.GetAll(), ids, seen, _settings.SCAN_DEPTH)
+
+	-- Crates runs only in the lobby (and the Studio map)
+	if I.G_Crates then
+		Module._collectIds(I.G_Crates.GetAll(), ids, seen, _settings.SCAN_DEPTH)
+	end
 
 	-- Marked as scanned, so the settings scan leaves them out
 	for _index: number, moduleName: string in ipairs(_settings.SKIP_SETTINGS) do

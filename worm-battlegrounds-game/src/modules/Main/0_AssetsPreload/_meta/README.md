@@ -7,7 +7,7 @@ turn:
 
 1. every gui in `I.UserInterface.UI`, open or not (their frames, backgrounds and icons);
 2. the asset ids (`rbxassetid://` and digits) found in the game's data and settings, which code sets on guis later:
-   Inventory's items, Arsenal's weapons and Crates' rows (their icons), and every module's settings (map pictures, pad
+   Inventory's items, Arsenal's weapons and Crates' rows (their icons; Crates runs only in the lobby, so a match skips them), and every module's settings (map pictures, pad
    glyphs, badges), leaving out `SKIP_SETTINGS`;
 3. the asset folder, `I.Dirs.Assets` (crate, weapon and skin models, snails' animations, Vfx effects, the lobby
    stage).

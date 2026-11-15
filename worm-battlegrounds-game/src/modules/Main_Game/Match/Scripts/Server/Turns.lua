@@ -32,9 +32,6 @@ local shotFired: boolean = false
 local shotResolved: boolean = false
 local random: Random = Random.new()
 
--- The snails that played since the wind last changed; it changes once every snail still in play has
-local windPlayed = {} --- @type { [string]: boolean }
-
 -- When the turn playing now runs out (os.clock), and the length an admin set for every turn (nil is TURN_SECONDS)
 local turnDeadline: number = 0
 local turnSeconds: number? = nil
@@ -82,7 +79,6 @@ function Module.Reset()
 	teams = {}
 	teamIndex = 1
 	roundPending = false
-	windPlayed = {}
 
 	--[[ Grouping ]]
 
@@ -118,7 +114,7 @@ end
 
 --[[
 	Plays the next turn: picks the next snail (team by team), starts a new round when the order wrapped, raises the
-	liquid in sudden death, rolls the wind once every snail played on the last one, tells every client who plays after it (`TurnOrder`), hands the snail to
+	liquid in sudden death, rolls a new wind, tells every client who plays after it (`TurnOrder`), hands the snail to
 	its player (or its bot, or a bot standing in for a player who dropped: `Autopilot`), waits for a shot or the timer,
 	takes the snail back, waits for the shot and then the arena to settle, and knocks out every snail left at 0 health.
 ]]
@@ -159,7 +155,7 @@ function Module.RunTurn()
 	shotFired = false
 	shotResolved = false
 	model:SetAttribute("Active", true)
-	Module._rollWind(participantId)
+	Module._rollWind()
 	matchFolder:SetAttribute("TurnOrder", table.concat(Module._getUpcoming(), ","))
 	-- A dropped player's snail plays on under a bot until they come back
 	local autopilot: boolean = participant.IsBot or not participant.Connected
@@ -234,29 +230,21 @@ end
 --%%%%%%%%%%%%%%%%%%%% Roll Wind
 
 --[[
-	Rolls a new wind for the first turn, and again once every snail still in play has played on the current one (the
-	testers, 2026-11-13: the wind stays for a whole round), then counts the snail starting its turn.
+	Rolls a new wind for every turn, never the one the turn before had (the owner, 2026-11-15: "the wind power changes
+	every turn").
 ]]
-function Module._rollWind(participantId: string)
-	--[[ Checks ]]
+function Module._rollWind()
+	--[[ Local Variables ]]
 
-	-- Check if every snail still in play has played on this wind
-	local everyonePlayed: boolean = true
-	--- @param participant Match_Participant
-	for _index: number, participant in ipairs(Roster.GetParticipants()) do
-		if not participant.Out and not windPlayed[participant.Id] then
-			everyonePlayed = false
-			break
-		end
-	end
+	local last: number? = matchFolder:GetAttribute("Wind")
+	local wind: number = Module._getRandomWind()
 
 	--[[ Rolling ]]
 
-	if everyonePlayed or matchFolder:GetAttribute("Wind") == nil then
-		windPlayed = {}
-		matchFolder:SetAttribute("Wind", Module._getRandomWind())
+	while wind == last do
+		wind = Module._getRandomWind()
 	end
-	windPlayed[participantId] = true
+	matchFolder:SetAttribute("Wind", wind)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Shot Fired

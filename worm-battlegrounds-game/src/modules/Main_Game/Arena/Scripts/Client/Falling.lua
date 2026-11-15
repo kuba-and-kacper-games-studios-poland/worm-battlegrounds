@@ -53,7 +53,7 @@ function Module._onFall(group, drop: number, started: number)
 
 	while fallen < drop do
 		I.S.RunService.RenderStepped:Wait()
-		local elapsed: number = I.S.Workspace:GetServerTimeNow() - started
+		local elapsed: number = I.Match.GetDrawTime() - started
 		fallen = math.min(0.5 * I.S.Workspace.Gravity * elapsed * elapsed, drop)
 		for part: BasePart, start: CFrame in pairs(starts) do
 			part.CFrame = start - Vector3.yAxis * fallen

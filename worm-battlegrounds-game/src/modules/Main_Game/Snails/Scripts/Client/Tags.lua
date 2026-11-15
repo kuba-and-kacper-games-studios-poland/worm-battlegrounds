@@ -23,6 +23,9 @@ local timerConnection: RBXScriptConnection?
 local turn = nil --- @type Snails_TagTurn?
 local turnConnection: RBXScriptConnection?
 
+-- The snail attributes a tag shows: only these redraw it (a walking snail's Stamina changes all the time)
+local TAG_ATTRIBUTES = { Health = true, MaxHealth = true, Color = true, Active = true, Ghost = true } --- @type { [string]: boolean }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -106,7 +109,9 @@ function Module._addTag(model: Instance)
 			Module._popDamage(root, health - model:GetAttribute("Health"))
 		end
 		health = model:GetAttribute("Health")
-		Module._refreshTag(model, tag)
+		if TAG_ATTRIBUTES[attribute] then
+			Module._refreshTag(model, tag)
+		end
 	end)
 end
 

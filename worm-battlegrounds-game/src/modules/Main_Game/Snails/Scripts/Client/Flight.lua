@@ -109,7 +109,7 @@ end
 function Module._step()
 	--[[ Local Variables ]]
 
-	local now: number = I.S.Workspace:GetServerTimeNow()
+	local now: number = I.Match.GetDrawTime()
 
 	--[[ Stepping ]]
 

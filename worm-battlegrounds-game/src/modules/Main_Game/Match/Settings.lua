@@ -62,7 +62,7 @@ local _settings = {
 	UNDERWATER_DAMAGE = 5,
 	UNDERWATER_HEAD_HEIGHT = 1.6,
 
-	-- The wind is a whole number from -WIND_MAX to WIND_MAX, rolled again once every snail in play has played on it
+	-- The wind is a whole number from -WIND_MAX to WIND_MAX, rolled again every turn, never the same twice in a row
 	WIND_MAX = 10,
 
 	--[[
@@ -122,6 +122,15 @@ local _settings = {
 		Color3.fromRGB(60, 220, 220),
 		Color3.fromRGB(255, 120, 200),
 	},
+
+	--%%%%%%%%%%%%%%%%%%%% Drawing
+
+	--[[
+		The clock clients draw moving things on (I.Match.GetDrawTime): it eases toward the server's clock over
+		DRAW_CLOCK_EASE seconds instead of following its corrections, and jumps to it when DRAW_CLOCK_SNAP seconds off
+	]]
+	DRAW_CLOCK_EASE = 1,
+	DRAW_CLOCK_SNAP = 0.5,
 
 	--%%%%%%%%%%%%%%%%%%%% Studio
 

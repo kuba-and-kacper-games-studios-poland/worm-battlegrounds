@@ -1835,3 +1835,23 @@ day the dev lobby's console showed Atmosphere failing to start: `Wind:194: attem
   settings works there and fails on a real lobby, where Match is off. Test the lobby with `Ume_StudioMapId = "Lobby"`.
 
 Rules: Maps and placeholders (Two places, one file, two maps; Built in the dev experience, published to the main one).
+
+## Shots that paused mid-air, and other playtest fixes (2026-11-15)
+
+**What happened.** On the dev servers the owner saw rockets stop for a few frames mid-air ("not as smooth as they
+were"), a hit snail's health bar stutter while it moved, AssetsPreload fail on every match client
+(`AssetsPreload:59: attempt to index nil with 'GetAll'`), and the wind stay at −8 three turns running.
+
+- **Draw on a steady clock.** Shots, thrown snails and falling ground were drawn from `GetServerTimeNow()` each frame.
+  A live client's estimate of the server's clock is corrected now and then, and a correction backwards holds
+  everything drawn on it still until the clock catches up. Studio has no network, so it never shows. They now draw on
+  `I.Match.GetDrawTime()`, which runs at the local clock's rate and eases toward the server's. Not seen on a live
+  server yet: the cause is reasoned, not measured.
+- **Redraw a billboard only when what it shows changes.** SnailTag redrew its health bar (a new gradient every time)
+  on every attribute of its snail, and the server rewrites `Stamina` all the time while a snail walks.
+- **A module on both maps never reaches the other map's modules unguarded.** AssetsPreload read `I.G_Crates`, which
+  runs only in the lobby (the same mistake as Atmosphere's wind earlier that day).
+- **The wind changes every turn now** (the owner), never the same as the turn before; the testers' wind for a whole
+  round (2026-11-13) is gone.
+
+Rules: Snails (Shots fly by the game's own simulation; Every thrown shot flies like the rocket).

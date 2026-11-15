@@ -218,7 +218,10 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   terrain or snail it's aimed into, never inside it (Combat's `GetShotStart`, which bots' predictions use too). The server is
   the authority (launch, states every 0.1 s, end; it alone decides blasts), and each client simulates its own copy for
   smooth flight, rewinding to the server's state when it drifts. Never give a flying shot Roblox physics or move it by
-  replicated parts.
+  replicated parts. **What moves on the server's clock is drawn on `I.Match.GetDrawTime()`** (the owner, 2026-11-15:
+  rockets stopped for a few frames mid-air live), never `GetServerTimeNow()` read each frame: a client's estimate of
+  the server's clock is corrected now and then, and drawing on it froze shots, thrown snails and falling ground for a
+  moment; the draw clock runs at the local clock's rate and eases toward the server's.
 - **Shots fly in slow motion** (the tester's notes, 2026-11-08): the simulation runs at Combat's
   `PROJECTILE_TIME_SCALE` (0.5, half speed) along the same paths, so eyes can follow a shot. A thrown bomb's `Fuse`
   counts its own slowed flight time, so it bursts where it did at full speed; a placed one's (Dynamite) stays in real
@@ -239,7 +242,8 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   (`WIND_ACCEL_GROWTH`, the owner, 2026-11-13: "on wind 6… the projectile will get swept by the wind in another
   direction"): a shot into the wind lands visibly short, and in strong wind a steep shot is blown back over the
   shooter's head (at 6, steeper than about 64°). The
-  wind stays for a whole round: Match rolls it again only once every snail in play has played on it, strong wind
+  wind changes every turn (the owner, 2026-11-15: "the wind power changes every turn", replacing the testers' wind
+  for a whole round of 2026-11-13): Match rolls a new one as each turn starts, never the one before, strong wind
   rarely (`WIND_WEIGHTS`, the owner, 2026-11-15: ±10 about 1% of rolls), and a change
   gusts across the screen (Atmosphere's `WIND_CHANGE_BURST`) and flashes the HUD's number.
 - **Teammates are never hurt by each other** (the testers, 2026-11-13): Combat's `Blast.Hit` skips a snail on the

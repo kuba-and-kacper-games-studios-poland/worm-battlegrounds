@@ -42,7 +42,7 @@ player left stops at the next turn. One match plays at a time.
 | `Server.lua` | The match folders, remotes, Topics, the `I` table; starts the handlers |
 | `Scripts/Server/Phases.lua` | The main loop: waiting, drop, landing, turns, the end, rematches |
 | `Scripts/Server/Roster.lua` | Metadata, participants (players and bots), teams, the participant entries. `AssignTeam(participant)` puts a player on their Roblox team in a team match, making the team only when `Teams` has none of that name, at the start and when they come back |
-| `Scripts/Server/Turns.lua` | Turn order, the timer (a turn ends with its shot or its timer only: getting hurt no longer ends it, the owner, 2026-11-15), wind (rolled again once every snail still in play has played on it, its strength weighted by `WIND_WEIGHTS` so ±10 is about 1% of rolls), rounds, sudden death; a bot plays a dropped player's turns (`Autopilot`); at every turn's end each snail with its head under a pond's liquid loses `UNDERWATER_DAMAGE`, never below 1; the settle (below); after the knockouts at a turn's end it waits Snails' `GHOST_TIME` when any snail went out |
+| `Scripts/Server/Turns.lua` | Turn order, the timer (a turn ends with its shot or its timer only: getting hurt no longer ends it, the owner, 2026-11-15), wind (rolled again every turn, never the same twice in a row (the owner, 2026-11-15), its strength weighted by `WIND_WEIGHTS` so ±10 is about 1% of rolls), rounds, sudden death; a bot plays a dropped player's turns (`Autopilot`); at every turn's end each snail with its head under a pond's liquid loses `UNDERWATER_DAMAGE`, never below 1; the settle (below); after the knockouts at a turn's end it waits Snails' `GHOST_TIME` when any snail went out |
 | `Scripts/Server/Placement.lua` | Knockout order and the final places |
 | `Scripts/Server/Stats.lua` | Damage, knockouts, rounds and best shot per participant |
 | `Scripts/Server/Connection.lua` | Leaving, dropping out, rejoining (control from the snail's next turn, its team and `ReplicationFocus` back), sending players to the lobby, the `InMatch` attribute |
@@ -83,6 +83,7 @@ player left stops at the next turn. One match plays at a time.
 | `GetMyParticipantId()` | `string` | `P_<userId>` |
 | `GetParticipantInfo(participantId)` | `Configuration?` | The participant's entry |
 | `IsMyTurn()` | `boolean` | Whether the local player is active and plays the turn themselves (`false` while `Autopilot`) |
+| `GetDrawTime()` | `number` | The server's clock for drawing what moves on it (Combat's shots, Snails' flights, Arena's falls): steady at the local clock's rate, easing toward the server's (`DRAW_CLOCK_EASE`), so it never stands still or steps back when the client's estimate of the server's clock is corrected; it jumps when `DRAW_CLOCK_SNAP` seconds off |
 
 ## Network
 
@@ -138,6 +139,7 @@ player left stops at the next turn. One match plays at a time.
 | `REMATCH_SECONDS` | `20` | The rematch vote |
 | `LOBBY_RESEND_SECONDS`, `LOBBY_FAILED_MESSAGE` | `15`, "Couldn't get you to the lobby. Try again!" | A player on the way to the lobby isn't sent again for this long; a teleport that can't start says so, and Lobby works again at once |
 | `TEAM_SIZES`, `TEAMS`, `FFA_COLORS` | | Teams by mode, team names and colours, deathmatch colours |
+| `DRAW_CLOCK_EASE`, `DRAW_CLOCK_SNAP` | `1`, `0.5` | `GetDrawTime`'s easing toward the server's clock, in seconds, and how far off it jumps instead |
 | `STUDIO_MAP` | `"Studio"` | The map that runs the lobby and its matches on one server |
 | `STUDIO_METADATA`, `STUDIO_WAIT` | | The Match map alone in Studio: its stand-in match and wait |
 

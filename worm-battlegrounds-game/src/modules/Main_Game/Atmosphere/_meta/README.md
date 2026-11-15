@@ -76,7 +76,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 | `WIND_SOUND_TWEENINFO` | 2 s Sine InOut | How the loop eases to a new wind, and fades out when the map goes |
 | `WIND_GUST_SOUND`, `WIND_GUST_SOUND_FROM` | `"Wind_Gust"`, `0.4` | The whoosh at a gust's peak, in wind of 40 % of the strongest or more, as likely as the wind's share |
 | `WIND_GUST_SOUND_VOLUME` | `{ 0.15, 0.5 }` | The whoosh's volume, from just past `WIND_GUST_SOUND_FROM` to the strongest wind |
-| `WIND_CHANGE_BURST`, `WIND_CHANGE_BURST_MIN` | `40`, `8` | Streaks each emitter bursts when the wind changes (once every snail played on it), at the strongest wind and at least |
+| `WIND_CHANGE_BURST`, `WIND_CHANGE_BURST_MIN` | `40`, `8` | Streaks each emitter bursts when the wind changes (every turn), at the strongest wind and at least |
 | `PROP_EFFECTS` | `Leaves`, `Needles`, `Bush`, `Cactus`, `Twig` → `"Leaves"`; `Rock` → `"Dust"` | The burst a blast plays from each kind of prop part, by part name |
 | `PROP_PARTS_FULL` | `6` | Parts a blast must reach for a prop's full burst; fewer play a smaller one (down to half) |
 | `PROP_WIND_SHARE` | `0.5` | The share of the wind's pull that bends a burst |

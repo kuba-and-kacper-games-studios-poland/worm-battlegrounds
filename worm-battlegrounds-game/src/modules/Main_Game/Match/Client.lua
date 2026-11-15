@@ -7,6 +7,9 @@
 local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "Match"
 
+--- @type Match_Settings
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
 
 local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
@@ -19,6 +22,10 @@ local DropPicker = require(_scripts:FindFirstChild("Client"):FindFirstChild("Dro
 
 local matchFolder: Folder
 local wasMyTurn: boolean = false
+
+-- How far the drawing clock is from the local clock, and when it was last read (os.clock)
+local drawOffset: number? = nil
+local drawReadAt: number = 0
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -67,6 +74,7 @@ function Module.Init()
 		GetMyParticipantId = Module.GetMyParticipantId,
 		GetParticipantInfo = Module.GetParticipantInfo,
 		IsMyTurn = Module.IsMyTurn,
+		GetDrawTime = Module.GetDrawTime,
 	}
 end
 
@@ -180,6 +188,35 @@ end
 --- @return boolean
 function Module.IsMyTurn()
 	return Module.GetActive() == Module.GetMyParticipantId() and not matchFolder:GetAttribute("Autopilot")
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Draw Time
+
+--[[
+	**CLIENT** |
+	Returns the server's clock for drawing what moves on it (shots, thrown snails, falling ground): it runs at the local
+	clock's steady rate and eases toward the server's over DRAW_CLOCK_EASE seconds, so it never stands still or steps
+	back when the client's estimate of the server's clock is corrected; one off by DRAW_CLOCK_SNAP or more jumps to it.
+]]
+--- @return number
+function Module.GetDrawTime()
+	--[[ Local Variables ]]
+
+	local now: number = os.clock()
+	local target: number = I.S.Workspace:GetServerTimeNow() - now
+
+	--[[ Easing ]]
+
+	if not drawOffset or math.abs(target - drawOffset) >= _settings.DRAW_CLOCK_SNAP then
+		drawOffset = target
+	else
+		drawOffset += (target - drawOffset) * (1 - math.exp(-(now - drawReadAt) / _settings.DRAW_CLOCK_EASE))
+	end
+	drawReadAt = now
+
+	--[[ Returning ]]
+
+	return now + drawOffset
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

@@ -125,7 +125,7 @@ function Module._onShot(id: number, kind: string, name: string, start: number, p
 	--[[ Catching Up ]]
 
 	-- It arrives a moment after the server launched it: it catches up now, and its drawing eases out from the launch
-	Module._catchUp(shot, math.floor((I.S.Workspace:GetServerTimeNow() - start) / STEP))
+	Module._catchUp(shot, math.floor((I.Match.GetDrawTime() - start) / STEP))
 	shot.Offset = position - body.Position
 end
 
@@ -212,7 +212,7 @@ end
 function Module._step(deltaTime: number)
 	--[[ Local Variables ]]
 
-	local now: number = I.S.Workspace:GetServerTimeNow()
+	local now: number = I.Match.GetDrawTime()
 	local fade: number = math.exp(-deltaTime / _settings.CORRECTION_SMOOTH)
 
 	--[[ Stepping ]]
