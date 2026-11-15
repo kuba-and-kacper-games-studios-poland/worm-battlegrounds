@@ -31,7 +31,7 @@ three cards wear gold, silver and bronze outlines and place colours; Rematch is 
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| Placing` | `U_Placings` | `S_Place`, `S_Avatar`, `S_Name` (team colour, with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name), `S_Username`, `S_Coins`, `Background` › `S_Stroke` (the card's outline) |
+| `PREFAB \| Placing` | `U_Placings` | `S_Place`, `S_Avatar` (cropped, so it keeps its shape and fills its box when the cards narrow), `S_Name` (team colour, with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name), `S_Username`, `S_Coins`, `Background` › `S_Stroke` (the card's outline) |
 
 ## Driven by
 

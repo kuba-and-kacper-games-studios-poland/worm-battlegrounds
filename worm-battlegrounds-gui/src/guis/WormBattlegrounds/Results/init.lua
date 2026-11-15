@@ -902,6 +902,8 @@ local _gui = {
 						Size = UDim2.fromScale(0.506, 0.3962),
 						ZIndex = 3,
 						Image = "rbxassetid://139377864778126",
+						-- Cards narrow when more players share the row: crop keeps the avatar's shape and fills its box
+						ScaleType = Enum.ScaleType.Crop,
 					},
 					Attributes = { _ImageName = "1214_285__MatchOver__PlayerIcon_image" },
 				},

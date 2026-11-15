@@ -557,7 +557,7 @@ mirrored in the bots' `Predict`); ponds still only slow it.
 - **Only the rotation's maps play outside custom lobbies** (the owner, 2026-11-15): new public matches, Solo and Party pick
   from MatchBoard's `MAP_POOL` by each map's `Sizes`; the other built maps stay in the game for custom lobbies only
   (`CUSTOM_MAP_POOL`). Taking a map out of rotation never removes it.
-- **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`), `_Labs` (MapLab) and Roblox's own.
+- **The Workspace holds only the game:** `Ume` (spawn, asset folders, `Env`; the spawn, `Ume.BaseSpawn` at 0, 0.5, 0 under every map, and its decal are tagged `HideOnPlay`, since it showed through the new Desert's lava: the owner, 2026-11-15), `_Labs` (MapLab) and Roblox's own.
   Scratch and unused things go in `ServerStorage.!dump`. The template's baseplate (`Workspace.Ume.Env.Baseplate`)
   stays for building, but `Env` is tagged `Utils_MoveChildTo` (to ServerStorage), so the server moves it out when
   the game starts: nothing in play stands on it (avatars are parked anchored, the lobby's stage has its own ground).
