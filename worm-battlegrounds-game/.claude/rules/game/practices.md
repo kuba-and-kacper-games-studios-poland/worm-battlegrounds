@@ -623,7 +623,7 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   written short by the slot (`Currency_ShortFrom`: "18.62k"), so a count never wraps.
 - **The lobby is a party stage, as Fortnite's** (the owner's pick, 2026-11-09, replacing the bot match behind the
   guis): each client clones the stage prefab (`ReplicatedStorage_Assets/Lobby/PREFAB | Stage`, built by hand where it
-  stands, beyond the baseplate; since 2026-11-12 the studio's meadow, `Spawn_New`, and since 2026-11-15 the owner's `NewSpawn` (the same meadow, new platforms with glowing ring beams, the back one raised as before), its four platforms the pods; its parts are SmoothPlastic, since this place's `2022 Stud` variants are) and holds the camera on its `Camera` marker, low and close; the player's snail
+  stands, beyond the baseplate; since 2026-11-12 the studio's meadow, `Spawn_New`, and since 2026-11-15 the owner's `NewSpawn` (the same meadow, new platforms with glowing ring beams, the back one the fourth player's, raised 7.5 studs over the front one so its snail shows over the front snail's head: the owner, 2026-11-15), its four platforms the pods; its parts are SmoothPlastic, since this place's `2022 Stud` variants are) and holds the camera on its `Camera` marker, low and close; the player's snail
   stands on the front pod (`Pod_1`) in their equipped skin, 1.5 times its match size (Lobby's `STAGE_SNAIL_SCALE`, the owner, 2026-11-15), and their party in this server on the pods around it in
   theirs (Lobby's `Stage` handler, from the `PartyId` and `EquippedSkin` Player attributes). Each client stands its
   own snails, so everyone is in front on their own screen; the pods are parts in the prefab, so the layout is moved
