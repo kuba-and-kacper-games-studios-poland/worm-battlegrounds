@@ -2,7 +2,7 @@
 
 The emotes' icons (the owner's ask, 2026-11-11: "for wave a hand waving in the color of the snail"), in the game's
 icon style: bold shapes, the ink outline, flat colours with a light edge, drawn with the snail's own pink, its purple
-spots and its beaded eyestalks. They show on the EmoteShop cards, the lobby's emote row and the match's emote wheel, and
+spots and its beaded eyestalks. They show on the EmoteShop cards, the lobby Loadout's EMOTES button (Wave's), the match's emote wheel, and
 in the speech bubble over a snail (or beside a name on a lobby party card) when it plays the emote.
 
 | Emote | Icon |

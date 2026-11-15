@@ -585,7 +585,7 @@ fuse (Combat's `SINK_*`). Only the spider bomb's crawl ends in liquid.
   ACTIVE LOBBIES (a scrolling row of cards, one per public mode) and SOLO VS BOTS (**Play with party** in a party) with
   CUSTOM; no logo and no welcome line. **The Loadout is a column two cards wide** hanging from the right edge under
   the menu, its LOADOUT and EMOTES headings right-aligned, EMOTES right under the last row of cards shown, and
-  **EMOTES is one + button** that opens the EMOTES panel
+  **EMOTES is one button with Wave's icon** that opens the EMOTES panel
   (`EmoteShop`, its right edge on the column's), where an owned emote plays when pressed (the owner, 2026-11-15). The solo or party setup and the waiting room take the board's place, whose lobby
   rows and buttons slide down off the screen for them and back after (MatchBoard's `PLAY_*` settings, the owner's
   pick, 2026-11-12): the setup at the bottom centre (the owner's pick, 2026-11-12), the waiting room hanging from the

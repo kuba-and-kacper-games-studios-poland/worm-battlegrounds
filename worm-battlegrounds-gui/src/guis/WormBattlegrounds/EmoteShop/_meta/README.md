@@ -1,6 +1,6 @@
 # EmoteShop
 
-The **EMOTES** panel, opened from the lobby Loadout's EMOTES + button: a card per emote (its rarity badge, icon and
+The **EMOTES** panel, opened from the lobby Loadout's EMOTES button: a card per emote (its rarity badge, icon and
 name), three across. An emote not owned yet wears a locked cover with its price in coins and the level it needs, and
 a press buys it; a press on an owned one closes the panel and plays it.
 
@@ -52,7 +52,7 @@ and again while it's open when the inventory changes.
 ### Setup
 
 Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `EmoteShop`, `Enabled` off. WidgetManager
-opens it: the Loadout gui's `S_Shop` (+) toggles it (its tags). It keeps its `Name`, Ids and prefab names.
+opens it: the Loadout gui's `S_Shop` (the EMOTES button) toggles it (its tags). It keeps its `Name`, Ids and prefab names.
 
 ### Input
 

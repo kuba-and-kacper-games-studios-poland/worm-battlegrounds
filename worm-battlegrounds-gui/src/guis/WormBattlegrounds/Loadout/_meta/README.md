@@ -2,7 +2,7 @@
 
 The lobby's **LOADOUT**, a column hanging from the right edge under the corner menu: numbered cards two a row, the
 Bazooka then slots 1 to 6 (an item's picture, name and copies, a + on an empty slot, the lock and price on the next
-slot to open), and under them **EMOTES**, one + button that opens the emote panel. Both headings are right-aligned
+slot to open), and under them **EMOTES**, one button with Wave's icon (the waving hand) that opens the emote panel. Both headings are right-aligned
 (the owner, 2026-11-15).
 
 **Look.** Ported 1:1 from the studio's `LobbyInventory` gui (its `Right` frame, 2026-11-09) as `Primitive` nodes,
@@ -11,7 +11,7 @@ attributes on the slot prefab (normal, selected, the + slot's darker outline). A
 (the design's locked inventory card) with the price, and EMOTES, which the design lacks, built from copies of
 its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker polished the lock cover
 (2026-11-11): the design's darker locked card with a coin before the price. Changed from the design (2026-11-15): a
-column two cards wide instead of rows of four and three, and the emote row is the + button alone. EMOTES is placed
+column two cards wide instead of rows of four and three, and the emote row is one button, showing Wave's icon (`art/emotes`) instead of a +. EMOTES is placed
 under all four rows; Loadout moves it up to sit under the last row shown.
 
 |  |  |
@@ -30,7 +30,7 @@ under all four rows; Loadout moves it up to sit under the last row shown.
 | `U_Row1` to `U_Row4` | Frame (horizontal list, right-aligned) | Loadout clones the cards two a row into them, in order, so a lone last card sits on the right |
 | `U_EmoteSection` | Frame | EMOTES: its heading and `U_Emotes`. Loadout moves it up a row for each row of cards not shown |
 | `U_Emotes` | Frame | Holds `S_Shop`, at the right |
-| `U_Emotes` › `S_Shop` | ImageButton (+) | Opens `EmoteShop` (its tags) |
+| `U_Emotes` › `S_Shop` | ImageButton (Wave's icon in `Icon`, where a slot card has its picture) | Opens `EmoteShop` (its tags) |
 
 ## Prefabs
 
@@ -64,7 +64,7 @@ turns it on outside matches (and off while a full-screen widget is open). It kee
 | Action | Mouse and keyboard | Touch | Gamepad | Bound in |
 | --- | --- | --- | --- | --- |
 | Pick a slot (opens `LoadoutPicker`, or asks to open a locked slot) | Click | Tap | Select and A | Loadout (`I.Interact.OnPress`) |
-| Open the emote panel (owned emotes play from there) | Click + | Tap + | Select and A | `S_Shop` tags (WidgetManager `Toggle`) |
+| Open the emote panel (owned emotes play from there) | Click the EMOTES button | Tap | Select and A | `S_Shop` tags (WidgetManager `Toggle`) |
 
 ### Looks
 

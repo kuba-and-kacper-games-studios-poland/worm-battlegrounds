@@ -7,7 +7,7 @@ player the starter pieces and emote, swaps the whole skins a player owned for th
 any outfit for every screen, sells emotes for coins once the player's level is high enough, and plays emotes for
 everyone. The client draws the `Skins` widget (the lobby's STYLE: a deck per slot, the snail in the middle, the open
 slot's pieces; pressing an owned piece wears it), the `EmoteShop` widget (opened from the lobby `Loadout` panel's
-EMOTES +; pressing an owned emote plays it), the emote wheel in `MatchHud`, and a played emote's icon in a thought cloud
+EMOTES button; pressing an owned emote plays it), the emote wheel in `MatchHud`, and a played emote's icon in a thought cloud
 over the player's snail (in a match and on the lobby's stage) and beside their name in the lobby's party list.
 
 | | |
