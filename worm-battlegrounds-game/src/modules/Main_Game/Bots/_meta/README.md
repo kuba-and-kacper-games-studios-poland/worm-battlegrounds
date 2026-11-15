@@ -19,25 +19,32 @@ reading of the wind, how far it looks: `SKILLS`).
    `LOW_GRAVITY_SCALE` of its weight (Low gravity): a spot only the potion reaches costs it as a limited weapon's use
    (the genome's `Ammo`), and it drinks the potion before it walks there. With its skill's `AirShots`, it also weighs
    spots in the air, hovering on its jetpack (at least `AIR_MIN` studs up, no higher than a safe fall), to shoot from
-   mid-flight: as high as a safe fall, and as high as its flight goes, where the fall after its shot costs health (the
-   spot's `Fall`, counted as its own damage, and a knockout when it's more than its health left): a trade it takes
-   only when the shot pays for it. Each spot knows how near a deadly drop is (`Edge`), how badly a
+   mid-flight, so the drop after its shot never costs it health. Each spot knows how near a deadly drop is (`Edge`), how badly a
    blast at its feet would drop it (`Footing`: through thin ground or a floating ledge into the sea), how low it is
    over the sea as sudden death nears (`Low`), whether terrain within `COVER_HEIGHT` over it shields it from shots
    dropping on it (`Cover`), what standing with its head in a pond would cost (Match's `UNDERWATER_DAMAGE`, counted
    `POND_TURNS` times, as danger), its height over the enemies, how many enemies see it or stand near it, and how many
    friends stand near it. The skill's `MapSense` says how much it minds the map's dangers. It keeps the
    `Spots` its genome likes best.
-3. **Targets.** Its `Targets` nearest enemies, nearer still when wounded (`Focus`), the last to hurt it (`Grudge`,
-   the snail's `LastAttacker` attribute), or a player rather than a bot (the skill's `Hunt`).
+3. **Targets.** Snails the open sea or the arena's bounds already took (Arena's `GetHazard`: sudden death's rise drowns
+   them a moment before they're knocked out) aren't in play. Of the rest, its `Targets` nearest enemies, nearer still when wounded (`Focus`), the last to hurt it (`Grudge`,
+   the snail's `LastAttacker` attribute), a player rather than a bot (the skill's `Hunt`), the enemy whose turn is
+   next (the skill's `Tempo`, from Match's `TurnOrder`), or one that deals much damage a turn (the skill's `Memory`:
+   its habits).
 4. **Rough shots.** Every usable weapon from every spot at every target and each of its `AimPoints` on it: the snail,
    its feet, then the ground under it on the side nearer a deadly drop, then the other side (to blast the ground out
    from under it). Arcs are solved exactly with the wind it reads (Combat's `I.Combat.GetArcs` at `POWER_STEPS`) and
    checked against the terrain. With its skill's `Banks`, a bouncing weapon (the Grenade, the Cluster bomb) whose
    direct arc at a target misses by more than `BANK_MISS` also tries bank shots: onto the ground `BANK_STEP` studs
    either side of the target, onto a wall `BANK_HEIGHT` up past it, then twice as far out, each flown in full and
-   judged by where it bursts, so it bounces grenades into holes and round cover. Guns need a clear line in range; the homing missile is marked on the point; a swing or Dynamite only from
-   beside the target. With no arc reaching any target, it aims at the terrain toward each one instead, at points every
+   judged by where it bursts, so it bounces grenades into holes and round cover. Guns need a clear line in range; the homing missile is marked on the point and launched each of
+   `HOMING_LAUNCHES`' ways, each flown in full (its arc up to its lock, then straight at the point), keeping the one
+   that bursts nearest, so it clears ceilings and comes down over cover. With its skill's `AirPops`, the black hole
+   grenade is also aimed at points in the air (`AIR_POP_HEIGHTS` over the target, then over the middle of the target
+   and the enemy nearest it), each throw flown in full and opened where it passes nearest its point, within
+   `AIR_POP_REACH` (the plan's `Target`; the second press comes at its `OpenStep`): snails it pulls up burst with it
+   and fall. A swing or Dynamite only from beside the
+   target. With no arc reaching any target, it aims at the terrain toward each one instead, at points every
    `DIG_STEP` studs along the way from `DIG_MIN` studs off (never over its own head): it digs or blasts its way there.
 5. **Simulation.** The `Finalists` nearest misses are simulated in full (`Scripts/Server/Predict.lua`): the shot flies
    by Combat's own simulation (`I.G_Combat.StepBody`) from where Combat would start it (`I.Combat.GetShotStart`),
@@ -49,11 +56,26 @@ reading of the wind, how far it looks: `SKILLS`).
    bouncing off what they hit hard, landing and sliding on, off an edge too) to where they come to rest (into the open sea
    knocks them out, a long drop costs fall damage, into lava burns: Snails' `BURN_DAMAGE` × `BURN_TICKS`), so it sees a blow that bounces an enemy off its ledge into the sea; and snails whose ground the craters cut away drop
    through them. Each plan's score is the genome's weighing of what it does (damage and knockouts to enemies, harm to
-   friends and itself, the ammo it spends) and of the spot it shoots from. A shot that hurts no enemy is still worth the
+   friends and itself, the ammo it spends) and of the spot it shoots from; harm to the enemy who plays next counts
+   more by the skill's `Tempo` (a knockout takes its turn away). A shot that hurts no enemy is still worth the
    genome's `Pressure` the nearer it lands to one (none from `PRESSURE_RANGE` studs), so it shoots toward enemies it
    can't reach instead of anywhere; one that knocks out the last enemy is worth `WIN_VALUE` more, so it hurts its own
    side only when that wins the match.
-6. **Choice.** The best plan, or with the skill's `Choice` above 0, a good-enough one more often the better it is.
+6. **No harm to itself.** A plan that hurts or knocks out its own snail, or walks it into a pond, is `Harm`, unless it
+   wins the match. While any plan isn't, it never takes one that is: when all its `Finalists` are, it simulates on, up
+   to `CLEAN_SEARCH` times as many, to find one.
+7. **Steady.** With its skill's `Sure`, its `Sure` best plans are flown again a hand's error off each way (one
+   `AimNoise`, one `PowerNoise`) and scored by the mean of the five flights: it takes the shot that still works a hair
+   off (a bounce chain, an enemy at an edge) over one that only works dead on.
+8. **A turn ahead.** With its skill's `Lookahead`, those plans are also weighed by the next turn, from where everyone
+   ends up after them: its own best Bazooka shot next turn at an enemy (as its genome values damage), less what each
+   enemy left could do back to it there (as its genome values its own damage), the next to play fully and the rest
+   `LOOK_OTHERS` of it, each as dangerous as its habits say and from as far as it walks (the skill's `Memory`).
+9. **Choice.** The best plan, or with the skill's `Choice` above 0, a good-enough one more often the better it is.
+
+**Habits.** Bots remember every snail's play this match (`Bots_Habit`): the damage its shots deal a turn and how far
+it walks before it shoots, from Match's `Match_TurnStarted` and Combat's `Combat_ShotFired` and `Combat_ShotResolved`;
+one they haven't seen play deals `HABIT_DAMAGE` and walks `HABIT_MOVE`.
 
 A bot's jetpack rests the turn after it flew, as a player's does (`JetpackRest`): that turn its brain plans no flight
 and `Move` reads no fuel.
@@ -61,10 +83,14 @@ and `Move` reads no fuel.
 Then it walks to the spot (flying its jetpack when the spot needs it, or before placing Dynamite: it rises first,
 keeps `HEADROOM` clear of ceilings and gives up on a wall after `WALL_JUMPS` jumps at it), hovers there for an air
 spot while it aims, plans again from
-where it stands if the walk fell short, holds its weapon, swings its crosshair and charges its power for everyone to
+where it stands if the walk fell short or its target is gone (knocked out, or drowned by sudden death's rise, after
+it planned; again, once, if that happens while it aims), holds its weapon, swings its crosshair and charges its power for everyone to
 see (`AIM_TIME`, Combat's `CHARGE_SECONDS`), and fires with its hand's error (`AimNoise`, `PowerNoise`), which narrows
 by `Ranging` with each shot in a row at the same target from about the same spot, as players walk their shots in.
-From placed Dynamite it runs toward the side with more ground, flying when it wears a jetpack.
+From placed Dynamite it runs toward the side with more ground, flying when it wears a jetpack. After a thrown shot
+(an Arc or Target weapon) it walks on while the shot flies, with the stamina it has left, as players run for cover
+(`Brain.GetRetreat`): to the ground its walk reaches every `MOVE_STEP` studs that its genome likes best for the spot
+alone, where its own shot's blasts and craters don't reach it, or it stays.
 
 **It taunts.** `TAUNT_DELAY` after its shot knocks out an enemy, a bot plays one of `TAUNT_KILL`'s emotes on its
 snail; after one that hurts a player for `TAUNT_DAMAGE` or more, one of `TAUNT_HIT`'s at `TAUNT_CHANCE`
@@ -85,14 +111,15 @@ aim points, mind the map more, and always take their best plan.
 
 **The gym** (`Scripts/Server/Gym.lua`, Studio only) trains a difficulty's genome by self-play: a population of
 genomes, from the shipped one and mutants of it, plays headless matches against itself (`Scripts/Server/Sim.lua`: the
-real arena, craters and sea, stand-in snails that teleport to their spot instead of walking, the same brain, hand and
+real arena, craters and sea, stand-in snails that teleport to their spot instead of walking (and on after a thrown shot), the same brain, hand and
 predictions, turns as Match orders them, a wind that holds for a round as Match's does, potions rolled as live bots
 roll them, sudden death), free-for-alls and 2 v 2s on every map. Each seat scores
 `PLACE_POINTS` for its place (a team match: 1 to the winners), plus `DAMAGE_POINTS` for each point of damage it dealt
 enemies, less its own side's. The best (`Elites`) carry on, the rest are bred from the better ones and mutated, and
 after the last generation the champion sits an exam against the shipped genome, the two swapping who sits first every
 two matches (the first seat moves first, worth about a quarter of a point). The report says what the bots did (hits,
-own-side hits, damage per shot, knockouts and how many were throws into the sea, moves, jetpack use, heals, weapons)
+own-side hits, damage per shot, knockouts and how many were throws into the sea, moves, jetpack use, walks on after
+a thrown shot, heals, weapons)
 and gives the champion as Lua for `ServerData/Brains.lua`. The same gym also runs on the PC, many matches at once: the
 repo's `bot-gym/` runs this module's code outside Roblox, and the **parity probe** (`Scripts/Server/Parity.lua`)
 checks that both play alike. The code folder's `train-bots` skill is the procedure.
@@ -108,9 +135,9 @@ checks that both play alike. The code folder's `train-bots` skill is the procedu
 
 | File | What it controls |
 | --- | --- |
-| `Server.lua` | Making bot participants, a bot's turn: its view, healing, walking to its plan's spot, aiming, firing, running from Dynamite, firing anyway when the brain has no plan (`_fireAnyway`); taunts after its hits and knockouts; the tutorial bot; drop spots |
+| `Server.lua` | Making bot participants, every snail's habits this match, a bot's turn: its view, healing, walking to its plan's spot, aiming, firing, running from Dynamite, firing anyway when the brain has no plan (`_fireAnyway`); taunts after its hits and knockouts; the tutorial bot; drop spots |
 | `ServerData/Brains.lua` | Each difficulty's trained genome (`Bots_Genome`) |
-| `Scripts/Server/Brain.lua` | The planner: spots and what it knows of them, targets, aim points, rough shots and bank shots, the full simulations and scores, the choice; heals and drop spots |
+| `Scripts/Server/Brain.lua` | The planner: spots and what it knows of them, targets, aim points, rough shots, homing launches, bank shots and black holes opened in the air, the full simulations and scores, no harm to itself, the steady check, the turn ahead, the choice; heals, drop spots and the walk on after a thrown shot |
 | `Scripts/Server/Aim.lua` | Where an arc first touches, the hand's error, and the self-check of Combat's arc solver (`GetArcs`) |
 | `Scripts/Server/Predict.lua` | What a shot would do: its flight, blasts and strikes, where thrown snails land, the ground along a column and drops through craters |
 | `Scripts/Server/Move.lua` | Moving a bot's snail: walking to an X, ledges, walls and ceilings, jumps (higher under the Low gravity potion), the jetpack and hovering, stamina, safe ground and runways (never ground in the sea or lava: Arena's `GetHazard`, `IsInLava`) |
@@ -118,7 +145,7 @@ checks that both play alike. The code folder's `train-bots` skill is the procedu
 | `Scripts/Server/Gym.lua` | Training runs: the trigger, generations, breeding, the exam, the report; the parity probe's trigger |
 | `Scripts/Server/Parity.lua` | The parity probe: on every map, the same stand spots, shots, plans and carves, as lines of text, for Studio's and the PC gym's to be compared (`bot-gym/README.md` → Parity) |
 | `ServerSettings.lua` | `Bots_Settings`, under a server name so clients never get it (practices → Bots stay on the server) |
-| `_meta/_types.lua` | `Bots_Genome`, `Bots_Skill`, `Bots_View`, `Bots_Snail`, `Bots_Spot`, `Bots_Plan`, `Bots_Shot`, `Bots_Blast`, `Bots_Strike`, `Bots_Effect`, `Bots_Outcome`, `Bots_Ranging`, `Bots_TrainOptions`, `Bots_Seat`, `Bots_Stats` |
+| `_meta/_types.lua` | `Bots_Genome`, `Bots_Skill`, `Bots_View`, `Bots_Snail`, `Bots_Spot`, `Bots_Plan`, `Bots_Shot`, `Bots_Blast`, `Bots_Strike`, `Bots_Effect`, `Bots_Outcome`, `Bots_Ranging`, `Bots_Habit`, `Bots_TrainOptions`, `Bots_Seat`, `Bots_Stats` |
 
 ## API
 
@@ -143,8 +170,9 @@ task.spawn(I.Bots.TakeTurn, bot.Id)
 
 No remotes: bots move their server-owned snails and fire through `I.Combat` on the server, and taunt through
 `I.Cosmetics.PlaySnailEmote`. They read the snail attributes (`Health`, `Team`, `Stamina`, `LastAttacker`) and the
-match's `Round`, and hear Combat's `Combat_ShotFired` and `Combat_ShotResolved` and Snails' `Snails_Died` Topics (for
-their taunts).
+match's `Round` and `TurnOrder` (whose turn is next), and hear Combat's `Combat_ShotFired` and `Combat_ShotResolved`,
+Snails' `Snails_Died` and Match's `Match_TurnStarted` Topics (for their taunts and every snail's habits). A black hole
+opened in the air is `I.Combat.Detonate`, the player's second press.
 
 ## In the place
 
@@ -162,7 +190,7 @@ A run or a probe needs the Studio map with no match playing: it loads each map i
 | Key | Default | What |
 | --- | --- | --- |
 | `BOT_NAMES` | a list of names | Picked without repeats in a match |
-| `LOADOUTS` | Tutorial: none (the Bazooka alone) · Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Spider bomb, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Golf Club, Spider bomb, Jetpack, Medkit · Nightmare: Hard's, a Grenade and the Black hole grenade | What each difficulty takes into a match (others use Easy's) |
+| `LOADOUTS` | Tutorial: none (the Bazooka alone) · Easy: Grenade, Shotgun, Jetpack · Medium: Grenade, Shotgun, Dynamite, Spider bomb, Jetpack, Bandage · Hard: Dynamite, Cluster Bomb, Uzi, Homing Missile, Golf Club, Spider bomb, Jetpack, Medkit · Nightmare: Hard's, a Grenade, the Black hole grenade, the Spartan spear and One Punch | What each difficulty takes into a match (others use Easy's) |
 | `POTIONS` | `{ "", "SpeedPotion", "LowGravityPotion" }` | One rolled at even odds onto every bot's loadout (`""`: none), the tutorial bot's aside |
 | `START_GAP` | `20` | No bot parachutes in within this many studs of a spot taken already |
 | `TAUNT_KILL`, `TAUNT_HIT` | Taunt, Laugh, Flex, Dance, Backflip, Victory trumpet · Laugh, Thumbs up, Flex, Taunt | The emotes a bot taunts with after a knockout, and after a hit on a player |
@@ -192,6 +220,10 @@ A run or a probe needs the Studio map with no match playing: it loads each map i
 | `ESCAPE_HEIGHT` | `8` | How high it flies over its placed Dynamite with a jetpack on |
 | `COVER_HEIGHT`, `POND_TURNS` | `12`, `3` | Terrain this close over a spot is cover; a pond's damage counts this many turns |
 | `PRESSURE_RANGE`, `WIN_VALUE` | `30`, `6` | How far from an enemy a shot is still worth its `Pressure`; what knocking out the last enemy adds |
+| `CLEAN_SEARCH` | `3` | When every one of its `Finalists` hurts itself, it simulates on, up to this many times as many, for one that doesn't |
+| `HOMING_LAUNCHES` | 8 (angle toward the target, power) | The homing missile's launches it flies, keeping the one that bursts nearest its point |
+| `AIR_POP_HEIGHTS`, `AIR_POP_REACH` | `{ 8, 14 }`, `4` | A skill's `AirPops`: how high over the target it tries opening the black hole, and how near its point the flight must pass |
+| `HABIT_DAMAGE`, `HABIT_MOVE`, `LOOK_OTHERS` | `25`, `8`, `0.5` | An enemy it hasn't seen play deals this much a turn and walks this far; an enemy not next to play counts this share of the next one's reply (`Lookahead`) |
 | `DIG_MIN`, `DIG_STEP` | `10`, `8` | Where it aims at the terrain toward a target it can't reach: from this far off, this far apart |
 | `BANK_MISS`, `BANK_STEP`, `BANK_HEIGHT` | `3`, `5`, `6` | Bank shots (a skill's `Banks`): tried when the direct arc misses by this much, this far apart either side of the target, this high on its far side |
 | `HEADROOM`, `WALL_JUMPS`, `AIR_MIN` | `1.5`, `2`, `5` | Flying: room kept under ceilings, jumps at a wall before giving up, and an air spot's least height (one as high as a safe fall, one as high as its flight goes) |
@@ -204,12 +236,12 @@ A run or a probe needs the Studio map with no match playing: it loads each map i
 
 ### Skills
 
-| Difficulty | AimNoise | PowerNoise | WindRead | Ranging (min) | Spots | Targets | Finalists | AimPoints | MapSense | Choice | AirShots | Banks | Hunt | StartNoise |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Easy | 9° | 0.1 | 0.4 | 0.8 (0.5) | 2 | 1 | 3 | 1 | 0.5 | 0.5 | 0 | 0 | 0 | 1 |
-| Medium | 4.5° | 0.06 | 0.8 | 0.75 (0.35) | 4 | 2 | 5 | 2 | 0.75 | 0.2 | 0 | 0 | 0 | 0.5 |
-| Hard | 1.8° | 0.025 | 1 | 0.7 (0.25) | 7 | 3 | 10 | 3 | 1 | 0 | 2 | 2 | 0 | 0.25 |
-| Nightmare | 0.5° | 0.008 | 1 | 0.6 (0.15) | 14 | 4 | 24 | 4 | 1 | 0 | 6 | 6 | 0.5 | 0.15 |
+| Difficulty | AimNoise | PowerNoise | WindRead | Ranging (min) | Spots | Targets | Finalists | AimPoints | MapSense | Choice | AirShots | Banks | Sure | AirPops | Lookahead | Memory | Tempo | Hunt | StartNoise |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Easy | 9° | 0.1 | 0.4 | 0.8 (0.5) | 2 | 1 | 3 | 1 | 0.5 | 0.5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| Medium | 4.5° | 0.06 | 0.8 | 0.75 (0.35) | 4 | 2 | 5 | 2 | 0.75 | 0.2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0.5 |
+| Hard | 1.8° | 0.025 | 1 | 0.7 (0.25) | 7 | 3 | 10 | 3 | 1 | 0 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0.25 |
+| Nightmare | 0.25° | 0.004 | 1 | 0.5 (0.1) | 18 | 4 | 36 | 4 | 1 | 0 | 8 | 6 | 6 | 3 | 1 | 1 | 1 | 0.75 | 0.1 |
 
 ### The genome
 
@@ -234,10 +266,8 @@ What each weight in `ServerData/Brains.lua` makes a bot value (positive) or avoi
   Roblox's rolling). A floating
   ledge's smaller piece falling after a cut isn't foreseen, only ground cut away under a snail.
 - The brain foresees the Bazooka, Spartan spear, Grenade, Cluster bomb, Variety grenade's blast, Dynamite, guns,
-  swings, the homing missile, the spider bomb and the black hole grenade. A black hole opens where it first touches:
-  bots never open one in the air with a second press. A spider bomb's crawl is foreseen with the snails where they
+  swings, the homing missile, the spider bomb and the black hole grenade. A black hole a bot opens in the air gets its
+  second press at the step its planned flight reached the point, so a shaken throw opens a little off it. A spider bomb's crawl is foreseen with the snails where they
   stand, the black hole's draw in a straight line (not along the ground).
-- The genomes were trained before the spider bomb, the black hole, the potions, high air shots and bank shots: they
-  weigh them only through the weights they already have (damage, knockouts, own damage, `Ammo`) until a new run.
 - New things in the game (weapons, map objects such as explosive barrels, hazards, utilities) need the brain and the
   predictor taught about them, then a new training run. That's done only when the owner asks for it.

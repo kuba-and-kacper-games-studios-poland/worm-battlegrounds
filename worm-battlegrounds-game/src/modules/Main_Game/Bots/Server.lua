@@ -40,6 +40,10 @@ local rangings = {} --- @type { [string]: Bots_Ranging }
 -- The health of the players a bot's shot in flight may hurt, by the bot, for its taunt once it lands
 local before = {} --- @type { [string]: { [Model]: number } }
 
+-- Every snail's habits this match (the damage it deals a turn, how far it walks), and where its turn started
+local habits = {} --- @type { [string]: Bots_Habit }
+local turnStarts = {} --- @type { [string]: Vector3 }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -96,6 +100,9 @@ function Module.Start()
 	I.Topic.Subscribe("Combat_ShotFired", Module._onShotFired)
 	I.Topic.Subscribe("Combat_ShotResolved", Module._onShotResolved)
 	I.Topic.Subscribe("Snails_Died", Module._onDied)
+	I.Topic.Subscribe("Match_TurnStarted", Module._onTurnStarted)
+	I.Topic.Subscribe("Combat_ShotFired", Module._noteWalk)
+	I.Topic.Subscribe("Combat_ShotResolved", Module._noteDamage)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -116,6 +123,8 @@ function Module.CreateParticipant(difficulty: string, number: number)
 		usedNames = {}
 		rangings = {}
 		before = {}
+		habits = {}
+		turnStarts = {}
 	end
 	local name: string = Module._getName()
 	local loadout = table.clone(_settings.LOADOUTS[difficulty] or _settings.LOADOUTS.Easy) --- @type { string }
@@ -147,9 +156,12 @@ end
 	**SERVER** |
 	Plays a bot's turn as a player would (or a dropped player's, at TAKEOVER_DIFFICULTY). While it thinks (THINK_TIME) its brain plans the turn with its difficulty's
 	trained genome (ServerData/Brains) and skill (SKILLS): it heals when hurt, drinks a potion when its spot needs one,
-	walks or flies its jetpack to the spot it picked, plans again from where it ended up if the walk fell short, and
-	fires with its hand's error, which narrows as it keeps shooting at the same target. Gives up quietly when the turn
-	ends meanwhile.
+	walks or flies its jetpack to the spot it picked, plans again from where it ended up if the walk fell short or its
+	target is gone (knocked out meanwhile, or drowned by sudden death's rise), and fires with its hand's error, which
+	narrows as it keeps shooting at the same target. A black hole planned to open in the air gets its second press
+	when its flight reaches the point (the plan's OpenStep). After a thrown shot it walks on with the stamina it has
+	left to the spot its brain likes best, clear of its own blast, as players run for cover. Gives up quietly when the
+	turn ends meanwhile.
 ]]
 function Module.TakeTurn(participantId: string)
 	--[[ Data ]]
@@ -187,6 +199,14 @@ function Module.TakeTurn(participantId: string)
 		return
 	end
 
+	-- Its target went out while it thought: it thinks again
+	if plan and Module._isGone(plan.TargetId) then
+		plan = Brain.GetPlan(Module._getView(participantId, model), genome, skill)
+		if not Module._isTurn(participantId) then
+			return
+		end
+	end
+
 	-- No shot reaches anyone: it fires anyway, as a player would
 	if not plan then
 		Module._fireAnyway(participantId, model)
@@ -211,20 +231,14 @@ function Module.TakeTurn(participantId: string)
 		return
 	end
 
-	-- A walk that ended off its spot (along the plane, for a spot in the air) plans the shot again from the ground there
+	-- A walk that ended off its spot (along the plane, for a spot in the air), or a target gone meanwhile, plans the shot again from the ground there
 	local reached: Vector3 = model.PrimaryPart.Position
 	local off: number = if plan.Spot.Air then math.abs(reached.X - plan.Spot.Position.X) else (reached - plan.Spot.Position).Magnitude
-	if off > _settings.ARRIVE_DISTANCE + _settings.CLOSE_SLACK then
-		Module._land(participantId, model)
-		plan = Brain.GetPlan(Module._getView(participantId, model), genome, skill, true)
-		if not Module._isTurn(participantId) then
+	if off > _settings.ARRIVE_DISTANCE + _settings.CLOSE_SLACK or Module._isGone(plan.TargetId) then
+		plan, row = Module._planAgain(participantId, model, genome, skill)
+		if not plan or not row then
 			return
 		end
-		if not plan then
-			Module._fireAnyway(participantId, model)
-			return
-		end
-		row = I.G_Arsenal.Get(plan.ItemId)
 	end
 
 	--[[ Firing ]]
@@ -242,14 +256,44 @@ function Module.TakeTurn(participantId: string)
 		end)
 	end
 	local ready: boolean = Module._showAim(participantId, plan.ItemId, angle, if row.Aim == "Feet" then 0 else power)
-	local fired: boolean = ready and I.Combat.Fire(participantId, plan.ItemId, angle, power, plan.Target)
 	aiming = false
+
+	-- Its target went out while it aimed (sudden death's sea, a fall): it aims again from where it is, once
+	if ready and Module._isGone(plan.TargetId) then
+		plan, row = Module._planAgain(participantId, model, genome, skill)
+		if not plan or not row then
+			return
+		end
+		angle, power = plan.Angle, plan.Power
+		if row.Aim ~= "Melee" and row.Aim ~= "Feet" then
+			angle, power = Aim.GetShaken(plan.Angle, plan.Power, skill, Module._countShots(participantId, plan))
+		end
+		ready = Module._showAim(participantId, plan.ItemId, angle, if row.Aim == "Feet" then 0 else power)
+	end
+	local fired: boolean = ready and I.Combat.Fire(participantId, plan.ItemId, angle, power, plan.Target)
 	if not ready then
 		return
 	end
 	if not fired then
 		I.Combat.Fire(participantId, "Bazooka", angle, power)
 		return
+	end
+
+	-- A black hole it means to open in the air: the second press when its flight gets there
+	local openStep: number? = if row.Kind == "Roller" and plan.Target and plan.Outcome then plan.Outcome.Shot.OpenStep else nil
+	if openStep then
+		task.delay(openStep * I.Settings["Combat"].PROJECTILE_STEP, I.Combat.Detonate, participantId)
+	end
+
+	--[[ Repositioning ]]
+
+	-- A thrown shot leaves it moving until it bursts: it walks on with what stamina it has left, as a player runs for cover
+	local cover: Vector3? = Brain.GetRetreat(Module._getView(participantId, model), genome, skill, plan, model:GetAttribute("Stamina") or 0)
+	if cover then
+		Move.WalkTo(model, cover.X, _settings.MOVE_SECONDS, nil, function(): boolean
+			local phase: string = I.Match.GetPhase()
+			return I.Match.GetActive() == participantId and (phase == "Turn" or phase == "Flight") and not model.PrimaryPart.Anchored
+		end)
 	end
 
 	--[[ Running ]]
@@ -319,6 +363,41 @@ function Module._land(participantId: string, model: Model)
 	while not I.Snails.IsGrounded(model.Name) and os.clock() < deadline and Module._isTurn(participantId) do
 		task.wait(0.1)
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Plan Again
+
+--[[
+	Plans a bot's shot again from where it stands, once it's on the ground: after a walk that fell short, or when its
+	target went out meanwhile. With no plan it fires anyway (FireAnyway). Returns the plan and its weapon's row, or nil
+	when the turn ended or it fired anyway.
+]]
+--- @param genome Bots_Genome
+--- @param skill Bots_Skill
+--- @return Bots_Plan?
+--- @return Arsenal_WeaponData?
+function Module._planAgain(participantId: string, model: Model, genome, skill)
+	--[[ Planning ]]
+
+	Module._land(participantId, model)
+	local plan = Brain.GetPlan(Module._getView(participantId, model), genome, skill, true) --- @type Bots_Plan?
+
+	--[[ Checks ]]
+
+	-- Check if the turn lasted the planning
+	if not Module._isTurn(participantId) then
+		return nil, nil
+	end
+
+	-- No shot reaches anyone from here: it fires anyway
+	if not plan then
+		Module._fireAnyway(participantId, model)
+		return nil, nil
+	end
+
+	--[[ Returning ]]
+
+	return plan, I.G_Arsenal.Get(plan.ItemId)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Fire Anyway
@@ -500,6 +579,58 @@ function Module._onDied(participantId: string, _cause: string, killerId: string?
 	Module._taunt(killerId, _settings.TAUNT_KILL)
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Turn Started
+
+--[[
+	Notes where a snail starts its turn, for its habits (NoteWalk).
+]]
+function Module._onTurnStarted(participantId: string)
+	--[[ Data ]]
+
+	local model: Model? = I.Snails.Get(participantId)
+
+	--[[ Saving ]]
+
+	turnStarts[participantId] = if model and model.PrimaryPart then model.PrimaryPart.Position else nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Note Walk
+
+--[[
+	Notes how far a snail walked on its turn before it fired, into its habits' Move (a running mean).
+]]
+function Module._noteWalk(participantId: string, _itemId: string)
+	--[[ Data ]]
+
+	local model: Model? = I.Snails.Get(participantId)
+	local start: Vector3? = turnStarts[participantId]
+
+	--[[ Checks ]]
+
+	-- Check if its turn's start is known
+	if not model or not model.PrimaryPart or not start then
+		return
+	end
+
+	--[[ Saving ]]
+
+	local habit = Module._getHabit(participantId) --- @type Bots_Habit
+	habit.Move += (math.abs(model.PrimaryPart.Position.X - start.X) - habit.Move) / (habit.Turns + 1)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Note Damage
+
+--[[
+	Counts a snail's turn into its habits once its shot landed: the damage it dealt, as a running mean.
+]]
+function Module._noteDamage(participantId: string, damage: number)
+	--[[ Saving ]]
+
+	local habit = Module._getHabit(participantId) --- @type Bots_Habit
+	habit.Turns += 1
+	habit.Damage += (damage - habit.Damage) / habit.Turns
+end
+
 --%%%%%%%%%%%%%%%%%%%% Taunt
 
 --[[
@@ -544,11 +675,29 @@ function Module._isTurn(participantId: string)
 	return I.Match.GetActive() == participantId and I.Match.GetPhase() == "Turn"
 end
 
+--%%%%%%%%%%%%%%%%%%%% Is Gone
+
+--[[
+	Returns whether a bot's target is out of play: knocked out, or already in the open sea or past the arena's bounds
+	(Arena's GetHazard), where it's about to be.
+]]
+--- @return boolean
+function Module._isGone(targetId: string)
+	--[[ Data ]]
+
+	local target: Model? = I.Snails.Get(targetId)
+
+	--[[ Returning ]]
+
+	return not target or not target.PrimaryPart or not target:GetAttribute("Alive") or I.Arena.GetHazard(target.PrimaryPart.Position) ~= nil
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get View
 
 --[[
 	Returns what a bot knows at this moment, for its brain: its snail and every other one in play, the wind, the
-	round, its stamina, the items it may use now with their uses left, and who hurt it last.
+	round, its stamina, the items it may use now with their uses left, who hurt it last, the enemy whose turn is next
+	(Match's TurnOrder) and every snail's habits this match.
 ]]
 --- @return Bots_View
 function Module._getView(participantId: string, model: Model)
@@ -560,6 +709,13 @@ function Module._getView(participantId: string, model: Model)
 
 	local snails = {} --- @type { Bots_Snail }
 	local uses = {} --- @type { [string]: number }
+	local nextId: string? = nil
+	for _index: number, upcomingId: string in ipairs(string.split(I.Dirs.UmeWorkspace:FindFirstChild("Match"):GetAttribute("TurnOrder") or "", ",")) do
+		local upcoming: Model? = I.Snails.Get(upcomingId)
+		if not nextId and upcoming and upcoming ~= model and upcoming:GetAttribute("Alive") and upcoming:GetAttribute("Team") ~= model:GetAttribute("Team") then
+			nextId = upcomingId
+		end
+	end
 	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
 		if other ~= model then
 			table.insert(snails, Module._getSnail(other))
@@ -582,8 +738,28 @@ function Module._getView(participantId: string, model: Model)
 		Stamina = model:GetAttribute("Stamina") or 0,
 		Uses = uses,
 		LastAttacker = model:GetAttribute("LastAttacker"),
+		Next = nextId,
+		Habits = habits,
 	}
 	return view
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Habit
+
+--[[
+	Returns a snail's habits this match, made empty the first time.
+]]
+--- @return Bots_Habit
+function Module._getHabit(participantId: string)
+	--[[ Saving ]]
+
+	if not habits[participantId] then
+		habits[participantId] = { Turns = 0, Damage = 0, Move = 0 }
+	end
+
+	--[[ Returning ]]
+
+	return habits[participantId]
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Snail

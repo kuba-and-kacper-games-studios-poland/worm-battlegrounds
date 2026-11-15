@@ -1995,3 +1995,20 @@ whole once the active snail acted, Worms style, with its health. And the jetpack
   attribute.
 
 Rules: Snails (Every snail parachutes in; One jetpack a match, on fuel; Utilities are held, then used).
+
+## Bots that hurt themselves, and shots at the drowned (2026-11-15)
+
+**What happened.** The owner: "remove that the bots sacrifice their hp", "make them use homing missiles better",
+"sometimes they shoot after the enemy is dead in the last place he was… water rises, someone dies and in that same
+turn bot shoots there", then "make the bots overall more realistic to behave like real players". Bots hovered as high
+as their jetpack went and took the fall after the shot when the genome said the shot paid for it; the brain also took
+blasts on itself whenever the weights allowed. The homing missile always launched at 70° and 0.7 power, into ceilings
+and walls. Sudden death raised the sea at the start of a bot's turn, the drowning snail was still `Alive` for a moment,
+and the bot planned on it and fired at its last spot.
+
+- **A rule the owner states is a hard rule, not a weight.** A genome trades anything for enough damage; "never" has
+  to be a filter (`Harm`), with the weights left to choose among what's allowed.
+- **A world that changes at the turn's start can change under the plan.** Check the target again just before acting.
+- **Bots should have every move players have.** Players run after a thrown shot; bots stood still.
+
+Rules: Snails (Bots play tricks and taunt: never spend their own health, move like players).

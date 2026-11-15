@@ -42,7 +42,7 @@ local _settings = {
 		Easy = { "Grenade", "Shotgun", "Jetpack" },
 		Medium = { "Grenade", "Shotgun", "Dynamite", "SpiderBomb", "Jetpack", "Bandage" },
 		Hard = { "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "Jetpack", "Medkit" },
-		Nightmare = { "Grenade", "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "BlackHoleGrenade", "Jetpack", "Medkit" },
+		Nightmare = { "Grenade", "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "BlackHoleGrenade", "SpartanSpear", "OnePunch", "Jetpack", "Medkit" },
 	},
 
 	--[[
@@ -87,6 +87,14 @@ local _settings = {
 		- AirShots: how many spots in the air, hovering on its jetpack, it also weighs shooting from (0: none)
 		- Banks: how many bank shots it tries with a bouncing weapon (the Grenade, the Cluster bomb) when its direct
 		  arc at a target misses by more than BANK_MISS: landing beside or past it, to bounce and roll in
+		- Sure: how many of its best plans it flies again a hand's error off each way, taking the one that still works
+		  off its mark (0: none)
+		- AirPops: how many points in the air (over a target, between two) it tries opening the black hole grenade at,
+		  pressing again mid-flight (0: it opens where it touches)
+		- Lookahead: how much it weighs the next turn with a plan (0 to 1): its own shot from where it ends up, less what
+		  the enemies can do back to it there (the next to play most, each as dangerous as its Memory says)
+		- Memory: how much it minds each enemy's habits (0 to 1): the damage it deals a turn and how far it walks
+		- Tempo: how much more the enemy whose turn is next counts (0 to 1): as a target, and hurting or knocking it out
 		- Hunt: how much nearer players (not bots) count when it picks its targets, from 0 to 1
 		- StartNoise: how loosely it picks where it parachutes in (GetStart), on top of what its genome likes there
 		Nightmare is secret: it isn't on the board. The tutorial's bot plays Easy's brain (TUTORIAL_BRAIN) with a
@@ -108,6 +116,11 @@ local _settings = {
 			Choice = 0.5,
 			AirShots = 0,
 			Banks = 0,
+			Sure = 0,
+			AirPops = 0,
+			Lookahead = 0,
+			Memory = 0,
+			Tempo = 0,
 			Hunt = 0,
 			StartNoise = 1,
 		},
@@ -125,6 +138,11 @@ local _settings = {
 			Choice = 0.5,
 			AirShots = 0,
 			Banks = 0,
+			Sure = 0,
+			AirPops = 0,
+			Lookahead = 0,
+			Memory = 0,
+			Tempo = 0,
 			Hunt = 0,
 			StartNoise = 1,
 		},
@@ -142,6 +160,11 @@ local _settings = {
 			Choice = 0.2,
 			AirShots = 0,
 			Banks = 0,
+			Sure = 0,
+			AirPops = 0,
+			Lookahead = 0,
+			Memory = 0,
+			Tempo = 0,
 			Hunt = 0,
 			StartNoise = 0.5,
 		},
@@ -159,25 +182,35 @@ local _settings = {
 			Choice = 0,
 			AirShots = 2,
 			Banks = 2,
+			Sure = 2,
+			AirPops = 0,
+			Lookahead = 0,
+			Memory = 0,
+			Tempo = 0,
 			Hunt = 0,
 			StartNoise = 0.25,
 		},
 		Nightmare = {
-			AimNoise = 0.5,
-			PowerNoise = 0.008,
+			AimNoise = 0.25,
+			PowerNoise = 0.004,
 			WindRead = 1,
-			Ranging = 0.6,
-			RangingMin = 0.15,
-			Spots = 14,
+			Ranging = 0.5,
+			RangingMin = 0.1,
+			Spots = 18,
 			Targets = 4,
-			Finalists = 24,
+			Finalists = 36,
 			AimPoints = 4,
 			MapSense = 1,
 			Choice = 0,
-			AirShots = 6,
+			AirShots = 8,
 			Banks = 6,
-			Hunt = 0.5,
-			StartNoise = 0.15,
+			Sure = 6,
+			AirPops = 3,
+			Lookahead = 1,
+			Memory = 1,
+			Tempo = 1,
+			Hunt = 0.75,
+			StartNoise = 0.1,
 		},
 	},
 
@@ -293,6 +326,46 @@ local _settings = {
 
 	-- A shot that knocks out the last enemy is worth this much more: it pays for hurting its own side to win
 	WIN_VALUE = 6,
+
+	--[[
+		A bot never takes a plan that hurts itself while one that doesn't is left: when every one of its Finalists does,
+		it simulates on, up to CLEAN_SEARCH times its Finalists, to find one
+	]]
+	CLEAN_SEARCH = 3,
+
+	--[[
+		The homing missile's launches it tries (angle above level toward the target in degrees, power), keeping the one
+		whose flight, up to its lock and then straight at the point, bursts nearest it
+	]]
+	--[[
+		A skill's AirPops: the black hole grenade's points in the air, tried in this order: AIR_POP_HEIGHTS studs over
+		the target, then over the middle of the target and the enemy nearest it within the hole's PullRadius twice over.
+		It opens there when its flight (Predict) passes within AIR_POP_REACH studs of the point
+	]]
+	--- @type { number }
+	AIR_POP_HEIGHTS = { 8, 14 },
+
+	AIR_POP_REACH = 4,
+
+	--[[
+		A skill's Lookahead: an enemy unknown to its Memory deals HABIT_DAMAGE a turn and walks HABIT_MOVE studs; an
+		enemy that isn't next to play counts LOOK_OTHERS of the next one's reach
+	]]
+	HABIT_DAMAGE = 25,
+	HABIT_MOVE = 8,
+	LOOK_OTHERS = 0.5,
+
+	--- @type { Vector2 }
+	HOMING_LAUNCHES = {
+		Vector2.new(70, 0.7),
+		Vector2.new(90, 0.5),
+		Vector2.new(90, 0.85),
+		Vector2.new(55, 0.45),
+		Vector2.new(55, 0.8),
+		Vector2.new(35, 0.6),
+		Vector2.new(15, 0.6),
+		Vector2.new(115, 0.6),
+	},
 
 	--[[
 		A skill's Banks: when its direct arc at a target lands more than BANK_MISS studs off, a bouncing weapon also

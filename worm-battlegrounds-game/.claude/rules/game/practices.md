@@ -335,13 +335,22 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   spider bomb from Medium up, the black hole grenade on Nightmare alone, and every bot rolls none, a Speed potion or a
   Low gravity potion at even odds (Bots' `LOADOUTS`, `POTIONS`), drunk only when the spot it wants needs it.
   **Bots play tricks and taunt** (the owner, 2026-11-13: "make them play like pros"): Hard and Nightmare also shoot
-  hovering on their jetpack, higher than a safe fall when the shot pays for the fall after it (the spot's `Fall`,
-  their own damage in the genome), and bank grenades off the ground and walls into targets their direct arc can't
+  hovering on their jetpack (no higher than a safe fall), and bank grenades off the ground and walls into targets their direct arc can't
   reach (a skill's `Banks`); every brain sees a blow bounce and slide an enemy off its ledge into the sea (Predict's
   throw follows Snails' flight). A bot's knockout of an enemy, or a hit of 20 or more on a player, plays an emote on
   its snail (Bots' `TAUNT_*`, Cosmetics' `PlaySnailEmote`). **Snails drop apart, never on pre-set spots** (the owner,
   2026-11-13: "3 bots are in the same place"): the drop draws `DROP_SPOT_CHOICES` random land spots per snail, no bot
-  takes one within `START_GAP` of a spot taken, and players who don't place start on a free one.
+  takes one within `START_GAP` of a spot taken, and players who don't place start on a free one. **Bots never spend
+  their own health** (the owner, 2026-11-15: "remove that the bots sacrifice their hp"): no plan that hurts or knocks
+  out the bot itself, or walks it into a pond, while any other is left (Bots' `Harm`, `CLEAN_SEARCH`), except a shot
+  that wins the match. **Bots move like players** (the owner, 2026-11-15: "more realistic… so their moves are not
+  restricted"): after a thrown shot every bot walks on with the stamina it has left to the spot it likes best, clear
+  of its own blast (Bots' `GetRetreat`), and a bot whose target went out after it planned (sudden death's sea) plans
+  again before it fires. **Nightmare plays like the best players** (the owner, 2026-11-15, picking from the bots'
+  next ideas): it opens the black hole in the air over its targets with a second press (`AirPops`), weighs the next
+  turn with each plan (its own next shot, the enemies' replies: `Lookahead`), remembers how much each player deals and
+  how far they walk this match (`Memory`), and goes for the enemy whose turn is next (`Tempo`); its hand is steadier
+  and it checks its best shots still work a hair off (`Sure`), and it carries the Spartan spear and One Punch too.
 - **A walking snail has no grip:** its ball's friction is 0 while it walks, so it slides along walls and up slopes;
   at rest it grips again (`ROOT_FRICTION`).
 - **Snails are light, and a thrown snail flies the game's own physics** (the owner, 2026-11-12: "more like worms…

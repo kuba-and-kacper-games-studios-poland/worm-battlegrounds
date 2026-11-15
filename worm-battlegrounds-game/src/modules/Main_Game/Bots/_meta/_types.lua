@@ -56,6 +56,11 @@ local _bots_Genome = {}
 --- @field Choice number
 --- @field AirShots number
 --- @field Banks number
+--- @field Sure number
+--- @field AirPops number
+--- @field Lookahead number
+--- @field Memory number
+--- @field Tempo number
 --- @field Hunt number
 ---
 --- # Start #
@@ -94,7 +99,21 @@ local _bots_Snail = {}
 --- @field Stamina number
 --- @field Uses { [string]: number }
 --- @field LastAttacker string?
+---
+--- # Others #
+---
+--- @field Next string?
+--- @field Habits { [string]: Bots_Habit }
 local _bots_View = {}
+
+--- @class Bots_Habit
+---
+--- # Play #
+---
+--- @field Turns number
+--- @field Damage number
+--- @field Move number
+local _bots_Habit = {}
 
 --- @class Bots_Spot
 ---
@@ -114,7 +133,6 @@ local _bots_View = {}
 --- @field Low number
 --- @field Cover number
 --- @field Pond number
---- @field Fall number
 --- @field Height number
 --- @field Exposure number
 --- @field Crowd number
@@ -141,6 +159,7 @@ local _bots_Spot = {}
 ---
 --- @field Score number
 --- @field Outcome Bots_Outcome
+--- @field Harm boolean?
 local _bots_Plan = {}
 
 --- @class Bots_Blast
@@ -177,6 +196,7 @@ local _bots_Strike = {}
 --- # Black hole #
 ---
 --- @field Pulls { [string]: Vector3 }?
+--- @field OpenStep number?
 local _bots_Shot = {}
 
 --- @class Bots_Effect
@@ -260,6 +280,7 @@ local _bots_TrainOptions = {}
 --- @field Cooldowns { [string]: number }
 --- @field LastAttacker string?
 --- @field Ranging Bots_Ranging?
+--- @field Habit Bots_Habit
 --- @field Out boolean
 ---
 --- # Result #
@@ -291,5 +312,6 @@ local _bots_Seat = {}
 --- @field Moves number
 --- @field Jetpacks number
 --- @field Air number
+--- @field Retreats number
 --- @field Heals number
 local _bots_Stats = {}

@@ -62,7 +62,10 @@ end
 	genome likes best for its skill, solves every usable weapon's shot at its nearest targets from each (at the snail,
 	and with a skill's AimPoints at the ground under it too), simulates the most promising in full (Predict, craters
 	and drops included) and scores what they do. With no shot at anyone, it blasts the ground in the way to a target
-	instead, from the spot nearest it, as players dig. Nil when it can't even do that.
+	instead, from the spot nearest it, as players dig. Snails the open sea already took (sudden death's rise) aren't
+	in play. It never takes a plan that costs it health (Harm) while one that doesn't is left, simulating up to
+	CLEAN_SEARCH times its Finalists to find one. With its skill's Sure and Lookahead, its best plans are flown a hair
+	off (Steady) and weighed with the next turn (LookAhead). Nil when it can't even do that.
 ]]
 --- @param view Bots_View
 --- @param genome Bots_Genome
@@ -72,6 +75,7 @@ function Module.GetPlan(view, genome, skill, stay: boolean?)
 	--[[ Local Variables ]]
 
 	Predict.ClearColumns()
+	view = Module._getLiving(view)
 	local everyone = Module._getEveryone(view) --- @type { Bots_Snail }
 	local targets = Module._getTargets(view, genome, skill) --- @type { Bots_Snail }
 	local spots = Module._getSpots(view, genome, skill, targets, stay == true) --- @type { Bots_Spot }
@@ -111,6 +115,12 @@ function Module.GetPlan(view, genome, skill, stay: boolean?)
 						table.insert(candidates, plan)
 					end
 				end
+				if skill.AirPops > 0 and I.G_Arsenal.IsWeapon(itemId) and I.G_Arsenal.Get(itemId).Kind == "Roller" then
+					--- @param plan Bots_Plan
+					for _planIndex: number, plan in ipairs(Module._getPops(view, skill, spot, target, itemId, everyone)) do
+						table.insert(candidates, plan)
+					end
+				end
 			end
 		end
 	end
@@ -140,27 +150,96 @@ function Module.GetPlan(view, genome, skill, stay: boolean?)
 
 	--[[ Simulating ]]
 
-	-- The nearest misses are simulated in full and scored
+	-- The nearest misses are simulated in full and scored; past its Finalists, on only while every plan hurts itself
 	--- @param a Bots_Plan
 	--- @param b Bots_Plan
 	table.sort(candidates, function(a, b): boolean
 		return a.Score < b.Score
 	end)
 	local finalists = {} --- @type { Bots_Plan }
+	local clean = {} --- @type { Bots_Plan }
 	--- @param plan Bots_Plan
 	for index: number, plan in ipairs(candidates) do
-		if index > skill.Finalists then
+		if index > skill.Finalists * _settings.CLEAN_SEARCH or index > skill.Finalists and #clean > 0 then
 			break
 		end
 		if Module._simulate(view, genome, skill, plan, everyone) then
 			table.insert(finalists, plan)
+			if not plan.Harm then
+				table.insert(clean, plan)
+			end
 		end
 		Module.Breathe()
 	end
 
 	--[[ Returning ]]
 
-	return Module._choose(finalists, skill)
+	return Module._choose(Module._lookAhead(view, genome, skill, Module._steady(view, genome, skill, if #clean > 0 then clean else finalists, everyone)), skill)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Retreat
+
+--[[
+	Returns where a bot walks after its thrown shot (an Arc or Target weapon), as a player runs for cover while it
+	flies: the ground its walk reaches with the stamina it has left, every MOVE_STEP studs, the spot its genome likes
+	best for the spot alone (GetPlace) where the shot's own blasts and the craters don't reach it. Nil when staying
+	where it fired from is as good.
+]]
+--- @param view Bots_View
+--- @param genome Bots_Genome
+--- @param skill Bots_Skill
+--- @param plan Bots_Plan
+--- @return Vector3?
+function Module.GetRetreat(view, genome, skill, plan, stamina: number)
+	--[[ Data ]]
+
+	local row = I.G_Arsenal.Get(plan.ItemId) --- @type Arsenal_WeaponData
+
+	--[[ Checks ]]
+
+	-- Check if its shot flies on while it walks, and it stands on the ground
+	if row.Aim ~= "Arc" and row.Aim ~= "Target" or plan.Spot.Air or not plan.Outcome or stamina < _settings.MOVE_STEP then
+		return nil
+	end
+
+	--[[ Local Variables ]]
+
+	view = Module._getLiving(view)
+	local origin: Vector3 = plan.Spot.Position
+	local jump: number = Move.GetJump()
+	local placed = Module._getEveryone(view) --- @type { Bots_Snail }
+	placed[1] = table.clone(view.Self)
+	local best: Vector3? = nil
+	local bestScore: number = -math.huge
+
+	--[[ Choosing ]]
+
+	-- Where it fired from first, so a walk has to be better than staying
+	for _sideIndex: number, side: number in ipairs({ 0, -1, 1 }) do
+		local last: Vector3 = origin
+		for step: number = 0, if side == 0 then 0 else math.floor(stamina) do
+			local ground: Vector3? = if step == 0 then origin else Move.GetGround(origin.X + side * step, last.Y, jump)
+			if not ground or step > 0 and not Move.CanStep(last, ground) then
+				break
+			end
+			last = ground
+			if step % _settings.MOVE_STEP == 0 then
+				placed[1].Position = ground
+				local effect = Predict.GetEffects(plan.Outcome.Shot, placed)[view.Self.Id] --- @type Bots_Effect?
+				local spot = Module._getSpot(view, ground, 0, false, jump, nil) --- @type Bots_Spot
+				local score: number = Module._getPlace(spot, genome, view, skill) + random:NextNumber() * skill.Choice
+				if not (effect and (effect.Damage > 0 or effect.Out)) and spot.Pond == 0 and score > bestScore then
+					best = if step == 0 then nil else ground
+					bestScore = score
+				end
+			end
+		end
+		Module.Breathe()
+	end
+
+	--[[ Returning ]]
+
+	return best
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Heal
@@ -282,6 +361,34 @@ function Module.Breathe()
 	end
 end
 
+--%%%%%%%%%%%%%%%%%%%% Get Living
+
+--[[
+	Returns a view without the snails the open sea or the arena's bounds already took (Arena's GetHazard): sudden
+	death's rise drowns them at the start of a turn, a moment before they're knocked out.
+]]
+--- @param view Bots_View
+--- @return Bots_View
+function Module._getLiving(view)
+	--[[ Local Variables ]]
+
+	local living = table.clone(view) --- @type Bots_View
+	living.Snails = {}
+
+	--[[ Listing ]]
+
+	--- @param snail Bots_Snail
+	for _index: number, snail in ipairs(view.Snails) do
+		if not I.Arena.GetHazard(snail.Position) then
+			table.insert(living.Snails, snail)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return living
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Everyone
 
 --[[
@@ -304,7 +411,8 @@ end
 
 --[[
 	Returns the enemies a bot aims at this turn, as many as its skill's Targets: the nearest first, nearer still when
-	wounded (its genome's Focus), the last to hurt it (Grudge) or a player rather than a bot (its skill's Hunt).
+	wounded (its genome's Focus), the last to hurt it (Grudge), a player rather than a bot (its skill's Hunt), the one
+	whose turn is next (Tempo) or one that deals much damage a turn (Memory: its habits).
 ]]
 --- @param view Bots_View
 --- @param genome Bots_Genome
@@ -326,7 +434,9 @@ function Module._getTargets(view, genome, skill)
 			local wounded: number = 1 - snail.Health / maxHealth
 			local grudge: number = if snail.Id == view.LastAttacker then 1 else 0
 			local hunted: number = if snail.IsBot then 1 else 1 - skill.Hunt
-			rank[snail.Id] = (snail.Position - view.Self.Position).Magnitude * (1 - 0.3 * math.clamp(genome.Focus * wounded + genome.Grudge * grudge, 0, 2)) * hunted
+			local next: number = if snail.Id == view.Next then 1 - 0.3 * skill.Tempo else 1
+			local danger: number = 1 - 0.3 * skill.Memory * math.clamp(Module._getHabit(view, snail.Id).Damage / _settings.HABIT_DAMAGE - 1, 0, 1)
+			rank[snail.Id] = (snail.Position - view.Self.Position).Magnitude * (1 - 0.3 * math.clamp(genome.Focus * wounded + genome.Grudge * grudge, 0, 2)) * hunted * next * danger
 		end
 	end
 	--- @param a Bots_Snail
@@ -454,13 +564,13 @@ function Module._getSpots(view, genome, skill, targets, stay: boolean)
 
 	--[[ Choosing ]]
 
-	-- The open and air spots its genome likes best, up to its skill's Spots with where it stands, and its AirShots (a high one's fall is weighed with its shot, Simulate)
+	-- The open and air spots its genome likes best, up to its skill's Spots with where it stands, and its AirShots
 	--- @param list { Bots_Spot }
 	for _index: number, list in ipairs({ open, air }) do
 		--- @param a Bots_Spot
 		--- @param b Bots_Spot
 		table.sort(list, function(a, b): boolean
-			return Module._getPlace(a, genome, view, skill) + genome.SelfDamage * a.Fall / 100 > Module._getPlace(b, genome, view, skill) + genome.SelfDamage * b.Fall / 100
+			return Module._getPlace(a, genome, view, skill) > Module._getPlace(b, genome, view, skill)
 		end)
 	end
 	local spots = { here } --- @type { Bots_Spot }
@@ -529,7 +639,6 @@ function Module._getSpot(view, position: Vector3, walk: number, fly: boolean, ju
 		Low = if sea > -math.huge then math.clamp(1 - (standing.Y - sea) / _settings.LOW_RANGE, 0, 1) * (0.25 + 0.75 * urgency) else 0,
 		Cover = if I.S.Workspace:Raycast(standing, Vector3.yAxis * _settings.COVER_HEIGHT, sightParams) then 1 else 0,
 		Pond = if I.Arena.GetLiquid(head) then 1 else 0,
-		Fall = if ground then math.clamp(math.floor(position.Y - ground.Y - I.Settings["Snails"].SAFE_FALL_HEIGHT), 0, I.Settings["Snails"].MAX_FALL_DAMAGE) else 0,
 		Height = if enemies > 0 then math.clamp((position.Y - enemyHeight / enemies) / _settings.HEIGHT_SCALE, -1, 1) else 0,
 		Exposure = if enemies > 0 then seen / enemies else 0,
 		Crowd = crowd,
@@ -542,9 +651,8 @@ end
 
 --[[
 	Returns the spots in the air over the ground a jetpack flight passes (its `walk`th stud from where the bot stands),
-	to hover and shoot from, at least AIR_MIN studs up: one no higher than a safe fall (Snails' SAFE_FALL_HEIGHT), and
-	one as high as its cruise when that's higher still, whose fall after the shot costs health (its Fall), a trade its
-	genome weighs against what the shot does from up there. Empty when there isn't room to hover.
+	to hover and shoot from, at least AIR_MIN studs up and no higher than a safe fall (Snails' SAFE_FALL_HEIGHT), so the
+	drop after its shot never costs it health. Empty when there isn't room to hover.
 ]]
 --- @param view Bots_View
 --- @return { Bots_Spot }
@@ -556,12 +664,10 @@ function Module._getAirSpots(view, ground: Vector3, walk: number, cruise: number
 
 	--[[ Listing ]]
 
-	for _index: number, height: number in ipairs({ safe, cruise }) do
-		if height - ground.Y >= _settings.AIR_MIN and (height == safe or height > safe + 1) then
-			local spot = Module._getSpot(view, Vector3.new(ground.X, height, 0), walk, true, jump, ground) --- @type Bots_Spot
-			spot.Cruise = cruise
-			table.insert(spots, spot)
-		end
+	if safe - ground.Y >= _settings.AIR_MIN then
+		local spot = Module._getSpot(view, Vector3.new(ground.X, safe, 0), walk, true, jump, ground) --- @type Bots_Spot
+		spot.Cruise = cruise
+		table.insert(spots, spot)
 	end
 
 	--[[ Returning ]]
@@ -626,8 +732,7 @@ end
 
 --[[
 	Returns how much a genome likes standing on a spot, for the spot alone: the getting there (a potion it drinks for
-	it costs as a limited weapon's use does: Ammo), the fall after shooting from high in the air (as its own damage),
-	the map's dangers there (the edge, its footing, low ground, a pond's damage over POND_TURNS turns) as much as its
+	it costs as a limited weapon's use does: Ammo), the map's dangers there (the edge, its footing, low ground, a pond's damage over POND_TURNS turns) as much as its
 	skill's MapSense minds them, the height, cover from above, being seen, crowded and threatened.
 ]]
 --- @param spot Bots_Spot
@@ -647,7 +752,6 @@ function Module._getPlace(spot, genome, view, skill)
 
 	return -genome.Walk * walk
 		- potion
-		- genome.SelfDamage * spot.Fall / 100
 		- genome.Jetpack * (if spot.Fly then 1 else 0)
 		- skill.MapSense * danger
 		+ genome.Height * spot.Height
@@ -703,7 +807,7 @@ end
 --[[
 	Returns a weapon's best rough shot at a point on a target (its `point`th, GetAimPoints) from a spot, with how far
 	off it lands as its Score for now: arcs solved exactly for the wind it reads and checked against the terrain, the
-	homing missile marked on the point, guns at the snail only with a clear line in range, a swing or Dynamite only
+	homing missile launched the way whose flight (Predict) bursts nearest the point, guns at the snail only with a clear line in range, a swing or Dynamite only
 	from beside it. Nil when the weapon has no shot there.
 ]]
 --- @param view Bots_View
@@ -752,12 +856,24 @@ function Module._getRough(view, skill, spot, target, itemId: string, aimAt: Vect
 
 	--[[ Homing ]]
 
-	-- Fired up toward the target's side, it steers itself
+	-- It flies its launch arc until it locks on, then straight at the point: the launch whose flight bursts nearest it, clear of ceilings and walls on the way
 	if row.Aim == "Target" then
-		plan.Angle = math.rad(if side < 0 then 110 else 70)
-		plan.Power = 0.7
+		local everyone = Module._getEveryone(view) --- @type { Bots_Snail }
+		local bestMiss: number = math.huge
+		for _index: number, launch: Vector2 in ipairs(_settings.HOMING_LAUNCHES) do
+			local angle: number = if side < 0 then math.pi - math.rad(launch.X) else math.rad(launch.X)
+			local shot = Predict.GetShot(origin, itemId, angle, launch.Y, aimAt, view.Wind * skill.WindRead, view.Self.Model, everyone, nil) --- @type Bots_Shot?
+			local miss: number = if shot then (shot.Landed - aimAt).Magnitude else math.huge
+			if miss < bestMiss then
+				bestMiss = miss
+				plan.Angle = angle
+				plan.Power = launch.Y
+			end
+			Module.Breathe()
+		end
 		plan.Target = aimAt
-		return plan
+		plan.Score += bestMiss
+		return if bestMiss < math.huge then plan else nil
 	end
 
 	--[[ Checks ]]
@@ -833,6 +949,79 @@ function Module._getBanks(view, skill, spot, target, itemId: string, everyone)
 	return banks
 end
 
+--%%%%%%%%%%%%%%%%%%%% Get Pops
+
+--[[
+	Returns a black hole grenade's shots opened in the air (its owner's second press), as many as its skill's
+	AirPops: AIR_POP_HEIGHTS studs over the target, then over the middle of the target and the enemy nearest it (within
+	twice the hole's PullRadius), each arc flown in full (Predict) and opened where it passes nearest its point. Each
+	plan's Target is that point, and its Score how far from it the hole opens.
+]]
+--- @param view Bots_View
+--- @param skill Bots_Skill
+--- @param spot Bots_Spot
+--- @param target Bots_Snail
+--- @param everyone { Bots_Snail }
+--- @return { Bots_Plan }
+function Module._getPops(view, skill, spot, target, itemId: string, everyone)
+	--[[ Data ]]
+
+	local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
+
+	--[[ Local Variables ]]
+
+	local reach: number = row.PullRadius or row.BlastRadius * 1.5
+	local wind: number = I.G_Combat.GetWindAcceleration(itemId, view.Wind) * skill.WindRead
+	local points = {} --- @type { Vector3 }
+	for _index: number, height: number in ipairs(_settings.AIR_POP_HEIGHTS) do
+		table.insert(points, target.Position + Vector3.yAxis * height)
+	end
+	local pair = nil --- @type Bots_Snail?
+	--- @param snail Bots_Snail
+	for _index: number, snail in ipairs(view.Snails) do
+		local apart: number = (snail.Position - target.Position).Magnitude
+		if snail ~= target and snail.Team ~= view.Self.Team and apart <= reach * 2 and (not pair or apart < (pair.Position - target.Position).Magnitude) then
+			pair = snail
+		end
+	end
+	if pair then
+		table.insert(points, (target.Position + pair.Position) / 2 + Vector3.yAxis * _settings.AIR_POP_HEIGHTS[1])
+	end
+	local pops = {} --- @type { Bots_Plan }
+
+	--[[ Flying ]]
+
+	for index: number = 1, math.min(skill.AirPops, #points) do
+		local point: Vector3 = points[index]
+		local best = nil --- @type Bots_Plan?
+		for _arcIndex: number, arc: Vector2 in ipairs(I.Combat.GetArcs(spot.Position, point, itemId, wind, _settings.POWER_STEPS)) do
+			local shot = Predict.GetShot(spot.Position, itemId, arc.X, arc.Y, point, view.Wind * skill.WindRead, view.Self.Model, everyone, nil) --- @type Bots_Shot?
+			local score: number = if shot and shot.OpenStep then spot.Walk * 0.01 + (shot.Landed - point).Magnitude else math.huge
+			if score < (if best then best.Score else math.huge) then
+				--- @type Bots_Plan
+				best = {
+					ItemId = itemId,
+					TargetId = target.Id,
+					Spot = spot,
+					Angle = arc.X,
+					Power = arc.Y,
+					Target = point,
+					Score = score,
+					Outcome = nil,
+				}
+			end
+			Module.Breathe()
+		end
+		if best then
+			table.insert(pops, best)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return pops
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Aim Points
 
 --[[
@@ -876,8 +1065,10 @@ end
 	Simulates a rough plan in full (Predict) with the wind its bot reads, and scores what it does with the genome: harm
 	to enemies (knockouts, wounded ones, the last to hurt it), harm to friends and itself, the ammo it spends, and the
 	spot it shoots from. A shot that hurts no enemy is worth its Pressure the nearer it lands to one (PRESSURE_RANGE),
-	and one that knocks out the last enemy WIN_VALUE more. Placed Dynamite is scored with its bot run off as far as its
-	ground and the fuse allow. Returns whether the weapon's shot could be foreseen.
+	and one that knocks out the last enemy WIN_VALUE more; harm to the enemy who plays next is worth more by its skill's
+	Tempo. Placed Dynamite is scored with its bot run off as far as its
+	ground and the fuse allow. A plan that hurts or knocks out its own bot, or walks it into a pond, is marked Harm,
+	unless it wins the match. Returns whether the weapon's shot could be foreseen.
 ]]
 --- @param view Bots_View
 --- @param genome Bots_Genome
@@ -923,6 +1114,8 @@ function Module._simulate(view, genome, skill, plan, everyone)
 	local uses: number = view.Uses[plan.ItemId] or -1
 	local enemiesLeft: number = 0
 	local hurtEnemy: boolean = false
+	local harmed: boolean = false
+	local selfOut: boolean = false
 	local nearest: number = math.huge
 	score -= if uses > 0 then genome.Ammo / uses else 0
 	--- @param snail Bots_Snail
@@ -931,14 +1124,16 @@ function Module._simulate(view, genome, skill, plan, everyone)
 		local damage: number = if effect then math.min(effect.Damage, snail.Health) / 100 else 0
 		local out: number = if effect and (effect.Out or effect.Damage >= snail.Health) then 1 else 0
 		if snail.Id == view.Self.Id then
-			-- Its fall from a high air spot after the shot (its damage is the spot's, GetPlace) knocks it out too
-			out = if (if effect then effect.Damage else 0) + plan.Spot.Fall >= snail.Health then 1 else out
 			score -= genome.SelfDamage * damage + genome.SelfKnockout * out
+			harmed = damage > 0 or out > 0
+			selfOut = out > 0
 		elseif snail.Team == view.Self.Team then
 			score -= genome.AllyDamage * damage + genome.AllyKnockout * out
 		else
 			score += genome.EnemyDamage * damage + genome.Knockout * out + genome.Focus * damage * (1 - snail.Health / maxHealth)
 			score += if snail.Id == view.LastAttacker then genome.Grudge * damage else 0
+			-- The enemy who plays next: a knockout takes its turn away
+			score += if snail.Id == view.Next then skill.Tempo * (0.5 * genome.EnemyDamage * damage + genome.Knockout * out) else 0
 			enemiesLeft += 1 - out
 			hurtEnemy = hurtEnemy or damage > 0
 			nearest = math.min(nearest, (snail.Position - shot.Landed).Magnitude)
@@ -953,10 +1148,188 @@ function Module._simulate(view, genome, skill, plan, everyone)
 
 	plan.Score = score
 	plan.Outcome = { Shot = shot, Effects = effects }
+	-- Hurting itself, or walking into a pond, is harm; only a shot that wins the match while it stays in play may
+	plan.Harm = (harmed or plan.Spot.Pond > 0 and plan.Spot.Walk > 0) and not (enemiesLeft == 0 and not selfOut)
 
 	--[[ Returning ]]
 
 	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Steady
+
+--[[
+	Returns the plans a bot picks from, with its skill's Sure above 0: its Sure best, each flown again with its hand's
+	error (one AimNoise, one PowerNoise) off each way, scored by the mean of what the five
+	flights do, so it takes the shot that still works a hair off over one that only works dead on (a bounce chain, an
+	enemy right at an edge). Placed and swung weapons have no error to weigh. Without Sure, the plans as they are.
+]]
+--- @param view Bots_View
+--- @param genome Bots_Genome
+--- @param skill Bots_Skill
+--- @param plans { Bots_Plan }
+--- @param everyone { Bots_Snail }
+--- @return { Bots_Plan }
+function Module._steady(view, genome, skill, plans, everyone)
+	--[[ Checks ]]
+
+	-- Check if its skill weighs its own hand
+	if skill.Sure <= 0 or #plans <= 1 then
+		return plans
+	end
+
+	--[[ Local Variables ]]
+
+	local angleOff: number = math.rad(skill.AimNoise)
+	local powerOff: number = skill.PowerNoise
+	local offsets = { Vector2.new(-angleOff, 0), Vector2.new(angleOff, 0), Vector2.new(0, -powerOff), Vector2.new(0, powerOff) } --- @type { Vector2 }
+	local best = table.clone(plans) --- @type { Bots_Plan }
+	--- @param a Bots_Plan
+	--- @param b Bots_Plan
+	table.sort(best, function(a, b): boolean
+		return a.Score > b.Score
+	end)
+	best = { table.unpack(best, 1, math.min(skill.Sure, #best)) }
+
+	--[[ Flying ]]
+
+	--- @param plan Bots_Plan
+	for _index: number, plan in ipairs(best) do
+		local aim: string = I.G_Arsenal.Get(plan.ItemId).Aim
+		if aim ~= "Melee" and aim ~= "Feet" then
+			local total: number = plan.Score
+			for _offsetIndex: number, offset: Vector2 in ipairs(offsets) do
+				local shaken = table.clone(plan) --- @type Bots_Plan
+				shaken.Angle += offset.X
+				shaken.Power = math.clamp(plan.Power + offset.Y, 0, 1)
+				total += if Module._simulate(view, genome, skill, shaken, everyone) then shaken.Score else plan.Score
+				Module.Breathe()
+			end
+			plan.Score = total / (#offsets + 1)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return best
+end
+
+--%%%%%%%%%%%%%%%%%%%% Look Ahead
+
+--[[
+	Returns the plans with the next turn weighed in, by its skill's Lookahead (0: as they are): from where everyone
+	ends up after each plan (thrown or knocked out by it), its own best Bazooka shot next turn at an enemy (GetReach,
+	as its genome values damage to enemies), less what each enemy left could do back to it (the next to play fully,
+	the rest LOOK_OTHERS of it), each as dangerous as its habits say and from as far as it walks (its skill's
+	Memory), as its genome values its own damage.
+]]
+--- @param view Bots_View
+--- @param genome Bots_Genome
+--- @param skill Bots_Skill
+--- @param plans { Bots_Plan }
+--- @return { Bots_Plan }
+function Module._lookAhead(view, genome, skill, plans)
+	--[[ Checks ]]
+
+	-- Check if it thinks a turn ahead
+	if skill.Lookahead <= 0 then
+		return plans
+	end
+
+	--[[ Weighing ]]
+
+	--- @param plan Bots_Plan
+	for _index: number, plan in ipairs(plans) do
+		local effects = if plan.Outcome then plan.Outcome.Effects else {} --- @type { [string]: Bots_Effect }
+		local own = effects[view.Self.Id] --- @type Bots_Effect?
+		local mine: Vector3 = if own then own.Position else plan.Spot.Position
+		local followUp: number = 0
+		local threat: number = 0
+		--- @param snail Bots_Snail
+		for _snailIndex: number, snail in ipairs(view.Snails) do
+			local effect = effects[snail.Id] --- @type Bots_Effect?
+			if snail.Team ~= view.Self.Team and not (effect and effect.Out) then
+				local there: Vector3 = if effect then effect.Position else snail.Position
+				local habit = Module._getHabit(view, snail.Id) --- @type Bots_Habit
+				local danger: number = 1 + skill.Memory * (habit.Damage / _settings.HABIT_DAMAGE - 1)
+				local share: number = if snail.Id == view.Next or not view.Next then 1 else _settings.LOOK_OTHERS
+				followUp = math.max(followUp, Module._getReach(view, there, mine, 0))
+				threat += share * danger * Module._getReach(view, mine, there, skill.Memory * habit.Move)
+			end
+		end
+		plan.Score += skill.Lookahead * (genome.EnemyDamage * followUp - genome.SelfDamage * threat)
+		Module.Breathe()
+	end
+
+	--[[ Returning ]]
+
+	return plans
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Reach
+
+--[[
+	Returns how much a Bazooka shot from `from`, or from the ground `walk` studs either side of it, could hurt a snail
+	at `at` with this turn's wind, per 100 health: its damage by how near the best arc lands, none from its blast
+	radius out.
+]]
+--- @param view Bots_View
+--- @return number
+function Module._getReach(view, at: Vector3, from: Vector3, walk: number)
+	--[[ Local Variables ]]
+
+	local row = I.G_Arsenal.Get("Bazooka") --- @type Arsenal_WeaponData
+	local wind: number = I.G_Combat.GetWindAcceleration("Bazooka", view.Wind)
+	local origins = { from } --- @type { Vector3 }
+	if walk >= 1 then
+		for _index: number, side: number in ipairs({ -1, 1 }) do
+			local ground: Vector3? = Move.GetGround(from.X + side * walk, from.Y, Move.GetJump())
+			if ground then
+				table.insert(origins, ground)
+			end
+		end
+	end
+	local best: number = 0
+
+	--[[ Solving ]]
+
+	for _index: number, origin: Vector3 in ipairs(origins) do
+		for _arcIndex: number, arc: Vector2 in ipairs(I.Combat.GetArcs(origin, at, "Bazooka", wind, _settings.POWER_STEPS)) do
+			local miss: number = (Aim.GetContact(origin, arc.X, arc.Y, "Bazooka", wind, view.Self.Model) - at).Magnitude
+			best = math.max(best, math.clamp(1 - miss / row.BlastRadius, 0, 1) * row.DamageMax / 100)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return best
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Habit
+
+--[[
+	Returns what a bot knows of a snail's habits (the damage it deals a turn and how far it walks), or HABIT_DAMAGE
+	and HABIT_MOVE for one it hasn't seen play.
+]]
+--- @param view Bots_View
+--- @return Bots_Habit
+function Module._getHabit(view, snailId: string)
+	--[[ Data ]]
+
+	local habit = view.Habits[snailId] --- @type Bots_Habit?
+
+	--[[ Checks ]]
+
+	-- Check if it has seen the snail play
+	if habit and habit.Turns > 0 then
+		return habit
+	end
+
+	--[[ Returning ]]
+
+	--- @type Bots_Habit
+	local unknown = { Turns = 0, Damage = _settings.HABIT_DAMAGE, Move = _settings.HABIT_MOVE }
+	return unknown
 end
 
 --%%%%%%%%%%%%%%%%%%%% Choose

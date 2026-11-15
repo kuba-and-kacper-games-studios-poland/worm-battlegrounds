@@ -622,6 +622,7 @@ function Module._getNewStats()
 		Moves = 0,
 		Jetpacks = 0,
 		Air = 0,
+		Retreats = 0,
 		Heals = 0,
 	}
 	return stats
@@ -632,7 +633,7 @@ end
 --[[
 	Returns play stats in a line: turns per match, the share of shots that hurt an enemy and that hurt the shooter's own
 	side, damage per shot, knockouts (and how many were throws into the sea or off the arena), how often bots moved
-	and flew, how often they shot from the air, heals, and the weapons fired most.
+	and flew, how often they shot from the air and walked on after a thrown shot, heals, and the weapons fired most.
 ]]
 --- @param stats Bots_Stats
 --- @return string
@@ -649,7 +650,7 @@ function Module._getSummary(stats)
 	--[[ Returning ]]
 
 	return string.format(
-		"%.1f turns/match, hit %d%%, own side %d%%, %.1f dmg/shot, %d knockouts (%d thrown), moved %d%%, jetpack %d%%, air %d%%, %d heals; %s",
+		"%.1f turns/match, hit %d%%, own side %d%%, %.1f dmg/shot, %d knockouts (%d thrown), moved %d%%, jetpack %d%%, air %d%%, walked on %d%%, %d heals; %s",
 		stats.Turns / math.max(stats.Matches, 1),
 		math.round(stats.Hits / shots * 100),
 		math.round(stats.Friendly / shots * 100),
@@ -659,6 +660,7 @@ function Module._getSummary(stats)
 		math.round(stats.Moves / shots * 100),
 		math.round(stats.Jetpacks / shots * 100),
 		math.round(stats.Air / shots * 100),
+		math.round(stats.Retreats / shots * 100),
 		stats.Heals,
 		table.concat(weapons, ", ")
 	)

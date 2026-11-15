@@ -127,7 +127,7 @@ function Module.Play(mapId: string, seats, maxRounds: number, folder: Folder, ra
 		if round >= match.SUDDEN_DEATH_ROUND then
 			I.Arena.RaiseLiquid(match.SUDDEN_DEATH_RISE)
 		end
-		Module._playTurn(seat, seats, turn, round, wind, random, stats, log)
+		Module._playTurn(seat, seats, turn, round, wind, random, stats, log, Module._getNext(teams, teamIndex, memberIndex))
 	end
 	stats.Matches += 1
 	stats.Turns += turn
@@ -164,6 +164,7 @@ function Module._seat(seat, spot: Vector3, folder: Folder)
 	seat.Friendly = 0
 	seat.LastAttacker = nil
 	seat.Ranging = nil
+	seat.Habit = { Turns = 0, Damage = 0, Move = 0 }
 	for _index: number, itemId: string in ipairs(seat.Loadout) do
 		local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData
 		seat.Uses[itemId] = row.Uses
@@ -200,14 +201,14 @@ end
 
 --[[
 	Plays one seat's turn: its cooldowns count down, it heals and plans with its brain, goes to its spot (a jetpack use
-	when it flies, a potion's when the spot needs one), fires with its hand's error into the real wind, runs from placed Dynamite, and the shot's effects
+	when it flies, a potion's when the spot needs one), fires with its hand's error into the real wind, runs from placed Dynamite or walks on after a thrown shot, and the shot's effects
 	land: damage with credit, knockouts and throws, craters. Then everyone settles on what ground is left. Counts what
 	it did in `stats`, and prints it with `log`.
 ]]
 --- @param seat Bots_Seat
 --- @param seats { Bots_Seat }
 --- @param stats Bots_Stats
-function Module._playTurn(seat, seats, turn: number, round: number, wind: number, random: Random, stats, log: boolean)
+function Module._playTurn(seat, seats, turn: number, round: number, wind: number, random: Random, stats, log: boolean, nextId: string?)
 	--[[ Local Variables ]]
 
 	for itemId: string, turns: number in pairs(seat.Cooldowns) do
@@ -216,7 +217,7 @@ function Module._playTurn(seat, seats, turn: number, round: number, wind: number
 
 	--[[ Healing ]]
 
-	local heal: string? = Brain.GetHeal(Module._getView(seat, seats, wind, round), seat.Genome)
+	local heal: string? = Brain.GetHeal(Module._getView(seat, seats, wind, round, nextId), seat.Genome)
 	if heal then
 		seat.Health = math.min(seat.Health + (I.G_Arsenal.Get(heal).Amount or 0), I.Settings["Snails"].MAX_HEALTH)
 		Module._take(seat, heal)
@@ -225,7 +226,7 @@ function Module._playTurn(seat, seats, turn: number, round: number, wind: number
 
 	--[[ Planning ]]
 
-	local plan = Brain.GetPlan(Module._getView(seat, seats, wind, round), seat.Genome, seat.Skill) --- @type Bots_Plan?
+	local plan = Brain.GetPlan(Module._getView(seat, seats, wind, round, nextId), seat.Genome, seat.Skill) --- @type Bots_Plan?
 	if not plan then
 		return
 	end
@@ -272,6 +273,14 @@ function Module._playTurn(seat, seats, turn: number, round: number, wind: number
 		seat.Model:PivotTo(CFrame.new(Move.GetGround(x, origin.Y, 5) or origin))
 	end
 
+	-- After a thrown shot it walks on with the stamina it has left, as a live bot does (Brain.GetRetreat)
+	local stamina: number = I.Settings["SnailControl"].STAMINA_STUDS - plan.Spot.Walk
+	local cover: Vector3? = Brain.GetRetreat(Module._getView(seat, seats, wind, round, nextId), seat.Genome, seat.Skill, plan, stamina)
+	if cover then
+		seat.Model:PivotTo(CFrame.new(cover))
+		stats.Retreats += 1
+	end
+
 	--[[ Applying ]]
 
 	local snails = Module._getSnails(seats) --- @type { Bots_Snail }
@@ -304,6 +313,12 @@ function Module._playTurn(seat, seats, turn: number, round: number, wind: number
 	end
 
 	stats.Hits += if seat.Dealt > dealt then 1 else 0
+
+	-- Its habits, as live bots remember players' (the damage it deals a turn, how far it walks)
+	local habit = seat.Habit --- @type Bots_Habit
+	habit.Turns += 1
+	habit.Damage += (seat.Dealt - dealt - habit.Damage) / habit.Turns
+	habit.Move += (plan.Spot.Walk - habit.Move) / habit.Turns
 	stats.Friendly += if seat.Friendly > friendly then 1 else 0
 	stats.Damage += seat.Dealt - dealt
 	--- @param blast Bots_Blast
@@ -312,10 +327,10 @@ function Module._playTurn(seat, seats, turn: number, round: number, wind: number
 	end
 	if log then
 		print(
-			`[{_localName}::{script.Name}]: Turn {turn} {seat.Id}: {plan.ItemId} at {plan.TargetId} from {plan.Spot.Walk} studs{if plan.Spot.Air then " (in the air)" elseif plan.Spot.Fly then " (jetpack)" else ""}, wind {wind}, planned {string.format(
-				"%.2f",
-				plan.Score
-			)}; dealt {seat.Dealt - dealt}, own side {seat.Friendly - friendly}`
+			`[{_localName}::{script.Name}]: Turn {turn} {seat.Id}: {plan.ItemId}{if shot.OpenStep then " opened in the air" else ""} at {plan.TargetId}{if plan.TargetId == nextId then " (next)" else ""} from {plan.Spot.Walk} studs{if plan.Spot.Air
+				then " (in the air)"
+				elseif plan.Spot.Fly then " (jetpack)"
+				else ""}, wind {wind}, planned {string.format("%.2f", plan.Score)}; dealt {seat.Dealt - dealt}, own side {seat.Friendly - friendly}`
 		)
 	end
 
@@ -416,17 +431,21 @@ end
 
 --[[
 	Returns what a seat's brain knows on its turn, as a live bot's view: every snail in play, the wind, the round, full
-	stamina,
-	the items it may use now and who hurt it last.
+	stamina, the items it may use now, who hurt it last, whose turn is next and every seat's habits.
 ]]
 --- @param seat Bots_Seat
 --- @param seats { Bots_Seat }
 --- @return Bots_View
-function Module._getView(seat, seats, wind: number, round: number)
+function Module._getView(seat, seats, wind: number, round: number, nextId: string?)
 	--[[ Local Variables ]]
 
 	local others = {} --- @type { Bots_Snail }
 	local uses = {} --- @type { [string]: number }
+	local habits = {} --- @type { [string]: Bots_Habit }
+	--- @param other Bots_Seat
+	for _index: number, other in ipairs(seats) do
+		habits[other.Id] = other.Habit
+	end
 	--- @param snail Bots_Snail
 	for _index: number, snail in ipairs(Module._getSnails(seats)) do
 		if snail.Id ~= seat.Id then
@@ -457,8 +476,40 @@ function Module._getView(seat, seats, wind: number, round: number)
 		Stamina = I.Settings["SnailControl"].STAMINA_STUDS,
 		Uses = uses,
 		LastAttacker = seat.LastAttacker,
+		Next = nextId,
+		Habits = habits,
 	}
 	return view
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Next
+
+--[[
+	Returns the seat that plays after the one the rotation is on (teams in turn, each team's members in turn, those out
+	skipped), without moving the rotation, or nil with none left.
+]]
+--- @param teams { { Bots_Seat } }
+--- @param memberIndex { [number]: number }
+--- @return string?
+function Module._getNext(teams, teamIndex: number, memberIndex)
+	--[[ Searching ]]
+
+	local team: number = teamIndex
+	for _try: number = 1, #teams do
+		team = team % #teams + 1
+		local members = teams[team] --- @type { Bots_Seat }
+		local member: number = memberIndex[team] or 0
+		for _member: number = 1, #members do
+			member = member % #members + 1
+			if not members[member].Out then
+				return members[member].Id
+			end
+		end
+	end
+
+	--[[ Returning ]]
+
+	return nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Snails

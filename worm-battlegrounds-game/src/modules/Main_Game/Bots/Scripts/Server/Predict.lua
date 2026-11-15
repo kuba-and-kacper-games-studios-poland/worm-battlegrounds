@@ -64,7 +64,8 @@ end
 	Returns what a weapon fired from a snail's middle would do, as Combat's behaviors do it: the blasts it sets off and
 	the snails it strikes directly (bullets, a swing, a piercing spear), with the same simulation (I.G_Combat's
 	bodies), wind acceleration (bomblets and the spider bomb's throw too) and fuses. A spider bomb crawls to the nearest enemy (Combat's GetCrawlStep) before it
-	bursts; a black hole pulls snails in (Pulls) before it does. `random` scatters bullets and bomblets as a real shot
+	bursts; a black hole pulls snails in (Pulls) before it does, and with a `target` opens in the air where its flight
+	passes nearest it, within AIR_POP_REACH (its owner's second press, OpenStep). `random` scatters bullets and bomblets as a real shot
 	does; without it they spread evenly, so a plan is the same every time. Nil for a weapon whose shot it can't foresee.
 ]]
 --- @param snails { Bots_Snail }
@@ -155,7 +156,9 @@ function Module.GetShot(origin: Vector3, itemId: string, angle: number, power: n
 	-- A placed weapon is left behind by its snail, which runs from it
 	local burst: Vector3?
 	local pierced = {} --- @type { Model }
-	burst, pierced = Module._fly(start, velocity, options, row, if row.Aim == "Feet" then shooter else nil)
+	local openStep: number?
+	burst, pierced, openStep = Module._fly(start, velocity, options, row, if row.Aim == "Feet" then shooter else nil, if row.Kind == "Roller" then target else nil)
+	shot.OpenStep = openStep
 	for _index: number, snail: Model in ipairs(pierced) do
 		table.insert(shot.Strikes, {
 			Id = snail.Name,
@@ -715,25 +718,37 @@ end
 	Steps a shot body until it bursts or is gone, as the behaviors do: a contact shot bursts where it touches, a fused
 	one when its fuse runs out, a homing one at its target, any but the spear in liquid. Returns where it burst (nil
 	when it's lost, sunk or flew past PREDICT_SECONDS) and the snails a piercing shot passed through. `left` is a
-	snail it never touches (the one that placed it and ran).
+	snail it never touches (the one that placed it and ran). With `openNear` (a black hole opened by a second press),
+	it also stops in the air where it passes nearest that point within AIR_POP_REACH, and returns that step.
 ]]
 --- @param options Combat_ShotOptions
 --- @param row Arsenal_WeaponData?
 --- @return Vector3?
 --- @return { Model }
-function Module._fly(start: Vector3, velocity: Vector3, options, row, left: Model?)
+--- @return number?
+function Module._fly(start: Vector3, velocity: Vector3, options, row, left: Model?, openNear: Vector3?)
 	--[[ Local Variables ]]
 
 	local combat = I.Settings["Combat"] --- @type Combat_Settings
 	local body = I.G_Combat.NewBody(start, velocity, options) --- @type Combat_Body
 	local thrown: boolean = row ~= nil and row.Aim ~= "Feet"
 	local fuse: number? = if row and row.Fuse and thrown then row.Fuse / combat.PROJECTILE_TIME_SCALE elseif row then row.Fuse else nil
+	local last: Vector3 = start
+	local lastAway: number = math.huge
 	world.Exclude = { I.Dirs.UmeWorkspace:FindFirstChild("Combat"), left }
 
 	--[[ Flying ]]
 
 	for _step: number = 1, math.ceil(_settings.PREDICT_SECONDS / (combat.PROJECTILE_STEP * combat.PROJECTILE_TIME_SCALE)) do
 		local hit: RaycastResult? = I.G_Combat.StepBody(body, world)
+
+		-- Pressed again where it passes nearest its point: it opens one step back, where it was nearest
+		local away: number = if openNear then (openNear - body.Position).Magnitude else math.huge
+		if lastAway <= _settings.AIR_POP_REACH and away > lastAway then
+			return last, body.Ignore, body.Step - 1
+		end
+		last = body.Position
+		lastAway = away
 		local elapsed: number = body.Step * combat.PROJECTILE_STEP
 		local sunkFor: number = if body.Sunk and not body.Grounded then (body.Step - body.SunkStep) * combat.PROJECTILE_STEP else 0
 		if I.Arena.GetHazard(body.Position) or sunkFor >= combat.SINK_SECONDS then
