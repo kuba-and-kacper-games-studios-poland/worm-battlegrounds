@@ -1,5 +1,5 @@
 ---
-title: "Lobby: the loadout is a column two cards wide on the right, EMOTES is one + button, the Party X clears the title"
+title: "Lobby: the loadout is a column two cards wide on the right, EMOTES is one button with Wave's icon, the Party X clears the title"
 date: 2026-11-15
 status: open
 kind: changed
@@ -20,7 +20,7 @@ files:
   of three. The LOADOUT heading is right-aligned, and so are the rows: a lone last card (the locked one, usually)
   sits in the right column.
 - **EMOTES** (right-aligned too) sits right under the last row of cards shown (it moves down as slots open) and is
-  **one + button**, instead of a row of every owned emote and a +. It opens the EMOTES panel as before, now placed so its right edge lines up with the loadout column's.
+  **one button showing Wave's icon** (the waving hand), instead of a row of every owned emote and a +. It opens the EMOTES panel as before, now placed so its right edge lines up with the loadout column's.
 - In the EMOTES panel, **pressing an owned emote closes the panel and plays it** (before, owned cards did nothing
   there and emotes were played from the lobby row). Locked ones are still bought by a press.
 - **PARTY**: the red Leave X now sits just after the PARTY title instead of covering its end.
@@ -33,8 +33,8 @@ one row step (row height plus padding) for each of the four rows not shown. Cosm
 `Right` at x 0.9756 (was 0.8906). Party gui: `S_Leave` anchored at its left, x 0.92 of the column (was right-anchored
 at 1.05).
 
-**How to check.** In the lobby: LOADOUT at the top right with two cards a row, EMOTES with one + under it; the +
-opens the panel against the right edge; pressing Wave there closes it and the snail waves. In a party, the X sits
+**How to check.** In the lobby: LOADOUT at the top right with two cards a row, EMOTES with one button under it
+showing Wave's waving hand (`S_Shop` › `Icon`, `rbxassetid://122190966104251`); it opens the panel against the right edge; pressing Wave there closes it and the snail waves. In a party, the X sits
 after PARTY.
 
 **For the wiki.** Lobby and Loadout & inventory: the loadout's layout (two a row, on the right). Emotes: owned
