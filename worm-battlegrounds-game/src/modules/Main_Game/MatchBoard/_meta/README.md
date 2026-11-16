@@ -23,7 +23,9 @@ out, and pressing one says "Your party's leader picks the match."
 and the whole party is in it at once (their windows stay closed; their Custom reads "Party lobby" and opens it); the
 party must fit (on one team in Teams: `size // 2`), and a Teams lobby without bots needs someone from outside the
 party. When the player's lobby closes without them pressing Leave (it started, or its owner closed it), the window
-closes. Launching builds the match's teams
+closes. Its member list ends with an open slot per free place up to the lobby's size (`CUSTOM_OPEN_SLOT_TEXT`), and every
+change to the player's lobby is published (`MatchBoard_RoomChanged`) for the lobby's stage and the Party column, which
+list it (2026-11-16). Launching builds the match's teams
 (parties stay together, a party bigger than a team spilling onto the next team with room: Matchmaking's `Seat`), gives
 each player the card the match seats them from until they arrive, writes the match's metadata and teleports everyone
 to a reserved server of the Match map. On the Studio map (the lobby and the match on one Studio server) it hands the
@@ -33,7 +35,7 @@ match to `I.Match.Host` instead (a public Join to the match waiting there joins 
 | --- | --- |
 | Folder | `src/modules/Main_Game/MatchBoard` |
 | Runs on | Server, Client · Lobby map, Studio map |
-| Exposes | `I.MatchBoard` (server) |
+| Exposes | `I.MatchBoard` (server; on the client, `GetCustomRoom`) |
 | Uses | `I.Matchmaking`, `I.Party`, `I.Teleport`, `I.TeleportToServer`, `I.Transition`, `I.Notify`, `I.Friends` (client), `I.WidgetManager`, `I.DoEvery`, `I.Console` (client: the pad's selection) |
 
 ## Files
@@ -45,11 +47,11 @@ match to `I.Match.Host` instead (a public Join to the match waiting there joins 
 | `Scripts/Server/Public.lua` | The public cards: Join (claim seats in an open match on the card's map anywhere, or open a new one on it) |
 | `Scripts/Server/Custom.lua` | Custom rooms: creating, inviting, answering, starting, leaving |
 | `Scripts/Server/Launch.lua` | Teams, cards, metadata and the teleport to a new match server or an open one (`Send`; on the Studio map, `I.Match.Host`); solo and party matches |
-| `Client.lua` | Starts the three client handlers |
+| `Client.lua` | Starts the three client handlers; `I.MatchBoard` on the client (`GetCustomRoom`) |
 | `Scripts/Helpers/Rotation.lua` | `MatchBoard_Rotation`, both sides: each public card's map from the server clock (`GetMap(mode, size, at?)`), the seconds until the next (`GetSecondsLeft`), and the rotation's maps for a size (`GetPool`) |
 | `Scripts/Client/Board.lua` | The `MatchBoard` board: Solo vs bots (Play with party), Custom, the public lobby cards (each the rotation's map and its timer, redrawn every second while the board shows, `TIMER_TICK`); a party member's locked buttons. On a pad the selection rests on Solo vs bots (`I.Console.SetHome`) |
 | `Scripts/Client/Setup.lua` | The setup for a solo or party match (the studio's PlaySolo window, in the board's place): the bots, the picked one outlined white, what a win pays, Start, and X back to the board. On a pad the panel holds the selection, Start first, and B goes back to the board (`I.Console.Focus`) |
-| `Scripts/Client/Custom.lua` | The `CustomLobby` widget and room invites; closes the widget when the player's lobby closes without them leaving it |
+| `Scripts/Client/Custom.lua` | The `CustomLobby` widget and room invites; closes the widget when the player's lobby closes without them leaving it. Registers `MatchBoard_RoomChanged` and publishes it on every refresh of the player's lobby; lists its members, then open slots up to its `Size`; `GetMyRoom` (`I.MatchBoard.GetCustomRoom`) |
 | `Settings.lua` | `MatchBoard_Settings` |
 | `_meta/_types.lua` | `MatchBoard_RowOption`, `MatchBoard_MapRow`, `MatchBoard_Row` |
 
@@ -61,6 +63,12 @@ match to `I.Match.Host` instead (a public Join to the match waiting there joins 
 | --- | --- | --- |
 | `Launch(players, kind, mode, size, mapId, difficulty, tutorial?)` | `boolean` | Builds the teams and metadata and teleports the players. On the Studio map it starts the match on this server; on the Lobby map alone in Studio it only prints and notifies |
 | `GetMap(size: number)` | `string` | A random map from `MAP_POOL` (the rotation) whose `Sizes` hold that many snails; any pool map when none does (solo and party matches) |
+
+### Client: `I.MatchBoard`
+
+| Function | Returns | What it does |
+| --- | --- | --- |
+| `GetCustomRoom()` | `Instance?` | The custom lobby the local player is in (its `Configuration`: `Players`, `Size`, `Owner`…), nil when in none or before the board has arrived |
 
 ## Network
 
@@ -80,6 +88,12 @@ match to `I.Match.Host` instead (a public Join to the match waiting there joins 
 **Send: RemoteEvents**
 
 - `MatchBoard_Invited @ (fromUserId: number, roomId: string)`: to an invited player
+
+### Client
+
+**Topics**
+
+- `MatchBoard_RoomChanged @ ()`: the player's custom lobby changed (joined, left, someone came or went, or it closed); the lobby's stage and Party redraw from `I.MatchBoard.GetCustomRoom`
 
 ## Data
 
@@ -108,6 +122,7 @@ text colour), which the picked one swaps to.
 | `SOLO_DIFFICULTIES` | Easy, Medium, Hard | The bots' difficulties in the setup (a party also gets No bots) |
 | `CUSTOM_DIFFICULTIES` | None, Easy, Medium, Hard, Nightmare | The custom lobby's Bots row; Nightmare is only here |
 | `CUSTOM_ALONE_MESSAGE` | "You can't start a custom lobby by yourself. Invite a player or turn bots on!" | What Start says with only the owner in the lobby and no bots |
+| `CUSTOM_OPEN_SLOT_TEXT`, `CUSTOM_OPEN_SLOT_TRANSPARENCY` | `"Open slot"`, `0.5` | A free place in the lobby's member list (one per place up to its size): its name line, faded this much, no avatar or username |
 | `REWARD_TEXT`, `SOLO_WIN_COINS` | | What the setup's reward line says for a solo match (beside the coins), a party match and a party match without bots; the coins a solo win pays by difficulty (20, 35, 60: MatchRewards' `SOLO_COINS`, which pays them) |
 | `PARTY_BOTS_PER_PLAYER`, `PARTY_MAX_SIZE` | `1`, `8` | Bots per member in a party match with bots, and its most snails |
 | `BOARD_GUI_NAME`, `CUSTOM_GUI_NAME` | | The guis |

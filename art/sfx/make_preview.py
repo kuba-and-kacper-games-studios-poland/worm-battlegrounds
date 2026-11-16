@@ -1,12 +1,15 @@
 """Builds preview.html: every effect (make_classic.py's classic.json) and piece of music with a player, what it replaces
 and where it plays, for review before anything is uploaded.
-python -I make_preview.py <folder with make_classic.py's WB_*.wav> <folder with WB_Music_*.wav>"""
+python -I make_preview.py <folder with make_classic.py's WB_*.wav> <folder with WB_Music_*.wav> [<update folder>]
+The update folder (out/update_2026-11-16: make_levels.py's new maps and make_classic.py's "update" set) adds the
+"Update 16 Nov" section at the top."""
 
 import base64
 import html
 import os
 import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import json  # noqa: E402
@@ -128,13 +131,126 @@ TODO = [
 
 
 def player(wav, loop=False):
-    """An audio player with the sound embedded as MP3 (every browser and webview plays it; OGG isn't everywhere)."""
-    mp3 = os.path.splitext(wav)[0] + ".mp3"
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-codec:a", "libmp3lame", "-q:a", "4", mp3],
-                   check=True)
-    with open(mp3, "rb") as f:
-        data = base64.b64encode(f.read()).decode()
+    """An audio player with the sound embedded as MP3 (every browser and webview plays it; OGG isn't everywhere). The
+    MP3 is made in a temporary folder, so nothing is left beside the sounds."""
+    with tempfile.TemporaryDirectory() as tmp:
+        mp3 = os.path.join(tmp, "preview.mp3")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-codec:a", "libmp3lame", "-q:a", "4", mp3],
+                       check=True)
+        with open(mp3, "rb") as f:
+            data = base64.b64encode(f.read()).decode()
     return f"<audio controls {'loop ' if loop else ''}preload='none' src='data:audio/mpeg;base64,{data}'></audio>"
+
+
+# --- Update 16 Nov (2026-11-16): the new maps' music and the new effects, from out/update_2026-11-16 -------------------
+# Music: (file name after WB_Music_, what it is, where it plays). The names are SoundsList's Music_<MapId>.
+UPDATE_MUSIC = [
+    ("VolcanoIsle", "Volcano Isle, 87 s loop at 88 BPM in E Phrygian, hot and tense: the lava sea rumbling and "
+                    "bubbling, embers ticking, a hot breeze. A slow heartbeat on low toms, the low choir growling now "
+                    "and then; the snail tune on a low harp (the pack has no marimba), then a low horn, the piano, "
+                    "the soft horn, the chimes up high, one at a time", "Volcano Isle's match (Music_VolcanoIsle, "
+                    "today Desert's track as a shortcut)"),
+    ("VolcanoIsle_SuddenDeath", "Volcano Isle in sudden death, 118 BPM: pounding toms in eighths (the bass drum tuned "
+                                "up), the backbeat, brass stabs on the fifth and the flat second, an orchestra hit "
+                                "every 8 bars; the tune on the bright horn, answered by the horn, the lava louder",
+     "Volcano Isle's sudden death (Music_VolcanoIsle_SuddenDeath)"),
+    ("EchoCaverns", "Echo Caverns, 96 s loop at 80 BPM in B minor: drips into a cave pool ringing in a long stone "
+                    "echo, the cave's dark air, a far-off rumble. A deep thump and a low note every two bars, a choir "
+                    "breathing in; the tune plinked on the finger chimes (the pack's glockenspiel) with long echoes, "
+                    "the harp, the piano and the soft horn between", "Echo Caverns' match (Music_EchoCaverns)"),
+    ("EchoCaverns_SuddenDeath", "Echo Caverns in sudden death, 120 BPM: an echoing piano pulse (each note answered a "
+                                "dotted eighth later, twice), a driving dirty bass in eighths, the backbeat and a "
+                                "choir; the tune on the lead guitar with an echo, answered on the chimes",
+     "Echo Caverns' sudden death (Music_EchoCaverns_SuddenDeath)"),
+    ("RollingPlains", "Rolling Plains, 71 s loop at 108 BPM in D major, wide and breezy: gusts over long grass, "
+                      "leaves, birds, a hawk far off. A plucked harp on the beat, a string chord spread wide; the "
+                      "game's own call and answer whistled on the soft horn (the pack has no whistle), the harp and "
+                      "the guitar plucked between", "Rolling Plains' match (Music_RollingPlains)"),
+    ("RollingPlains_SuddenDeath", "Rolling Plains in sudden death, 138 BPM: galloping strings and harp (an eighth and "
+                                  "two sixteenths on every beat), the shaker in sixteenths, the backbeat; the tune "
+                                  "on the bright horn, answered by the soft horn",
+     "Rolling Plains' sudden death (Music_RollingPlains_SuddenDeath)"),
+    ("FluffyFallout", "Fluffy Fallout, 69 s loop at 112 BPM in C Mixolydian, playful: a soft wind, crickets, a few "
+                      "birds. Oom-pah on short plucked harp (the pack has no pizzicato strings), a little woodblock "
+                      "on the off-beats; the tune bouncing on the plucked harp, then the piano, the chimes, a low "
+                      "horn", "Fluffy Fallout's match (Music_FluffyFallout)"),
+    ("FluffyFallout_SuddenDeath", "Fluffy Fallout in sudden death, 140 BPM: fast plucked harp in sixteenths, toy "
+                                  "drums (the snare and a tom tuned up high, woodblocks), a bouncing bass; the tune "
+                                  "on the bright horn, answered on short piano notes",
+     "Fluffy Fallout's sudden death (Music_FluffyFallout_SuddenDeath)"),
+    ("MirageMesa", "Mirage Mesa, 101 s loop at 76 BPM in A Hijaz, slow and hazy (Desert is D, faster, with the guitar "
+                   "and a camel walk): sand hiss, a hot wind, a hawk calling far off. A lazy frame drum, a high choir "
+                   "haze breathing in; the tune slowly on a kalimba (the harp, plucked short: the pack has none) "
+                   "with its notes hanging, the chimes, the soft horn like a reed flute, the piano",
+     "Mirage Mesa's match (Music_MirageMesa)"),
+    ("MirageMesa_SuddenDeath", "Mirage Mesa in sudden death, 112 BPM: the hand drums speed up through every 8 bars "
+                               "(quarters, eighths, the maqsum with sixteenths, a roll into the crash), harp arpeggios "
+                               "up the Hijaz chord, the bass and a low choir; the tune low on the bright horn, "
+                               "answered by the horn", "Mirage Mesa's sudden death (Music_MirageMesa_SuddenDeath)"),
+    ("LakesideShowdown", "Lakeside Showdown, 80 s loop at 96 BPM in G Lydian: lake water lapping at the shore, birds, "
+                         "leaves, a light breeze. A gentle harp rolling a chord on every beat, a string chord now and "
+                         "then; the tune on a flute (the soft horn: the pack has no flute), the chimes and the piano "
+                         "once each", "Lakeside Showdown's match (Music_LakesideShowdown)"),
+    ("LakesideShowdown_SuddenDeath", "Lakeside Showdown in sudden death, 126 BPM: the harp driving in sixteenths, "
+                                     "the backbeat and bass drum, the bass in eighths, a choir; the tune on the "
+                                     "bright horn, answered by the flute",
+     "Lakeside Showdown's sudden death (Music_LakesideShowdown_SuddenDeath)"),
+]
+# Effects: name -> (where it plays, what it replaces). Their "what" comes from make_classic.py's docstrings.
+THROW = "the shared classic slingshot (12222103)"
+UPDATE_FX = [
+    ("Throws (each thrown weapon its own, one family)", [
+        ("Fire_Grenade", "A grenade thrown", THROW),
+        ("Fire_ClusterBomb", "A cluster bomb thrown", THROW),
+        ("Fire_VarietyGrenade", "A variety grenade thrown", THROW),
+        ("Fire_BlackHoleGrenade", "A black hole grenade thrown", THROW),
+        ("Fire_SpiderBomb", "A spider bomb thrown", THROW),
+        ("Fire_SpartanSpear", "The Spartan spear thrown", THROW),
+    ]),
+    ("Homing missile", [
+        ("Homing_Lock", "The homing missile locking onto its target", "NEW"),
+        ("Homing_Boost", "The homing missile diving at its target", "NEW"),
+    ]),
+    ("Black hole", [
+        ("BlackHole_Open", "The black hole opening (first touch, or the second press)", "NEW"),
+        ("BlackHole_Hum", "While it's open and pulling (seamless loop)", "NEW"),
+        ("BlackHole_Collapse", "Its hold ending: it caves in, just before the burst", "NEW"),
+        ("BlackHole_Burst", "The burst after the collapse", "NEW"),
+    ]),
+    ("Variety grenade and cluster bomb", [
+        ("Variety_Burst", "The variety grenade bursting into its minis", "NEW"),
+        ("Variety_Dig", "Variety worms burrowing (repeats as they dig)", "NEW"),
+        ("Variety_Squeak", "A variety worm diving into the ground", "NEW"),
+        ("Cluster_Split", "The cluster bomb splitting into bomblets", "NEW"),
+    ]),
+]
+
+
+def update_section(folder):
+    """The "Update 16 Nov" section: the six new maps' music and the new effects, each with what it is and where it
+    plays, all from the update's own folder."""
+    with open(os.path.join(folder, "classic.json"), encoding="utf-8") as f:
+        meta = json.load(f)
+    rows = ["<h2>Update 16 Nov</h2><p class='lead'>New since your last listen (2026-11-16), not uploaded: music for "
+            "the six new maps, made the way Picnic Plains, Desert and Rockslide Ridge are (the map's ambience and a "
+            "light song, mostly one instrument at a time playing a bit of the game's snail tune, in the map's own "
+            "mode, on the same classic samples and at the same loudness; a faster, driving sudden-death version), and "
+            "the new effects: a throw of its own for each thrown weapon, the homing missile's lock and dive, the black "
+            "hole's four stages, the variety grenade's burst and worms, the cluster's split. Where the brief named an "
+            "instrument the sample pack doesn't have, the card says what stands in. Loops play on repeat.</p>",
+            "<h3>Map music</h3><div class='grid'>"]
+    for name, what, where in UPDATE_MUSIC:
+        audio = player(os.path.join(folder, f"WB_Music_{name}.wav"), True)
+        rows.append(card(f"Music_{name}", what, where, "NEW", audio))
+    rows.append("</div>")
+    for title, items in UPDATE_FX:
+        rows.append(f"<h3>{html.escape(title)}</h3><div class='grid'>")
+        for name, where, replaces in items:
+            row = meta[name]
+            audio = player(os.path.join(folder, f"WB_{name}.wav"), row["loop"])
+            rows.append(card(name, row["what"], where, replaces, audio, row["kind"]))
+        rows.append("</div>")
+    return "".join(rows)
 
 
 # Sounds remade since the last preview (the owner's notes, 2026-11-10)
@@ -158,8 +274,9 @@ def card(name, what, where, replaces, audio, kind=None, ref=None):
 def main():
     folder = sys.argv[1]
     music = sys.argv[2] if len(sys.argv) > 2 else None
+    update = sys.argv[3] if len(sys.argv) > 3 else None
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "preview.html")
-    rows = []
+    rows = [update_section(update)] if update else []
     with open(os.path.join(folder, "classic.json"), encoding="utf-8") as f:
         meta = json.load(f)
     if music:

@@ -60,6 +60,13 @@ local _settings = {
 	VIP_NAME_COLOR = Color3.fromRGB(255, 206, 46),
 
 	--[[
+		On each screen, every snail but the player's own wears a small tag (the owner, 2026-11-16: "small minimalistic
+		hp and nickname"): its name and health bar at OTHER_TAG_SCALE, no level or badges; the turn arrow and timer
+		keep their size
+	]]
+	OTHER_TAG_SCALE = 0.7,
+
+	--[[
 		As a turn starts, the red turn arrow drops onto the active snail's tag from ARROW_DROP_FROM design px above
 		(off the top of the screen), bouncing in over ARROW_DROP_SECONDS, then bobs ARROW_BOB_HEIGHT px up and down
 		ARROW_BOB_SPEED radians a second
@@ -103,13 +110,24 @@ local _settings = {
 
 	--[[
 		Utilities a snail wears while they work, drawn by every client from their Arsenal models: the snail attribute
-		that shows each one, and where its RootPart sits in the ball's space (−Z ahead of the snail, +Y up)
+		that shows each one, and where its RootPart sits in the ball's space (−Z ahead of the snail, +Y up). Gear worn
+		on the shell follows the skin's shell bone (Bone, at BoneOffset from it, times the skin's scale), so it stays
+		strapped on through the idle, the walk and the hide; Offset is where it sits on a skin without that bone. The
+		Jetpack's back tank hugs the back of the shell, its front tank hidden in the shell
 	]]
 	--- @type { [string]: Snails_Gear }
 	GEAR = {
 		Parachute = { Attribute = "Parachute", Offset = Vector3.new(0, 4.9, 0) },
-		Jetpack = { Attribute = "JetpackFuel", Offset = Vector3.new(0, 0.4, 2.4) },
+		Jetpack = {
+			Attribute = "JetpackFuel",
+			Offset = Vector3.new(0, 0.15, 1.2),
+			Bone = "Bone.013",
+			BoneOffset = CFrame.new(0, 0.569, -0.747) * CFrame.fromEulerAnglesXYZ(-3.0735, 0, math.pi),
+		},
 	},
+
+	-- The skin scale a BoneOffset was measured at (the skins' own, Classic's 0.45); a skin drawn bigger moves it out with it
+	GEAR_SKIN_SCALE = 0.45,
 
 	--%%%%%%%%%%%%%%%%%%%% Sounds
 
@@ -141,15 +159,15 @@ local _settings = {
 	-- A snail shows its trail (the Trail_Snail effect) while it flies faster than this, in studs a second: knocked back, not walking
 	TRAIL_SPEED = 45,
 
-	-- Where the jetpack's jet (the Trail_Jet effect) comes out, from the snail's ball: under the worn jetpack (GEAR)
-	JET_TRAIL_OFFSET = Vector3.new(0, -0.6, 2.4),
+	-- Where the jetpack's jet (the Trail_Jet effect) comes out, from the snail's ball: under the worn jetpack's back tank (GEAR)
+	JET_TRAIL_OFFSET = Vector3.new(0, -0.85, 2.2),
 
 	--[[
-		The jet also streams JET_EXHAUST_VFX's Exhaust emitters (the rocket's thruster and smoke) down from there, so it
+		The jet also streams JET_EXHAUST_VFX's Exhaust emitters (the studio's booster flames) down from there, so it
 		shows while the jetpack hovers still; it's on while the snail wearing it is in the air (nothing within
 		JET_GROUND_GAP studs under its ball) and not dropping faster than JET_FALL_SPEED studs a second
 	]]
-	JET_EXHAUST_VFX = "Trail_Smoke",
+	JET_EXHAUST_VFX = "Jet_Booster",
 	JET_GROUND_GAP = 0.6,
 	JET_FALL_SPEED = 6,
 
@@ -174,6 +192,19 @@ local _settings = {
 
 	-- The most a throw lasts before the snail is handed back to Roblox physics wherever it is, in seconds
 	FLIGHT_MAX_SECONDS = 8,
+
+	-- A snail a black hole drags through the air speeds up to its drag speed over this many seconds, as the hole takes hold
+	DRAG_EASE = 0.35,
+
+	--[[
+		A snail on the ground slides along it toward a black hole only while the hole is less than this many studs above
+		it; a hole higher up lifts it off and draws it up through the air, so steps and ledges never stop the pull (the
+		owner, 2026-11-16: "make the magnet pull better")
+	]]
+	DRAG_SLIDE_MAX_RISE = 4,
+
+	-- A sliding snail moving slower than this share of its drag speed is held by a step or a wall, and drifts over it instead
+	DRAG_SLIDE_STUCK = 0.25,
 
 	--%%%%%%%%%%%%%%%%%%%% Burning
 

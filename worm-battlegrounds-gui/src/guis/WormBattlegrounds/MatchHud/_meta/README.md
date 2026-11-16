@@ -58,7 +58,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `S_Content` › `S_Avatar` | ImageLabel (square, `UICorner` 0.22, `Crop`; the design's player picture in the gui) | The snail's headshot, or `BOT_AVATAR` for a bot |
 | `S_Avatar` › `S_AvatarStroke` | UIStroke (`Border`, `ScaledSize` 0.06, orange) | `Color` = the accent, as the lines |
 | `S_Content` › `S_Title` | TextLabel (`TextCase_Upper`, the timer's font Heavy Italic, white under its gradient, a dark (20, 14, 10) `ScaledSize` UIStroke) | "Your turn!" or "Bax's turn" |
-| `S_Title` › `S_TitleGradient` | UIGradient (top to bottom) | `Color` = MatchHud's `CALLOUT_MINE_GRADIENT` (gold) or `CALLOUT_OTHER_GRADIENT` (white) |
+| `S_Title` › `S_TitleGradient` | UIGradient (top to bottom) | `Color` = MatchHud's `CALLOUT_MINE_GRADIENT` (gold) or `CALLOUT_OTHER_GRADIENT` (white); in the sudden-death callout white over the liquid's colour, turned and slid (Looks) |
 | `S_Content` › `S_Sub` | TextLabel (`TextCase_Upper`, Bold Italic, (225, 225, 235), the same dark UIStroke) | "Aim and fire!", "You're next!" or "You play in 3 turns" |
 | `U_Tension` | Frame, hidden, the whole screen (0.99 × 0.985) | Shown in the last `TICK_SOUND_FROM` seconds of the player's own turn |
 | `U_Tension` › `S_Glow` | UIStroke (red (240, 60, 30), 14 px, `Border`, a UIGradient clearer at the middle of each side) | Its `Transparency` pulses (1 in the gui) |
@@ -125,6 +125,7 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 | Used up for the match | `BarSlot` › `S_Icon` (and a model's `S_Model`) | `ImageColor3` = `Look_CooldownIconColor`, `S_Lock` shown (the Jetpack only once its fuel is gone; until then `S_Uses` shows the fuel left, "75%") |
 | Turn callout, the player's own | `S_TitleGradient`; `S_LineTop`, `S_LineBottom`, `S_AvatarStroke` | Gold `CALLOUT_MINE_GRADIENT`; orange `CALLOUT_ACCENT_COLOR` |
 | Turn callout, anyone else's | `S_TitleGradient`; `S_LineTop`, `S_LineBottom`, `S_AvatarStroke`; `S_Pop` | White `CALLOUT_OTHER_GRADIENT`; the snail's `Color`; at `CALLOUT_OTHER_SCALE` |
+| Turn callout, sudden death | `S_Avatar`; `S_Title`, `S_Sub`; `S_TitleGradient`; `S_LineTop`, `S_LineBottom` | Avatar hidden; "Water is rising..." or "Lava is rising..." over "Sudden death!"; the gradient white to 0.5, the liquid's colour from 0.52 (MatchHud's `SUDDEN_DEATH_LIQUIDS`), `Rotation` 90, its `Offset` tweened from `SUDDEN_DEATH_FILL_FROM` to `SUDDEN_DEATH_FILL_TO` (1.6 s sine out); the lines in the liquid's colour; held `SUDDEN_DEATH_HOLD` (2.4 s). The next turn's callout shows the avatar and puts the gradient's `Rotation` and `Offset` back |
 | Current snail | `TurnEntry` › `Background` | `Main` takes `Look_CurrentMain` and `Look_CurrentMainColor` (orange), `Stroke` `Look_CurrentStrokeColor`, `S_Mask` shown; others `Look_Main`, `Look_MainColor` and their team colour on `Stroke` |
 | Side | `TeamPlayer` › `Background` | `Main`, `Stroke2`, `Stroke` take `Look_Left*` or `Look_Right*` (mirrored slants); `Stroke` tinted the team colour |
 | Aiming snail | `S_Crosshair` › `S_RingLine` (`Color`), `S_ArmA`, `S_ArmB` (`BackgroundColor3`) | The snail's `Color`: its team's, or its own in a free-for-all |

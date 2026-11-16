@@ -20,6 +20,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import make_sfx  # noqa: E402
+import snaillib as L  # noqa: E402
 from snaillib import (CLASSIC, HERE, SR, N, Song, fade, level, loop_seam, mix, place, render_midi, room,  # noqa: E402
                       to_ogg, write)
 from tracker import DRUMS, Track  # noqa: E402
@@ -419,13 +420,221 @@ def Teleport_In():
     return stack((load("swoosh"), 0, 1), (score(build, 2.0), 0, 1))
 
 
+# --- 2026-11-16: each thrown weapon's own throw, the homing missile, the black hole, the variety grenade, the cluster --
+# The throws replace the one shared classic slingshot (Fire_Throw, 12222103): each keeps the slingshot at its core,
+# so they stay one family, with its own mark on it. Short numpy touches (clinks, servo chirps, warbles) where no
+# classic sound has one, through snaillib as make_crates.py does; each reseeds so it builds the same every time.
+
+def clinks(count, span, f_lo=2000, f_hi=3600, gain=0.3):
+    """Small metal parts knocking together: short bright two-partial pings scattered over `span` seconds."""
+    parts = []
+    for _ in range(count):
+        f = L.rng.uniform(f_lo, f_hi)
+        ping = L.modal([f, f * 1.48, f * 2.3], [0.03, 0.018, 0.01], [1, 0.5, 0.25], 0.08)
+        parts.append((ping, span * L.rng.random(), gain * L.rng.uniform(0.5, 1)))
+    return stack(*parts)
+
+
+def warble(f0, f1, seconds, rate=7.0, depth=0.12):
+    """A low wobbling tone gliding from f0 to f1, a little overdriven: the black hole's voice."""
+    t = L.tt(seconds)
+    f = L.glide(f0, f1, seconds, "log") * (1 + depth * np.sin(2 * np.pi * rate * t))
+    y = np.sin(2 * np.pi * np.cumsum(f) / SR) + 0.4 * np.sin(4 * np.pi * np.cumsum(f) / SR)
+    return L.spec(np.tanh(y * 1.5), hi=900)
+
+
+@sound("BUILT", -16)
+def Fire_Grenade():
+    """Grenade thrown: the pin pulled (a classic switch, quick and high, with its ring tinkling), then the classic
+    slingshot."""
+    L.reseed(71)
+    ring = L.modal([3150, 4700, 7900], [0.05, 0.03, 0.015], [1, 0.5, 0.25], 0.15)
+    return stack((speed(load("switch"), 1.6), 0, 3.0), (ring, 0.01, 0.12), (load("RubberBandSling"), 0.14, 1))
+
+
+@sound("BUILT", -15)
+def Fire_ClusterBomb():
+    """Cluster bomb thrown: heavier, the slingshot slowed and a weighty thump under it, the bomblets rattling inside
+    as it's swung and as it leaves."""
+    L.reseed(72)
+    heft = L.thump(140, 60, 0.02, 0.08, 0.4)
+    return stack((clinks(9, 0.22, gain=0.35), 0, 1), (speed(load("RubberBandSling"), 0.82), 0.2, 1),
+                 (heft, 0.2, 0.5), (clinks(6, 0.3, 1800, 3000, 0.25), 0.32, 1))
+
+
+@sound("BUILT", -16)
+def Fire_VarietyGrenade():
+    """Variety grenade thrown: the slingshot, a little brighter, with a finger-chime and glockenspiel sparkle running
+    up after it."""
+    L.reseed(73)
+    sparkle = sampled([("chimes", 0.06 + i * 0.035, 0.3, p, 50 + i * 3) for i, p in enumerate((88, 91, 96, 100, 103))],
+                      0.9, wet=0.3)
+    glock = stack((L.mallet(100, 0.5, "glock"), 0.12, 0.12), (L.mallet(107, 0.5, "glock"), 0.2, 0.1))
+    return stack((speed(load("RubberBandSling"), 1.06), 0, 1), (sparkle, 0, 0.8), (glock, 0, 1))
+
+
+@sound("BUILT", -16)
+def Fire_BlackHoleGrenade():
+    """Black hole grenade thrown: the slingshot, a touch lower, with a low warble swelling and sinking under it, as if
+    the grenade pulled at the air."""
+    L.reseed(74)
+    w = warble(95, 52, 0.9) * L.swell(0.9, 0.35, 1.5)
+    return stack((speed(load("RubberBandSling"), 0.94), 0, 1), (w, 0.02, 0.45))
+
+
+@sound("BUILT", -16)
+def Fire_SpiderBomb():
+    """Spider bomb thrown: the slingshot, and a tiny mechanical chirp as its legs fold (three servo blips, a classic
+    switch click)."""
+    L.reseed(75)
+    blips = []
+    for i, (f0, f1) in enumerate(((1800, 2600), (2000, 2900), (2300, 3300))):
+        b = L.osc(L.glide(f0, f1, 0.035, "log"), 0.035, "square") * L.ar(0.035, 0.002, 1.2)
+        blips.append((L.band(b, 2600, 1.2), 0.03 + i * 0.05, 0.22))
+    return stack((load("RubberBandSling"), 0.06, 1), (speed(load("switch"), 1.3), 0.0, 2.0), *blips)
+
+
+@sound("BUILT", -15)
+def Fire_SpartanSpear():
+    """Spartan spear thrown: a long swish (the classic sword slash, quicker) over a soft slingshot, and the bronze tip
+    ringing as it leaves (the classic blade 'shing' and a metal ring)."""
+    L.reseed(76)
+    ring = L.modal([1250, 3420, 6600], [0.5, 0.25, 0.1], [1, 0.45, 0.2], 0.8)
+    return stack((speed(load("swordslash"), 1.1), 0, 1), (speed(load("RubberBandSling"), 1.15), 0, 0.4),
+                 (speed(load("unsheath"), 1.25), 0.05, 0.45), (ring, 0.08, 0.25))
+
+
+@sound("BUILT", -18)
+def Homing_Lock():
+    """The homing missile locking on: two quick high beeps (the classic electronic ping, twice as fast), 0.4 s."""
+    p = speed(load("electronicpingshort"), 2.0)
+    return fade(stack((p, 0, 1), (p, 0.13, 1))[: N(0.4)], 0.001, 0.05)
+
+
+@sound("BUILT", -15)
+def Homing_Boost():
+    """The homing missile diving at its target: the classic rocket whoosh read faster and faster (its pitch rising) as
+    the afterburner kicks in with a low fwoom, 1.2 s."""
+    L.reseed(77)
+    src = load("RocketWhoosh")[N(0.8):]
+    n = N(1.2)
+    rate = 1.0 + 0.7 * np.linspace(0, 1, n) ** 1.3
+    burn = np.interp(np.cumsum(rate), np.arange(len(src)), src)
+    burn *= np.clip(L.tt(1.2) / 0.08, 0, 1)
+    fwoom = L.sweep(L.noise(N(0.5)), 2500, 250, "lp") * L.decay(0.5, 0.15, 0.01)
+    return stack((burn, 0, 1), (fwoom, 0, 0.5), (L.thump(160, 55, 0.03, 0.1, 0.5), 0, 0.5))
+
+
+@sound("BUILT", -13)
+def BlackHole_Open():
+    """The black hole opening: a quick inward breath (the classic swoosh reversed and slowed), then a deep whomp (a long
+    sub thump and the classic bass slowed) with the low choir and sweeping bass blooming under it."""
+    L.reseed(78)
+    breath = np.flip(speed(load("swoosh"), 0.6))
+    at = len(breath) / SR
+    whomp = L.thump(90, 28, 0.06, 0.35, 1.4)
+    air = L.sweep(L.noise(N(0.8)), 2000, 150, "lp") * L.decay(0.8, 0.25, 0.005)
+    bloom = sampled([("lowchoir", 0, 0.9, 28, 92), ("sweepbass", 0, 0.5, 28, 90)], 1.4, wet=0.35)
+    return stack((breath, 0, 0.8), (whomp, at, 1), (speed(load("bass"), 0.55), at, 0.6), (air, at, 0.4),
+                 (bloom, at, 0.8))
+
+
+@sound("BUILT", -22, loop=True)
+def BlackHole_Hum():
+    """The black hole pulling while it's open: a 3 s seamless loop that always seems to rise (a Shepard glide), a deep
+    sub, a six-a-second warble and air rushing in (no classic sound has one, so it's synthesized)."""
+    return make_sfx.BlackHole_Hum()
+
+
+@sound("BUILT", -15)
+def BlackHole_Collapse():
+    """The black hole caving in: the classic rocket blast played backwards (sucked in, swelling), a tone rising under
+    it, then cut off at its peak with a tiny low gulp and near silence, 1 s."""
+    L.reseed(79)
+    rev = np.flip(speed(load("collide"), 0.8)[: N(0.8)])
+    rise = L.osc(L.glide(40, 180, 0.8, "log"), 0.8) * np.linspace(0, 1, N(0.8)) ** 2.5
+    suck = np.flip(speed(load("swoosh"), 0.7))
+    x = stack((rev, 0, 1), (rise, 0, 0.5), (suck, 0.8 - len(suck) / SR, 0.6))[: N(0.8)]
+    x = fade(x, 0.001, 0.006)
+    gulp = L.thump(70, 30, 0.02, 0.05, 0.18)
+    return stack((x, 0, 1), (gulp, 0.81, 0.35))[: N(1.0)]
+
+
+@sound("BUILT", -11)
+def BlackHole_Burst():
+    """The black hole bursting after it collapses: the classic Time Bomb boom with a slowed classic explosion and a
+    long sub under it, the orchestra hit and a dark low choir on top, and its own mark, a deep warble falling away."""
+    L.reseed(80)
+    boom = fade(load("RocketShot")[: N(2.2)], 0.001, 0.6)
+    sub = L.thump(110, 24, 0.06, 0.5, 2.5)
+    fall = warble(320, 45, 1.6, rate=9, depth=0.15) * L.decay(1.6, 0.6, 0.004)
+    dark = sampled([("hit", 0, 0, 0, 110), ("lowchoir", 0, 1.6, 28, 96), ("choir", 0.02, 1.4, 52, 70),
+                    ("choir", 0.02, 1.4, 55, 66), ("crash", 0, 0, 0, 84)], 2.4, wet=0.4)
+    return stack((boom, 0, 0.8), (L.spec(speed(load("impact_explosion_03"), 0.7), hi=3000), 0, 0.6), (sub, 0, 0.9),
+                 (fall, 0.05, 0.4), (dark, 0, 0.7))[: N(2.6)]
+
+
+@sound("BUILT", -14)
+def Variety_Burst():
+    """The variety grenade bursting into its minis: a bright pop (the classic flashbulb and Kerplunk) and a prism of
+    finger chimes spraying up and back down, a glockenspiel glitter and a short bright-horn chord, rare and festive."""
+    L.reseed(81)
+    pop = stack((load("flashbulb"), 0, 1), (speed(load("Kerplunk"), 1.5), 0, 0.8), (L.click(0.004, 3000), 0, 0.6),
+                (speed(load("collide"), 1.5)[: N(0.4)], 0, 0.3))
+    up = (84, 88, 91, 95, 98, 102, 105)
+    n = [("chimes", 0.03 + i * 0.025, 0.35, p, 56) for i, p in enumerate(up)]
+    n += [("chimes", 0.22 + i * 0.03, 0.4, p, 46) for i, p in enumerate(reversed(up[:5]))]
+    n += [("brass", 0.05, 0.25, p, 90) for p in (72, 76, 79, 83)] + [("crash", 0.03, 0, 0, 70)]
+    prism = sampled(n, 1.6, wet=0.32)
+    glit = stack(*[(L.mallet(p, 0.6, "glock"), 0.08 + i * 0.04, 0.12) for i, p in enumerate((96, 100, 103, 107))])
+    return stack((pop, 0, 1), (prism, 0, 0.9), (glit, 0, 1))
+
+
+@sound("BUILT", -19)
+def Variety_Dig():
+    """A variety worm burrowing: a short wet crunch (the classic splat, lower, over gritty soil grains and a soft
+    thud), 0.3 s, made to repeat as they dig."""
+    L.reseed(82)
+    grit = L.grains(0.3, 26, 500, 2200, (0.004, 0.012), 1.5)
+    return fade(stack((speed(load("splat"), 0.85), 0, 1), (grit, 0, 0.5), (L.thump(130, 60, 0.02, 0.05, 0.2), 0, 0.5))
+                [: N(0.3)], 0.001, 0.06)
+
+
+@sound("BUILT", -20)
+def Variety_Squeak():
+    """A variety worm diving in: a tiny cute squeak (synthesized; no classic sound squeaks) and a little classic
+    Kerplunk bloop as it goes under."""
+    return stack((make_sfx.Variety_Squeak(), 0, 1), (speed(load("Kerplunk"), 2.2), 0.13, 0.35))
+
+
+@sound("BUILT", -15)
+def Cluster_Split():
+    """The cluster bomb splitting into its bomblets: a sharp pop (the classic snap and a small, quick classic blast,
+    a Kerplunk pop) and the bomblets clinking apart."""
+    L.reseed(83)
+    blast = fade(speed(load("collide"), 1.8)[: N(0.35)], 0.001, 0.1)
+    return stack((speed(load("snap"), 0.9), 0, 1), (blast, 0, 0.5), (speed(load("Kerplunk"), 1.3), 0, 0.6),
+                 (clinks(7, 0.25, 2200, 3800, 0.3), 0.04, 1))
+
+
+UPDATE_2026_11_16 = ["Fire_Grenade", "Fire_ClusterBomb", "Fire_VarietyGrenade", "Fire_BlackHoleGrenade",
+                     "Fire_SpiderBomb", "Fire_SpartanSpear", "Homing_Lock", "Homing_Boost", "BlackHole_Open",
+                     "BlackHole_Hum", "BlackHole_Collapse", "BlackHole_Burst", "Variety_Burst", "Variety_Dig",
+                     "Variety_Squeak", "Cluster_Split"]
+
+
 # --- build -----------------------------------------------------------------------------------------------------------
 
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "out", "classic")
     os.makedirs(out, exist_ok=True)
     meta = {}
-    for name, row in SOUNDS.items():
+    # Name some to build only them (python -I make_classic.py <out> Fire_Grenade ...); "update" builds the 2026-11-16 set
+    names = sys.argv[2:] or list(SOUNDS)
+    if names == ["update"]:
+        names = UPDATE_2026_11_16
+    for name in names:
+        row = SOUNDS[name]
         fn = row["fn"]
         if row["kind"] == "CLASSIC":
             src = row["source"]

@@ -40,6 +40,8 @@ local _snails_Participant = {}
 --- # Placing #
 ---
 --- @field Offset Vector3
+--- @field Bone string?
+--- @field BoneOffset CFrame?
 local _snails_Gear = {}
 
 --%%%%%%%%%%%%%%%%%%%% Sounds

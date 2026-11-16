@@ -18,6 +18,7 @@ local Flight = require(_scripts:FindFirstChild("Client"):FindFirstChild("Flight"
 local Shots = require(_scripts:FindFirstChild("Client"):FindFirstChild("Shots")) --- @type Combat_Client_Shots
 local Effects = require(_scripts:FindFirstChild("Client"):FindFirstChild("Effects")) --- @type Combat_Client_Effects
 local Aimbot = require(_scripts:FindFirstChild("Client"):FindFirstChild("Aimbot")) --- @type Combat_Client_Aimbot
+local Vortex = require(_scripts:FindFirstChild("Client"):FindFirstChild("Vortex")) --- @type Combat_Client_Vortex
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -61,6 +62,7 @@ function Module.Start()
 	Shots.Start()
 	Effects.Start()
 	Aimbot.Start()
+	Vortex.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

@@ -42,9 +42,9 @@ local Module = {}
 
 --[[
 	The black hole grenade (the testers, 2026-11-13): thrown like a grenade, it opens on the first thing it touches, or
-	wherever it is when its owner presses again (Detonate), even in the air. Open, it holds still for HoleTime while its
-	trail streams on every screen, drawing every snail within PullRadius in (the shooter's teammates aside: Drag), then
-	bursts where they're stuck to it, and lets them go.
+	wherever it is when its owner presses again (Detonate), even in the air. Open, it holds still for HoleTime while
+	every screen draws its vortex and hears it (Combat_HoleOpened), drawing every snail within PullRadius in (the
+	shooter's teammates aside: Drag), then bursts where they're stuck to it, and lets them go.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -79,6 +79,7 @@ function Module.Run(shot)
 	local closesAt: number = os.clock() + (row.HoleTime or 2.5)
 	local sentAt: number = 0
 	local dragged = {} --- @type { [string]: boolean }
+	I.Network.FireAll("Combat_HoleOpened", center, row.HoleTime or 2.5)
 	while os.clock() < closesAt do
 		local deltaTime: number = I.S.RunService.Heartbeat:Wait()
 		Module._drag(shot, center, deltaTime, dragged)

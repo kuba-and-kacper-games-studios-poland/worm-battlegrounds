@@ -241,10 +241,24 @@ function Module._makeCarrier(itemId: string, position: Vector3)
 		return nil
 	end
 
+	--[[ Returning ]]
+
+	return Module.MakeTrailCarrier(effect, position, `{itemId}Trail`)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Make Trail Carrier
+
+--[[
+	Makes an invisible anchored part in the effects folder carrying a trail effect (a Vfx prefab), its attachments
+	standing toward the camera (along Z, TRAIL_SCALE apart), so the ribbon keeps its width whichever way it's moved,
+	and its exhaust's emitters streaming. The caller moves it, and destroys it.
+]]
+--- @return BasePart
+function Module.MakeTrailCarrier(effect: string, position: Vector3, name: string)
 	--[[ Building ]]
 
 	local carrier: Part = Instance.new("Part")
-	carrier.Name = `{itemId}Trail`
+	carrier.Name = name
 	carrier.Size = Vector3.one * 0.2
 	carrier.Transparency = 1
 	carrier.Anchored = true

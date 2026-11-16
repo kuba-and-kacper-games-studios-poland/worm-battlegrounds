@@ -15,7 +15,7 @@ from snaillib import (N, SR, ar, band, bandsweep, bubble, click, decay, drive, f
                       tt, to_ogg, write)
 
 SOUNDS = {}
-LOOPS = {"Snail_Jetpack"}
+LOOPS = {"Snail_Jetpack", "BlackHole_Hum"}
 
 
 def sound(target_db, measure="loudest"):
@@ -399,6 +399,49 @@ def Liquid_Obsidian():
     crk = (rng_arr(N(L)) < 40 / SR) * rng_arr(N(L))
     crackle = band(np.convolve(crk, np.exp(-tt(0.003) / 0.0008), "same"), 2200, 1.2) * 2.5 * decay(L, 0.5)
     return mix(L, (steam, 0, 0.7), (crackle, 0.1, 0.6))
+
+
+# --- 2026-11-16: the black hole's hum and the variety worms' squeak (no classic sound has either) ---------------------
+
+@sound(-22, "rms")
+def BlackHole_Hum():
+    """The open black hole pulling, a seamless 3 s loop that always seems to rise: a Shepard glide (sines an octave
+    apart, each climbing an octave per loop under a fixed bell of loudness, so the top fades out as the bottom fades in),
+    a deep sub, a warble six times a second and a breathing rush of air being drawn in. Every part repeats exactly at
+    the loop's length, the glide's phases chained from partial to partial, so it wraps with no seam."""
+    reseed(61)
+    T = 3.0
+    t = tt(T)
+    shep = np.zeros(len(t))
+    phase = 0.0
+    for k in range(7):
+        f0 = 20.0 * 2 ** k
+        f = f0 * 2 ** (t / T)
+        ph = phase + 2 * np.pi * f0 * T / np.log(2) * (2 ** (t / T) - 1)
+        amp = np.exp(-((np.log2(f / 160.0)) ** 2) / (2 * 0.9 ** 2))
+        shep += amp * np.sin(ph)
+        phase = (phase + 2 * np.pi * f0 * T / np.log(2)) % (2 * np.pi)
+    shep = np.tanh(shep * 1.6) / np.tanh(1.6)
+    sub = np.sin(2 * np.pi * 45 * t) + 0.3 * np.sin(2 * np.pi * 90 * t + 1.0)
+    warble = 1 - 0.35 * (0.5 + 0.5 * np.sin(2 * np.pi * 6 * t))
+    breathe = 0.75 + 0.25 * np.sin(2 * np.pi * (1 / T) * t * 3)
+    air = spec(spec(noise(len(t)), lo=350, order=2), hi=1600, order=2)
+    air = air / (np.std(air) + 1e-9) * (0.6 + 0.4 * np.sin(2 * np.pi * 2 / T * t - 1.2))
+    return (shep * 0.8 * warble + sub * 0.35 * breathe + air * 0.12) * breathe
+
+
+@sound(-20)
+def Variety_Squeak():
+    """A tiny cute squeak as a variety worm dives into the ground: a rubber-toy chirp up and down with a quick wobble."""
+    reseed(62)
+    L = 0.2
+    t = tt(L)
+    f = 1500 + 1100 * np.sin(np.pi * np.minimum(t / 0.13, 1)) ** 0.8 - 400 * (t / L)
+    f = f * (1 + 0.03 * np.sin(2 * np.pi * 38 * t))
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    y = np.sin(ph) + 0.3 * np.sin(2 * ph) + 0.08 * np.sin(3 * ph)
+    breath = band(noise(len(t)), 3200, 2) * 0.08
+    return (y + breath) * ar(L, 0.008, 1.6)
 
 
 # --- build -----------------------------------------------------------------------------------------------------------

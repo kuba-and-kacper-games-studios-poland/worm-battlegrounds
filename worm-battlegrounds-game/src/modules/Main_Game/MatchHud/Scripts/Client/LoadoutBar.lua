@@ -97,7 +97,8 @@ end
 
 --[[
 	Picks a box: the snail holds that item (Combat_Select). A weapon is aimed and fired; a utility (a Medkit, a potion)
-	waits in the snail's hands until a press on the screen uses it (Use Held) (the owner, 2026-11-15).
+	waits in the snail's hands until a press on the screen uses it (Use Held) (the owner, 2026-11-15), except those in
+	USE_ON_SELECT (the Jetpack), used at once when they're ready.
 ]]
 function Module.Select(itemId: string)
 	--[[ Checks ]]
@@ -119,6 +120,12 @@ function Module.Select(itemId: string)
 	--[[ Refreshing ]]
 
 	Module._refreshBoxes()
+
+	--[[ Using ]]
+
+	if _settings.USE_ON_SELECT[itemId] then
+		Module.UseHeld()
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Use Held

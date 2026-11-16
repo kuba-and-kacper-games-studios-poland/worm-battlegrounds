@@ -9,21 +9,24 @@ it: the box comes back when that window closes, while the invite lasts (`INVITE_
 **Invite friends** in that box opens Roblox's game invite. Party state lives in two Player attributes, so every client draws the `Party` column
 (the PARTY column at the left: a card per member with their avatar, name (their badges after it, `I.PlayerBadges.Show`) and level, a crown on the leader, Kick for
 the leader, then a **+** card per free place for a player who may invite, and the red Leave button by the PARTY title
-while in a party) without its own remote.
+while in a party) without its own remote. In a custom lobby (MatchBoard's `I.MatchBoard.GetCustomRoom`, redrawn on its
+`MatchBoard_RoomChanged` Topic) the column lists the lobby instead: its members in this server, the crown on its owner, no
+Kick or Leave, and a **+** card per free place up to its size that opens the `CustomLobby` window (2026-11-16). With
+more cards than `MAX_PARTY`, the column shrinks to fit them (a `S_FitScale` UIScale the client adds to `U_Members`).
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Party` |
 | Runs on | Server, Client · Lobby map |
 | Exposes | `I.Party` (server) |
-| Uses | `I.WidgetManager`, `I.Interact`, `I.Friends`, `I.PlayerBadges` (client) |
+| Uses | `I.WidgetManager`, `I.Interact`, `I.Friends`, `I.PlayerBadges`, `I.MatchBoard` and its `MatchBoard_RoomChanged` Topic (client) |
 
 ## Files
 
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Invites, answers, leaving, kicking, the attributes |
-| `Client.lua` | The `Party` column |
+| `Client.lua` | The `Party` column: the party, or the player's custom lobby |
 | `Scripts/Client/Invites.lua` | The `PartyInvite` and `PartyInvited` boxes |
 | `Settings.lua` | `Party_Settings` |
 
@@ -68,6 +71,7 @@ while in a party) without its own remote.
 | `INVITE_SECONDS` | `30` | How long an invite stays open |
 | `GUI_NAME` | `"Party"` | The party column |
 | `INVITE_GUI_NAME`, `INVITED_GUI_NAME` | `"PartyInvite"`, `"PartyInvited"` | The invite list, and the box an invited player answers (WidgetManager widgets) |
+| `CUSTOM_GUI_NAME` | `"CustomLobby"` | The custom lobby's window, which a + card opens while the column lists a custom lobby |
 
 ## In the place
 

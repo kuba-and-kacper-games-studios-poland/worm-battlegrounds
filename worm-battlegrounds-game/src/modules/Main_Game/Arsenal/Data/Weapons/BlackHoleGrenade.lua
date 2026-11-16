@@ -32,7 +32,7 @@ local _data = {
 	--[[ Extras ]]
 
 	HoleTime = 2.5,
-	PullRadius = 20,
+	PullRadius = 24,
 }
 
 return _data

@@ -41,8 +41,8 @@ A weapon row: `Name`, `Icon`, `Kind` (Rocket, Bouncer, Crawler, Homing, Roller, 
 Straight, Melee, Target, Feet), `Wind`, `HoldPose` (the snail rig's pose for a gun: `Gun` for the Uzi, `MiniGun`,
 `Bazooka` for the Bazooka and the Homing missile, `ShotGun`; a row without one is held in the `Gun` pose and plays no
 shot, as `SnailRig`'s README says), `DamageMax`, `DamageEdge`, `BlastRadius`, `Knockback`, `Uses` (−1 unlimited),
-`Cooldown` (turns), then the kind's fields (`MinSpeed`, `MaxSpeed`, `Fuse`, `Elasticity`, `Bomblets` (with `Mini`, drawn as small copies of the bomb: the cluster bomb's and the variety grenade's), `Snails`,
-`Pellets`, `Spread`, `Range`, `CrawlTime`, `LockDelay`, `HoleTime`, `PullRadius`, `Reach`, `Lift`, …). `Retreat` (Dynamite) keeps
+`Cooldown` (turns), then the kind's fields (`MinSpeed`, `MaxSpeed`, `Fuse`, `Elasticity`, `Bomblets` (with `Mini`, drawn as small copies of the bomb: the cluster bomb's and the variety grenade's; with `Hatch`, each digs out one of the row's `Snails` worms where it bursts: the variety grenade's, 2026-11-16), `Snails`, `BurstSound` (played where the bomb bursts: the cluster bomb's `Cluster_Split`, the variety grenade's `Variety_Burst`),
+`Pellets`, `Spread`, `Range`, `CrawlTime`, `LockDelay`, `LockPause`, `HomingSpeed`, `HomingMaxSpeed`, `HomingAccel`, `HomingTurn`, `HomingTurnGrowth` (the homing missile's lock, stall and dive: Combat's README), `HoleTime`, `PullRadius`, `Reach`, `Lift`, …). `Retreat` (Dynamite) keeps
 the turn going that many seconds after the weapon is placed, with the stamina bar full again, so the snail can run
 before its `Fuse` runs out. A `Feet` weapon with no launch speed (Dynamite) is placed where the snail stands. A utility row: `Name`,
 `Icon`, `Effect` (Heal, Jetpack, Speed, Parachute, LowGravity), `Amount`, `ShinyAmount`, `Uses`, and an optional
@@ -78,7 +78,7 @@ Jetpack on a snail while they work (Snails' README → Gear).
 | Instance | What |
 | --- | --- |
 | `Assets/Arsenal/Models/<WeaponId>` | Bazooka, Shotgun, Uzi, HomingMissile (the launcher), Minigun, BaseballBat: held, RootPart at the grip. Grenade, Dynamite, ClusterBomb, SpiderBomb, BlackHoleGrenade, VarietyGrenade, SpartanSpear: thrown, RootPart at the centre. BaseballBat is the golf club (the studio's `gfclub` mesh). The spear and the club carry a Trail (from the studio's effects) between `TrailBottom` and `TrailTip` attachments on their `Body` |
-| `Assets/Arsenal/Models/<UtilityId>` | Jetpack, SpeedPotion, LowGravityPotion (the studio's `gravity_potion` mesh), Parachute, Bandage, Medkit: RootPart at the centre, no `Muzzle`. The Jetpack's straps face the RootPart's front (it's worn on the back); the Parachute's harness hangs at its bottom |
+| `Assets/Arsenal/Models/<UtilityId>` | Jetpack, SpeedPotion, LowGravityPotion (the studio's `gravity_potion` mesh), Parachute, Bandage, Medkit: RootPart at the centre, no `Muzzle`. The Jetpack is the studio's twin-tank jetpack (from its `SnailJetPack` rig, 2026-11-16), worn on the shell's bone (Snails' `GEAR`): its back tank on the back of the shell, its front one hidden in it; the Parachute's harness hangs at its bottom |
 | `Assets/Arsenal/Projectiles/<ShotId>` | HomingMissile (the missile, nose along +X); Bazooka (the rocket, 2.2 studs long, nose along +X, a RootPart with the mesh welded on as `Body`, as HomingMissile); Snail (a Variety grenade's snail, its face on the RootPart's right side, which Combat turns to the camera); Dynamite (the placed stick, 4× the held one, RootPart half a stud above its bottom so it stands on the ground) |
 
 Still without a model: One Punch, Low Gravity Potion, and the Cluster bomb's bomblets.

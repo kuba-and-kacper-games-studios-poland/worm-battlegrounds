@@ -20,9 +20,18 @@ local data = {
 	["Music_RockslideRidge"] = { 83665320995374 },
 	["Music_RockslideRidge_SuddenDeath"] = { 105098553957434 },
 
-	-- shortcut: Desert's tracks until the sound kit (art/sfx) makes Volcano Isle's own and the owner approves them
-	["Music_VolcanoIsle"] = { 71795470444674 },
-	["Music_VolcanoIsle_SuddenDeath"] = { 73282690663044 },
+	["Music_VolcanoIsle"] = { 98089926843116 },
+	["Music_VolcanoIsle_SuddenDeath"] = { 114840032802966 },
+	["Music_EchoCaverns"] = { 88013179066525 },
+	["Music_EchoCaverns_SuddenDeath"] = { 99180597832857 },
+	["Music_RollingPlains"] = { 70713277122954 },
+	["Music_RollingPlains_SuddenDeath"] = { 91635030725359 },
+	["Music_FluffyFallout"] = { 102717083104303 },
+	["Music_FluffyFallout_SuddenDeath"] = { 116446538180793 },
+	["Music_MirageMesa"] = { 128088483156283 },
+	["Music_MirageMesa_SuddenDeath"] = { 78632086006587 },
+	["Music_LakesideShowdown"] = { 140312693826581 },
+	["Music_LakesideShowdown_SuddenDeath"] = { 70594889625484 },
 
 	--%%%%%%%%%%%%%%%%%%%% GUI (Roblox's classic 2009 sounds, and the studio's own)
 
@@ -83,12 +92,12 @@ local data = {
 
 	["Fire_Bazooka"] = { 12222065 },
 	["Fire_HomingMissile"] = { 94209886160879 },
-	["Fire_Grenade"] = { 12222103 },
-	["Fire_ClusterBomb"] = { 12222103 },
-	["Fire_VarietyGrenade"] = { 12222103 },
-	["Fire_BlackHoleGrenade"] = { 12222103 },
-	["Fire_SpiderBomb"] = { 12222103 },
-	["Fire_SpartanSpear"] = { 12222103 },
+	["Fire_Grenade"] = { 134187606881393 },
+	["Fire_ClusterBomb"] = { 76469237486419 },
+	["Fire_VarietyGrenade"] = { 121499785826189 },
+	["Fire_BlackHoleGrenade"] = { 86656686213349 },
+	["Fire_SpiderBomb"] = { 79288578034525 },
+	["Fire_SpartanSpear"] = { 96828431610420 },
 	["Fire_Dynamite"] = { 116344910255456 },
 	["Fire_Shotgun"] = { 118799477525243 },
 	["Fire_Uzi"] = { 102554652606535 },
@@ -111,6 +120,19 @@ local data = {
 	["Explosion_Small"] = { 12221984 },
 	["Shot_Bounce"] = { 12222046 },
 	["Shot_Whistle"] = { 116922447743708 },
+
+	--[[ Weapon moments ]]
+
+	["Homing_Lock"] = { 108221912360196 },
+	["Homing_Boost"] = { 117133077769409 },
+	["BlackHole_Open"] = { 90233913427156 },
+	["BlackHole_Hum"] = { 115404024597950 },
+	["BlackHole_Collapse"] = { 70678667430929 },
+	["BlackHole_Burst"] = { 75322124653582 },
+	["Variety_Burst"] = { 106398921764072 },
+	["Variety_Dig"] = { 110984625266950 },
+	["Variety_Squeak"] = { 94578555541051 },
+	["Cluster_Split"] = { 125537299818400 },
 
 	--[[ Snails ]]
 

@@ -244,6 +244,96 @@ def drips(seconds, per_minute=14):
     return _scatter(seconds, int(per_minute * seconds / 60), drip, (0.2, 0.6), 0.7)
 
 
+# --- added 2026-11-16 for the new maps (caves, the lake, the plains' grass) -------------------------------------------
+
+def _wrap_hall(layer, decay_s=2.6, predelay=0.03, wet=0.7, damp=3200.0):
+    """A big stone hall round a layer, convolved circularly so its tail wraps round the loop's end like the music's."""
+    n = layer.shape[0]
+    t = np.arange(_n(decay_s * 1.3)) / SR
+    out = np.zeros_like(layer)
+    for c in (0, 1):
+        ir = _rng.standard_normal(len(t)) * np.exp(-t * 6.9 / decay_s)
+        ir = spec(ir, hi=damp, order=1)
+        ir = np.concatenate([np.zeros(_n(predelay)), ir])[:n]
+        wetsig = np.fft.irfft(np.fft.rfft(layer[:, c]) * np.fft.rfft(ir, n), n)
+        wetsig *= (np.std(layer[:, c]) + 1e-12) / (np.std(wetsig) + 1e-12)
+        out[:, c] = layer[:, c] * (1 - wet) + wetsig * wet
+    return out
+
+
+def cave_drip():
+    """A drop falling into a cave pool: deeper and rounder than the oasis's, sometimes two."""
+    d = 0.2
+    t = _t(d)
+    f0 = _rng.uniform(500, 800)
+    f = f0 + f0 * 1.2 * (1 - np.exp(-t / 0.014))
+    y = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.04) * np.clip(t / 0.0015, 0, 1) * 0.6
+    if _rng.random() < 0.3:
+        y = y + np.concatenate([np.zeros(_n(0.07)), y[: len(y) - _n(0.07)] * 0.5])
+    return y
+
+
+def cave_drips(seconds, per_minute=18):
+    """Drips in a cave: drops scattered round the hall, each ringing on in a long stone echo that wraps the loop."""
+    dry = _scatter(seconds, int(per_minute * seconds / 60), cave_drip, (0.25, 0.8), 0.9)
+    return _wrap_hall(dry, 2.8, 0.04, 0.6)
+
+
+def cave_tone(seconds):
+    """The cave's own air: a dark, slow room tone with two faint hollow resonances breathing in and out."""
+    n = _n(seconds)
+    out = np.zeros((n, 2))
+    for c in (0, 1):
+        x = spec(spec(_rng.standard_normal(n), hi=420, order=2), lo=40, order=1)
+        hollow = band(_rng.standard_normal(n), 180, 14) * _breathe(n, 0.08, 1.0) ** 2 \
+            + band(_rng.standard_normal(n), 310, 16) * _breathe(n, 0.06, 1.0) ** 2
+        y = x / (np.std(x) + 1e-9) + hollow / (np.std(hollow) + 1e-9) * 0.5
+        out[:, c] = y * _breathe(n, 0.1, 0.4)
+    return out
+
+
+def lap():
+    """One small wave lapping the shore: a soft slosh in, a brief wash back, and a gurgle or two."""
+    d = _rng.uniform(1.0, 1.6)
+    t = _t(d)
+    x = _rng.standard_normal(len(t))
+    env_in = np.clip(t / 0.25, 0, 1) ** 1.5 * np.exp(-np.maximum(t - 0.25, 0) / 0.18)
+    env_back = np.exp(-((t - 0.65) / 0.25) ** 2)
+    y = band(x, _rng.uniform(450, 700), 1.0) * env_in + spec(x, lo=1500, hi=5000) * env_back * 0.35
+    for _ in range(_rng.integers(1, 4)):
+        g = _rng.uniform(0.04, 0.08)
+        f0 = _rng.uniform(250, 500)
+        gt = _t(g)
+        gurgle = np.sin(2 * np.pi * np.cumsum(f0 * (1 + 1.3 * gt / g)) / SR) * np.sin(np.pi * gt / g)
+        i = _n(_rng.uniform(0.1, 0.6))
+        y[i:i + len(gurgle)] += gurgle[: len(y) - i] * 0.35
+    return y * 0.6
+
+
+def lapping(seconds, every=2.6):
+    """Lake water lapping at the shore, a wave every couple of seconds, with a faint wash under it all."""
+    n = _n(seconds)
+    out = np.zeros((n, 2))
+    at = 0.0
+    while at < seconds - 0.5:
+        wrap_add(out, lap(), at, _rng.uniform(0.5, 1.0), _rng.uniform(-0.6, 0.6))
+        at += every * _rng.uniform(0.7, 1.3)
+    for c in (0, 1):
+        wash = spec(spec(_rng.standard_normal(n), lo=300, order=1), hi=2500, order=2)
+        out[:, c] += wash / (np.std(wash) + 1e-9) * _breathe(n, 0.3, 0.8) * 0.06
+    return out
+
+
+def grass(seconds, rate=0.18):
+    """Wind through long grass: a soft swishing hiss that swells with the gusts, a little brighter than sand."""
+    n = _n(seconds)
+    out = np.zeros((n, 2))
+    for c in (0, 1):
+        x = spec(spec(_rng.standard_normal(n), lo=1400, order=2), hi=5200, order=2)
+        out[:, c] = x / (np.std(x) + 1e-9) * _breathe(n, rate, 1.0) ** 2.5
+    return out
+
+
 def sounding_rms(layer):
     """RMS while a layer sounds, its quiet gaps left out, so a sparse layer's calls are as loud as its level says."""
     mono = layer.mean(axis=1)

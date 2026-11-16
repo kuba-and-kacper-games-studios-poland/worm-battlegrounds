@@ -34,6 +34,10 @@ local timerColor: Color3
 local waitColor: Color3
 local windColor: Color3
 
+-- The callout title gradient's turn and offset from the gui, put back after sudden death's fill
+local titleRotation: number
+local titleOffset: Vector2
+
 -- The wind shown last, so a change flashes
 local shownWind: number? = nil
 
@@ -98,6 +102,8 @@ function Module.Start(gui: ScreenGui)
 	timerColor = elems["Timer"].TextColor3
 	waitColor = elems["Wait"].TextColor3
 	windColor = elems["Wind"].TextColor3
+	titleRotation = elems["CalloutTitleGradient"].Rotation
+	titleOffset = elems["CalloutTitleGradient"].Offset
 
 	--[[ Connections ]]
 
@@ -267,7 +273,7 @@ end
 	gold over orange lines, with a whoosh and a bugle call (Turn_Yours), and a phone or pad taps twice. Anyone else's:
 	their name in white over lines in their colour, smaller, with how long until the player's own and a drum roll
 	(Turn_Start). When the player plays next, their "You're next!" line flashes with Turn_Next. In sudden death the sea's
-	rise is heard (Match_WaterRise).
+	rise is heard (Match_WaterRise), and the line under the title says the liquid rises.
 ]]
 function Module._onTurnStarted(activeId: string)
 	--[[ Local Variables ]]
@@ -278,15 +284,23 @@ function Module._onTurnStarted(activeId: string)
 	local turnsLeft: number? = if myTurn then nil else Module._getTurnsLeft()
 	local accent: Color3 = if myTurn or not active then _settings.CALLOUT_ACCENT_COLOR else active:GetAttribute("Color")
 	local gradient = if myTurn then _settings.CALLOUT_MINE_GRADIENT else _settings.CALLOUT_OTHER_GRADIENT --- @type { Color3 }
+	local sub: string = if myTurn then "Aim and fire!" elseif turnsLeft == 1 then "You're next!" elseif turnsLeft then `You play in {turnsLeft} turns` else ""
+	local liquid = Module._getSuddenDeathLiquid() --- @type MatchHud_SuddenDeathLiquid?
 
 	--[[ Callout ]]
 
 	if entry then
 		Teams.SetAvatar(elems["CalloutAvatar"], entry)
 	end
+	if liquid then
+		sub = `{sub}  ·  {string.format(_settings.SUDDEN_DEATH_REMINDER, string.lower(liquid.Name))}`
+	end
+	elems["CalloutAvatar"].Visible = true
 	elems["CalloutTitle"].Text = if myTurn then "Your turn!" elseif active then `{active:GetAttribute("DisplayName")}'s turn` else ""
-	elems["CalloutSub"].Text = if myTurn then "Aim and fire!" elseif turnsLeft == 1 then "You're next!" elseif turnsLeft then `You play in {turnsLeft} turns` else ""
+	elems["CalloutSub"].Text = sub
 	elems["CalloutTitleGradient"].Color = ColorSequence.new(gradient[1], gradient[2])
+	elems["CalloutTitleGradient"].Rotation = titleRotation
+	elems["CalloutTitleGradient"].Offset = titleOffset
 	elems["CalloutLineTop"].BackgroundColor3 = accent
 	elems["CalloutLineBottom"].BackgroundColor3 = accent
 	elems["CalloutAvatarStroke"].Color = accent
@@ -328,10 +342,10 @@ end
 
 --[[
 	Plays the callout banner at a scale: the band snaps open while its content slides in from the left and settles from
-	CALLOUT_START_SCALE, holds CALLOUT_HOLD seconds, then the content slides off right as the band closes. A newer
-	callout takes over from an older one.
+	CALLOUT_START_SCALE, holds CALLOUT_HOLD seconds (or the hold given), then the content slides off right as the band
+	closes. A newer callout takes over from an older one.
 ]]
-function Module._popCallout(scale: number)
+function Module._popCallout(scale: number, hold: number?)
 	--[[ Local Variables ]]
 
 	callouts += 1
@@ -358,7 +372,7 @@ function Module._popCallout(scale: number)
 
 	--[[ Hiding ]]
 
-	task.delay(_settings.CALLOUT_IN_TWEENINFO.Time + _settings.CALLOUT_HOLD, function()
+	task.delay(_settings.CALLOUT_IN_TWEENINFO.Time + (hold or _settings.CALLOUT_HOLD), function()
 		-- A newer callout has the screen
 		if count ~= callouts then
 			return
@@ -382,19 +396,49 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Sudden Death
 
 --[[
-	Sounds the siren when sudden death starts.
+	Sounds the siren when sudden death starts and, once the turn's own callout is gone, announces the rising liquid on
+	the callout: "Water is rising..." with no avatar, its lines in the liquid's colour, its title filling with it from
+	the bottom.
 ]]
 function Module._onSuddenDeath()
+	--[[ Data ]]
+
+	local liquid = Module._getSuddenDeathLiquid() --- @type MatchHud_SuddenDeathLiquid?
+
 	--[[ Checks ]]
 
 	-- Check if sudden death just started
-	if not matchFolder:GetAttribute("SuddenDeath") then
+	if not liquid then
 		return
 	end
 
 	--[[ Playing ]]
 
 	I.Sound.Play({ Name = "Match_SuddenDeath", SoundGroup = "SFX" })
+
+	--[[ Announcing ]]
+
+	local wait: number = _settings.CALLOUT_IN_TWEENINFO.Time + _settings.CALLOUT_HOLD + _settings.CALLOUT_OUT_TWEENINFO.Time
+	task.delay(wait, function()
+		elems["CalloutAvatar"].Visible = false
+		elems["CalloutTitle"].Text = string.format(_settings.SUDDEN_DEATH_TITLE, liquid.Name)
+		elems["CalloutSub"].Text = _settings.SUDDEN_DEATH_SUB
+		elems["CalloutLineTop"].BackgroundColor3 = liquid.Color
+		elems["CalloutLineBottom"].BackgroundColor3 = liquid.Color
+		elems["CalloutTitleGradient"].Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.52, liquid.Color),
+			ColorSequenceKeypoint.new(1, liquid.Color),
+		})
+		elems["CalloutTitleGradient"].Rotation = 90
+		elems["CalloutTitleGradient"].Offset = _settings.SUDDEN_DEATH_FILL_FROM
+		Module._popCallout(1, _settings.SUDDEN_DEATH_HOLD)
+
+		local Fill_TweenGoal = { Offset = _settings.SUDDEN_DEATH_FILL_TO }
+		local Fill_Tween: Tween = I.S.TweenService:Create(elems["CalloutTitleGradient"], _settings.SUDDEN_DEATH_FILL_TWEENINFO, Fill_TweenGoal)
+		Fill_Tween:Play()
+	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Tick
@@ -526,6 +570,26 @@ function Module._getTurnsLeft()
 	--[[ Returning ]]
 
 	return table.find(string.split(matchFolder:GetAttribute("TurnOrder") or "", ","), mine.Name)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Sudden Death Liquid
+
+--[[
+	Returns the rising liquid's name and colour while sudden death runs (the match's SeaKind, water when unknown), nil
+	before it.
+]]
+--- @return MatchHud_SuddenDeathLiquid?
+function Module._getSuddenDeathLiquid()
+	--[[ Checks ]]
+
+	-- Check if sudden death runs
+	if not matchFolder:GetAttribute("SuddenDeath") then
+		return nil
+	end
+
+	--[[ Returning ]]
+
+	return _settings.SUDDEN_DEATH_LIQUIDS[matchFolder:GetAttribute("SeaKind") or "Water"] or _settings.SUDDEN_DEATH_LIQUIDS.Water
 end
 
 return Module

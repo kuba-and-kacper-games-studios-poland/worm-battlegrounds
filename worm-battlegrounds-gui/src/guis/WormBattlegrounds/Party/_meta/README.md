@@ -31,7 +31,7 @@ with button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker rewor
 | Prefab | Parent | Elements |
 | --- | --- | --- |
 | `PREFAB \| Member` | `U_Members` | A Frame: `S_Avatar`, `S_Name` (with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name, whose `UITextSizeConstraint` it lowers so the name stays on one line), `S_Level` (the level on the `LevelBadge` under the avatar; capitals by `TextCase_Upper`), `S_Username` ("@name", under the name), `S_Crown` (leader), `S_Kick` (ImageButton, the leader sees it on others). Party names it by user id; Cosmetics puts a played emote's label beside it |
-| `PREFAB \| Invite` | `U_Members` | An ImageButton with a +: opens `PartyInvite` |
+| `PREFAB \| Invite` | `U_Members` | An ImageButton with a +: opens `PartyInvite`, or the `CustomLobby` window while the column lists the player's custom lobby (up to its size, 8 at most) |
 
 ## Driven by
 

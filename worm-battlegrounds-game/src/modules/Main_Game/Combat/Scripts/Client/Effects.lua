@@ -161,14 +161,21 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Hit
 
 --[[
-	Shakes the camera by how hard the blow was (harder on a knockout), stops the world for a beat on a big one (longer on
-	a knockout, with the camera punching in on the snail and the knockout's ding), and vibrates a phone or pad when the
-	local player's own snail is hurt.
+	Throws sparks off the hurt snail (HIT_VFX, bigger for a harder blow), shakes the camera by how hard the blow was
+	(harder on a knockout), stops the world for a beat on a big one (longer on a knockout, with the camera punching in
+	on the snail and the knockout's ding), and vibrates a phone or pad when the local player's own snail is hurt.
 ]]
 function Module._onHit(participantId: string, damage: number, position: Vector3, knockout: boolean?)
 	--[[ Data ]]
 
 	local mine: Model? = I.Snails.GetMine()
+
+	--[[ Sparks ]]
+
+	if damage > 0 then
+		local scale: number = math.min(_settings.HIT_VFX_SCALE + damage * _settings.HIT_VFX_DAMAGE_SCALE, _settings.HIT_VFX_MAX_SCALE)
+		I.Vfx.Play(_settings.HIT_VFX, CFrame.new(position), effectsFolder, scale)
+	end
 
 	--[[ Shaking ]]
 

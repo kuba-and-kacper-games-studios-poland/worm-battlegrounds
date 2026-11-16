@@ -35,6 +35,31 @@ local _settings = {
 	-- How much bigger the snails stand on the stage than in a match (the owner, 2026-11-15: "50% larger in lobby")
 	STAGE_SNAIL_SCALE = 1.5,
 
+	--[[
+		In a custom lobby the stage stands its members on CUSTOM_PODS_PREFAB's eight pods instead (in Assets/Lobby, its
+		pivot on the stage's pivot; authored 300 studs beside the stage): three in front, two raised behind them, three
+		higher at the back, packed close (the owner, 2026-11-16). The camera then backs off along its look, and rises
+		with it, just as far as every snail needs to fit STAGE_FIT_MARGIN of the screen, easing there
+		(STAGE_CAMERA_EASE of the way each 1/60 s)
+	]]
+	CUSTOM_PODS_PREFAB = "PREFAB | CustomPods",
+	STAGE_FIT_MARGIN = 0.82,
+	STAGE_CAMERA_EASE = 0.08,
+
+	--[[
+		Every snail on the stage holds STAGE_WEAPON (scaled with it) and plays one of STAGE_POSES (Animations in
+		Assets/Snails/Animations, the studio's bazooka poses), picked at random for each snail, never the one it had, and
+		started at a random point: picked again when the stage's members change or the player comes back from a match
+		(the owner, 2026-11-16: "make it feel organic and natural"). A pose with no AnimationId yet is skipped
+	]]
+	STAGE_WEAPON = "Bazooka",
+
+	-- The stage weapon's size against its match model, as the studio's posed snail holds it (the match draws it bigger to read)
+	STAGE_WEAPON_SCALE = 0.72,
+
+	--- @type { string }
+	STAGE_POSES = { "LobbyPose1", "LobbyPose2", "LobbyPose3", "LobbyPose4" },
+
 	--%%%%%%%%%%%%%%%%%%%% Travel
 
 	-- The teleport screen

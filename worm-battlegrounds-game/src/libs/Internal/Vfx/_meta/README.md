@@ -45,7 +45,7 @@ Emitters stay `Enabled = false` in their prefabs; `Emit` turns streams on and of
 Prefabs live in `Workspace.Ume.ReplicatedStorage_Assets/Vfx/`, moved into `ReplicatedStorage.Ume.Assets`
 (`I.Dirs.Assets`) when the game starts. Each is an anchored, invisible part named `PREFAB | <name>` (a trail prefab
 keeps its visible mesh, as a guide for its attachments), standing in a row from X −300 at Y −14. They came from the
-studio's `Particles_1` and `Particles_2` folders (2026-11-09), the trails from the studio's `Trails_New` (2026-11-11):
+studio's `Particles_1` and `Particles_2` folders (2026-11-09), the trails from the studio's `Trails_New` (2026-11-11), and the studio's newer effects on 2026-11-16 (`Jet_Booster`, `Hit_Sparks`, `Trail_Fog`, the two auras):
 
 | Prefab | From | Played by |
 | --- | --- | --- |
@@ -55,19 +55,22 @@ studio's `Particles_1` and `Particles_2` folders (2026-11-09), the trails from t
 | `Explosion_Gun` | Gun Explosion | Combat: where each bullet lands |
 | `Flash_Bullet` | Bullet Flash | Combat: where each bullet lands |
 | `Flash_SMG` | SMG Flash | Combat: the Uzi's and Minigun's muzzle |
-| `Flash_Sniper` | Sniper Flash | Combat: the Shotgun's muzzle |
+| `Flash_Sniper` | Sniper Flash | Combat: the Shotgun's muzzle, and a homing missile locking on (`HOMING_LOCK_VFX`) |
 | `Punch` | Saitama Punch | Combat: One Punch, along the swing |
 | `Spawn` | Spawn | Snails: a snail appearing |
 | `Fall` | Fall | Snails: a snail landing from a fall |
 | `Splash_Water`, `Splash_Lava` | Water Splash, Lava Splash | Snails: a snail knocked out in water or lava |
 | `Healing` | Healing | Snails: a snail healing |
 | `Trail_Snail` | Snail (its trail) | Snails: a trail on each snail while it flies |
-| `Trail_Jet` | Trails_New: jet (BeamFilled wavey) | Snails: the jetpack's jet while a snail climbs on it |
+| `Trail_Jet` | Trails_New: jet (BeamFilled wavey) | Snails: the jetpack's jet while a snail climbs on it; Combat: a homing missile's dive (`HOMING_DIVE_TRAIL`) |
+| `Jet_Booster` | The studio's Booster FX flames (2026-11-16), on an `Exhaust` attachment, off | Snails: streamed down from under the jetpack while it flies (`JET_EXHAUST_VFX`) |
+| `Trail_Fog` | The studio's smoke trail (2026-11-16) | Combat: the Grenade's and the Spider bomb's throws |
+| `Hit_Sparks` | The studio's Damage sparks (2026-11-16) | Combat: on every snail a blow hurts (`HIT_VFX`, bigger for a harder blow) |
 | `Trail_Smoke` | Trails_New: smoke (BeamWavey fog, made a little grey and subtler), plus an `Exhaust` attachment: `Smoke` (soft grey puffs) and `Thruster` (a tiny orange flame), both off | Combat: the Bazooka's and Homing missile's shots |
-| `Trail_BlackHole` | Trails_New: blackhole (BeamNoise cloud, BeamChromatic Thick) | Combat: the Black hole grenade's shot |
-| `Trail_Variety` | Trails_New: verity (BeamGlow strays) | Combat: the Variety grenade's shot |
-| `Aura_Speed` | An `Aura` attachment: `Spark` and `Bolt` (Glint's spec, cyan and the bottle's yellow), `Streak` (Wind_Streak's, pale cyan), all off (2026-11-12) | Snails: around a snail under the Speed potion, streaming while it lasts |
-| `Aura_LowGravity` | An `Aura` attachment: `Bubble` (Splash_Water's Bubble 2) and `Motes` (Ambient_Motes'), violet, drifting up slowly, both off (2026-11-12) | Snails: around a snail under the Low gravity potion, streaming while it lasts |
+| `Trail_BlackHole` | Trails_New: blackhole (BeamNoise cloud, BeamChromatic Thick) | Combat: the Black hole grenade's shot, and the arms that orbit it once it opens (`VORTEX_TRAIL`) |
+| `Trail_Variety` | Trails_New: verity (BeamGlow strays) | Combat: the Variety grenade's shot, and the worms its minis hatch |
+| `Aura_Speed` | The studio's new Speed effect (2026-11-16; the 2026-11-12 one, an `Aura` attachment of sparks, bolts and streaks, is in `ServerStorage.!dump`), its emitters off | Snails: around a snail under the Speed potion, its attachments and trails copied onto the ball, streaming while it lasts; Combat: its emitters stream on a homing missile's dive (`HOMING_DIVE_SPARKS`) |
+| `Aura_LowGravity` | The studio's new Low Gravity effect (2026-11-16; the 2026-11-12 one, violet bubbles and motes, is in `ServerStorage.!dump`), its emitters off | Snails: around a snail under the Low gravity potion, its attachments and trails copied onto the ball, streaming while it lasts |
 
 The Spear's and the Bat's trails are on their Arsenal models instead (Arsenal's README → In the place).
 

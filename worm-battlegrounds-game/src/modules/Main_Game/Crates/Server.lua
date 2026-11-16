@@ -29,6 +29,23 @@ local Module = {}
 
 function Module.Init()
 	----------------------------
+	----------- DATA -----------
+	----------------------------
+
+	-- Whether the player opened their free crate for joining the studio's group (GROUP_CRATE)
+	--- @type Player_ProfileData
+	local _pt = I.Player.ProfileTemplate
+	_pt["Crates"] = {
+		GroupCrateClaimed = false,
+	}
+
+	----------------------------
+	------ INITIALIZATION ------
+	----------------------------
+
+	I.G_Player.OnPlayerAdded(I.Priority.Replicator, Module._createReplicator)
+
+	----------------------------
 	--------- REGISTRY ---------
 	----------------------------
 
@@ -48,6 +65,10 @@ function Module.Init()
 		--[[ Control ]]
 
 		Open = Module.Open,
+
+		--[[ Methods ]]
+
+		CanClaimGroupCrate = Module.CanClaimGroupCrate,
 	}
 end
 
@@ -57,9 +78,9 @@ end
 
 --[[
 	**SERVER** |
-	Opens one crate, a 3-pack or a 10-pack, paid in a currency the crate takes or with VIP's free daily crate ("VipDaily"):
-	takes the price, rolls each item by the crate's odds and gives it. Returns what each crate gave, or nil when the
-	player can't open it.
+	Opens one crate, a 3-pack or a 10-pack, paid in a currency the crate takes, with VIP's free daily crate ("VipDaily")
+	or with the free crate for joining the studio's group ("GroupReward", once, GROUP_CRATE only): takes the price,
+	rolls each item by the crate's odds and gives it. Returns what each crate gave, or nil when the player can't open it.
 ]]
 --- @return { Crates_Result }?
 function Module.Open(player: Player, crateId: string, count: number, payWith: string)
@@ -98,8 +119,13 @@ function Module.Open(player: Player, crateId: string, count: number, payWith: st
 		return nil
 	end
 
+	-- Check if the group's free crate is this one, still unclaimed, and the player is in the group
+	if payWith == "GroupReward" and (crateId ~= _settings.GROUP_CRATE or count ~= 1 or not Module.CanClaimGroupCrate(player)) then
+		return nil
+	end
+
 	-- Check if the crate takes this currency
-	if payWith ~= "VipDaily" and not row.Prices[payWith] then
+	if payWith ~= "VipDaily" and payWith ~= "GroupReward" and not row.Prices[payWith] then
 		return nil
 	end
 
@@ -108,6 +134,8 @@ function Module.Open(player: Player, crateId: string, count: number, payWith: st
 	local paid: boolean
 	if payWith == "VipDaily" then
 		paid = I.Shop.ClaimVipCrate(player)
+	elseif payWith == "GroupReward" then
+		paid = Module._claimGroupCrate(player)
 	else
 		paid = I.Currency.Subtract(player, payWith, I.G_Crates.GetPrice(crateId, payWith, count))
 	end
@@ -146,6 +174,102 @@ function Module.Open(player: Player, crateId: string, count: number, payWith: st
 	--[[ Returning ]]
 
 	return results
+end
+
+--%%%%%%%%%%%%%%%%%%%% Claim Group Crate
+
+--[[
+	Marks the player's free group crate as opened, saved, and tells their client. Returns whether it was still theirs to
+	open.
+]]
+--- @return boolean
+function Module._claimGroupCrate(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return false
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Crates"]
+
+	--[[ Checks ]]
+
+	-- Check if it's still unopened
+	if moduleData["GroupCrateClaimed"] then
+		return false
+	end
+
+	--[[ Saving ]]
+
+	moduleData["GroupCrateClaimed"] = true
+
+	--[[ Publishing ]]
+
+	I.Replicator.Set(player, _localName, "GroupCrateClaimed", true)
+
+	--[[ Returning ]]
+
+	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Create Replicator
+
+--[[
+	Gives the player's client whether they opened their free group crate, and reads their membership of the studio's
+	group while it's unclaimed.
+]]
+function Module._createReplicator(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Crates"]
+
+	--[[ Publishing ]]
+
+	I.Replicator.CreateFolder(player, _localName)
+	I.Replicator.Set(player, _localName, "GroupCrateClaimed", moduleData["GroupCrateClaimed"] == true)
+
+	--[[ Group ]]
+
+	-- An unclaimed crate needs the player's membership read, so their client's CLAIM knows it (I.Group mirrors it)
+	if not moduleData["GroupCrateClaimed"] then
+		task.spawn(I.Group.IsMember, player, _settings.GROUP_NAME)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Can Claim Group Crate
+
+--[[
+	**SERVER** |
+	Returns whether the player may open their free group crate: not opened yet, and in the studio's group.
+]]
+--- @return boolean
+function Module.CanClaimGroupCrate(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return false
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Crates"]
+
+	--[[ Returning ]]
+
+	return not moduleData["GroupCrateClaimed"] and I.Group.IsMember(player, _settings.GROUP_NAME) == true
 end
 
 --%%%%%%%%%%%%%%%%%%%% Roll

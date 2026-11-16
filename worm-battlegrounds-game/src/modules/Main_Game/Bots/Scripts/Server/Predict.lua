@@ -149,7 +149,12 @@ function Module.GetShot(origin: Vector3, itemId: string, angle: number, power: n
 		Bounce = if row.Kind == "Bouncer" and not row.BurstOnContact then row.Elasticity or 0.5 else nil,
 		Target = if row.Kind == "Homing" then target else nil,
 		HomingSpeed = row.HomingSpeed,
+		HomingMaxSpeed = row.HomingMaxSpeed,
+		HomingAccel = row.HomingAccel,
+		HomingTurn = row.HomingTurn,
+		HomingTurnGrowth = row.HomingTurnGrowth,
 		LockStep = if row.Kind == "Homing" then math.round((row.LockDelay or 1) / combat.PROJECTILE_STEP) else nil,
+		LockPauseSteps = if row.Kind == "Homing" then math.round((row.LockPause or 0) / combat.PROJECTILE_STEP) else nil,
 	}
 	local velocity: Vector3 = if row.Aim == "Feet" then Vector3.zero else I.G_Combat.GetLaunchVelocity(itemId, angle, power)
 

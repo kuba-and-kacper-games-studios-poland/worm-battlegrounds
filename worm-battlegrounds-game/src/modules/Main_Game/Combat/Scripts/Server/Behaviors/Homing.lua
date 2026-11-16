@@ -36,8 +36,9 @@ local Module = {}
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	The homing missile: flies off like a rocket (with wind) for LockDelay seconds, then turns toward the marked target
-	at HomingSpeed, no longer pushed by wind, and explodes on contact or at the target.
+	The homing missile: flies off like a rocket (with wind) for LockDelay seconds, then locks on (no more wind): it
+	stalls for LockPause, then dives at the marked target, speeding up from HomingSpeed to HomingMaxSpeed and bending
+	toward it at HomingTurn, and explodes on contact or at the target.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -51,7 +52,12 @@ function Module.Run(shot)
 	options.Wind = I.G_Combat.GetWindAcceleration(shot.ItemId, I.Match.GetWind())
 	options.Target = target
 	options.HomingSpeed = row.HomingSpeed or 60
+	options.HomingMaxSpeed = row.HomingMaxSpeed
+	options.HomingAccel = row.HomingAccel
+	options.HomingTurn = row.HomingTurn
+	options.HomingTurnGrowth = row.HomingTurnGrowth
 	options.LockStep = math.round(lockDelay / _settings.PROJECTILE_STEP)
+	options.LockPauseSteps = math.round((row.LockPause or 0) / _settings.PROJECTILE_STEP)
 	local body = Projectiles.Launch("Homing", shot.ItemId, shot.Origin, velocity, options) --- @type Combat_Body
 	local burst: Vector3? = nil
 

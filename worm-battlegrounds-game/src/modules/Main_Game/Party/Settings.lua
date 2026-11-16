@@ -16,6 +16,9 @@ local _settings = {
 	-- The box that lists who can be invited, and the box an invited player answers
 	INVITE_GUI_NAME = "PartyInvite",
 	INVITED_GUI_NAME = "PartyInvited",
+
+	-- The custom lobby's window, opened from a free place while the column lists a custom lobby
+	CUSTOM_GUI_NAME = "CustomLobby",
 }
 
 return _settings

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -37,7 +38,7 @@ local Module = {}
 --[[
 	One of a variety grenade's worms: it digs one way at SNAIL_SPEED, eating a tunnel through the terrain, and hurts
 	every snail it touches by the row's Damage a hit, Hits times at most, until SNAIL_LIFETIME runs out or it digs
-	into water or lava.
+	into water or lava. It squeaks as it dives in and crunches as it bites (Variety_Squeak, Variety_Dig).
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot, from: Vector3, direction: Vector3)
@@ -50,6 +51,8 @@ function Module.Run(shot, from: Vector3, direction: Vector3)
 	local lastHit = {} --- @type { [Model]: number }
 	local hits: number = 0
 	local rootRadius: number = I.Settings["Snails"].ROOT_SIZE / 2
+	local bites: number = 0
+	Module.PlaySound("Variety_Squeak", from)
 
 	--[[ Crawling ]]
 
@@ -60,7 +63,11 @@ function Module.Run(shot, from: Vector3, direction: Vector3)
 		-- Eat the terrain ahead
 		if os.clock() - lastBite >= _settings.SNAIL_BITE then
 			lastBite = os.clock()
+			bites += 1
 			task.spawn(I.Arena.Carve, part.Position, snails.Radius)
+			if bites % _settings.SNAIL_DIG_SOUND_EVERY == 1 then
+				Module.PlaySound("Variety_Dig", part.Position)
+			end
 		end
 
 		-- Bite every snail close enough, once a second each
@@ -83,6 +90,26 @@ function Module.Run(shot, from: Vector3, direction: Vector3)
 	--[[ Cleaning ]]
 
 	part:Destroy()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play Sound
+
+--[[
+	Plays a match sound for everyone where it happens, heard as far as the camera can be, a little higher or lower each
+	time.
+]]
+function Module.PlaySound(name: string, position: Vector3)
+	--[[ Playing ]]
+
+	I.Sound.PlayForAll({
+		Name = name,
+		Location = position,
+		SoundGroup = "SFX",
+		RollOffMin = _settings.SOUND_ROLLOFF_MIN,
+		RollOffMax = _settings.SOUND_ROLLOFF_MAX,
+		PitchMin = 0.92,
+		PitchMax = 1.08,
+	})
 end
 
 return Module

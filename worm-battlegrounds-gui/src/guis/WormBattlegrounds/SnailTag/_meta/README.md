@@ -1,8 +1,9 @@
 # SnailTag
 
 The tag over every snail's head: the name over a health bar (team colour, gold name for VIP) with the player's badges after the name, the level, the red turn arrow and turn timer over the snail whose turn it is, and the emote it plays. The arrow drops
-in from above the screen and bobs; once the active snail moves, aims or shoots, its tag hides until the turn ends
-(Worms Armageddon's way; the Snails module does both).
+in from above the screen and bobs; once the active snail moves, aims or shoots, the arrow hides until the turn ends,
+its tag and health staying up (the Snails module does both). On each screen every snail but the player's own wears it
+small: its name and health bar at Snails' `OTHER_TAG_SCALE`, no level or badges (the owner, 2026-11-16).
 
 **Look.** The name and health bar are the studio's HUD design (`World.Overhead`), ported 1:1 on 2026-11-09 as `Primitive` nodes: the name in the design's font with its outline, the bar's slanted frame with its fill picture and the health number on it. The turn arrow is a picture of its own (`art/hud`, a fat red arrow with the icons' ink outline), uploaded to The
 Snail Studio group (image `rbxassetid://107929925047000`). The level and emote picture stay the
@@ -26,9 +27,9 @@ theme's (`WormBattlegroundsBrawl`). 240 × 240 at design scale, scaled with the 
 | `U_Tag` › `S_Active` | Stack | Shown over the active snail: the timer, then the arrow's slot (`ArrowSlot`, 36 × 45) |
 | `U_Tag` › `S_Active` › `S_Arrow` | ImageLabel | The red turn arrow: code offsets its `Position` in its slot to drop it in and bob it |
 | `U_Tag` › `S_Active` › `S_Timer` | Label (`Strong`) | The turn's seconds, blank while a shot flies; hidden on the active player's own screen |
-| `U_Tag` › `S_Level` | Label | "Lv 12" |
+| `U_Tag` › `S_Level` | Label | "Lv 12", on the player's own snail only |
 | `U_Tag` › `Overhead` › `S_Name` | TextLabel (UITextSizeConstraint) | Tinted in the team's colour (gold for VIP); PlayerBadges narrows it and lowers its `MaxTextSize` to make room for the badges on one line |
-| `U_Tag` › `Overhead` › `S_Badges` | Frame | The player's badges: PlayerBadges clones its hidden `PREFAB \| Badge` (an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs) once per badge and lays them out after the name |
+| `U_Tag` › `Overhead` › `S_Badges` | Frame | The player's badges: PlayerBadges clones its hidden `PREFAB \| Badge` (an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs) once per badge and lays them out after the name, on the player's own snail only (hidden on the others) |
 | `U_Tag` › `Overhead` › `S_Health` | Frame | The bar: `Background` › `Stroke` tinted the team's colour |
 | `S_Health` › `S_Fill` | ImageLabel with a UIGradient | Tinted the team's colour; the gradient cuts it at the health left |
 | `S_Health` › `S_HealthText` | TextLabel | The health number |
@@ -55,3 +56,4 @@ None: it only shows.
 | Team colour | `S_Name`, `S_Health` › `Background` › `Stroke`, `S_Fill` | `TextColor3` / `ImageColor3` = the snail's `Color` (the name gold for VIP, Snails' `VIP_NAME_COLOR`) |
 | Health left | `S_Fill` › `UIGradient` | `Transparency` opaque up to the health's share of `MaxHealth`, clear after it |
 | Badges | `S_Badges` › `Badge`, `S_Name` | Each `BADGE_SIZE` (0.85) of the name's height after its text; the name narrowed by their room, its `UITextSizeConstraint` lowered so it fits on one line (PlayerBadges' README) |
+| Another snail's tag | `Overhead` › `S_SmallScale`; `S_Level`, `S_Badges` | Snails adds a UIScale `S_SmallScale` at `OTHER_TAG_SCALE` (0.7) under `Overhead` on every snail but the player's own, so its name and bar shrink while the turn arrow and timer keep their size; its level and badges hidden |

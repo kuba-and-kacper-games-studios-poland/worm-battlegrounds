@@ -15,20 +15,35 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --[[ Stage ]]
 
 local worldFolder: Folder
+local stage: Model
 local cameraMarker: BasePart
 
--- Where each pod's snail stands, the player's pod first
+-- The stage's own pods (the party's) and the custom lobby's eight, only one set standing in the stage at a time
+local partyPods: Folder
+local customPods: Model
+
+-- Where each pod's snail stands, the player's pod first: the party's, the custom lobby's, and the set in use
+local partyMarkers = {} --- @type { BasePart }
+local customMarkers = {} --- @type { BasePart }
 local snailMarkers = {} --- @type { BasePart }
 
 --[[ Snails ]]
 
--- Each party member's snail on the stage, the skin it wears, and how far it's lifted to keep its feet on its pod
+-- Each member's snail on the stage, the outfit it wears, how far it's lifted to keep its feet on its pod, and its pose
 local snails = {} --- @type { [Player]: Model }
 local snailSkins = {} --- @type { [Player]: string }
 local snailLifts = {} --- @type { [Player]: number }
+local snailPoses = {} --- @type { [Player]: AnimationTrack }
 
--- Whether the camera is held on the stage
+-- The pose each member played last, so a new pick is another one, and the members the poses were picked for
+local lastPoses = {} --- @type { [Player]: string }
+local posedFor: string = ""
+
+--[[ Camera ]]
+
+-- Whether the camera is held on the stage, and where it eases to
 local holding: boolean = false
+local cameraTarget: CFrame? = nil
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -51,7 +66,7 @@ local Module = {}
 function Module.Start()
 	--[[ Connections ]]
 
-	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshCamera)
+	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._onInMatch)
 	I.S.Players.PlayerAdded:Connect(Module._watchPlayer)
 	I.S.Players.PlayerRemoving:Connect(function()
 		task.defer(Module._refreshSnails)
@@ -59,6 +74,7 @@ function Module.Start()
 	for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
 		Module._watchPlayer(player)
 	end
+	I.Topic.Subscribe("MatchBoard_RoomChanged", Module._refreshSnails)
 
 	--[[ Starting ]]
 
@@ -71,27 +87,36 @@ end
 --%%%%%%%%%%%%%%%%%%%% Set Up
 
 --[[
-	Builds this screen's copy of the stage from its prefab, finds its camera marker and each pod's snail marker, then
-	holds the camera there and stands the party on the pods.
+	Builds this screen's copy of the stage from its prefab, with the custom lobby's pods on its pivot (put away until a
+	custom lobby needs them), finds its camera marker and each pod's snail marker, then holds the camera there and
+	stands the members on the pods.
 ]]
 function Module._setUp()
 	--[[ Building ]]
 
 	worldFolder = I.Dirs.UmeWorkspace:WaitForChild(_localName)
-	local stage: Model = I.Dirs.Assets:FindFirstChild(_localName):FindFirstChild(_settings.STAGE_PREFAB):Clone()
+	local assets: Folder = I.Dirs.Assets:FindFirstChild(_localName)
+	stage = assets:FindFirstChild(_settings.STAGE_PREFAB):Clone()
 	stage.Name = "Stage"
 	stage.Parent = worldFolder
+	customPods = assets:FindFirstChild(_settings.CUSTOM_PODS_PREFAB):Clone()
+	customPods.Name = "CustomPods"
+	customPods:PivotTo(stage:GetPivot())
 
 	--[[ Elements ]]
 
-	local pods: Folder = stage:FindFirstChild(_settings.PODS_FOLDER)
+	partyPods = stage:FindFirstChild(_settings.PODS_FOLDER)
 	cameraMarker = stage:FindFirstChild(_settings.CAMERA_MARKER, true)
 
 	--[[ Pods ]]
 
-	for index: number = 1, #pods:GetChildren() do
-		table.insert(snailMarkers, pods:FindFirstChild(`{_settings.POD_PREFIX}{index}`):FindFirstChild(_settings.SNAIL_MARKER))
+	--- @param markers { BasePart }
+	for pods: Instance, markers in pairs({ [partyPods] = partyMarkers, [customPods:FindFirstChild(_settings.PODS_FOLDER)] = customMarkers }) do
+		for index: number = 1, #pods:GetChildren() do
+			table.insert(markers, pods:FindFirstChild(`{_settings.POD_PREFIX}{index}`):FindFirstChild(_settings.SNAIL_MARKER))
+		end
 	end
+	snailMarkers = partyMarkers
 
 	--[[ Showing ]]
 
@@ -102,7 +127,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Player
 
 --[[
-	Restands the party when a player joins or leaves a party, or changes their snail's outfit.
+	Restands the members when a player joins or leaves a party, or changes their snail's outfit.
 ]]
 function Module._watchPlayer(player: Player)
 	--[[ Connections ]]
@@ -117,20 +142,29 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Snails
 
 --[[
-	Stands the player on the first pod and the rest of their party on the next ones, each in their snail's outfit, and
-	takes away the snails of players who left.
+	Stands the player on the first pod and the rest of their party, or of their custom lobby on its own eight pods, on
+	the next ones, each in their snail's outfit holding the stage's weapon, and takes away the snails of players who
+	left. Each snail strikes a new pose when the members changed, and the camera frames them.
 ]]
 function Module._refreshSnails()
 	--[[ Checks ]]
 
 	-- Skip until the stage has arrived
-	if #snailMarkers == 0 then
+	if #partyMarkers == 0 then
 		return
 	end
 
+	--[[ Pods ]]
+
+	local custom: boolean = I.MatchBoard.GetCustomRoom() ~= nil
+	snailMarkers = if custom then customMarkers else partyMarkers
+	partyPods.Parent = if custom then nil else stage
+	customPods.Parent = if custom then stage else nil
+
 	--[[ Local Variables ]]
 
-	local members = Module._getMembers() --- @type { Player }
+	local members = Module._getMembers(custom) --- @type { Player }
+	local memberIds = {} --- @type { string }
 
 	--[[ Clearing ]]
 
@@ -140,6 +174,7 @@ function Module._refreshSnails()
 			snails[player] = nil
 			snailSkins[player] = nil
 			snailLifts[player] = nil
+			snailPoses[player] = nil
 		end
 	end
 
@@ -153,13 +188,28 @@ function Module._refreshSnails()
 		if snails[player] then
 			snails[player]:PivotTo(snailMarkers[index].CFrame + Vector3.yAxis * snailLifts[player])
 		end
+		table.insert(memberIds, tostring(player.UserId))
 	end
+
+	--[[ Posing ]]
+
+	-- New members, a member gone or the pods swapped: everyone strikes a new pose
+	local key: string = `{custom}:{table.concat(memberIds, ",")}`
+	if key ~= posedFor then
+		posedFor = key
+		Module._poseAll()
+	end
+
+	--[[ Camera ]]
+
+	cameraTarget = if custom then Module._getFitCFrame() else cameraMarker.CFrame
 end
 
 --%%%%%%%%%%%%%%%%%%%% Dress
 
 --[[
-	Gives a member a snail wearing an outfit (the Outfit attribute's text), replacing the one they had.
+	Gives a member a snail wearing an outfit (the Outfit attribute's text) and holding the stage's weapon, both scaled
+	up for the stage, replacing the one they had.
 ]]
 function Module._dress(player: Player, outfit: string)
 	--[[ Data ]]
@@ -199,11 +249,101 @@ function Module._dress(player: Player, outfit: string)
 	model.Parent = worldFolder
 	I.SnailRig.SetMotion(model, "Idle")
 
+	--[[ Weapon ]]
+
+	local weapon: Model = I.G_Arsenal.GetModel(_settings.STAGE_WEAPON):Clone()
+	weapon:ScaleTo(weapon:GetScale() * _settings.STAGE_SNAIL_SCALE * _settings.STAGE_WEAPON_SCALE)
+	I.SnailRig.Hold(model, _settings.STAGE_WEAPON, weapon)
+	weapon.Parent = model
+
 	--[[ Saving ]]
 
 	snails[player] = model
 	snailSkins[player] = outfit
 	snailLifts[player] = underPivot * (_settings.STAGE_SNAIL_SCALE - 1)
+	snailPoses[player] = nil
+	Module._pose(player)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Pose All
+
+--[[
+	Has every snail on the stage strike a new pose.
+]]
+function Module._poseAll()
+	--[[ Posing ]]
+
+	for player: Player in pairs(snails) do
+		Module._pose(player)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Pose
+
+--[[
+	Plays a pose on a member's snail: one of STAGE_POSES that has an animation, at random, never the one they had last,
+	looping from a random point, over its held weapon's pose. Nothing changes while no pose has an animation yet.
+]]
+function Module._pose(player: Player)
+	--[[ Data ]]
+
+	local model: Model? = snails[player]
+	local animator: Animator? = model and model:FindFirstChildWhichIsA("Animator", true)
+	local animations: Folder = I.Dirs.Assets:FindFirstChild("Snails"):FindFirstChild("Animations")
+
+	--[[ Checks ]]
+
+	-- Check if the snail is rigged
+	if not animator then
+		return
+	end
+
+	--[[ Picking ]]
+
+	local choices = {} --- @type { Animation }
+	for _index: number, name: string in ipairs(_settings.STAGE_POSES) do
+		local animation: Instance? = animations:FindFirstChild(name)
+		if animation and animation:IsA("Animation") and animation.AnimationId ~= "" and (name ~= lastPoses[player] or #_settings.STAGE_POSES == 1) then
+			table.insert(choices, animation)
+		end
+	end
+	if #choices == 0 then
+		return
+	end
+	local picked: Animation = choices[math.random(#choices)]
+
+	--[[ Playing ]]
+
+	if snailPoses[player] then
+		snailPoses[player]:Stop(0.25)
+	end
+	local track: AnimationTrack = animator:LoadAnimation(picked)
+	track.Priority = Enum.AnimationPriority.Action4
+	track.Looped = true
+	track:Play(0.25)
+	track.TimePosition = math.random() * math.max(track.Length, 0)
+
+	--[[ Saving ]]
+
+	snailPoses[player] = track
+	lastPoses[player] = picked.Name
+end
+
+--%%%%%%%%%%%%%%%%%%%% On In Match
+
+--[[
+	Hands the camera over while the player is in a match, and has the stage strike new poses when they come back.
+]]
+function Module._onInMatch()
+	--[[ Camera ]]
+
+	Module._refreshCamera()
+
+	--[[ Posing ]]
+
+	if not I.S.Players.LocalPlayer:GetAttribute("InMatch") then
+		Module._poseAll()
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Camera
@@ -230,6 +370,7 @@ function Module._refreshCamera()
 	if holding then
 		-- The FOV buff's base, so an open widget's FOV change still adds to it
 		I.Buff.Set("FOV", "Standard", _settings.STAGE_FOV)
+		I.S.Workspace.CurrentCamera.CFrame = cameraTarget or cameraMarker.CFrame
 
 		-- After Roblox's camera scripts each frame, so nothing moves it off the stage
 		I.S.RunService:BindToRenderStep("Lobby_Stage", Enum.RenderPriority.Camera.Value + 1, Module._holdCamera)
@@ -242,14 +383,20 @@ end
 --%%%%%%%%%%%%%%%%%%%% Hold Camera
 
 --[[
-	Puts the camera on the stage's camera marker, looking along its front.
+	Eases the camera to where it frames the stage (its marker, or backed off to fit a custom lobby), looking along the
+	marker's front.
 ]]
-function Module._holdCamera()
-	--[[ Applying ]]
+function Module._holdCamera(deltaTime: number)
+	--[[ Local Variables ]]
 
 	local camera: Camera = I.S.Workspace.CurrentCamera
+	local target: CFrame = cameraTarget or cameraMarker.CFrame
+	local alpha: number = 1 - (1 - _settings.STAGE_CAMERA_EASE) ^ (deltaTime * 60)
+
+	--[[ Applying ]]
+
 	camera.CameraType = Enum.CameraType.Scriptable
-	camera.CFrame = cameraMarker.CFrame
+	camera.CFrame = camera.CFrame:Lerp(target, alpha)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -268,11 +415,11 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Members
 
 --[[
-	Returns who stands on the stage: the player, then the rest of their party in this server by user id, as many as
-	there are pods.
+	Returns who stands on the stage: the player, then the rest of their custom lobby in its order, or of their party in
+	this server by user id, as many as there are pods.
 ]]
 --- @return { Player }
-function Module._getMembers()
+function Module._getMembers(custom: boolean)
 	--[[ Local Variables ]]
 
 	local localPlayer: Player = I.S.Players.LocalPlayer
@@ -281,21 +428,65 @@ function Module._getMembers()
 
 	--[[ Members ]]
 
-	if partyId then
+	if custom then
+		local room: Instance = I.MatchBoard.GetCustomRoom()
+		local userIds = I.S.HttpService:JSONDecode(room:GetAttribute("Players") or "[]") --- @type { number }
+		for _index: number, userId: number in ipairs(userIds) do
+			local player: Player? = I.S.Players:GetPlayerByUserId(userId)
+			if player and player ~= localPlayer then
+				table.insert(members, player)
+			end
+		end
+	elseif partyId then
 		for _index: number, player: Player in ipairs(I.S.Players:GetPlayers()) do
 			if player ~= localPlayer and player:GetAttribute("PartyId") == partyId then
 				table.insert(members, player)
 			end
 		end
+		table.sort(members, function(first: Player, second: Player)
+			return first.UserId < second.UserId
+		end)
 	end
-	table.sort(members, function(first: Player, second: Player)
-		return first.UserId < second.UserId
-	end)
 	table.insert(members, 1, localPlayer)
 
 	--[[ Returning ]]
 
 	return { table.unpack(members, 1, math.min(#members, #snailMarkers)) }
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Fit CFrame
+
+--[[
+	Returns where the camera frames every snail on the stage: the marker's view, backed off along its look (so it also
+	rises) as far as the farthest corner of any snail needs to sit within STAGE_FIT_MARGIN of the screen's edges.
+]]
+--- @return CFrame
+function Module._getFitCFrame()
+	--[[ Local Variables ]]
+
+	local camera: Camera = I.S.Workspace.CurrentCamera
+	local marker: CFrame = cameraMarker.CFrame
+	local tanV: number = math.tan(math.rad(_settings.STAGE_FOV / 2)) * _settings.STAGE_FIT_MARGIN
+	local aspect: number = camera.ViewportSize.X / math.max(camera.ViewportSize.Y, 1)
+	local tanH: number = tanV * aspect
+	local back: number = 0
+
+	--[[ Fitting ]]
+
+	for _player: Player, model: Model in pairs(snails) do
+		local box: CFrame
+		local size: Vector3
+		box, size = model:GetBoundingBox()
+		for _index: number, corner: Vector3 in ipairs({ Vector3.new(-1, -1, -1), Vector3.new(1, 1, 1), Vector3.new(-1, 1, -1), Vector3.new(1, -1, 1) }) do
+			local offset: Vector3 = box:PointToWorldSpace(corner * size / 2) - marker.Position
+			local depth: number = offset:Dot(marker.LookVector)
+			back = math.max(back, math.abs(offset:Dot(marker.RightVector)) / tanH - depth, math.abs(offset:Dot(marker.UpVector)) / tanV - depth)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return marker - marker.LookVector * back
 end
 
 return Module

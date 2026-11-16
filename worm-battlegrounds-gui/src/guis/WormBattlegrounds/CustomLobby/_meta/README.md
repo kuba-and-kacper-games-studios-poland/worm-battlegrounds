@@ -25,7 +25,7 @@ A private lobby to play friends (pays no coins). First the player creates it (ma
 | `U_Create` › `S_Create` | ImageButton | Creates the lobby and shows `U_Room` |
 | `U_Room` | Frame | The room, hidden until created |
 | `U_Room` › `S_Info` | TextLabel | "Teams  \|  4 players  \|  Desert  \|  Hard bots" |
-| `U_Members` | ScrollingFrame with a UIListLayout | Holds one `Member` per player in the lobby |
+| `U_Members` | ScrollingFrame with a UIListLayout | Holds one `Member` per player in the lobby, then an open slot per free place up to its size (a `Member` named `Open<n>`: "Open slot" faded, no avatar or username; MatchBoard's `CUSTOM_OPEN_SLOT_*`) |
 | `U_Invitable` | ScrollingFrame with a UIListLayout | Holds one `Invitable` per player in this server |
 | `U_Room` › `S_InviteFriends`, `S_Start`, `S_Leave` | ImageButton | Friend invite prompt; start (shown to the owner only); leave |
 

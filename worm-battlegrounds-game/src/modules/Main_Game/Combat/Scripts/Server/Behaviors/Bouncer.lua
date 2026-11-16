@@ -20,15 +20,6 @@ local Snail = require(script.Parent:FindFirstChild("Snail")) --- @type Combat_Sn
 
 local random: Random = Random.new()
 
--- The four ways a variety grenade's worms dig off, fanned out downward
---- @type { Vector3 }
-local snailDirections = {
-	Vector3.new(-0.7, -1, 0).Unit,
-	Vector3.new(-0.25, -1, 0).Unit,
-	Vector3.new(0.25, -1, 0).Unit,
-	Vector3.new(0.7, -1, 0).Unit,
-}
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -52,8 +43,8 @@ local Module = {}
 --[[
 	A thrown or placed bomb. One with a Fuse explodes when it runs out (the Dynamite placed at the feet), or when it
 	comes to rest if it was thrown (the Grenade); one that bursts on contact explodes on the first thing it touches (Cluster bomb, Variety
-	grenade); water or lava only slows it. Then a cluster bomb scatters its bomblets and a variety grenade lets out its
-	snails.
+	grenade); water or lava only slows it. Then it sounds its burst (BurstSound), a cluster bomb scatters its bomblets
+	and a variety grenade throws its minis, each of which hatches a worm where it bursts (the owner, 2026-11-16).
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot)
@@ -95,6 +86,9 @@ function Module.Run(shot)
 	end
 
 	shot.Damage += Blast.Explode(burst, row.BlastRadius, shot.ItemId, shot.ParticipantId, shot.Shiny, row.DamageMax, row.DamageEdge, row.Knockback)
+	if row.BurstSound then
+		Snail.PlaySound(row.BurstSound, burst)
+	end
 
 	--[[ Splitting ]]
 
@@ -109,11 +103,12 @@ function Module.Run(shot)
 			end)
 		end
 	end
-	if row.Snails then
+	-- Worms dig out of the burst itself, unless its minis hatch them
+	if row.Snails and not (row.Bomblets and row.Bomblets.Hatch) then
 		for index: number = 1, row.Snails.Count do
 			pending += 1
 			task.spawn(function()
-				Snail.Run(shot, burst + Vector3.yAxis, snailDirections[(index - 1) % #snailDirections + 1])
+				Snail.Run(shot, burst + Vector3.yAxis, _settings.SNAIL_DIRECTIONS[(index - 1) % #_settings.SNAIL_DIRECTIONS + 1])
 				pending -= 1
 			end)
 		end
@@ -129,6 +124,7 @@ end
 --[[
 	One of a bomb's bomblets (a cluster bomb's, a variety grenade's): thrown up and out at a random angle and speed, in
 	its bomb's wind, it explodes on contact. With Mini it's drawn as a small copy of its bomb (its model and trail, at that share of its size).
+	With Hatch a worm digs out of its blast, down one of SNAIL_DIRECTIONS at random.
 ]]
 --- @param shot Combat_Shot
 function Module._runBomblet(shot, from: Vector3)
@@ -154,6 +150,11 @@ function Module._runBomblet(shot, from: Vector3)
 		elseif body.Stopped then
 			local center: Vector3 = if hit then hit.Position else body.Position
 			shot.Damage += Blast.Explode(center, bomblets.Radius, shot.ItemId, shot.ParticipantId, shot.Shiny, bomblets.DamageMax, bomblets.DamageEdge, "Small")
+			if bomblets.Hatch and shot.Row.Snails then
+				Projectiles.Land(body)
+				Snail.Run(shot, center + Vector3.yAxis, _settings.SNAIL_DIRECTIONS[random:NextInteger(1, #_settings.SNAIL_DIRECTIONS)])
+				return
+			end
 			break
 		end
 	end

@@ -189,10 +189,13 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   `Particles_2`), its emitters disabled, with `EmitCount`, `EmitDelay` and `EmitDuration` attributes saying how each
   fires. Code plays one by name (`I.Vfx.Play(name, cframe, parent, scale?)`), clones a trail (`I.Vfx.AddTrail`), and
   never builds particles of its own. Blasts pick theirs by size (Combat's `BLAST_VFX`); guns, the punch and the
-  snails' spawn, landing, healing, splash and trail have theirs (Combat's and Snails' client `Effects`). Missiles and
-  the black hole, variety and cluster grenades (their mini bomblets too) draw the studio's trails as they fly (Combat's
-  `PROJECTILE_TRAILS`), and a launcher's shot blasts out of it (`LAUNCH_VFX`), and a
-  jetpack its jet (Snails' `Trail_Jet`); a trail's attachments stand along Z, toward the camera, so it keeps its width.
+  snails' spawn, landing, healing, splash and trail have theirs (Combat's and Snails' client `Effects`). Missiles, the
+  Grenade, the spider bomb and the black hole, variety and cluster grenades (their mini bomblets and the variety's worms
+  too) draw the studio's trails as they fly (Combat's `PROJECTILE_TRAILS`: the Grenade's and the spider bomb's
+  `Trail_Fog` since 2026-11-16), and a launcher's shot blasts out of it (`LAUNCH_VFX`), and a jetpack its jet (Snails'
+  `Trail_Jet`) over the studio's booster flames (`JET_EXHAUST_VFX`, `Jet_Booster`); a trail's attachments stand along Z,
+  toward the camera, so it keeps its width. Every snail a blow hurts throws the studio's damage sparks (Combat's
+  `HIT_VFX`, `Hit_Sparks`, bigger for a harder blow, 2026-11-16).
 - **Each place has its own mood, subtle and in the game's colours** (the owner's pick, 2026-11-10: "subtle, high
   quality, minimalistic but visible… worms type of colors, but in a professional way"): the Atmosphere module sets
   the lobby's or the map's lighting preset (`Lobby`, `Plains`, `Desert`, `Cave`, `Volcano`, in `Lighting.Presets`), a few
@@ -272,10 +275,29 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   them… they slowly move towards it if they're on ground, they like slide towards it"): open, it draws every snail in
   its `PullRadius` in slowly (Combat's `BLACK_HOLE_DRAG_SPEED`), sliding along the ground or drifting through the air,
   holds each one stuck at its middle (`I.Snails.Drag`), bursts with no knockback, and lets them drop.
+- **Every screen draws the black hole the same** (2026-11-16): a snail it drags through the air drifts along a path
+  written once on the snail (Snails' `Drag*` attributes and `Helpers/Drag`, easing in over `DRAG_EASE`), which each
+  client draws before the camera on `I.Match.GetDrawTime()`, as throws are, never the anchored ball's replicated steps
+  (they looked choppy on other screens). An open hole draws a vortex on every screen (Combat's `Combat_HoleOpened`,
+  the `Vortex` handler): `VORTEX_ARMS` carriers of its trail orbit its middle, closing in and spinning faster, since a
+  still hole draws no trail, with its open, hum, collapse and burst sounds. It pulls harder since that day:
+  `BLACK_HOLE_DRAG_SPEED` 16 (was 10), its `PullRadius` 24 (was 20), and only a snail on about the hole's level, with
+nothing in the way, slides; one under a hole higher up, or stopped by a step, drifts up through the air (Snails'
+`DRAG_SLIDE_MAX_RISE`, `DRAG_SLIDE_STUCK`).
+- **The homing missile locks on, then dives** (2026-11-16): after its `LockDelay` it stalls for its `LockPause` (0.2 s)
+  with its nose turning to the target, flashes and beeps (Combat's `HOMING_LOCK_VFX`, `Homing_Lock`), then dives with
+  a whoosh, the jet trail and sparks (`HOMING_DIVE_TRAIL`, `HOMING_DIVE_SPARKS`), speeding up from `HomingSpeed` 70 (was
+  60) to `HomingMaxSpeed` 150 by `HomingAccel` 160 and turning at most `HomingTurn` 5 radians a second, growing by
+  `HomingTurnGrowth` 10 each second, so it bends into its target instead of snapping onto it. Ballistics steers it the
+  same on the server, every client and the bots' `Predict`.
 - **A blast hurts at once; the crater follows** (the owner, 2026-11-13: the black hole "updates the terrain after a
   lag… and deals damage after a lag"): Blast hurts every snail the moment it shows, while the server cuts the crater,
   and throws them only once it's cut. Craters cut with one merged cutter (Arena's `Cutter.Merge`), and a client's own
-  pieces skip precise collision, so its hole shows in the blast's frame. The variety grenade bursts into four mini variety grenades (its `Bomblets`' `Mini`), no longer worms.
+  pieces skip precise collision, so its hole shows in the blast's frame. The variety grenade bursts into four mini variety grenades (its `Bomblets`' `Mini`), and **each mini hatches a
+  digging worm** where it bursts (the owner, 2026-11-16: "verity should burst into digging worms", undoing the testers'
+  minis-only burst of 2026-11-13; its `Bomblets`' `Hatch` and its `Snails` row): the worm squeaks as it dives in and
+  crunches as it digs (Combat's `SNAIL_DIG_SOUND_EVERY`), and the bomb sounds its burst (the row's `BurstSound`, the
+  Cluster bomb's `Cluster_Split` too).
 - **A thrown shot leaves the snail moving until it bursts** (the owner, 2026-11-15: "throw it and run away"): after an
   `Arc` or `Target` shot the player keeps moving their snail with the stamina it has left; the shot's blast, a hit on
   that snail or an open black hole drawing it takes the snail back first (Combat's `Blast._takeBack`), so the server
@@ -288,12 +310,17 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   (the owner, 2026-11-15: "1 turn cooldown"): a snail that burned fuel on its turn (`JetpackFlew`) can't fly its next
   one (`JetpackRest`, set as that turn starts), its fuel kept; bots obey it too. While the jetpack is on, its fuel
   shows on a bar over the stamina bar (MatchHud's `U_Stamina` › `U_Fuel`, the stamina bar's twin in orange: "Jetpack
-  75%", or "Jetpack next turn" while it rests), drawn from the client's own count as it burns.
+  75%", or "Jetpack next turn" while it rests), drawn from the client's own count as it burns. **It's strapped to the shell and goes on at once** (2026-11-16): the
+  studio's twin-tank jetpack follows the skin's shell bone through every animation (Snails' `GEAR.Jetpack` `Bone` and
+  `BoneOffset`, scaled by `GEAR_SKIN_SCALE`), its back tank on the back of the shell and its jet under it
+  (`JET_TRAIL_OFFSET`), and picking it on the bar puts it on with no press on the screen (the owner's pick, MatchHud's
+  `USE_ON_SELECT`).
 - **Utilities are held, then used** (the owner, 2026-11-15: "when you click it it equips and the worm is holding
-  it, and when you click on screen it's used"): picking a Medkit, a Bandage, a potion, the Jetpack or the Parachute
+  it, and when you click on screen it's used"): picking a Medkit, a Bandage, a potion or the Parachute
   puts it in the snail's hands (`HeldItem`, no aim); the next press on the screen uses it (MatchHud's
   `LoadoutBar.UseHeld`, any press, a finger's too; RT on a pad), and the snail takes back the weapon it held before, or
-  the Bazooka when that one has no uses left or cools down.
+  the Bazooka when that one has no uses left or cools down. The Jetpack is used the moment it's picked since
+  2026-11-16 (the owner, MatchHud's `USE_ON_SELECT`).
 - **Used-up items lock on the bar** (the owner, 2026-11-15): a slot with no uses left for the match shows a lock over
   its darkened icon (MatchHud's `BarSlot` › `S_Lock`), as a cooling one is darkened.
 - **Dynamite is placed, not thrown:** it drops at the snail's feet (`Aim = "Feet"`, no launch speed), the stamina bar
@@ -387,7 +414,7 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   refuses it shows no bubble. Shooting ends it at once too: on the shooter's screen at the press, on every screen when
   the match enters its Flight (Combat's client `Held`).
 - **Potions show on the snail, and on the player's screen on their turn** (the owner, 2026-11-12): a snail under the
-  Speed or Low gravity potion streams its `Aura_*` Vfx prefab (cyan sparks, violet bubbles), and on the player's own
+  Speed or Low gravity potion streams its `Aura_*` Vfx prefab (since 2026-11-16 the studio's Speed and Low Gravity effects, their trails too), and on the player's own
   turn the `PotionVignette` gui tints the screen's edges cyan, violet, or pink for both (Snails' `POTION_*`).
 
 ## Guis
@@ -460,7 +487,14 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   (MatchHud's `U_TurnCallout`, the owner: "make it look professional"): "Your turn!" in gold over orange lines for the
   player's own, with a sound and a haptic tap; anyone else's smaller, in white over lines in the snail's team colour,
   with how long until the player's own. The player hears when they're next. In the last seconds of their own turn the timer turns orange, then red, ticks faster and higher, and a
-  red band pulses along the screen's sides (MatchHud's `TIMER_*`, `TICK_*`, `TENSION_PULSE_RATE`).
+  red band pulses along the screen's sides (MatchHud's `TIMER_*`, `TICK_*`, `TENSION_PULSE_RATE`). **Sudden death is
+  announced on the same banner** (2026-11-16): once the turn's own callout is gone it reads "Water is rising..." or
+  "Lava is rising..." (Match's `SeaKind`), no avatar, its lines in the liquid's colour and its title filling with it
+  from the bottom, and every sudden-death turn's line adds "The water rises" (MatchHud's `SUDDEN_DEATH_*`).
+- **Only the player's own snail wears the full tag** (the owner, 2026-11-16: "small minimalistic hp and nickname"): on
+  each screen every other snail's SnailTag shows its name and health bar only, at Snails' `OTHER_TAG_SCALE` (0.7, an
+  `S_SmallScale` UIScale on its `Overhead`), no level or badges; the turn arrow and timer keep their size. Once the
+  active snail acts only its arrow hides; the tag and its health stay up.
 - **Crates open on the GACHA screen, CS2's way** (the owner's pick, 2026-11-11: "use our gui style but use the layout
   of cs go crate opening"): the shop makes way and the opening plays on the `Crates` gui itself, never in a window of
   its own (`CrateOpen` is unused). The bought crates drop in as 3D models in a ViewportFrame (the owner, 2026-11-11:
@@ -482,6 +516,11 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   `Premium` shows it's premium by small touches (a gold tab, a halo, the violet
   backdrop, a PREMIUM tag, a pale-gold line), never another layout. Gui particles are `I.UIEmitter`'s. The sounds mix
   crisp clicks for the reel with the Great Strategy instruments for the melodies (`art/sfx/make_crates.py`).
+- **Joining the studio's group opens a free crate, once** (the owner, 2026-11-16): on the crates screen the
+  `FreeCrate` badge opens a dialog asking the player to like the game (which no game can check, so it's only asked)
+  and join The Snail Studio (566704940, the Group list's `SnailStudio`). CLAIM lights once they're in and opens one
+  Weapon crate on the crates screen like a bought one (Crates' `GROUP_CRATE`, paid with `"GroupReward"`); the server
+  allows it once a player (`Crates.GroupCrateClaimed`) and only to members (`I.Crates.CanClaimGroupCrate`).
 - **Models that move in a ViewportFrame sit in a WorldModel inside it** (2026-11-11, measured on the ten-pack: the owner
   asked for it light on performance): moving even one part placed straight in a ViewportFrame redraws every mesh in
   it, about 25 ms a frame for ten crates, while the same crates moving in a WorldModel cost under 1 ms, and moving
@@ -519,7 +558,7 @@ mirrored in the bots' `Predict`); ponds still only slow it.
 - **Badges after a name are the server's, and every one shows** (the owner's pick, 2026-11-10: "if a player has
   multiple, display multiple"): the PlayerBadges server writes the `Badges` Player attribute (owner, developer by
   rank or role name in The Snail Studio's group, since its roles share rank 1, the AdminPanel's admins, Roblox staff, Video Stars, verified, Premium), and every
-  name a player's badges belong after (SnailTag, the turn list, Party, Results) has an `S_Badges` frame beside it
+  name a player's badges belong after (the player's own SnailTag, the turn list, Party, Results) has an `S_Badges` frame beside it
   that `I.PlayerBadges.Show` lays out, shrinking the name first. Verified and Premium are Roblox's own glyphs
   (`U+E000`, `U+E001`, which the game's fonts draw); the rest are the `art/badges` kit's pictures, uploaded to
   the group (2026-11-11), one `Image` each in PlayerBadges' `BADGES`.
@@ -676,7 +715,14 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   count, and a timer over Join counting down to the card's next map (the owner, 2026-11-16: "show the timer back"). The solo or party setup takes the board's place, whose lobby rows and buttons slide down off the
   screen for it and back after (MatchBoard's `PLAY_*` settings, the owner's pick, 2026-11-12), at the bottom centre
   (the owner's pick, 2026-11-12); custom lobbies open in a window. Crates and Skins are full-screen widgets: while either is open the lobby's guis hide
-  (Lobby's `FULL_SCREEN_WIDGETS` and `LOBBY_GUIS`).
+  (Lobby's `FULL_SCREEN_WIDGETS` and `LOBBY_GUIS`). **A custom lobby stands on eight pods** (the owner, 2026-11-16):
+  while the player is in one, the stage swaps its pods for `PREFAB | CustomPods` (three in front, two raised behind
+  them, three higher at the back, packed close), stands the lobby's members on them and backs the camera off until
+  they all fit (Lobby's `STAGE_FIT_MARGIN`, `STAGE_CAMERA_EASE`); the Party column lists the lobby then (its members,
+  the owner's crown, + cards up to its size that open CustomLobby), and the lobby's member list ends in open slots.
+  **Every stage snail holds the Bazooka and strikes a pose** (the owner, 2026-11-16: "make it feel organic and
+  natural"): one of Lobby's `STAGE_POSES` at random, never the one it had, picked again when the members change or the
+  player comes back from a match; a pose without an uploaded id is skipped.
 - **Public matches are global** (the owner, 2026-11-15, replacing the per-server rows and timers of 2026-11-09):
   each public mode has one card, and Join sends the player and their party here straight to a match server: the
   fullest open match of that mode on any server with a seat for each of them, on one team where it fits, or a new one

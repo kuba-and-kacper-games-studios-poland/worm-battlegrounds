@@ -2072,3 +2072,52 @@ opens the picker itself, once per starter weapon, and only while no other window
   never over another window, keeps a player who closes it from being trapped.
 
 Rules: Snails (The tutorial is a whole first match against a bot, then the loadout).
+
+
+## A black hole that stuttered on other screens, and a vortex for a still hole (2026-11-16)
+
+**What happened.** A snail a black hole drew through the air moved smoothly only on the server: the server anchored
+its ball and set its CFrame every frame, and other screens saw that anchored part arrive in replicated steps, so the
+drift looked choppy. The open hole also showed little: it holds still for its `HoleTime`, and a trail draws only
+while its attachments move, so the black hole's own trail stopped drawing the moment it opened.
+
+- **Something the server moves every frame is sent as a path, not as positions.** The drift is now written once on
+  the snail (`DragFrom`, `DragTo`, `DragSpeed`, `DragReach`, `DragEase`, `DragStart`), and one helper
+  (`Snails/Scripts/Helpers/Drag.lua`) turns it into a position on the server's clock for both sides. Each client
+  draws it on `I.Match.GetDrawTime()` before the camera, as thrown snails already were (`FlightFrom`,
+  `FlightVelocity`, `FlightStart`).
+- **A still effect that needs a trail gets moving carriers.** The vortex is `VORTEX_ARMS` invisible parts carrying
+  `Trail_BlackHole`, orbiting the hole's middle and closing in (`Combat/Scripts/Client/Vortex.lua`, started by
+  `Combat_HoleOpened`), built with Flight's `MakeTrailCarrier`, the shots' own carrier.
+- **A ground slide only goes where the ground leads.** In a Studio test a bot under a hole opened above a ledge never
+  moved: it was on the ground, so it slid, and a step held it there for the whole `HoleTime`. A slide was then kept
+  for a hole about level with the snail (`DRAG_SLIDE_MAX_RISE`), and a slide that a step or wall slows under
+  `DRAG_SLIDE_STUCK` of its speed (read from the ball's speed the frame after it was set) gives way to the drift.
+
+Rules: Snails (Every screen draws the black hole the same; Whatever moves something the camera follows runs before
+the camera).
+
+## The jetpack on the shell's bone (2026-11-16)
+
+**What happened.** Worn gear sat at a fixed offset in the ball's space (`GEAR.Offset`), which is fine for a parachute
+over the snail but not for a jetpack strapped to the shell: the shell moves with the rig's animations (the idle's
+bob, the walk, the hide), and the studio's new twin-tank jetpack had to stay on it.
+
+- **Gear worn on an animated part follows its bone.** A `GEAR` row can name a skin bone (`Bone`) and an offset from it
+  (`BoneOffset`); Gear places the model at the bone's `TransformedWorldCFrame` each frame, its offset scaled by the
+  skin's scale over the scale it was measured at (`GEAR_SKIN_SCALE`), so the bigger stage snails and every skin on
+  Classic's skeleton wear it the same. A skin without the bone falls back to `Offset`.
+
+Rules: Snails (One jetpack a match, on fuel).
+
+## Variety minis that hatch worms (2026-11-16)
+
+**What happened.** On 2026-11-13 the testers had the variety grenade burst into four minis instead of digging worms.
+On 2026-11-16 the owner wanted both: "verity should burst into digging worms". The worms' behaviour
+(`Combat/Scripts/Server/Behaviors/Snail.lua`) and their row (`Snails`) were still in the game, unused, so the change
+was a flag on the minis (`Bomblets.Hatch`) and the row put back.
+
+- **A behaviour taken off a weapon stays until it's taken out of the game.** Kept code (here, with its README saying
+  it was unused) made the reversal a data change plus sounds, not a rebuild.
+
+Rules: Snails (A blast hurts at once; the crater follows).

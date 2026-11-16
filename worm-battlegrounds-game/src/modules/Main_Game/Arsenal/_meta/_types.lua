@@ -38,6 +38,7 @@
 --- @field BurstOnContact boolean?
 --- @field Bomblets Arsenal_Bomblets?
 --- @field Snails Arsenal_Snails?
+--- @field BurstSound string?
 --- @field Pellets number?
 --- @field PerBulletDamage number?
 --- @field Spread number?
@@ -48,7 +49,12 @@
 --- @field CrawlTime number?
 --- @field CrawlSpeed number?
 --- @field LockDelay number?
+--- @field LockPause number?
 --- @field HomingSpeed number?
+--- @field HomingMaxSpeed number?
+--- @field HomingAccel number?
+--- @field HomingTurn number?
+--- @field HomingTurnGrowth number?
 --- @field HoleTime number?
 --- @field PullRadius number?
 --- @field Reach number?
@@ -69,6 +75,10 @@ local _arsenal_WeaponData = {}
 --- # Look #
 ---
 --- @field Mini number?
+---
+--- # Worms #
+---
+--- @field Hatch boolean?
 local _arsenal_Bomblets = {}
 
 --- @class Arsenal_Snails

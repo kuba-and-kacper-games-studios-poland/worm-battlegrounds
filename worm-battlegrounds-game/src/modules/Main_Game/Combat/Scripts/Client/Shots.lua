@@ -119,6 +119,8 @@ function Module._onShot(id: number, kind: string, name: string, start: number, p
 		LastBounce = 0,
 		Whistled = false,
 		Whistle = nil,
+		Locked = false,
+		Diving = false,
 	}
 	shots[id] = shot
 
@@ -232,7 +234,88 @@ function Module._step(deltaTime: number)
 		shot.Offset *= fade
 		shot.Part.CFrame = CFrame.new(position + shot.Offset) * CFrame.Angles(0, 0, angle)
 		Module._whistle(shot)
+		Module._home(shot)
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Home
+
+--[[
+	Shows a homing shot locking on and diving: as it locks, a flash and its lock beeps (Homing_Lock); as it dives, an
+	afterburner whoosh (Homing_Boost), the jet trail (HOMING_DIVE_TRAIL) and the dive's sparks (HOMING_DIVE_SPARKS'
+	attachments, streaming) on it until it ends.
+]]
+--- @param shot Combat_ClientShot
+function Module._home(shot)
+	--[[ Local Variables ]]
+
+	local body = shot.Body --- @type Combat_Body
+	local options = body.Options --- @type Combat_ShotOptions
+
+	--[[ Checks ]]
+
+	-- Check if it's a homing shot that has locked on and still has a phase to show
+	if not options.Target or not options.LockStep or body.Step < options.LockStep or shot.Diving then
+		return
+	end
+
+	--[[ Locking ]]
+
+	if not shot.Locked then
+		shot.Locked = true
+		I.Vfx.Play(_settings.HOMING_LOCK_VFX, shot.Part.CFrame, effectsFolder, _settings.HOMING_LOCK_VFX_SCALE)
+		Module._playAt(shot, "Homing_Lock")
+	end
+
+	--[[ Diving ]]
+
+	if body.Step < options.LockStep + (options.LockPauseSteps or 0) then
+		return
+	end
+	shot.Diving = true
+	Module._playAt(shot, "Homing_Boost")
+	-- The trail's attachments stand toward the camera (along Z), so it keeps its width; the part only turns about Z
+	local had = {} --- @type { [Instance]: boolean }
+	for _index: number, child: Instance in ipairs(shot.Part:GetChildren()) do
+		had[child] = true
+	end
+	I.Vfx.AddTrail(_settings.HOMING_DIVE_TRAIL, shot.Part)
+	for _index: number, child: Instance in ipairs(shot.Part:GetChildren()) do
+		if child:IsA("Attachment") and not had[child] then
+			child.Position = Vector3.new(0, child.Position.Y, child.Position.X + child.Position.Z) * _settings.TRAIL_SCALE
+		end
+	end
+	local sparks: BasePart? = I.Vfx.Get(_settings.HOMING_DIVE_SPARKS)
+	for _index: number, source: Instance in ipairs(if sparks then sparks:GetChildren() else {}) do
+		if source:IsA("Attachment") and #source:GetChildren() > 0 then
+			local attachment: Attachment = source:Clone()
+			attachment.Position = Vector3.zero
+			for _index2: number, emitter: Instance in ipairs(attachment:GetChildren()) do
+				if emitter:IsA("ParticleEmitter") then
+					emitter.Enabled = true
+				end
+			end
+			attachment.Parent = shot.Part
+		end
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play At
+
+--[[
+	Plays a match sound from a shot's part, heard as far as the camera can be.
+]]
+--- @param shot Combat_ClientShot
+function Module._playAt(shot, name: string)
+	--[[ Playing ]]
+
+	I.Sound.Play({
+		Name = name,
+		Location = shot.Part,
+		SoundGroup = "SFX",
+		RollOffMin = _settings.SOUND_ROLLOFF_MIN,
+		RollOffMax = _settings.SOUND_ROLLOFF_MAX,
+	})
 end
 
 --%%%%%%%%%%%%%%%%%%%% Whistle

@@ -33,7 +33,9 @@ local _data = {
 
 	Elasticity = 0.3,
 	BurstOnContact = true,
-	Bomblets = { Count = 4, DamageMax = 20, DamageEdge = 8, Radius = 3.5, Mini = 0.5 },
+	Bomblets = { Count = 4, DamageMax = 20, DamageEdge = 8, Radius = 3.5, Mini = 0.5, Hatch = true },
+	Snails = { Count = 4, Hits = 6, Damage = 5, Radius = 2 },
+	BurstSound = "Variety_Burst",
 }
 
 return _data

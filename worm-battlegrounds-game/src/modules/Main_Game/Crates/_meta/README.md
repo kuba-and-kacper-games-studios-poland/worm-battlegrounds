@@ -10,23 +10,26 @@ screen as 3D models (one, three or ten) and wait for a tap, then rattle, spring 
 up a ball of light that flashes into the reels. A reel of item cards rolls under a fixed line (three stacked bands for a
 3-pack, ten columns for a 10-pack) and slows onto each result, then the results are revealed. A legendary first lands
 as a gold ★ card; then a golden crate drops in and is tapped open, a golden reel picks which legendary (when the crate
-holds more than one), and the legendary plays its own drop. Hidden crates never show or open.
+holds more than one), and the legendary plays its own drop. Hidden crates never show or open. A player in The Snail
+Studio's group opens one Weapon crate free, once (`GROUP_CRATE`, the owner, 2026-11-16): the `FreeCrate` gui's badge on
+the crates screen opens a dialog asking them to like the game and join the group, and CLAIM opens it like a bought one.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Crates` |
 | Runs on | Server, Client, Global · Lobby map |
 | Exposes | `I.Crates` (server and client), `I.G_Crates` (both) |
-| Uses | `I.Currency`, `I.Inventory`, `I.G_Inventory`, `I.Policy`, `I.Shop`, `I.Random`, `I.Rarity`, `I.WidgetManager`, `I.Replicator`, `I.Notify`, `I.Interact`, `I.Format`, `I.Console` (client: the pad's tab buttons), `I.Sound`, `I.UIEmitter` (client: every particle), `I.Topic`, `I.G_Cosmetics`, `I.SnailRig`, `I.Utils` (client: the skin snails on cards) |
+| Uses | `I.Currency`, `I.Inventory`, `I.G_Inventory`, `I.Policy`, `I.Shop`, `I.Random`, `I.Rarity`, `I.WidgetManager`, `I.Replicator`, `I.Notify`, `I.Interact`, `I.Format`, `I.Console` (client: the pad's tab buttons), `I.Sound`, `I.UIEmitter` (client: every particle), `I.Topic`, `I.G_Cosmetics`, `I.SnailRig`, `I.Utils` (client: the skin snails on cards), `I.Group` (the free group crate), `I.G_Player`, `I.Player` |
 
 ## Files
 
 | File | What it controls |
 | --- | --- |
-| `Server.lua` | `Open`: checks, paying, rolling, giving |
+| `Server.lua` | `Open`: checks, paying (a currency, VIP's daily crate or the free group crate), rolling, giving; the `Crates` profile key and Replicator folder (`GroupCrateClaimed`), and reading a new player's group membership while their free crate is unclaimed |
 | `Global.lua` | The crate rows and pack prices; warns at start when a crate's odds don't add up to 100 or name an unknown item |
 | `Client.lua` | Starts the client handlers |
 | `Scripts/Client/Panel.lua` | The Crates widget: tabs (on a pad LB and RB step through them while it's open, the Console module's `TabPrevious` and `TabNext`), the balance chips, a row of buy buttons per currency (coins on top, diamonds under them), the lobby menu's Weapons and Skins buttons and badge, opening |
+| `Scripts/Client/GroupReward.lua` | The free group crate (the `FreeCrate` gui, `GROUP_GUI_NAME`): enabled while the crates screen shows and the crate is unclaimed (`GroupCrateClaimed` `false`); its badge opens the dialog, whose `S_CrateView` shows the crate's 3D model; JOIN (`I.Group.PromptJoin`) or JOINED by the player's membership (`I.Group.IsMember`, followed through `I.Group.GetChangedSignal`), and CLAIM in its `Look_*` colours, lit once they're in. CLAIM closes the dialog and opens the crate on the crates screen like a bought one (`Panel.Open(GROUP_CRATE, 1, "GroupReward")`), or says `GROUP_JOIN_FIRST` before they're in |
 | `Scripts/Client/Odds.lua` | The Crates widget's odds list, by rarity; a snail piece shows a snail wearing it live on its card (`SkinModels`) |
 | `Scripts/Client/SkinModels.lua` | The snail pieces' snails on cards: `Put` shows a snail wearing an item's piece (Cosmetics' `BuildSnail` on its `GetShowcase` outfit), posed in its idle frame (`I.SnailRig.Pose`), in a card's `S_Model` viewport, framed on the piece as the Style screen frames it (Cosmetics' `GetPieceShot`); `Release` takes it off; spare snails wait in a pool by piece; `GetPicture` is a piece's reel picture (`PIECE_PICTURES`). While the widget is open it draws a card's snail again once the card holds still where it's seen (`SKIN_REDRAW_FRAMES`): Roblox doesn't draw a viewport that changed while it moved or was hidden until it changes again where it's seen |
 | `Scripts/Client/Showcase.lua` | The crate on its pedestal: its 3D model (the row's `Model`) in `U_Crate`'s viewport, dressed in the crate's `Look` (glow, rays, beam, ring, ambient particles, STANDARD or PREMIUM tag, name plate; the premium crate's halo and violet backdrop), turning rays, a bob, a sway and a breathing glow while the widget is open, a pop when the crate changes, and the leap off the pedestal when a crate is bought |
@@ -45,7 +48,8 @@ holds more than one), and the legendary plays its own drop. Hidden crates never 
 
 | Function | Returns | What it does |
 | --- | --- | --- |
-| `Open(player, crateId: string, count: number, payWith: string)` | `{ Crates_Result }?` | Opens 1, 3 or 10 crates (`COUNTS`) paid in `"Coins"`, `"Diamonds"` or `"VipDaily"`; nil when it can't |
+| `Open(player, crateId: string, count: number, payWith: string)` | `{ Crates_Result }?` | Opens 1, 3 or 10 crates (`COUNTS`) paid in `"Coins"`, `"Diamonds"`, `"VipDaily"` or `"GroupReward"` (one `GROUP_CRATE`, once, while `CanClaimGroupCrate`); nil when it can't |
+| `CanClaimGroupCrate(player)` | `boolean` | Whether the player may open their free group crate: not opened yet, and in the group (`GROUP_NAME`) |
 
 ### Client: `I.Crates`
 
@@ -71,16 +75,19 @@ holds more than one), and the legendary plays its own drop. Hidden crates never 
 
 **Receive: RemoteFunctions**
 
-- `Crates_Open @ (player: Player, crateId: string, count: number, payWith: string)`: returns the results, or nil. Rate limit 2 per second.
+- `Crates_Open @ (player: Player, crateId: string, count: number, payWith: string)`: `payWith` a currency, `"VipDaily"` or `"GroupReward"`; returns the results, or nil. Rate limit 2 per second.
 
 ## Data
 
-Owned items are Inventory items. The widget reads three Replicator folders other modules write:
+Owned items are Inventory items. The widget reads Replicator folders other modules write, and Crates' own; the profile
+keeps whether the free group crate was opened:
 
 | Where | Key | What |
 | --- | --- | --- |
 | Replicator `Shop` | `VipCrateReady` | Makes the Skin crate's x1 free (FREE, paid with `VipDaily`) and the badge FREE |
 | Replicator `Policy` | `ArePaidRandomItemsRestricted` | Hides the diamonds chip while not `false` |
+| Profile | `Crates.GroupCrateClaimed` | Whether the player opened their free group crate (`false` until then), set by `Open` paid with `"GroupReward"` |
+| Replicator `Crates` | `GroupCrateClaimed` | The same, for their client: the `FreeCrate` gui shows only while it's `false` |
 
 A crate row: `Name`, `TabName` (its tab's text), `LayoutOrder` (its tab's place), `Hidden` (no tab, and
 it never opens), `Prices` (`{ [currency]: { One, Three, Ten } }`),
@@ -151,6 +158,8 @@ reel. Closing the widget ends an opening at once.
 | `SHINY_COPIES` | `10` | Copies that make an item shiny |
 | `PAID_CURRENCIES` | `{ "Diamonds" }` | Currencies bought with Robux: rolls with them are paid random items |
 | `VIP_CRATE` | `"Skin"` | VIP's free daily crate (the coins row's x1) |
+| `GROUP_CRATE`, `GROUP_NAME` | `"Weapon"`, `"SnailStudio"` | The crate a player opens free once for joining the studio's group (its name in the Group module's list, `src/global_data/Group/Groups.lua`: 566704940) and liking the game, which no game can check, so it's only asked |
+| `GROUP_GUI_NAME`, `GROUP_JOIN_FIRST` | `"FreeCrate"`, "Join The Snail Studio group first, then claim your free crate!" | The free crate's gui (its badge and dialog), and what CLAIM says before the player is in the group |
 | `INTRO_TWEENINFO`, `QUICK_INTRO_TWEENINFO` | 0.56 s, 0.26 s | The shop making way |
 | `STAGE_LAYOUTS` | 1, 3 and 10 (`Crates_StageLayout`) | Where the 3D crates stand by pack size (studs; the camera looks along +Z at their fronts), their scale and turn, the camera and the point it looks at |
 | `STAGE_FOV`, `STAGE_ASPECT` | `26`, 16 / 9 | The stage camera's field of view, and the screen shape the layouts are framed for (a narrower screen backs the camera off) |
@@ -225,6 +234,10 @@ The `Lobby` gui's corner menu opens it: `U_Menu` › `S_Weapons` and `S_Skins` (
 (`U_Menu` › `S_Badge` › `S_Count`) reads FREE while VIP's daily crate waits, else how many of
 the cheapest coin crate the player's coins open (`9+` past 9, hidden at none), redrawn on `Currency_Changed`. The old
 `CrateOpen` and `CrateOdds` guis are no longer used.
+
+Drives the `FreeCrate` gui over the crates screen (its README): `U_Button` (the badge), and `U_Dialog` with `S_CrateView`
+(the crate's model, still, in the viewport itself), `S_JoinButton`, `S_Joined`, `S_ClaimButton` (its `Look_MainColor`,
+`Look_StrokeColor`, `Look_LockedMainColor`, `Look_LockedStrokeColor`) and `S_CloseButton`.
 
 The 3D crates are `PREFAB | Crate_Weapon`, `_Premium`, `_Utility`, `_Skin` and `_Starter` in
 `Workspace.Ume.ReplicatedStorage_Assets.Crates` (read at runtime from `I.Dirs.Assets.Crates`). Each is a Model of eight

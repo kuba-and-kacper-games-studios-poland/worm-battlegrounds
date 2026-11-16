@@ -49,6 +49,15 @@ local leaving: boolean = false
 --- @class MatchBoard_Client_Custom
 local Module = {}
 
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	--[[ Topics ]]
+
+	-- The player's custom lobby changed: joined, left, someone came or went, or it closed (the lobby's stage and Party follow it)
+	I.Topic.Register("MatchBoard_RoomChanged")
+end
+
 --%%%%%%%%%%%%%%%%%%%% Start
 
 function Module.Start()
@@ -195,15 +204,20 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Room
 
 --[[
-	Shows the player's lobby when they're in one: its settings, its members, and everyone in this server they can
-	invite (the owner only).
+	Shows the player's lobby when they're in one: its settings, its members then an open slot per free place up to its
+	size, and everyone in this server they can invite (the owner only). Tells the lobby's stage and Party
+	(MatchBoard_RoomChanged).
 ]]
 function Module._refreshRoom()
 	--[[ Data ]]
 
-	local room: Instance? = Module._getMyRoom()
+	local room: Instance? = Module.GetMyRoom()
 	myRoomId = if room then room.Name else nil
 	leaving = leaving and room ~= nil
+
+	--[[ Publishing ]]
+
+	I.Topic.Publish("MatchBoard_RoomChanged")
 
 	--[[ Visibility ]]
 
@@ -247,6 +261,21 @@ function Module._refreshRoom()
 		entry.Parent = elems["Members"]
 	end
 
+	--[[ Open Slots ]]
+
+	for place: number = #members + 1, room:GetAttribute("Size") or #members do
+		local entry: Frame = prefabs["Member"]:Clone()
+		local nameLabel: TextLabel = entry:FindFirstChild("S_Name", true)
+		entry.Name = `Open{place}`
+		entry.LayoutOrder = place
+		entry.Visible = true
+		nameLabel.Text = _settings.CUSTOM_OPEN_SLOT_TEXT
+		nameLabel.TextTransparency = _settings.CUSTOM_OPEN_SLOT_TRANSPARENCY
+		entry:FindFirstChild("S_Username", true).Text = ""
+		entry:FindFirstChild("S_Avatar", true).Image = ""
+		entry.Parent = elems["Members"]
+	end
+
 	--[[ Invitable ]]
 
 	if not owner then
@@ -279,7 +308,7 @@ end
 function Module._onStart()
 	--[[ Data ]]
 
-	local room: Instance? = Module._getMyRoom()
+	local room: Instance? = Module.GetMyRoom()
 	local members = I.S.HttpService:JSONDecode(if room then room:GetAttribute("Players") or "[]" else "[]") --- @type { number }
 
 	--[[ Checks ]]
@@ -345,10 +374,19 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get My Room
 
 --[[
-	Returns the custom lobby the local player is in.
+	**CLIENT** |
+	Returns the custom lobby the local player is in (its Configuration: `Players`, `Size`, `Owner`…), nil when in none
+	or before the board has arrived.
 ]]
 --- @return Instance?
-function Module._getMyRoom()
+function Module.GetMyRoom()
+	--[[ Checks ]]
+
+	-- Check if the board has arrived
+	if not boardFolder then
+		return nil
+	end
+
 	--[[ Searching ]]
 
 	for _index: number, config: Instance in ipairs(boardFolder:GetChildren()) do

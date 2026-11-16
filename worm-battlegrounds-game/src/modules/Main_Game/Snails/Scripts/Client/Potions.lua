@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -139,7 +140,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Start Aura
 
 --[[
-	Copies an aura prefab's attachments onto a snail's ball and turns their emitters on.
+	Copies an aura prefab's attachments onto a snail's ball and turns their emitters on, and its trails between the
+	copied attachments (held by their first attachment, so they go with it).
 ]]
 --- @return { Attachment }
 function Module._startAura(prefabName: string, root: BasePart)
@@ -150,6 +152,7 @@ function Module._startAura(prefabName: string, root: BasePart)
 	--[[ Local Variables ]]
 
 	local attachments = {} --- @type { Attachment }
+	local copies = {} --- @type { [Attachment]: Attachment }
 
 	--[[ Building ]]
 
@@ -165,7 +168,16 @@ function Module._startAura(prefabName: string, root: BasePart)
 				end
 			end
 			attachment.Parent = root
+			copies[source] = attachment
 			table.insert(attachments, attachment)
+		end
+		for _index: number, source: Instance in ipairs(prefab:GetChildren()) do
+			if source:IsA("Trail") and copies[source.Attachment0] and copies[source.Attachment1] then
+				local trail: Trail = source:Clone()
+				trail.Attachment0 = copies[source.Attachment0]
+				trail.Attachment1 = copies[source.Attachment1]
+				trail.Parent = trail.Attachment0
+			end
 		end
 	end
 

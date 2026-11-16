@@ -54,11 +54,11 @@ local _settings = {
 			},
 		},
 
-		-- shortcut: Picnic Plains' mood and music until the lake gets its own
+		-- shortcut: Picnic Plains' mood until the lake gets its own (its own music since 2026-11-16)
 		LakesideShowdown = {
 			Preset = "Plains",
-			Music = "Music_PicnicPlains",
-			SuddenDeathMusic = "Music_PicnicPlains_SuddenDeath",
+			Music = "Music_LakesideShowdown",
+			SuddenDeathMusic = "Music_LakesideShowdown_SuddenDeath",
 			WindColor = Color3.fromRGB(255, 255, 255),
 			WindSound = "Wind_OpenAir",
 			Ambient = {
@@ -70,11 +70,11 @@ local _settings = {
 			},
 		},
 
-		-- shortcut: Picnic Plains' mood and music until Rolling Plains gets its own
+		-- shortcut: Picnic Plains' mood until Rolling Plains gets its own (its own music since 2026-11-16)
 		RollingPlains = {
 			Preset = "Plains",
-			Music = "Music_PicnicPlains",
-			SuddenDeathMusic = "Music_PicnicPlains_SuddenDeath",
+			Music = "Music_RollingPlains",
+			SuddenDeathMusic = "Music_RollingPlains_SuddenDeath",
 			WindColor = Color3.fromRGB(255, 255, 255),
 			WindSound = "Wind_OpenAir",
 			Ambient = {
@@ -104,8 +104,8 @@ local _settings = {
 		-- The Desert until 2026-11-15, renamed when a new map took its name: the Desert's mood and music
 		MirageMesa = {
 			Preset = "Desert",
-			Music = "Music_Desert",
-			SuddenDeathMusic = "Music_Desert_SuddenDeath",
+			Music = "Music_MirageMesa",
+			SuddenDeathMusic = "Music_MirageMesa_SuddenDeath",
 			WindColor = Color3.fromRGB(255, 240, 214),
 			WindSound = "Wind_Desert",
 			Ambient = {
@@ -118,11 +118,11 @@ local _settings = {
 			},
 		},
 
-		-- shortcut: Picnic Plains' sky mood and music until Fluffy Fallout gets its own
+		-- shortcut: Picnic Plains' sky mood until Fluffy Fallout gets its own (its own music since 2026-11-16)
 		FluffyFallout = {
 			Preset = "Plains",
-			Music = "Music_PicnicPlains",
-			SuddenDeathMusic = "Music_PicnicPlains_SuddenDeath",
+			Music = "Music_FluffyFallout",
+			SuddenDeathMusic = "Music_FluffyFallout_SuddenDeath",
 			WindColor = Color3.fromRGB(255, 255, 255),
 			WindSound = "Wind_OpenAir",
 			Ambient = {
@@ -148,11 +148,11 @@ local _settings = {
 			Ceiling = { Effect = "Grit", Every = { 3, 7 } },
 		},
 
-		-- shortcut: Rockslide Ridge's cave mood and music until Echo Caverns gets its own
+		-- shortcut: Rockslide Ridge's cave mood until Echo Caverns gets its own (its own music since 2026-11-16)
 		EchoCaverns = {
 			Preset = "Cave",
-			Music = "Music_RockslideRidge",
-			SuddenDeathMusic = "Music_RockslideRidge_SuddenDeath",
+			Music = "Music_EchoCaverns",
+			SuddenDeathMusic = "Music_EchoCaverns_SuddenDeath",
 			WindColor = Color3.fromRGB(228, 222, 212),
 			WindSound = "Wind_Howl",
 			Ambient = {

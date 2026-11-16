@@ -65,6 +65,28 @@ local _settings = {
 	--- @type { Color3 }
 	CALLOUT_OTHER_GRADIENT = { Color3.fromRGB(255, 255, 255), Color3.fromRGB(200, 215, 235) },
 
+	--[[
+		When sudden death starts, the callout announces the rising liquid (the map's sea, the match's SeaKind) once the
+		turn's own callout is gone: SUDDEN_DEATH_TITLE with the liquid's name, no avatar, the lines in its colour, held
+		SUDDEN_DEATH_HOLD seconds while the title fills with it from the bottom (its gradient's offset tweened from
+		SUDDEN_DEATH_FILL_FROM to SUDDEN_DEATH_FILL_TO by SUDDEN_DEATH_FILL_TWEENINFO). Later sudden-death turns add
+		SUDDEN_DEATH_REMINDER to the turn's line
+	]]
+	SUDDEN_DEATH_TITLE = "%s is rising...",
+	SUDDEN_DEATH_SUB = "Sudden death!",
+	SUDDEN_DEATH_REMINDER = "The %s rises",
+	SUDDEN_DEATH_HOLD = 2.4,
+	SUDDEN_DEATH_FILL_FROM = Vector2.new(0, 0.55),
+	SUDDEN_DEATH_FILL_TO = Vector2.new(0, -0.1),
+	SUDDEN_DEATH_FILL_TWEENINFO = TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+
+	-- Each liquid's name in the callout and its colour (the lines, and the title's fill under white)
+	--- @type { [string]: MatchHud_SuddenDeathLiquid }
+	SUDDEN_DEATH_LIQUIDS = {
+		Water = { Name = "Water", Color = Color3.fromRGB(63, 166, 255) },
+		Lava = { Name = "Lava", Color = Color3.fromRGB(255, 140, 20) },
+	},
+
 	-- When the player is next, their "You're next!" line flashes this colour (with Turn_Next) and fades back
 	NEXT_FLASH_COLOR = Color3.fromRGB(255, 220, 60),
 	NEXT_FLASH_TWEENINFO = TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -123,6 +145,10 @@ local _settings = {
 	MODEL_FOV = 30,
 	MODEL_VIEW_DIRECTION = Vector3.new(0.3, 0.25, 1),
 	MODEL_PADDING = 1.15,
+
+	-- Utilities used the moment their box is picked, with no press on the screen (the owner, 2026-11-16: the Jetpack)
+	--- @type { [string]: boolean }
+	USE_ON_SELECT = { Jetpack = true },
 
 	--%%%%%%%%%%%%%%%%%%%% Kill Feed
 

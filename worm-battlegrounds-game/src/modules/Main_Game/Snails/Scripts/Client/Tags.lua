@@ -63,7 +63,8 @@ end
 
 --[[
 	Puts a SnailTag over a snail (its player's badges after the name) and an outline around it, both in its team's
-	colour and kept in step with its attributes, and pops a damage number whenever its health drops.
+	colour and kept in step with its attributes, and pops a damage number whenever its health drops. Every snail but
+	the player's own gets the small tag: its name and bar at OTHER_TAG_SCALE, no level or badges.
 ]]
 function Module._addTag(model: Instance)
 	--[[ Local Variables ]]
@@ -72,11 +73,13 @@ function Module._addTag(model: Instance)
 	local tag: BillboardGui = templates:FindFirstChild("U_SnailTag", true):Clone()
 	local health: number = model:GetAttribute("Health")
 	local color: Color3 = model:GetAttribute("Color")
+	local mine: boolean = model:GetAttribute("UserId") == I.S.Players.LocalPlayer.UserId
 
 	--[[ Elements ]]
 
 	local nameLabel: TextLabel = tag:FindFirstChild("S_Name", true)
 	local levelLabel: TextLabel = tag:FindFirstChild("S_Level", true)
+	local overhead: Frame = tag:FindFirstChild("Overhead", true)
 
 	--[[ Building ]]
 
@@ -88,8 +91,13 @@ function Module._addTag(model: Instance)
 	nameLabel.Text = model:GetAttribute("DisplayName")
 	nameLabel.TextColor3 = if model:GetAttribute("Vip") then _settings.VIP_NAME_COLOR else color
 	levelLabel.Text = `Lv {model:GetAttribute("Level")}`
-	levelLabel.Visible = model:GetAttribute("Level") > 0
-	I.PlayerBadges.Show(nameLabel, model:GetAttribute("UserId"))
+	levelLabel.Visible = mine and model:GetAttribute("Level") > 0
+	if mine then
+		I.PlayerBadges.Show(nameLabel, model:GetAttribute("UserId"))
+	else
+		tag:FindFirstChild("S_Badges", true).Visible = false
+		I.Create("UIScale")({ Name = "S_SmallScale", Scale = _settings.OTHER_TAG_SCALE, Parent = overhead })
+	end
 	I.ScreenScale.AddBillboard(tag)
 
 	tag.Parent = root

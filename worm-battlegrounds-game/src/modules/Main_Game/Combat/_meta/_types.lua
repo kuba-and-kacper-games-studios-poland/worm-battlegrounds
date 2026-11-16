@@ -57,7 +57,12 @@ local _combat_Shot = {}
 ---
 --- @field Target Vector3?
 --- @field HomingSpeed number?
+--- @field HomingMaxSpeed number?
+--- @field HomingAccel number?
+--- @field HomingTurn number?
+--- @field HomingTurnGrowth number?
 --- @field LockStep number?
+--- @field LockPauseSteps number?
 local _combat_ShotOptions = {}
 
 --- @class Combat_Body
@@ -143,7 +148,26 @@ local _combat_Behavior = {}
 --- @field LastBounce number
 --- @field Whistled boolean
 --- @field Whistle Sound?
+---
+--- # Homing #
+---
+--- @field Locked boolean
+--- @field Diving boolean
 local _combat_ClientShot = {}
+
+--- @class Combat_Vortex
+---
+--- # General #
+---
+--- @field Center Vector3
+--- @field Started number
+--- @field Seconds number
+---
+--- # Look #
+---
+--- @field Arms { BasePart }
+--- @field Angle number
+local _combat_Vortex = {}
 
 --- @class Combat_FlyingShot
 ---

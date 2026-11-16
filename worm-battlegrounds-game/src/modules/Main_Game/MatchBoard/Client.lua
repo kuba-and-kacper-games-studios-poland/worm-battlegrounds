@@ -1,9 +1,10 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
--- --- @type Ume
--- local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
+--- @type Ume
+local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "MatchBoard"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
@@ -29,6 +30,27 @@ local Custom = require(_scripts:FindFirstChild("Client"):FindFirstChild("Custom"
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 local Module = {}
+
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	----------------------------
+	------ INITIALIZATION ------
+	----------------------------
+
+	Custom.Init()
+
+	----------------------------
+	---- ASSIGN TO INSTANCE ----
+	----------------------------
+
+	I.MatchBoard = {
+
+		--[[ Methods ]]
+
+		GetCustomRoom = Custom.GetMyRoom,
+	}
+end
 
 --%%%%%%%%%%%%%%%%%%%% Start
 

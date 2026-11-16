@@ -33,7 +33,12 @@ local _data = {
 	--[[ Extras ]]
 
 	LockDelay = 1,
-	HomingSpeed = 60,
+	LockPause = 0.2,
+	HomingSpeed = 70,
+	HomingMaxSpeed = 150,
+	HomingAccel = 160,
+	HomingTurn = 5,
+	HomingTurnGrowth = 10,
 }
 
 return _data

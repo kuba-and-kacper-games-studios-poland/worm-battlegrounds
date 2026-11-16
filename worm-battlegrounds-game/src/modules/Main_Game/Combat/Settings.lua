@@ -185,6 +185,24 @@ local _settings = {
 	-- One Punch's blast plays along the swing at this scale (the prefab is made for a 20-stud part)
 	PUNCH_VFX_SCALE = 0.5,
 
+	--[[
+		A homing shot flashes HOMING_LOCK_VFX (at HOMING_LOCK_VFX_SCALE) as it locks on, and from its dive draws
+		HOMING_DIVE_TRAIL and streams the emitters of HOMING_DIVE_SPARKS' attachments (the Speed aura's lightning)
+	]]
+	HOMING_LOCK_VFX = "Flash_Sniper",
+	HOMING_LOCK_VFX_SCALE = 2.5,
+	HOMING_DIVE_TRAIL = "Trail_Jet",
+	HOMING_DIVE_SPARKS = "Aura_Speed",
+
+	--[[
+		A snail a blow hurts throws out HIT_VFX's sparks (the studio's damage sparks), at HIT_VFX_SCALE grown by
+		HIT_VFX_DAMAGE_SCALE for each point of damage, up to HIT_VFX_MAX_SCALE
+	]]
+	HIT_VFX = "Hit_Sparks",
+	HIT_VFX_SCALE = 1.5,
+	HIT_VFX_DAMAGE_SCALE = 0.03,
+	HIT_VFX_MAX_SCALE = 4,
+
 	--%%%%%%%%%%%%%%%%%%%% Sounds
 
 	--[[
@@ -227,6 +245,18 @@ local _settings = {
 	SNAIL_BITE = 0.3,
 	SNAIL_LIFETIME = 6,
 
+	-- A worm squeaks (Variety_Squeak) as it dives in, and crunches (Variety_Dig) every SNAIL_DIG_SOUND_EVERY bites
+	SNAIL_DIG_SOUND_EVERY = 2,
+
+	-- The four ways a variety grenade's worms dig off, fanned out downward; a mini's worm takes one of them at random
+	--- @type { Vector3 }
+	SNAIL_DIRECTIONS = {
+		Vector3.new(-0.7, -1, 0).Unit,
+		Vector3.new(-0.25, -1, 0).Unit,
+		Vector3.new(0.25, -1, 0).Unit,
+		Vector3.new(0.7, -1, 0).Unit,
+	},
+
 	-- A crawling spider bomb or a homing missile bursts once this close to a snail, in studs
 	CONTACT_DISTANCE = 2.5,
 
@@ -243,8 +273,22 @@ local _settings = {
 		along the ground, drifting through the air), and holds each one stuck within BLACK_HOLE_STICK studs of its middle
 		until it bursts
 	]]
-	BLACK_HOLE_DRAG_SPEED = 10,
+	BLACK_HOLE_DRAG_SPEED = 16,
 	BLACK_HOLE_STICK = 2.5,
+
+	--[[
+		An open black hole's vortex on every screen: VORTEX_ARMS carriers of its trail (VORTEX_TRAIL, the studio's) orbit
+		its middle, from VORTEX_RADIUS in to VORTEX_END_RADIUS as it closes, spinning VORTEX_SPIN turns a second, faster by
+		VORTEX_SPIN_GROWTH each second. It opens with BlackHole_Open, hums BlackHole_Hum the while, and collapses
+		(BlackHole_Collapse) VORTEX_COLLAPSE seconds before it bursts (BlackHole_Burst, over the blast's own sound)
+	]]
+	VORTEX_TRAIL = "Trail_BlackHole",
+	VORTEX_ARMS = 3,
+	VORTEX_RADIUS = 7,
+	VORTEX_END_RADIUS = 0.6,
+	VORTEX_SPIN = 1.2,
+	VORTEX_SPIN_GROWTH = 1.4,
+	VORTEX_COLLAPSE = 0.9,
 
 	-- The box a melee swing checks in front of the snail, in studs on each side
 	MELEE_BOX = 4,
@@ -297,6 +341,9 @@ local _settings = {
 		BlackHoleGrenade = "Trail_BlackHole",
 		VarietyGrenade = "Trail_Variety",
 		ClusterBomb = "Trail_Smoke",
+		Grenade = "Trail_Fog",
+		SpiderBomb = "Trail_Fog",
+		Worm = "Trail_Variety",
 	},
 	TRAIL_SCALE = 1,
 	TRAIL_TAIL = 2,

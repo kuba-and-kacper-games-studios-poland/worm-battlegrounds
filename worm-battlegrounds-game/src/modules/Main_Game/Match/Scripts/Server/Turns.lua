@@ -149,6 +149,8 @@ function Module.RunTurn()
 
 	local round: number = matchFolder:GetAttribute("Round")
 	if round >= _settings.SUDDEN_DEATH_ROUND then
+		-- Which liquid rises, for the clients' callout ("Lava is rising..."), set before sudden death shows
+		matchFolder:SetAttribute("SeaKind", I.Arena.GetLiquidKind() or "Water")
 		matchFolder:SetAttribute("SuddenDeath", true)
 		I.Arena.RaiseLiquid(_settings.SUDDEN_DEATH_RISE)
 	end

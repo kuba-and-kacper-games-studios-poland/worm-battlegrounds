@@ -19,6 +19,13 @@ local _settings = {
 	-- The crate VIP players open free once a day
 	VIP_CRATE = "Skin",
 
+	--[[
+		The crate a player opens free once, for joining the studio's group (GROUP_NAME in the Group module's list) and
+		liking the game, which no game can check, so it's only asked (the owner, 2026-11-16)
+	]]
+	GROUP_CRATE = "Weapon",
+	GROUP_NAME = "SnailStudio",
+
 	--%%%%%%%%%%%%%%%%%%%% Intro
 
 	-- Seconds the shop takes to make way for the crates
@@ -377,6 +384,13 @@ local _settings = {
 	LOBBY_GUI_NAME = "Lobby",
 	BADGE_FREE = "FREE",
 	BADGE_MAX = 9,
+
+	--[[
+		The free group crate's gui (FreeCrate: its badge on the crates screen and its dialog), and what CLAIM says before
+		the player is in the group
+	]]
+	GROUP_GUI_NAME = "FreeCrate",
+	GROUP_JOIN_FIRST = "Join The Snail Studio group first, then claim your free crate!",
 }
 
 return _settings

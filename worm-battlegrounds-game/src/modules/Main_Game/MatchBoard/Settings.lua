@@ -130,6 +130,10 @@ local _settings = {
 	-- What Start says in a custom lobby with only its owner in it and no bots
 	CUSTOM_ALONE_MESSAGE = "You can't start a custom lobby by yourself. Invite a player or turn bots on!",
 
+	-- A custom lobby's free place in its member list (one per place up to its size): the name line, faded this much
+	CUSTOM_OPEN_SLOT_TEXT = "Open slot",
+	CUSTOM_OPEN_SLOT_TRANSPARENCY = 0.5,
+
 	--%%%%%%%%%%%%%%%%%%%% Gui
 
 	BOARD_GUI_NAME = "MatchBoard",

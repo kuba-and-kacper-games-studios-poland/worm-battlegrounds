@@ -21,6 +21,7 @@ local Motion = require(_scripts:FindFirstChild("Client"):FindFirstChild("Motion"
 local Ghost = require(_scripts:FindFirstChild("Client"):FindFirstChild("Ghost")) --- @type Snails_Client_Ghost
 local Potions = require(_scripts:FindFirstChild("Client"):FindFirstChild("Potions")) --- @type Snails_Client_Potions
 local Flight = require(_scripts:FindFirstChild("Client"):FindFirstChild("Flight")) --- @type Snails_Client_Flight
+local Drag = require(_scripts:FindFirstChild("Client"):FindFirstChild("Drag")) --- @type Snails_Client_Drag
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -78,6 +79,7 @@ function Module.Start()
 	Ghost.Start(snailsFolder)
 	Potions.Start(snailsFolder)
 	Flight.Start(snailsFolder)
+	Drag.Start(snailsFolder)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

@@ -33,6 +33,7 @@ local _data = {
 
 	Elasticity = 0.3,
 	BurstOnContact = true,
+	BurstSound = "Cluster_Split",
 	Bomblets = { Count = 5, DamageMax = 15, DamageEdge = 5, Radius = 3, Mini = 0.5 },
 }
 

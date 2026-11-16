@@ -23,6 +23,7 @@ local Drops = require(_scripts:FindFirstChild("Client"):FindFirstChild("Drops"))
 local Result = require(_scripts:FindFirstChild("Client"):FindFirstChild("Result")) --- @type Crates_Client_Result
 local Stage3D = require(_scripts:FindFirstChild("Client"):FindFirstChild("Stage3D")) --- @type Crates_Client_Stage3D
 local Reveal = require(_scripts:FindFirstChild("Client"):FindFirstChild("Reveal")) --- @type Crates_Client_Reveal
+local GroupReward = require(_scripts:FindFirstChild("Client"):FindFirstChild("GroupReward")) --- @type Crates_Client_GroupReward
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -71,6 +72,7 @@ function Module.Start()
 	Stage3D.Start()
 	Reveal.Start(Panel.Open)
 	Panel.Start(Odds.Draw, Showcase.Draw, Reveal.Show)
+	GroupReward.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

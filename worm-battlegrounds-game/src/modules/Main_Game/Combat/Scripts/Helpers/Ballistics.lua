@@ -99,12 +99,31 @@ function Module.Step(body, world)
 
 	--[[ Steering ]]
 
-	-- A homing shot locks on: no more gravity or wind, straight at its target
+	--[[
+		A homing shot locks on: no more gravity or wind. It stalls for its LockPauseSteps, nose turning to the target, then
+		dives, speeding up from HomingSpeed to HomingMaxSpeed by HomingAccel and turning at most HomingTurn (growing by
+		HomingTurnGrowth) radians a second, so it bends into its target; without HomingTurn it flies straight at it
+	]]
 	if options.Target and body.Step >= (options.LockStep or 0) then
 		local toTarget: Vector3 = options.Target - body.Position
 		acceleration = Vector3.zero
 		if toTarget.Magnitude > 1e-3 then
-			body.Velocity = toTarget.Unit * (options.HomingSpeed or 60)
+			local since: number = (body.Step - (options.LockStep or 0)) * STEP
+			local dive: number = since - (options.LockPauseSteps or 0) * STEP
+			local speed: number = if dive < 0 then 0 else math.min((options.HomingSpeed or 60) + (options.HomingAccel or 0) * dive, options.HomingMaxSpeed or options.HomingSpeed or 60)
+			local heading: Vector3 = if body.Velocity.Magnitude > 1e-3 then body.Velocity.Unit else toTarget.Unit
+			if options.HomingTurn then
+				local turn: number = (options.HomingTurn + (options.HomingTurnGrowth or 0) * math.max(dive, 0)) * STEP
+				local current: number = math.atan2(heading.Y, heading.X)
+				local wanted: number = math.atan2(toTarget.Y, toTarget.X)
+				local difference: number = (wanted - current + math.pi) % (2 * math.pi) - math.pi
+				local angle: number = current + math.clamp(difference, -turn, turn)
+				heading = Vector3.new(math.cos(angle), math.sin(angle), 0)
+			else
+				heading = toTarget.Unit
+			end
+			-- While it stalls it keeps a sliver of speed, so it still faces where it turns
+			body.Velocity = heading * math.max(speed, 1e-2)
 		end
 	end
 

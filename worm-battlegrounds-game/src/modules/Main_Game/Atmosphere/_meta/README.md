@@ -49,7 +49,7 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 
 | Key | Default | What |
 | --- | --- | --- |
-| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow`, `LakesideShowdown`, `RollingPlains` and `FluffyFallout` (Picnic Plains' row; Fluffy Fallout's pollen only), `Desert` and `MirageMesa` (the Desert's row), `RockslideRidge` (lava bubbles and embers since its lava sea, 2026-11-14), `EchoCaverns` (Rockslide Ridge's cave row, with water ripples), `VolcanoIsle` | Each mood, by MapId (below) |
+| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow`, `LakesideShowdown`, `RollingPlains` and `FluffyFallout` (Picnic Plains' row; Fluffy Fallout's pollen only), `Desert` and `MirageMesa` (the Desert's row), `RockslideRidge` (lava bubbles and embers since its lava sea, 2026-11-14), `EchoCaverns` (Rockslide Ridge's cave row, with water ripples), `VolcanoIsle` | Each mood, by MapId (below). Since 2026-11-16 `LakesideShowdown`, `RollingPlains`, `FluffyFallout`, `MirageMesa` and `EchoCaverns` keep their borrowed rows' looks but play their own `Music_<MapId>` and `…_SuddenDeath` |
 | `LOBBY_PROFILE` | `"Lobby"` | The mood outside matches |
 | `LOBBY_MAP`, `MATCH_MAP` | `"Lobby"`, `"Match"` | The place loader's maps with no matches and with only a match; the Studio map has both and follows `InMatch` |
 | `MOOD_TWEENINFO` | 2 s Sine InOut | How the lighting moves from one mood to the next |
@@ -97,7 +97,7 @@ A `PROFILES` row:
 | Key | Lobby | PicnicPlains | Desert | RockslideRidge | VolcanoIsle |
 | --- | --- | --- | --- | --- | --- |
 | `Preset` | `Lobby` | `Plains` | `Desert` | `Cave` | `Volcano` |
-| `Music`, `SuddenDeathMusic` | `BGM`, none | `Music_PicnicPlains`, `…_SuddenDeath` | `Music_Desert`, `…_SuddenDeath` | `Music_RockslideRidge`, `…_SuddenDeath` | `Music_VolcanoIsle`, `…_SuddenDeath` (Desert's tracks for now) |
+| `Music`, `SuddenDeathMusic` | `BGM`, none | `Music_PicnicPlains`, `…_SuddenDeath` | `Music_Desert`, `…_SuddenDeath` | `Music_RockslideRidge`, `…_SuddenDeath` | `Music_VolcanoIsle`, `…_SuddenDeath` |
 | `WindColor` | none (no wind) | `255, 255, 255` | `255, 240, 214` | `228, 222, 212` | `235, 214, 200` |
 | `WindSound` | none | `Wind_OpenAir` | `Wind_Desert` | `Wind_Howl` | `Wind_OpenAir` |
 | `Ambient` (`Effect`, `Bottom`–`Top`, `RateScale`) | `Ambient_Motes` 0–1 | `Ambient_Pollen` 0.1–1, `Ambient_Leaf` 0.3–1 | `Ambient_Sand` 0.05–0.6 | `Ambient_CaveDust` 0–0.85 | `Ambient_CaveDust` 0.2–1, rate 0.6 (ash) |
