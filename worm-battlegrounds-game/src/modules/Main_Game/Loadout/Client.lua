@@ -2,8 +2,8 @@
 	Created By: 	Nari
 ]]
 
--- --- @type Ume
--- local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
+--- @type Ume
+local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "Loadout"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Directories
@@ -29,6 +29,21 @@ local Picker = require(_scripts:FindFirstChild("Client"):FindFirstChild("Picker"
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 local Module = {}
+
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	----------------------------
+	---- ASSIGN TO INSTANCE ----
+	----------------------------
+
+	I.Loadout = {
+
+		--[[ Control ]]
+
+		OpenPicker = Panel.OpenPicker,
+	}
+end
 
 --%%%%%%%%%%%%%%%%%%%% Start
 

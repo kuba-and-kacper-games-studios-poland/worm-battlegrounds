@@ -2059,3 +2059,16 @@ and closed elsewhere. Servers disagreed, and the map under the player's finger m
 
 Rules: Guis (A lobby card is minimal), Public matches are global.
 
+
+## The loadout step players skipped (2026-11-16)
+
+The onboarding funnel showed 1,019 players see the lobby's "press a slot" hint and only 274 open the picker. A
+playtest showed the slot worked; the hint was simply ignored next to SOLO VS BOTS and the Join buttons. The guide now
+opens the picker itself, once per starter weapon, and only while no other window is open.
+
+- **Read a funnel step as what logs it.** Equip logs when the hint shows and Pick when the picker opens, so the drop
+  measured one tap the player didn't make, not players leaving.
+- **Do the step for them, once.** Opening the picker beats a louder arrow; opening it only once per weapon, and
+  never over another window, keeps a player who closes it from being trapped.
+
+Rules: Snails (The tutorial is a whole first match against a bot, then the loadout).

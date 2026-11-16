@@ -205,11 +205,28 @@ function Module._refresh()
 	elems["EmoteSection"].Position = UDim2.fromScale(0, emotesTop - (#rows - shownRows) * rowStep)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Open Picker
+
+--[[
+	**CLIENT** |
+	Opens the picker for an open slot, showing that slot selected.
+]]
+function Module.OpenPicker(slot: number)
+	--[[ Saving ]]
+
+	selectedSlot = slot
+
+	--[[ Opening ]]
+
+	Module._refresh()
+	openPicker(slot)
+end
+
 --%%%%%%%%%%%%%%%%%%%% On Slot Pressed
 
 --[[
-	Opens the picker for an open slot, showing that slot selected; for the next locked one, asks whether to open it
-	with coins, or prompts the next slot pass once the coin slot is open.
+	Opens the picker for an open slot; for the next locked one, asks whether to open it with coins, or prompts the next
+	slot pass once the coin slot is open.
 ]]
 function Module._onSlotPressed(slot: number)
 	--[[ Local Variables ]]
@@ -219,9 +236,7 @@ function Module._onSlotPressed(slot: number)
 	--[[ Opening ]]
 
 	if slot <= unlocked then
-		selectedSlot = slot
-		Module._refresh()
-		openPicker(slot)
+		Module.OpenPicker(slot)
 		return
 	end
 

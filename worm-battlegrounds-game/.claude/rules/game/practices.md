@@ -316,7 +316,8 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   then −16, "show the player he needs to add way more power"); a line shows where their arced shot will fly, moving
   with the power held (MatchHud's `PREDICTION_*`, the tutorial only). The results show Rematch grey and dead, so the
   player goes back by hand; the match gives the Grenade and the Shotgun, and in the lobby the guide leads to putting
-  them in the loadout. Its map is Training Meadow, a small island made for it (MapLab, exported 2026-11-13), in no
+  them in the loadout, opening the picker by itself once for each (the owner, 2026-11-16: the funnel showed most
+  players never pressed the slot). Its map is Training Meadow, a small island made for it (MapLab, exported 2026-11-13), in no
   rotation.
 - **A dropped player's snail plays on under a bot** (2026-11-10): it's never knocked out for being away. A bot plays
   its turns with the player's loadout (Match's `Autopilot`, Bots' `TAKEOVER_DIFFICULTY`), taking over mid-turn too,

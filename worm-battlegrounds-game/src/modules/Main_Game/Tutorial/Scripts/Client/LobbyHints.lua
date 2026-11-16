@@ -24,6 +24,9 @@ local moduleRep: Folder?
 local loadoutRep: Folder?
 local tickConnection: RBXScriptConnection?
 
+-- The starter weapons the guide already opened the picker for, so closing it never brings it back
+local autoOpened = {} --- @type { [string]: boolean }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -108,20 +111,29 @@ end
 --%%%%%%%%%%%%%%%%%%%% Tick
 
 --[[
-	Points at what to press next: a loadout slot and, in the picker, each starter weapon not yet in.
+	Points at what to press next: a loadout slot and, in the picker, each starter weapon not yet in. The picker opens by
+	itself once for each starter weapon, while no other window is open.
 ]]
 function Module._tick()
 	--[[ Local Variables ]]
 
 	local missing: string? = Module._getMissingWeapon()
+	local slot: number? = Module._getFreeSlot()
 
 	--[[ Showing ]]
 
 	if elems["Picker"].Enabled and missing then
 		local card: GuiObject? = elems["Items"]:FindFirstChild(missing, true)
 		Spotlight.Show(string.format(_settings.HINTS.Pick, I.G_Inventory.Items[missing].Name), card, "Pick")
-	else
-		Spotlight.Show(_settings.HINTS.Equip, Module._getFreeSlot(), "Equip")
+		return
+	end
+	Spotlight.Show(_settings.HINTS.Equip, if slot then elems["Loadout"]:FindFirstChild(`Slot{slot}`, true) else nil, "Equip")
+
+	--[[ Opening ]]
+
+	if missing and slot and not autoOpened[missing] and not I.WidgetManager.GetCurrent() then
+		autoOpened[missing] = true
+		I.Loadout.OpenPicker(slot)
 	end
 end
 
@@ -181,7 +193,7 @@ end
 --[[
 	Returns the loadout slot to put the next starter weapon in: the first open slot that holds no starter weapon.
 ]]
---- @return GuiObject?
+--- @return number?
 function Module._getFreeSlot()
 	--[[ Checks ]]
 
@@ -194,7 +206,7 @@ function Module._getFreeSlot()
 
 	for slot: number = 1, loadoutRep:GetAttribute("Unlocked") or I.Settings["Loadout"].BASE_SLOTS do
 		if not table.find(_settings.STARTER_WEAPONS, loadoutRep:GetAttribute(`Slot{slot}`) or "") then
-			return elems["Loadout"]:FindFirstChild(`Slot{slot}`, true)
+			return slot
 		end
 	end
 

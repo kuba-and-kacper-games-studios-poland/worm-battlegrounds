@@ -10,7 +10,7 @@ tutorial. Its steps: the lit spot to land on (the drop starts the player and the
 (round 2), a strong wind against the shot (round 3, Match's `TUTORIAL_WINDS`; the arrow points at the wind), then finish
 the bot; the bot's turns show a hint alone, and Return points out the results (Rematch is grey there). When the match
 ends, the match server marks it done and gives 100 coins and the starter weapons, Grenade and Shotgun (no crate since
-2026-11-15). Back in the lobby the guide points at a loadout slot and, in the picker, each starter weapon; once both
+2026-11-15). Back in the lobby the guide opens the picker for a free slot by itself, once for each starter weapon while no other window is open (2026-11-16: most players never pressed the slot), and points at that weapon in it; a player who closes it is pointed at the slot instead; once both
 are in the loadout, the tutorial is done and never shows again. Studio skips the whole tutorial (`Skip`) unless
 Workspace's `StudioTutorial` is true; then the Studio map plays the whole flow on one server, and the Lobby map alone,
 which can't start the match, skips it and goes straight to the loadout. Each guide shows only where it belongs (the
@@ -33,7 +33,7 @@ the lobby's.
 | `Client.lua` | Starts the spotlight, the match guide on the Match map, the lobby guide on the Lobby map, both on the Studio map |
 | `Scripts/Client/Spotlight.lua` | The `TutorialHint` gui: the ring over a gui element, a part or a world spot, the red arrow pointing at it (from under it near the screen's top), the hint panel beside them; the first time a funnel step shows it reports it (`Tutorial_Step`) |
 | `Scripts/Client/MatchHints.lua` | The guide during the tutorial match, a step per round (`TOUCH_HINTS` on touch, `PAD_HINTS` with the pad's button names on a pad) |
-| `Scripts/Client/LobbyHints.lua` | The guide to the loadout in the lobby; reports the equip step |
+| `Scripts/Client/LobbyHints.lua` | The guide to the loadout in the lobby: opens the picker (`I.Loadout.OpenPicker`), reports the equip step |
 | `Settings.lua` | `Tutorial_Settings` |
 
 ## API

@@ -14,7 +14,7 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | --- | --- |
 | Folder | `src/modules/Main_Game/Loadout` |
 | Runs on | Server, Client · both maps |
-| Exposes | `I.Loadout` (server) |
+| Exposes | `I.Loadout` (server, client) |
 | Uses | `I.Inventory`, `I.G_Inventory`, `I.G_Arsenal`, `I.Currency`, `I.G_Marketplace`, `I.Rarity`, `I.WidgetManager`, `I.Replicator` |
 | Saves | `Profile.Loadout` |
 
@@ -23,7 +23,7 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | Setting slots, opening the coin slot, counting the pass slots (republished when one is bought), the match loadout |
-| `Client.lua` | Starts the panel and the picker |
+| `Client.lua` | Starts the panel and the picker, the client `I.Loadout` |
 | `Scripts/Client/Panel.lua` | The `Loadout` panel's cards: the basic weapon and the slots, the selected look while the picker is open; EMOTES (`U_EmoteSection`) moved up under the last row shown |
 | `Scripts/Client/Picker.lua` | The `LoadoutPicker` widget |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `loadout` command |
@@ -40,6 +40,12 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | `OpenAllSlots(player)` | `boolean` | Opens every slot for good, whatever passes they own, by saving each slot past the base as a coin slot (the `loadout unlock_slots` command) |
 | `GetUnlocked(player)` | `number` | How many slots are open: base, plus the coin slot, plus one per slot pass owned |
 | `GetMatchLoadout(player)` | `{ string }, { [string]: boolean }` | The items in open slots, and which are shiny |
+
+### Client: `I.Loadout`
+
+| Function | Returns | What it does |
+| --- | --- | --- |
+| `OpenPicker(slot: number)` | | Opens the picker for an open slot, showing that slot selected, as pressing it does (the Tutorial's lobby guide) |
 
 ## Network
 
