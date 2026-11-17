@@ -1167,6 +1167,7 @@ hands after the animations each frame, taking last frame's offsets off first so 
 builds them up. The bots' headshots are voxel busts of the game's snail rendered in Blender (`art/bots`): eight
 personalities were drawn, then the owner chose one default snail for every bot for now ("we gonna do it later in a
 way where we have custom rare bots"). Rule: Guis → "An emote shows its icon in a speech bubble and plays on the snail".
+On 2026-11-17 the studio sent its own drawings of the same nine emotes, which replaced `art/emotes`' icons.
 
 ## The crates in 3D (2026-11-11)
 

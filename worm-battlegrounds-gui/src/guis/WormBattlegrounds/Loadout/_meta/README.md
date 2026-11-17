@@ -11,7 +11,7 @@ attributes on the slot prefab (normal, selected, the + slot's darker outline). A
 (the design's locked inventory card) with the price, and EMOTES, which the design lacks, built from copies of
 its header and slot card; button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker polished the lock cover
 (2026-11-11): the design's darker locked card with a coin before the price. Changed from the design (2026-11-15): a
-column two cards wide instead of rows of four and three, and the emote row is one button, showing Wave's icon (`art/emotes`) instead of a +. EMOTES is placed
+column two cards wide instead of rows of four and three, and the emote row is one button, showing Wave's icon (`Emote_Wave`'s `IconId`) instead of a +. EMOTES is placed
 under all four rows; Loadout moves it up to sit under the last row shown. Restyled for reading (the owner,
 2026-11-15): the picture keeps the card's middle, the number sits top left, the copies top right with Shiny under
 them, and the name in a band along the bottom; every text is heavy, on one line and outlined in black, and the lock

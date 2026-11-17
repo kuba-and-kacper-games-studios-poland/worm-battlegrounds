@@ -342,7 +342,7 @@ local _gui = {
 															DominantAxis = Enum.DominantAxis.Height,
 														},
 													},
-													-- Wave's icon (art/emotes), in the slot card's picture box
+													-- Wave's icon (Emote_Wave's IconId), in the slot card's picture box
 													{
 														Primitive = "ImageLabel",
 														Props = {
@@ -353,7 +353,7 @@ local _gui = {
 															Position = UDim2.fromScale(0.2333, 0.0918),
 															Size = UDim2.fromScale(0.5333, 0.8163),
 															ZIndex = 3,
-															Image = "rbxassetid://122190966104251",
+															Image = "rbxassetid://132166182456244",
 															ScaleType = Enum.ScaleType.Fit,
 														},
 													},

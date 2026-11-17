@@ -609,8 +609,9 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   to play"): over the snail in a match, in its chat stack (`I.ChatBubbles.ShowIcon`), and in the lobby over the
   avatar's top right corner on their party card, the tail down at the picture (2026-11-17: it covered the name). Every
   screen plays the emote on the snail (`I.SnailRig.Emote`); until an emote's animation is published under its name, a
-  stand-in motion made in code plays. Emote and bot pictures are the game's own drawn art (`art/emotes`, `art/bots`),
-  uploaded to the group (2026-11-11).
+  stand-in motion made in code plays. Emote pictures are the studio's (since 2026-11-17, replacing `art/emotes`' drawn
+  set; sources in the game home's `assets/ui/icons/emotes/`), bot pictures the game's own (`art/bots`), all uploaded
+  to the group.
 - **Emotes are a hold-to-open wheel in a match** (the owner, 2026-11-17: "make the in game emotes menu better"): T or
   X held, point, let go; a quick tap replays the last; one slice per emote in the emote shop's order, locked ones
   greyed with their level (Cosmetics' `Emotes`). The emote button opens it to pick from with a click or tap.

@@ -4,7 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "One Punch",
-	IconId = "rbxassetid://121731184312632",
+	IconId = "rbxassetid://137342798424801",
 
 	--[[ Classification ]]
 

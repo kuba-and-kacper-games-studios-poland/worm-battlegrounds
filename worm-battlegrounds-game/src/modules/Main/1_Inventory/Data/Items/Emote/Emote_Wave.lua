@@ -4,8 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Wave",
-	-- shortcut: the emote kit's picture (art/emotes), local until approved and uploaded
-	IconId = "rbxassetid://122190966104251",
+	IconId = "rbxassetid://132166182456244",
 
 	--[[ Classification ]]
 

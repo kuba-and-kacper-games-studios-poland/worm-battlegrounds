@@ -55,7 +55,8 @@ end
 
 --[[
 	A projectile part arrived (named after its weapon, or a burst's shot like Snail): when it has a model, hides the
-	placeholder ball and draws the model in its place until the part is gone. Bomblets keep their placeholders.
+	placeholder ball and draws the model in its place until the part is gone, playing its Walk while the server moves it.
+	Bomblets keep their placeholders.
 ]]
 function Module._addShot(child: Instance)
 	--[[ Checks ]]
@@ -90,6 +91,14 @@ function Module._addShot(child: Instance)
 	}
 	Module._place(child, 0)
 	model.Parent = effectsFolder
+
+	--[[ Animating ]]
+
+	-- A rigged model (the spider bomb) walks its legs all through the crawl the server moves it along
+	local walk: Animation? = model:FindFirstChild("Walk")
+	if walk and child.Anchored and not child:GetAttribute("Simulated") then
+		model:FindFirstChildOfClass("AnimationController"):FindFirstChildOfClass("Animator"):LoadAnimation(walk):Play()
+	end
 
 	--[[ Connections ]]
 

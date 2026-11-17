@@ -4,8 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Backflip",
-	-- shortcut: the emote kit's picture (art/emotes), local until approved and uploaded
-	IconId = "rbxassetid://134218829069464",
+	IconId = "rbxassetid://94262936265193",
 
 	--[[ Classification ]]
 

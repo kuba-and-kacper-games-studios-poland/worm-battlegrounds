@@ -4,8 +4,7 @@ local _data = {
 	--[[ General ]]
 
 	Name = "Thumbs up",
-	-- shortcut: the emote kit's picture (art/emotes), local until approved and uploaded
-	IconId = "rbxassetid://133574145418278",
+	IconId = "rbxassetid://82202842734013",
 
 	--[[ Classification ]]
 

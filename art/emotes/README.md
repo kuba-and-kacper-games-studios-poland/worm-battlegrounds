@@ -31,9 +31,27 @@ python -I ../bots/to_studio.py   # into Studio's content folder: rbxasset://text
 
 ## In the game
 
-Each emote's Inventory row (`Main/1_Inventory/Data/Items/Emote/Emote_<Id>.lua`) points its `IconId` at the icon's
-uploaded `rbxassetid://` id. The owner approved the upload on 2026-11-11 ("upload all assets that you did not upload to
-roblox"). All nine were uploaded as Decals to The Snail Studio group (566704940) and passed moderation:
+**Replaced on 2026-11-17:** the studio drew the same nine emotes in its own style, and the game uses those now. Their
+sources stay in the game home's `assets/ui/icons/emotes/` (outside this repo). They were pixel-fixed and uploaded as
+Decals to The Snail Studio group (566704940), and all passed moderation:
+
+| Emote | Decal | Image id |
+| --- | --- | --- |
+| `Backflip` ("Emote Backflip") | 131179893538617 | 94262936265193 |
+| `Cry` ("Emote Cry") | 140724210151388 | 94837384430812 |
+| `Dance` ("Emote Dance") | 85691778147141 | 133815758839610 |
+| `Flex` ("Emote Flex") | 72279195341253 | 116083563568263 |
+| `Laugh` ("Emote Laugh") | 133650175559757 | 123552394630328 |
+| `Taunt` ("Emote Taunt") | 98512346003122 | 104017914329926 |
+| `ThumbsUp` ("Emote Thumbs Up") | 104881887991300 | 82202842734013 |
+| `VictoryTrumpet` ("Emote Victory Trumpet") | 137115201717367 | 111511858190336 |
+| `Wave` ("Emote Wave") | 114570296033201 | 132166182456244 |
+
+Each emote's Inventory row (`Main/1_Inventory/Data/Items/Emote/Emote_<Id>.lua`) points its `IconId` at the image id;
+Wave's is also drawn in the Loadout gui's EMOTES button and the MatchHud gui's emote button and wheel slice.
+
+The drawn set below is no longer used. The owner approved its upload on 2026-11-11 ("upload all assets that you did
+not upload to roblox"). All nine were uploaded as Decals to The Snail Studio group (566704940) and passed moderation:
 
 | Emote | Decal | Image id |
 | --- | --- | --- |
