@@ -48,6 +48,10 @@ local tickedAt: number? = nil
 local tensionPhase: number = 0
 local callouts: number = 0
 
+-- Local play: the snail the callout holds for while its player takes the controller, and how many callouts it popped
+local handOffId: string? = nil
+local handOffCallout: number = 0
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -111,6 +115,8 @@ function Module.Start(gui: ScreenGui)
 	matchFolder:GetAttributeChangedSignal("Wind"):Connect(Module._refreshWind)
 	matchFolder:GetAttributeChangedSignal("TurnOrder"):Connect(Module._refresh)
 	matchFolder:GetAttributeChangedSignal("SuddenDeath"):Connect(Module._onSuddenDeath)
+	matchFolder:GetAttributeChangedSignal("HandOff"):Connect(Module._refresh)
+	matchFolder:GetAttributeChangedSignal("HandOff"):Connect(Module._onHandOff)
 	I.Topic.Subscribe("Match_PhaseChanged", Module._refresh)
 	I.Topic.Subscribe("Match_TurnStarted", Module._refresh)
 	I.Topic.Subscribe("Match_TurnStarted", Module._onTurnStarted)
@@ -123,10 +129,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the turn panel and the turn list while turns run, the stamina bar on the player's own turn (and after a throw
-	while they still move), and whose turn it
-	is: "Your turn!", or another snail's name in its team colour with how many turns until the player's own; ticks only
-	while it shows.
+	Shows the turn panel (once a local turn's player has the controller) and the turn list while turns run, the stamina
+	bar on the player's own turn (and after a throw while they still move), and whose turn it is: "Your turn!", or
+	another snail's name in its team colour with how many turns until the player's own; ticks only while it shows.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -148,7 +153,8 @@ function Module._refresh()
 
 	--[[ Visibility ]]
 
-	elems["Turn"].Visible = inTurns
+	-- In local play the turn's timer waits under the callout until its player has the controller (Match's HandOff)
+	elems["Turn"].Visible = inTurns and matchFolder:GetAttribute("HandOff") == nil
 	elems["TurnList"].Visible = inTurns
 	-- After a throw the player runs on with what's left until it bursts (SnailControl's CanMove)
 	local mine: Model? = I.Snails.GetMine()
@@ -273,7 +279,8 @@ end
 	gold over orange lines, with a whoosh and a bugle call (Turn_Yours), and a phone or pad taps twice. Anyone else's:
 	their name in white over lines in their colour, smaller, with how long until the player's own and a drum roll
 	(Turn_Start). When the player plays next, their "You're next!" line flashes with Turn_Next. In sudden death the sea's
-	rise is heard (Match_WaterRise), and the line under the title says the liquid rises.
+	rise is heard (Match_WaterRise), and the line under the title says the liquid rises. In local play the gold banner
+	names the snail whose turn it is, in its colour, and holds while its player takes the controller (On Hand Off).
 ]]
 function Module._onTurnStarted(activeId: string)
 	--[[ Local Variables ]]
@@ -282,22 +289,21 @@ function Module._onTurnStarted(activeId: string)
 	local active: Model? = I.Snails.Get(activeId)
 	local entry: Configuration? = I.Match.GetParticipantInfo(activeId)
 	local turnsLeft: number? = if myTurn then nil else Module._getTurnsLeft()
-	local accent: Color3 = if myTurn or not active then _settings.CALLOUT_ACCENT_COLOR else active:GetAttribute("Color")
+	-- In local play every snail on this screen is "yours", so the banner names whose turn it is
+	local localPlay: boolean = matchFolder:GetAttribute("Kind") == "Local"
+	local handingOff: boolean = myTurn and matchFolder:GetAttribute("HandOff") == activeId
+	local accent: Color3 = if active and (localPlay or not myTurn) then active:GetAttribute("Color") else _settings.CALLOUT_ACCENT_COLOR
 	local gradient = if myTurn then _settings.CALLOUT_MINE_GRADIENT else _settings.CALLOUT_OTHER_GRADIENT --- @type { Color3 }
-	local sub: string = if myTurn then "Aim and fire!" elseif turnsLeft == 1 then "You're next!" elseif turnsLeft then `You play in {turnsLeft} turns` else ""
-	local liquid = Module._getSuddenDeathLiquid() --- @type MatchHud_SuddenDeathLiquid?
+	local handOffText: string = _settings.HANDOFF_TEXTS[I.Platform.Current] or _settings.HANDOFF_TEXTS.Desktop
 
 	--[[ Callout ]]
 
 	if entry then
 		Teams.SetAvatar(elems["CalloutAvatar"], entry)
 	end
-	if liquid then
-		sub = `{sub}  ·  {string.format(_settings.SUDDEN_DEATH_REMINDER, string.lower(liquid.Name))}`
-	end
 	elems["CalloutAvatar"].Visible = true
-	elems["CalloutTitle"].Text = if myTurn then "Your turn!" elseif active then `{active:GetAttribute("DisplayName")}'s turn` else ""
-	elems["CalloutSub"].Text = sub
+	elems["CalloutTitle"].Text = if myTurn and not localPlay then "Your turn!" elseif active then `{active:GetAttribute("DisplayName")}'s turn` else ""
+	elems["CalloutSub"].Text = if handingOff then handOffText else Module._getCalloutLine(myTurn, turnsLeft)
 	elems["CalloutTitleGradient"].Color = ColorSequence.new(gradient[1], gradient[2])
 	elems["CalloutTitleGradient"].Rotation = titleRotation
 	elems["CalloutTitleGradient"].Offset = titleOffset
@@ -307,10 +313,13 @@ function Module._onTurnStarted(activeId: string)
 
 	--[[ Announcing ]]
 
-	if myTurn then
-		I.Sound.Play({ Name = "Turn_Yours", SoundGroup = "SFX" })
-		I.Sound.Play({ Name = "Turn_Whoosh", SoundGroup = "SFX" })
-		I.Haptic.PlayOnce("Match_YourTurn")
+	if handingOff then
+		-- Held until the player takes the controller; their turn's call plays then
+		I.Sound.Play({ Name = "Turn_Next", SoundGroup = "SFX" })
+		handOffId = activeId
+		handOffCallout = Module._openCallout(1)
+	elseif myTurn then
+		Module._playMyTurn()
 		Module._popCallout(1)
 	else
 		I.Sound.Play({ Name = "Turn_Start", SoundGroup = "SFX" })
@@ -338,18 +347,66 @@ function Module._onTurnStarted(activeId: string)
 	end
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Hand Off
+
+--[[
+	Local play: once the player the callout holds for has the controller (Match's HandOff clears), the line under their
+	name becomes their turn's, their turn's call plays, and the callout goes as any turn's does.
+]]
+function Module._onHandOff()
+	--[[ Checks ]]
+
+	-- Check if the callout holds for a hand-off that's over
+	if not handOffId or matchFolder:GetAttribute("HandOff") == handOffId then
+		return
+	end
+
+	--[[ Releasing ]]
+
+	handOffId = nil
+	Module._playMyTurn()
+	if handOffCallout == callouts then
+		elems["CalloutSub"].Text = Module._getCalloutLine(true, nil)
+		Module._closeCallout(handOffCallout, _settings.CALLOUT_HOLD)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play My Turn
+
+--[[
+	The player's own turn's call: a bugle (Turn_Yours) over a whoosh, and a phone or pad taps twice.
+]]
+function Module._playMyTurn()
+	--[[ Playing ]]
+
+	I.Sound.Play({ Name = "Turn_Yours", SoundGroup = "SFX" })
+	I.Sound.Play({ Name = "Turn_Whoosh", SoundGroup = "SFX" })
+	I.Haptic.PlayOnce("Match_YourTurn")
+end
+
 --%%%%%%%%%%%%%%%%%%%% Pop Callout
 
 --[[
-	Plays the callout banner at a scale: the band snaps open while its content slides in from the left and settles from
-	CALLOUT_START_SCALE, holds CALLOUT_HOLD seconds (or the hold given), then the content slides off right as the band
-	closes. A newer callout takes over from an older one.
+	Plays the callout banner at a scale (Open Callout), holds CALLOUT_HOLD seconds (or the hold given), then closes it
+	(Close Callout).
 ]]
 function Module._popCallout(scale: number, hold: number?)
+	--[[ Playing ]]
+
+	Module._closeCallout(Module._openCallout(scale), _settings.CALLOUT_IN_TWEENINFO.Time + (hold or _settings.CALLOUT_HOLD))
+end
+
+--%%%%%%%%%%%%%%%%%%%% Open Callout
+
+--[[
+	Opens the callout banner at a scale: the band snaps open while its content slides in from the left and settles from
+	CALLOUT_START_SCALE. A newer callout takes over from an older one.
+]]
+--- @return number
+function Module._openCallout(scale: number)
 	--[[ Local Variables ]]
 
 	callouts += 1
-	local count: number = callouts
 
 	--[[ Showing ]]
 
@@ -370,9 +427,20 @@ function Module._popCallout(scale: number, hold: number?)
 	local Pop_Tween: Tween = I.S.TweenService:Create(elems["CalloutPop"], _settings.CALLOUT_IN_TWEENINFO, Pop_TweenGoal)
 	Pop_Tween:Play()
 
+	--[[ Returning ]]
+
+	return callouts
+end
+
+--%%%%%%%%%%%%%%%%%%%% Close Callout
+
+--[[
+	After a delay, slides the callout's content off right as the band closes, unless a newer callout has the screen.
+]]
+function Module._closeCallout(count: number, delay: number)
 	--[[ Hiding ]]
 
-	task.delay(_settings.CALLOUT_IN_TWEENINFO.Time + (hold or _settings.CALLOUT_HOLD), function()
+	task.delay(delay, function()
 		-- A newer callout has the screen
 		if count ~= callouts then
 			return
@@ -590,6 +658,24 @@ function Module._getSuddenDeathLiquid()
 	--[[ Returning ]]
 
 	return _settings.SUDDEN_DEATH_LIQUIDS[matchFolder:GetAttribute("SeaKind") or "Water"] or _settings.SUDDEN_DEATH_LIQUIDS.Water
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Callout Line
+
+--[[
+	Returns the line under the callout's title: "Aim and fire!" on the player's own turn, else how long until it, with
+	the sudden-death reminder after it while the liquid rises.
+]]
+--- @return string
+function Module._getCalloutLine(myTurn: boolean, turnsLeft: number?)
+	--[[ Local Variables ]]
+
+	local line: string = if myTurn then "Aim and fire!" elseif turnsLeft == 1 then "You're next!" elseif turnsLeft then `You play in {turnsLeft} turns` else ""
+	local liquid = Module._getSuddenDeathLiquid() --- @type MatchHud_SuddenDeathLiquid?
+
+	--[[ Returning ]]
+
+	return if liquid then `{line}  ·  {string.format(_settings.SUDDEN_DEATH_REMINDER, string.lower(liquid.Name))}` else line
 end
 
 return Module

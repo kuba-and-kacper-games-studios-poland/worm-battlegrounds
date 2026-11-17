@@ -8,14 +8,14 @@ any outfit for every screen, sells emotes for coins once the player's level is h
 everyone. The client draws the `Skins` widget (the lobby's STYLE: a deck per slot, the snail in the middle, the open
 slot's pieces; pressing an owned piece wears it), the `EmoteShop` widget (opened from the lobby `Loadout` panel's
 EMOTES button; pressing an owned emote plays it), the emote wheel in `MatchHud`, and a played emote's icon in a thought cloud
-over the player's snail (in a match and on the lobby's stage) and beside their name in the lobby's party list.
+over the player's snail (in a match and on the lobby's stage) and over their avatar in the lobby's party list.
 
 | | |
 | --- | --- |
 | Folder | `src/modules/Main_Game/Cosmetics` |
 | Runs on | Server, Client, Global · both maps |
 | Exposes | `I.Cosmetics` (server), `I.G_Cosmetics` (both) |
-| Uses | `I.Inventory`, `I.G_Inventory`, `I.Currency`, `I.Progression`, `I.WidgetManager`, `I.Rarity`, `I.Interact`, `I.Console`, `I.SnailRig`, `I.Crates` (client: the Style screen's GET) |
+| Uses | `I.Inventory`, `I.G_Inventory`, `I.Currency`, `I.Progression`, `I.WidgetManager`, `I.Rarity`, `I.Interact`, `I.Console`, `I.SnailRig`, `I.Crates` (client: the Style screen's GET), `I.Match`, `I.Utils` (client: the wheel), `I.ChatBubbles`, `ContextActionService` |
 | Saves | `Profile.Cosmetics`; publishes the `Outfit` Player attribute and the `Seen` Replicator value |
 
 ## Files
@@ -28,7 +28,7 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 | `Scripts/Client/Skins.lua` | The full-screen `Skins` widget (the lobby's STYLE): a deck per slot on the left (its owned count, the worn piece, its first three pieces on cards that fan out while it's open), the open slot's pieces on the right (no hat or neck piece first, then owned by rarity, then locked with where to get them; the tiles stay while the list does, so wearing a piece only changes their looks), and the picked piece in a detail bar with EQUIP, WORN or GET (opens the Skin crate). NEW tags on the lobby's STYLE button, the decks and the tiles show owned pieces the player hasn't seen; leaving a deck, or closing the screen, sees its pieces (`Cosmetics_See`) |
 | `Scripts/Client/SkinsStage.lua` | The snail in the middle of the Style screen, with the player's name under it: a drag (mouse or finger) spins it all the way round, and the camera eases to the open or picked slot's view (`STAGE_FOCUS`): round to the shell, down onto the hat, in on the neck piece, back for the body. The camera moves only while it has somewhere to go, and only while the screen shows |
 | `Scripts/Client/EmoteShop.lua` | The `EmoteShop` widget: a card per emote (`PREFAB \| EmoteCard`: its icon, name and rarity badge), cheapest first; one not owned wears the locked cover with its price in coins and the level it needs ("Any level" from level 1), and a press buys it; a press on an owned one closes the panel and plays it (the lobby's only place to pick an emote, since 2026-11-15) |
-| `Scripts/Client/Emotes.lua` | The emote wheel (it closes on a pick, a click or tap anywhere but a button, and when the hud hides the emote button; on a pad it holds the selection while open, `I.Console.Focus`, and B closes it), and playing played emotes on every screen: the player's snail plays it (`I.SnailRig.Emote`: in a match, or on the lobby's stage), its icon pops up in a thought cloud over that snail's head (`I.ChatBubbles.ShowIcon`, in their chat stack: in a match, and on the lobby's stage), and in the lobby also in a speech bubble beside their name on their party card (`I.ChatBubbles.BuildIconBubble`, its tail pointing at the name) |
+| `Scripts/Client/Emotes.lua` | The match's emote wheel (2026-11-17): a ring of slices, one per emote in a fixed order (by the level that unlocks it, then its price, as the emote shop), each its Inventory row's picture; one not owned yet greyed under a lock and its level (`WHEEL_LEVEL_TEXT`). Holding `WHEEL_KEY` (T, bound with ContextActionService at High while the HUD's emote button shows) or the pad's X (the Console module's `Emotes`, read with `I.Console.IsAction`) opens it round the middle of the screen, spinning in with `Emote_WheelOpen`; the mouse's direction from the middle, or the left stick's (`Move`), points at a slice, which lights in the player's match colour and grows with `Emote_WheelHover`, its name in the middle (and for one not owned what opens it); letting go plays it, and a press shorter than `WHEEL_TAP_SECONDS` plays the last emote again (`WHEEL_BUTTON_EMOTE` before any). The HUD's emote button (its picture `WHEEL_BUTTON_EMOTE`'s) opens the wheel to pick from with a click or a tap (on a pad, with the selection: `I.Console.Focus`, B closes it). It stays shut while the emote button is hidden or the player's snail is hit or thrown (`I.SnailRig.CanEmote`), and closes on a pick, a click or tap anywhere but a button, and when the button hides. Playing played emotes on every screen: the player's snail plays it (`I.SnailRig.Emote`: in a match, or on the lobby's stage), its icon pops up in a thought cloud over that snail's head (`I.ChatBubbles.ShowIcon`, in their chat stack: in a match, and on the lobby's stage), and in the lobby also in a speech bubble over the top right corner of their party card's avatar (`I.ChatBubbles.BuildIconBubble`, its tail pointing down at the picture), inside the avatar so the column's layout and scale carry it, `CARD_BUBBLE_SIZE` of the avatar tall; it turns the avatar's `ClipsDescendants` off |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `cosmetics` command, and the `Cosmetics_SetIds` dictionary |
 | `Settings.lua` | `Cosmetics_Settings` |
 | `Data/Sets/<SetId>.lua` | `Cosmetics_SetData`: `Name`, `LayoutOrder`, `Model` (the snail in `Assets.Skins` holding its pieces), `Skin` (the whole skin it was) |
@@ -101,8 +101,14 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 | `SHINY_COPIES` | `10` | Copies of a piece that make it shiny |
 | `EMOTE_COOLDOWN` | `5` | Seconds between two emotes |
 | `EMOTE_SECONDS` | `3` | How long a played emote plays on the snail, and its bubble shows beside a name in the lobby |
-| `CARD_BUBBLE_GAP` | `8` | Design px between a name on a lobby party card and the emote bubble beside it |
-| `WHEEL_RADIUS` | `0.38` | How far the wheel's emotes sit from its centre, as a share of its size |
+| `CARD_BUBBLE_ANCHOR`, `CARD_BUBBLE_SIZE` | `(0.84, 0.1)`, `0.62` | The lobby party card's emote bubble: where its tail's tip stands on the avatar (shares of it across and down, inside its top right corner), and its height as a share of the avatar's |
+| `WHEEL_BUTTON_EMOTE` | `"Emote_Wave"` | The HUD emote button's picture, and what a quick tap plays before any other |
+| `WHEEL_KEY`, `WHEEL_TAP_SECONDS` | `T`, `0.25` | The keyboard key held to open the wheel (the pad's is the Console module's `Emotes`, X); a press shorter than this plays the last emote again |
+| `WHEEL_STICK_DEADZONE` | `0.5` | How far the left stick leans to point at a slice |
+| `WHEEL_ICON_RADIUS`, `WHEEL_DEAD_RADIUS`, `WHEEL_SLICE_GAP` | `0.32`, `0.17`, `2` | The ring, in shares of the wheel's size: where the icons sit, the middle that points at nothing; the degrees between two slices |
+| `WHEEL_HOVER_SCALE`, `WHEEL_HOVER_TWEENINFO` | `1.06`, 0.12 s quad out | The slice pointed at grows to this |
+| `WHEEL_OPEN_SPIN`, `WHEEL_OPEN_SCALE`, `WHEEL_OPEN_TWEENINFO` | `-40`, `0.6`, 0.28 s back out | Opening, the wheel spins in from this many degrees and grows from this share of its size |
+| `WHEEL_LEVEL_TEXT`, `WHEEL_LOCKED_TEXT`, `WHEEL_SHOP_TEXT` | `"Lv %d"`, `"Unlocks at level %d"`, `"Get it in the emote shop"` | Under a slice not owned yet (above level 1), and in the middle under its name: the level it unlocks at, or once reached, where to buy it |
 | `PIECE_SHOTS` | by slot | How a tile, a deck card or a crate card frames a piece: the height looked at (above the posed piece, or the snail's middle for a body) and the distance, both in the whole snail's sizes so the camera stays outside it, and how far it turns (the shell from behind) |
 | `PIECE_BONES` | head `Bone.003`, neck `Bone.002`, shell `Bone.013` | The bone each piece rides; a tile looks at the piece where the pose put it |
 | `VIEWPORT_REDRAW_DELAY` | `0.45` | Seconds after a draw before the small viewports are drawn again (Roblox skips a viewport that changed while it moved, like the fanning deck cards) |
@@ -112,11 +118,13 @@ over the player's snail (in a match and on the lobby's stage) and beside their n
 | `STAGE_PITCH` | `-10` to `55` | How low and high a drag tilts the camera, in degrees |
 | `SKINS_GUI_NAME`, `EMOTE_SHOP_GUI_NAME` | `"Skins"`, `"EmoteShop"` | The widgets |
 | `LOBBY_GUI_NAME` | `"Lobby"` | The gui whose STYLE button (`S_Style` › `S_New`) shows NEW while a piece is unseen |
-| `MATCH_HUD_GUI_NAME`, `PARTY_GUI_NAME` | | The guis that hold the emote wheel and the party list |
+| `MATCH_HUD_GUI_NAME`, `PARTY_GUI_NAME` | | The guis that hold the emote wheel (and its button) and the party list |
 
 ## In the place
 
 - Creates `Workspace.Ume.Cosmetics`; clients put the emote labels (BillboardGuis on the snail's `Root`) there.
+- Binds the CAS action `Cosmetics_EmoteWheel` (`WHEEL_KEY`, at High) while the match HUD's emote button shows, and
+  clones `MatchHud`'s `PREFAB | WheelSlice` into its wheel's `S_Slices`, one per emote.
 - Each set's pieces sit on one snail in `Assets.Skins` (in the place, `ReplicatedStorage.Ume.Assets.PlaceLoader.Default.Skins`),
   named by its row's `Model`: `Classic` (Garden), and the artist's `Clown`, `Cowboy`, `Devil`, `Knight`, `Ninja`,
   `Pirate`, `Robot`, `Skeleton` and `Soldier`, all on Classic's skeleton (`art/skins`). Its `Body` is the set's body

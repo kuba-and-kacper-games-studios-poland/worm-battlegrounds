@@ -2,7 +2,7 @@
 
 The match screen: the team panels in the top corners, the timer, whose turn and the wind at the top, the turn order on the left, the emote button on the right, the move and jump buttons (touch screens) bottom left, the loadout bar with the stamina bar over it at the bottom, the power slider and FIRE (touch screens) bottom right; plus the kill feed, the emote wheel and the blocks for the other phases (waiting, drop, knocked out).
 
-**Look.** Ported 1:1 from the studio's `HUD` gui (2026-11-09) as `Primitive` nodes: its slanted dark cards, pictures and fonts, laid out by screen fractions with aspect-ratio constraints, so the design's frames scale with the screen by themselves (no `S_ScreenScale`). Added to it from pieces of the design: the wait line under the banner (a copy of the banner), Jump (a copy of `>` above the move buttons), the angle and hint line over the power slider and the cooldown count on a slot (copies of the design's texts), the stamina bar (a copy of the power slider without its handle, its bar green) and the LB / RB hints (copies of a slot's key number). Kept from the old hud as the theme's controls (`WormBattlegroundsBrawl`): the kill feed (moved under the right team panel), the emote wheel and the waiting, drop and knocked-out blocks, each with its `S_ScreenScale`. The design's `World` frame (the world labels' look) went to `SnailTag` and `DamagePop`, and its crosshair picture to the MatchHud module's angle marker. Added on 2026-11-10 as `Primitive` nodes (the owner turned down the GUI kit's yellow Hazard plate for them: "this is old style, the new style is MatchBoard or MatchHud"): the tension band, and the turn callout. The callout was first two blocks on the timer's trapezoid frame pictures; later that day it became one banner (the owner: "the ui your turn looks bad, polish it up, make it look professional", "add the player avatar/bot icon"): a full-width dark band with accent lines, the snail's rounded square avatar, and the turn's text in the timer's font (`rbxassetid://12187365977`, Heavy Italic).
+**Look.** Ported 1:1 from the studio's `HUD` gui (2026-11-09) as `Primitive` nodes: its slanted dark cards, pictures and fonts, laid out by screen fractions with aspect-ratio constraints, so the design's frames scale with the screen by themselves (no `S_ScreenScale`). Added to it from pieces of the design: the wait line under the banner (a copy of the banner), Jump (a copy of `>` above the move buttons), the angle and hint line over the power slider and the cooldown count on a slot (copies of the design's texts), the stamina bar (a copy of the power slider without its handle, its bar green) and the LB / RB hints (copies of a slot's key number). Kept from the old hud as the theme's controls (`WormBattlegroundsBrawl`): the kill feed (moved under the right team panel) and the waiting block, each with its `S_ScreenScale`. The design's `World` frame (the world labels' look) went to `SnailTag` and `DamagePop`, and its crosshair picture to the MatchHud module's angle marker. Added on 2026-11-10 as `Primitive` nodes (the owner turned down the GUI kit's yellow Hazard plate for them: "this is old style, the new style is MatchBoard or MatchHud"): the tension band, and the turn callout. The callout was first two blocks on the timer's trapezoid frame pictures; later that day it became one banner (the owner: "the ui your turn looks bad, polish it up, make it look professional", "add the player avatar/bot icon"): a full-width dark band with accent lines, the snail's rounded square avatar, and the turn's text in the timer's font (`rbxassetid://12187365977`, Heavy Italic). Rebuilt on 2026-11-17 as `Primitive` nodes in the hud's look (the polish pass the owner approved): the emote wheel (a real ring of dark glass slices on a dark backing, the pointed one lit in the player's colour, the name in a dialog-look disc in the middle) and the emote button's picture and key cap. No new pictures: frames, `UICorner`, `UIStroke`s and `UIGradient` cuts (a slice is a disc cut by one gradient on it and one on its `CanvasGroup`). The drop's timer, a ring timer for a few hours that day, became a copy of `U_Turn`'s timer plate with "Pick where to land" under it (the owner: "make it more subtle, this one looks like it's from a different game"); in local play the turn callout also holds for the hand-off (the `LocalHandOff` card it replaced overlapped it).
 
 |  |  |
 | --- | --- |
@@ -24,7 +24,9 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_Turn` › `S_Wind` | TextLabel | The wind with its side, "+3" or "-3" ("0" in still air) |
 | `U_TeamsLeft`, `U_TeamsRight` | Frame (horizontal list), top corners | Hold one `Team` per team: the player's first on the left, then right, left… |
 | `U_TurnList` | Frame (vertical list), left | Holds one `TurnEntry` per snail: the one playing, then the next ones |
-| `U_EmoteButton` › `Button` | ImageButton (EMOTES), right | Opens `U_EmoteWheel` (the Cosmetics module) |
+| `U_EmoteButton` › `Button` | ImageButton (EMOTES), right | Opens `U_EmoteWheel` to pick from (the Cosmetics module); no `Utils_ButtonKey` since 2026-11-17, as Cosmetics reads T and X held itself |
+| `U_EmoteButton` › `S_Icon` | ImageLabel | The button's emote's picture (Cosmetics' `WHEEL_BUTTON_EMOTE`, the Wave's Inventory `IconId`) |
+| `U_EmoteButton` › `Button` › `KeyHint` | Frame (a key cap, "T"), `Utils_HideOnPlatform` (Desktop only) | T on the button's bottom right corner |
 | `U_Touch` | Frame, bottom left, `Utils_HideOnPlatform` (Mobile only) | Touch controls |
 | `U_Touch` › `S_Left`, `S_Right` | ImageButton | Walk left, walk right; shown on the player's turn |
 | `U_TouchJump` › `S_Jump` | Frame in `BottomRight`, over FIRE, `Utils_HideOnPlatform` (Mobile only) › ImageButton | Jump (its card drawn in three slices so the corners keep their shape: the gui maker's, 2026-11-11; moved over FIRE in the place, then into the gui, 2026-11-15); shown on the player's turn |
@@ -33,7 +35,7 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_LoadoutBar` | Frame, bottom middle | Shown while the player's snail plays |
 | `U_LoadoutBar` › `S_PrevHint`, `S_NextHint` | ImageLabel, `Console_Hint` (`Console_Action` `WeaponPrevious`, `WeaponNext`) | LB / RB beside the bar on Console |
 | `U_PadControls` | Frame, `Console_Hint` (`Console_HintHidden` until the player's turn) | The match's pad controls at the bottom left, a row each (`Console_Action`): charge and fire, aim, jump, move, camera, zoom in and out, menus |
-| `U_EmoteButton` › `Button` › `PadHint` | ImageLabel, `Console_Hint` (`Emotes`) | X on the EMOTES button |
+| `U_EmoteButton` › `Button` › `PadHint` | ImageLabel, `Console_Hint` (`Emotes`) | X on the button's bottom right corner, on Console |
 | `U_Slots` | Frame (horizontal list) | Holds one `BarSlot` per slot key (7: the Bazooka and loadout slots 1 to 6) |
 | `U_Stamina` | Frame, over the loadout bar | On the player's turn |
 | `U_Stamina` › `S_Bar`, `S_BarMask` | ImageLabels (`Fit`) with a UIGradient each | How far the snail can still walk: the bar and its texture, cut by their gradients at the share times MatchHud's `BAR_FILL` (1: the studio's complete PowerSlider, 2026-11-12, fills its whole width; sized 0.9319 × 0.4312, as the track) |
@@ -46,8 +48,13 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `U_Fire` | ImageButton (FIRE, the gui maker's painted button, 2026-11-11), bottom right | Touch screens, on the player's turn: held, charges the aim shown; let go, fires |
 | `U_Fire` › `S_Icon` | ImageLabel | The held weapon's icon |
 | `U_KillFeed` | Cells (no scroll, `Fixed`), kept | Top right, under the team panel: one `FeedLine` per knockout |
-| `U_EmoteWheel` | Frame, kept, hidden | One `WheelEmote` per owned emote, placed on a circle. Has its own `S_ScreenScale` |
-| `U_Drop` | Box (`Hud`), kept, hidden | The drop phase: "Pick where to land" and `S_Timer` |
+| `U_EmoteWheel` | Frame, hidden, the middle of the screen (0.44 of it, square), ZIndex 20 | The emote wheel; its `Rotation` spins it in |
+| `U_EmoteWheel` › `S_Pop` | UIScale | Grows it in as it opens |
+| `U_EmoteWheel` › `S_Slices` | Frame | Holds one `WheelSlice` per emote, round the ring from the top |
+| `U_EmoteWheel` › `S_Name`, `S_Sub` | TextLabel (in the `Middle` disc: fill 25, 25, 35, a dark outer and a grey 130 inner line) | The pointed emote's name (with nothing pointed at, the one a quick tap plays); under it, for one not owned yet, "Unlocks at level 10" or "Get it in the emote shop" |
+| `U_EmoteWheel` › `S_Hit` | ImageButton, see-through, over the wheel | Takes every press on the wheel, and the pad's selection while the button opened it |
+| `U_Drop` | Frame, top middle (where `U_Turn`'s timer stands), hidden | The drop phase's timer: `U_Turn`'s timer plate (`Timer`, its pictures) with "Pick where to land" (`Title`, `TextCase_Upper`) under it |
+| `U_Drop` › `S_Timer` | TextLabel | The time left ("0:15"), red in the last seconds |
 | `U_KnockedOut` | Frame, the studio's KnockedOut (2026-11-12), hidden | YOU WERE KNOCKED OUT! over `S_Spectate` (yellow, A) and `S_Leave` (red, B), ImageButtons with `Console_Hint` badges |
 | `U_Waiting` | Box (`Hud`), kept, hidden | "Waiting for players" and `S_Count` |
 | `U_TurnCallout` | Frame, hidden, see-through, across the screen (Position 0.5, 0.34; 1 × 0.14 of the screen; ZIndex 10) | The turn banner, shown as each turn starts (the player's own and anyone else's) |
@@ -72,12 +79,12 @@ The match screen: the team panels in the top corners, the timer, whose turn and 
 | `PREFAB \| Team` | `U_TeamsLeft` (clones go on either side) | `S_Players` (a horizontal list holding the nested `PREFAB \| TeamPlayer`), `S_Name` (`TextCase_Upper`) |
 | `PREFAB \| TeamPlayer` | nested in `Team` › `S_Players`, hidden | `Background` › `Main`, `S_Avatar` (square, under the outlines), `Stroke2`, `Stroke` |
 | `PREFAB \| FeedLine` | `U_KillFeed` | A Label: "Bax knocked out Ninja with the Black hole grenade", names in team colours (rich text) |
-| `PREFAB \| WheelEmote` | `U_EmoteWheel` | An Item (`S_Icon`, `S_Name`, `S_Info`, `Button`), anchored at its centre |
+| `PREFAB \| WheelSlice` | `U_EmoteWheel` (code puts clones in `S_Slices`) | A see-through Frame the wheel's size: `S_Grow` (UIScale), `S_Sector` (CanvasGroup) › `S_CutEnd` (its UIGradient) and `S_Wedge` (the disc, 0.92 of the wheel) › `S_CutStart` (UIGradient), `S_Icon` (the emote's picture) › `S_Lock` (the Loadout card's lock) and `S_Level` ("Lv 10"), both hidden. Its `Look_Color`, `Look_Transparency`, `Look_LockedIconColor` and `Look_LockedIconTransparency` attributes are its rest look |
 | `PREFAB \| PowerDot` | `U_Aim` | A round white Frame (`UICorner` 0.5, no outline) with a `UIGradient`: one circle of the power cone, which Aim clones `POWER_DOTS` times and sizes, colours (the gradient, along the aim) and places |
 
 ## Driven by
 
-The game's `MatchHud` module: it turns the ScreenGui on while the player is in a match and shows each block in its phase, plays the turn callout as turns start and pulses `U_Tension` in the player's last seconds (its `Turn` handler). The Cosmetics module fills the emote wheel and opens it from `U_EmoteButton`.
+The game's `MatchHud` module: it turns the ScreenGui on while the player is in a match and shows each block in its phase, plays the turn callout as turns start (in local play holding it while a turn waits for its player to take the controller) and pulses `U_Tension` in the player's last seconds (its `Turn` handler). The Cosmetics module builds the emote wheel's slices and opens it (held T or X, or `U_EmoteButton`); Panels runs the drop's timer.
 
 ## Preview
 
@@ -92,7 +99,7 @@ The game's `MatchHud` module: it turns the ScreenGui on while the player is in a
 | `S_Slots` (Slider, 1 to 7) | Loadout items; the rest of the 7 slots show "+" (the second item cools down) |
 | `S_Teams` (Slider, 2 to 4) | Teams of two in the corners |
 | `S_Feed` (Slider, 0 to 3) | Kill feed lines |
-| `S_Wheel` (Toggle) | Opens the emote wheel |
+| `S_Wheel` (Toggle) | Opens the emote wheel: 9 slices, the first lit in blue, the last two not owned yet |
 
 ## Integration
 
@@ -109,7 +116,7 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 | Charge the power | Hold the left button | Hold `U_Fire` | Hold RT | MatchHud (Aim; Combat's `CHARGE_SECONDS`, firing by itself at full) |
 | Fire | Let go | Let go of `U_Fire` | Let go of RT | MatchHud (Aim) |
 | Walk, jump | Game controls | `S_Left`, `S_Right`, `S_Jump` | Game controls | MatchHud and SnailControl |
-| Emote wheel | Click EMOTES | Tap EMOTES | X, then the selection (B closes it) | `Button` tags (`Utils_ButtonKey`); Cosmetics (`I.Console.Focus`) |
+| Emote wheel | Hold T, point with the mouse, let go (a quick tap plays the last emote again); or click EMOTES, then a slice | Tap EMOTES, then tap a slice | Hold X, point with the left stick, let go (a quick tap plays the last again); or select EMOTES with View and A, then point and A (B closes it) | Cosmetics (T bound with ContextActionService while the button shows; X read through `I.Console.IsAction("Emotes")`; the button's `I.Interact.OnPress`; `I.Console.Focus` when the button opened it) |
 | Zoom | Mouse wheel | Pinch | D-pad up / down | MatchCamera (`I.Console`: `ZoomIn`, `ZoomOut`) |
 | HUD and top bar buttons | Click | Tap | View starts the selection, A presses | Console (`Navigate`) |
 | Spectate / Leave | Click | Tap | A / B | `S_Spectate`, `S_Leave` tags (`Utils_ButtonKey`) |
@@ -119,6 +126,10 @@ Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Match
 | State | Element | Value |
 | --- | --- | --- |
 | Hover, press | Slots, EMOTES, FIRE, move and jump buttons | `Utils_ButtonScale` (`Bouncy`, hover ×1.04, press ×0.92) with `Button_Hover` and `Button_Click` |
+| Emote wheel opening | `U_EmoteWheel`, `S_Pop` | `Rotation` from Cosmetics' `WHEEL_OPEN_SPIN` (-40) to 0 and `Scale` from `WHEEL_OPEN_SCALE` (0.6) to 1 (`WHEEL_OPEN_TWEENINFO`, 0.28 s back out), with `Emote_WheelOpen` |
+| Slice pointed at | `WheelSlice` › `S_Wedge`, `S_Grow` | `BackgroundColor3` = the player's match `Color` (their team's), transparency 0, `Scale` `WHEEL_HOVER_SCALE` (1.06, `WHEEL_HOVER_TWEENINFO` 0.12 s), the slice's `ZIndex` 22 over its neighbours, with `Emote_WheelHover`; at rest `Look_Color` (34, 34, 46) at `Look_Transparency` (0.08), scale 1, `ZIndex` 21 |
+| Emote not owned | `WheelSlice` › `S_Icon`, `S_Lock`, `S_Level` | `ImageColor3` `Look_LockedIconColor` (120, 120, 130) at `Look_LockedIconTransparency` (0.35), the lock shown, "Lv 10" shown above level 1 |
+| Drop timer, last seconds | `U_Drop` › `S_Timer` | From MatchHud's `DROP_WARN_FROM` (3) seconds left the seconds turn `TIMER_DANGER_COLOR` (255, 70, 50), with `Turn_Tick` each second; white before |
 | Selected item | `BarSlot` › `Background` › `Stroke` | `ImageColor3` = `Look_SelectedStrokeColor` (white); others `Look_StrokeColor` (grey) |
 | Empty slot | `BarSlot` | `S_Plus` shown, the rest hidden, `Stroke` = `Look_EmptyStrokeColor`, not interactable |
 | Cooling down | `BarSlot` › `S_Icon` (and a model's `S_Model`) | `ImageColor3` = `Look_CooldownIconColor`, `S_Turns` shown |

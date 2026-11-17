@@ -2121,3 +2121,132 @@ was a flag on the minis (`Bomblets.Hatch`) and the row put back.
   it was unused) made the reversal a data change plus sounds, not a rebuild.
 
 Rules: Snails (A blast hurts at once; the crater follows).
+
+## The polish pass of 17 Nov: levels, frames, local play, the pad, Shiny and Golden (2026-11-17)
+
+**What happened.** The owner sent one long list of polish (a lobby level bar that fills after a match, frames by
+level, a free crate tile, the Party column for big custom lobbies, maps for Play Solo, a Local mode, a calmer pad aim
+and a free cursor, Shiny and Golden weapons, and more), asked for a draft first, approved it with "sounds good", and
+added that local play needs the map pick too.
+
+- **What a match earns for the lobby travels in the profile.** The match runs in another place, so the XP lines the
+  lobby plays back can't ride a remote or a Topic: MatchRewards saves them (Progression's `Replay`, a JSON string,
+  since Replicator attributes hold no tables), with the level and XP before and after and the cost of each level in
+  between, and the lobby clears it once it has played (`Progression_ReplaySeen`). Two matches before a lobby merge
+  their lines by key.
+- **"My snail" was `P_<UserId>` in a dozen places.** Local play gives one player several snails (guests,
+  `P_<hostId>_<n>`, with the host's `UserId`), and every server lookup that built the id from the player (Fire's five,
+  the aimbot, the fuel) had to ask Match instead (`GetControlledId`), as the client's `GetMine` asks
+  `GetMyParticipantId`. The controls follow every snail with this screen's `UserId` and drive the one the server lets
+  move. A guest's card is the roster's, not the host's (`GetCard` gave every guest the host's name).
+- **An exported gui comes out disabled.** The hand-off card's ScreenGui exports with `Enabled` off like the widgets,
+  so the script that shows it turns it on first. And `UmeGui.Export` only returns the ScreenGui: an export from a
+  script parents it into StarterGui itself, replacing the old copy.
+- **Studio's simulated keys don't reach the game's binds.** Keys sent through the Studio MCP never moved a snail; a
+  test LocalScript calling `I.SnailControl.Hold` did, which is how local play's hand-offs were checked.
+- **A pad's stick read as an angle every frame is twitchy.** Pointing the aim at the stick's angle on every reading
+  made small leans jump, and the stick springing back moved the aim just before RT. A gentle zone that nudges, a firm
+  one that eases, and no change while the lean drops fixed both (MatchHud's `Pad Aim`).
+- **Roblox's virtual cursor can't be tuned.** It scrolls only at the edges and doesn't run with
+  `AutoSelectGuiEnabled` off, so the Console module draws its own cursor and makes the button under it
+  `GuiService.SelectedObject`: A, B and the `Utils_ButtonKey` shortcuts keep working as with the selection.
+- **Gold can't be painted on a textured MeshPart.** A MeshPart's `Color` doesn't tint its `TextureID`, and scripts
+  can't set SurfaceAppearance maps, so Golden weapons tint through SurfaceAppearance `Color`, a SpecialMesh's
+  `VertexColor`, a decal's `Color3`, or a see-through gold copy over the textured part; plain parts go gold by their
+  colour. `Utils_Motion`'s Twinkle fades backgrounds, not images, so the gui's sparkles are frames.
+- **A centred label with a picture beside it needs its text's bounds.** An AutomaticSize X label measures at its
+  `TextSize` and doesn't follow screen-fraction layouts, so the price's coin is placed from `TextBounds`
+  (Loadout's `_centrePrice`).
+- **A blast through ground and a tree hitched, from six causes.** Props were cut one part at a time after the terrain,
+  each yielding (which also held up the blast's throws); their pieces were unanchored server physics, replicated every
+  frame, with a server tween per part; falling ground was written by the server and again by each client, so chunks
+  stuttered and hopped up after landing; each blast made and parented 24 to 56 cutter parts on the server and twice on
+  each client; the merged cutter was parented, so its mesh replicated to every player; and chips were physics parts
+  with a tween each while the reactions and see-through re-walked all of Decor. The fix: one writer per part (the
+  server moves what collides, clients draw copies), clients predict props as they do terrain, simple client motion for
+  everything cosmetic, pooled parts, and caches cleared by events instead of re-walks (Arena's `PropCut`,
+  `PropCarver`, `Thrown`, `PropBoxes`; Combat's `DEBRIS_*`).
+- **A bubble placed by pixel offsets inside a container with a UIScale lands in the wrong place.** The party card's
+  emote bubble sat over the name; it is now parented to the avatar it points at and sized against it.
+- **`Utils_ButtonKey` presses a button when its key is let go,** so a hold-to-open wheel reads the key itself and its
+  button drops its pad key.
+- **An export from a script is always a ScreenGui.** `UmeGui.Export` wraps a Billboard gui in a ScreenGui too (the Gui
+  tool's export makes the BillboardGui), so a billboard exported by script is rebuilt as a BillboardGui with its
+  holder's settings (the drop pin: 150 × 190, `LightInfluence` 0) before it goes on its holder.
+- **A second export from a script in one Studio session can be stale.** Studio caches `require`, so after UmeSync
+  changes a gui's source, `UmeGui.Export(path)` from the command bar or the MCP builds the version it required
+  first. Exporting `require` of a fresh clone of the gui's module (`UmeGui.Export(table)`) builds what's on disk; the
+  Gui tool's own export reloads by itself.
+- **Compact cards skip the badges, not only hide them.** The second Party column's small cards first hid the name but
+  still drew the badges over the picture; compact cards now don't call `PlayerBadges.Show` at all.
+
+Rules: Arena (Props break on every screen at once; Cutters are reused), Combat (Blasts are felt), Snails
+(Shiny and Golden copies look special everywhere), Shooting (the pad's calm aim), Guis (the free cursor,
+the level plate, rank frames, the free crate tile, text and picture centred), Lobby (the custom lobby's Party column,
+the map strip, Local play).
+
+## The 17 Nov polish, second look: one look for every new piece (2026-11-17)
+
+**What happened.** The owner played the polish pass and sent it back: the new guis didn't look like the game ("make
+sure the colors, transparencies and overall style is the same as our guis in game"). The control hint strip lay over
+the notifications, the drop's ring timer "looks like it's from a different game", the solo and local setups were a
+panel with a separate map strip on top ("they don't fit, they overlap", "even structure is different" from the
+draft), LOCAL was a new orange pill beside the blue CUSTOM, the hand-off card was a heavy band of its own, the level
+plate didn't fit, the lobby's camera swooped in on join, and the mode icons were flat stickers next to the glossy,
+studded weapon icons.
+
+- **Every new piece was a design of its own; each became a copy of one the game has.** The fixes were all the same
+  move: the drop timer is the turn timer's plate, the hand-off is the turn callout held open, the setups are the custom
+  lobby's window with its own map cards and buttons, LOCAL is CUSTOM's button, the level plate stands on a currency
+  slot's plate, the hints take the HUD's pad-hint lines. The rule went into `practices.md` ("A new piece is a copy of
+  one the game already has").
+- **Look at a new piece beside everything that shows with it.** The hint strip and the separate map strip looked fine
+  alone in a preview; in play they covered the notifications (bottom middle) and the setup panel, and the custom
+  lobby's ✕ hid under the new FREE WEAPONS tile. Two windows now sit centred under the top bar, at 0.564 down.
+- **The hand-off overlapped the turn callout because the turn was announced first.** The server set `ActiveId` (which
+  the clients turn into `Match_TurnStarted`) before waiting for the hand-off, so the "Player 2's turn" callout and the
+  hand-off card popped together. The server now names the hand-off before `ActiveId`, and the HUD holds its own
+  callout for it instead of a second gui.
+- **The lobby camera eased from wherever Roblox's camera had put it.** `_holdCamera` lerped from `camera.CFrame`
+  each frame; about a second after the stage camera took over, Roblox's camera scripts moved it as the avatar loaded
+  (once, hundreds of studs away and turned), and the ease swooped it back over two seconds. Easing a CFrame of its own
+  (`heldCFrame`) and only writing it to the camera ignores anything else that moves it.
+- **A node's `Id` names the instance only if its `Props` don't set `Name`.** Two copied nodes kept their design's
+  `Name` in `Props` beside the new `Id`; the export named them by the `Name`, the setup's `FindFirstChild("S_Title")`
+  found nothing, and the board's whole client start failed (its lobby cards stayed empty). Drop `Name` from `Props` when
+  giving a copied node an `Id`.
+- **A fixed-size picture window can't shrink to its content.** The custom lobby's window art is drawn `Fit`, so it
+  keeps its shape; the setup puts its rows in a `UIListLayout` centred in it, so a mode that hides a row (solo has no
+  players row) closes up instead of leaving a hole.
+
+## The 17 Nov polish, third look: change the look, keep the feel (2026-11-17)
+
+**What happened.** The owner played again: the weapon picker opened under the level plate, FREE WEAPONS, the menu and
+the coins; the custom lobby blurred and dimmed the stage but the solo, party and local setup didn't; the drop picker
+"totally sucks… the old one was good - i just wanted to change it visually"; FREE CRATE still showed over a crate
+opening; and the client logged "Could not carve … Bigoak.Trunk" (CSG error -4) four times.
+
+- **"Make it more obvious" asked for a look, not new mechanics.** The first pass moved the target off the pointer:
+  a ring projected onto the land under it, snapping into islands, a cross, a slam and a beam. The ring often sat far
+  from the pointer (on a cliff below it), which read as broken. The picking went back to the last commit's (the spot is
+  the point under the pointer, refused where a snail doesn't fit) and only the pin's look stayed. When asked to make
+  something clearer, change how it looks first and keep how it behaves.
+- **Blur and dim belong to WidgetManager widgets.** WidgetManager blurs and dims on `WidgetManager_Opened`, so a
+  window shown by toggling a frame inside another gui never gets them. The setup was MatchBoard's `U_Setup`; it is now
+  its own widget, `MatchSetup`, opened with `I.WidgetManager.Open`, and every lobby window should be one.
+- **A window over the lobby has to say what it covers.** The picker isn't full screen, so it was in neither of Lobby's
+  lists and nothing hid; the guis above it by `DisplayOrder` (LevelPlate 3, FreeCrate 2) drew over it. Lobby's
+  `PANEL_WIDGETS` now takes any set of lobby guis per widget, and the picker hides the top row and the board.
+- **A GuiObject turns about its own middle, whatever its AnchorPoint.** The free crate dialog's eight light beams were
+  half-length bars anchored at their bottoms on the frame's middle and turned 0° to 315°: each spun about its own
+  middle, so they crossed at a point above the crate, and wheeling the frame swung that point round the panel. The
+  dialog now shows the crates screen's sunburst picture, which turns about the crate. A spoke must be a full-size
+  frame turned around the middle, holding the bar, never the bar itself.
+- **Moving a node to another gui by script, strip only its own keys.** Splitting the setup and the free crate dialog
+  into widgets, the script dropped every `Visible = false` line in the moved subtree, not just the node's own: the
+  dialog's LIKE tick, the setup's players row and its gamepad badges (`PadHint`) then started shown. Strip a key on the
+  node's own lines only, and compare the hidden elements before and after.
+- **A client's CSG cut can fail where the server's doesn't.** Every test cut of the server's tree pieces on the client
+  worked in Studio, even straight after they arrived, so the cause wasn't found; the four failures matched the four
+  server-cut trunk pieces, and the terrain's client cutter already fell back quietly. A client's cut is only a guess
+  the server's pieces correct, so a failed one is tried once more and then dropped silently; the server still warns.

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Teams: a red and a blue shield, overlapping, metal rims and studs -->
+  <defs><linearGradient id="metal_d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2f5fa"/><stop offset="0.45" stop-color="#a9b3c2"/><stop offset="1" stop-color="#5f6878"/></linearGradient><linearGradient id="red_d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b5e"/><stop offset="0.45" stop-color="#e8322a"/><stop offset="1" stop-color="#a3161a"/></linearGradient><linearGradient id="blue_d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fc8ff"/><stop offset="0.45" stop-color="#1f8fe8"/><stop offset="1" stop-color="#145aa8"/></linearGradient></defs>
+  <path d="M10,14 L23,9 L36,14 L36,32 Q36,48 23,56 Q10,48 10,32 Z" fill="url(#metal_d)" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M14,17 L23,13.5 L32,17 L32,32 Q32,44 23,50.5 Q14,44 14,32 Z" fill="url(#red_d)" stroke="#171724" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="17.30" y="20.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="17.30" y="20.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="17.78" y="20.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <rect x="25.30" y="20.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="25.30" y="20.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="25.78" y="20.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <rect x="21.30" y="28.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="21.30" y="28.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="21.78" y="28.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <rect x="17.30" y="36.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="17.30" y="36.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="17.78" y="36.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <rect x="25.30" y="36.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="25.30" y="36.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="25.78" y="36.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <ellipse cx="19" cy="18" rx="4.5" ry="1.8" fill="#ffffff" opacity="0.55" transform="rotate(-25 19 18)"/>
+  <path d="M28,14 L41,9 L54,14 L54,32 Q54,48 41,56 Q28,48 28,32 Z" fill="url(#metal_d)" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M32,17 L41,13.5 L50,17 L50,32 Q50,44 41,50.5 Q32,44 32,32 Z" fill="url(#blue_d)" stroke="#171724" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="35.30" y="20.78" width="3.40" height="3.40" rx="0.95" fill="#145aa8"/><rect x="35.30" y="20.30" width="3.40" height="3.40" rx="0.95" fill="#1f8fe8"/><rect x="35.78" y="20.64" width="2.45" height="1.16" rx="0.57" fill="#5fc8ff" opacity="0.9"/>
+  <rect x="43.30" y="20.78" width="3.40" height="3.40" rx="0.95" fill="#145aa8"/><rect x="43.30" y="20.30" width="3.40" height="3.40" rx="0.95" fill="#1f8fe8"/><rect x="43.78" y="20.64" width="2.45" height="1.16" rx="0.57" fill="#5fc8ff" opacity="0.9"/>
+  <rect x="39.30" y="28.78" width="3.40" height="3.40" rx="0.95" fill="#145aa8"/><rect x="39.30" y="28.30" width="3.40" height="3.40" rx="0.95" fill="#1f8fe8"/><rect x="39.78" y="28.64" width="2.45" height="1.16" rx="0.57" fill="#5fc8ff" opacity="0.9"/>
+  <rect x="35.30" y="36.78" width="3.40" height="3.40" rx="0.95" fill="#145aa8"/><rect x="35.30" y="36.30" width="3.40" height="3.40" rx="0.95" fill="#1f8fe8"/><rect x="35.78" y="36.64" width="2.45" height="1.16" rx="0.57" fill="#5fc8ff" opacity="0.9"/>
+  <rect x="43.30" y="36.78" width="3.40" height="3.40" rx="0.95" fill="#145aa8"/><rect x="43.30" y="36.30" width="3.40" height="3.40" rx="0.95" fill="#1f8fe8"/><rect x="43.78" y="36.64" width="2.45" height="1.16" rx="0.57" fill="#5fc8ff" opacity="0.9"/>
+  <ellipse cx="37" cy="18" rx="4.5" ry="1.8" fill="#ffffff" opacity="0.55" transform="rotate(-25 37 18)"/>
+</svg>

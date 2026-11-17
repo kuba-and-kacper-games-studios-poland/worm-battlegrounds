@@ -8,6 +8,7 @@
 --- @field ItemId string
 --- @field Row Arsenal_WeaponData
 --- @field Shiny boolean
+--- @field Variant Combat_Variant?
 ---
 --- # Aim #
 ---
@@ -52,6 +53,7 @@ local _combat_Shot = {}
 ---
 --- @field Tumble boolean?
 --- @field DrawScale number?
+--- @field Variant Combat_Variant?
 ---
 --- # Homing #
 ---
@@ -184,3 +186,84 @@ local _combat_Vortex = {}
 --- @field Heading Vector3
 --- @field Drawn Vector3
 local _combat_FlyingShot = {}
+
+--%%%%%%%%%%%%%%%%%%%% Variants
+
+--- @alias Combat_Variant "Shiny" | "Golden"
+local _combat_Variant = {}
+
+--- @class Combat_VariantLook
+---
+--- # Held #
+---
+--- @field Gild { Color3 }?
+--- @field GildCover number?
+--- @field Sheen { Color3 }
+--- @field SheenPeriod number
+--- @field Outline Color3
+--- @field OutlineTransparency number
+--- @field Twinkle Combat_VariantEffect
+--- @field Dust Combat_VariantEffect?
+---
+--- # Shot #
+---
+--- @field Trail string
+--- @field TrailColor ColorSequence
+--- @field TrailWidth number
+--- @field Glint Combat_VariantEffect
+---
+--- # Blast #
+---
+--- @field Blast { Combat_VariantEffect }
+--- @field Sound string
+local _combat_VariantLook = {}
+
+--- @class Combat_VariantEffect
+---
+--- # General #
+---
+--- @field Effect string
+--- @field Color ColorSequence
+--- @field Scale number
+---
+--- # Timing #
+---
+--- @field Every number?
+---
+--- # Placing #
+---
+--- @field Ring number?
+--- @field RingRadius number?
+--- @field Front number?
+local _combat_VariantEffect = {}
+
+--- @class Combat_VariantShot
+---
+--- # General #
+---
+--- @field Look Combat_VariantLook
+--- @field Name string
+---
+--- # Look #
+---
+--- @field Carrier BasePart?
+--- @field NextGlint number
+local _combat_VariantShot = {}
+
+--- @class Combat_VariantDress
+---
+--- # General #
+---
+--- @field Look Combat_VariantLook
+--- @field Probe BasePart?
+---
+--- # Look #
+---
+--- @field Sheens { BasePart }
+--- @field Outline Highlight
+---
+--- # Timing #
+---
+--- @field NextTwinkle number
+--- @field NextDust number
+local _combat_VariantDress = {}

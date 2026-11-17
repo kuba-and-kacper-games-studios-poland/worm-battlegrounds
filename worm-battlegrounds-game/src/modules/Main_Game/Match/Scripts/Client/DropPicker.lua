@@ -159,7 +159,7 @@ end
 
 --[[
 	Sends the picked spot to the server when a snail fits there (in the tutorial, any press: the snail lands on the lit
-	spot); the server checks it again.
+	spot), with Drop_Place; the server checks it again.
 ]]
 function Module._place()
 	--[[ Checks ]]
@@ -172,6 +172,7 @@ function Module._place()
 	--[[ Sending ]]
 
 	I.Network.Fire("Match_PickDrop", pick.X, pick.Y)
+	I.Sound.Play({ Name = "Drop_Place", SoundGroup = "SFX" })
 end
 
 --%%%%%%%%%%%%%%%%%%%% Update
@@ -179,7 +180,7 @@ end
 --[[
 	While the drop runs: moves the spot with the stick and keeps a marker over every participant's spot. The local
 	player's marker follows their pick until they place it, faded where a snail doesn't fit; others' are faded until
-	they place theirs.
+	they place theirs. A marker drops in where it's placed.
 ]]
 function Module._update(deltaTime: number)
 	--[[ Checks ]]
@@ -206,9 +207,13 @@ function Module._update(deltaTime: number)
 		local y: number? = if following then pick.Y else entry:GetAttribute("DropY")
 		if x and y then
 			local marker: BasePart = markers[entry.Name] or Module._createMarker(entry)
-			local solid: boolean = if following then Module._isFree(pick) else placedSpot
 			marker.Position = Vector3.new(x, y, 0)
-			marker:FindFirstChild("S_Pin", true).ImageTransparency = if solid then 0 else 0.6
+			Module._setFaded(marker, not (if following then Module._isFree(pick) else placedSpot))
+
+			-- A spot placed, or moved, drops its pin in
+			if placedSpot and (marker:GetAttribute("SpotX") ~= x or marker:GetAttribute("SpotY") ~= y) then
+				Module._dropIn(marker, x, y)
+			end
 		end
 	end
 end
@@ -216,7 +221,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Marker
 
 --[[
-	Makes a participant's drop marker: the DropMarker billboard, with their name and colour, on an invisible part.
+	Makes a participant's drop marker: the DropMarker pin, in their colour with their picture (the bot picture for a bot)
+	and name, on an invisible part, its tip and its target ring on their spot.
 ]]
 --- @return BasePart
 function Module._createMarker(entry: Instance)
@@ -237,17 +243,31 @@ function Module._createMarker(entry: Instance)
 	--[[ Elements ]]
 
 	local nameLabel: TextLabel = marker:FindFirstChild("S_Name", true)
-	local pin: ImageLabel = marker:FindFirstChild("S_Pin", true)
+	local drop: Frame = marker:FindFirstChild("S_Drop", true)
+
+	--[[ Local Variables ]]
+
+	local color: Color3 = entry:GetAttribute("Color")
+
+	-- How far down the billboard the pin's tip (and the target's middle) is, as a share of its height
+	local tip: number = drop.Position.Y.Scale
 
 	--[[ Applying ]]
 
 	marker.Name = "DropMarker"
 	marker.Adornee = part
 	marker.AlwaysOnTop = true
-	marker.SizeOffset = Vector2.new(0, 0.5)
+	marker.SizeOffset = Vector2.new(0, tip - 0.5)
 	nameLabel.Text = entry:GetAttribute("DisplayName")
-	nameLabel.TextColor3 = entry:GetAttribute("Color")
-	pin.ImageColor3 = entry:GetAttribute("Color")
+	nameLabel.TextColor3 = color
+	marker:FindFirstChild("S_Head", true).BackgroundColor3 = color
+	marker:FindFirstChild("S_Point", true).BackgroundColor3 = color
+	marker:FindFirstChild("S_RingLine", true).Color = color
+	marker:FindFirstChild("S_Dot", true).BackgroundColor3 = color
+	part:SetAttribute("Tip", tip)
+	marker:FindFirstChild("S_Avatar", true).Image = if entry:GetAttribute("IsBot")
+		then I.Settings["MatchHud"].BOT_AVATAR
+		else `rbxthumb://type=AvatarHeadShot&id={math.max(entry:GetAttribute("UserId") or 0, 1)}&w=150&h=150`
 	I.ScreenScale.AddBillboard(marker)
 	marker.Parent = part
 
@@ -255,6 +275,78 @@ function Module._createMarker(entry: Instance)
 
 	markers[entry.Name] = part
 	return part
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Faded
+
+--[[
+	Fades a marker's pin and target (DROP_PIN_FADE) where a snail doesn't fit or a spot isn't placed yet, else shows
+	them solid.
+]]
+function Module._setFaded(marker: BasePart, faded: boolean)
+	--[[ Checks ]]
+
+	-- Check if it changes
+	if marker:GetAttribute("Faded") == faded then
+		return
+	end
+
+	--[[ Elements ]]
+
+	local nameLabel: TextLabel = marker:FindFirstChild("S_Name", true)
+	local avatar: ImageLabel = marker:FindFirstChild("S_Avatar", true)
+
+	--[[ Local Variables ]]
+
+	local transparency: number = if faded then _settings.DROP_PIN_FADE else 0
+
+	--[[ Applying ]]
+
+	marker:SetAttribute("Faded", faded)
+	nameLabel.TextTransparency = transparency
+	avatar.ImageTransparency = transparency
+	avatar.BackgroundTransparency = transparency
+	marker:FindFirstChild("S_Head", true).BackgroundTransparency = transparency
+	marker:FindFirstChild("S_Point", true).BackgroundTransparency = transparency
+	marker:FindFirstChild("S_Dot", true).BackgroundTransparency = transparency
+	for _index: number, stroke: Instance in ipairs(marker:GetDescendants()) do
+		if stroke:IsA("UIStroke") then
+			stroke.Transparency = transparency
+		end
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Drop In
+
+--[[
+	Drops a marker's pin onto the spot it was placed on, from DROP_PIN_FALL of its height above it, and pops its target
+	in from DROP_TARGET_POP times its size.
+]]
+function Module._dropIn(marker: BasePart, x: number, y: number)
+	--[[ Elements ]]
+
+	local drop: Frame = marker:FindFirstChild("S_Drop", true)
+	local targetScale: UIScale = marker:FindFirstChild("S_TargetScale", true)
+
+	--[[ Local Variables ]]
+
+	local tip: number = marker:GetAttribute("Tip")
+
+	--[[ Saving ]]
+
+	marker:SetAttribute("SpotX", x)
+	marker:SetAttribute("SpotY", y)
+
+	--[[ Tweening ]]
+
+	drop.Position = UDim2.fromScale(0.5, tip * (1 - _settings.DROP_PIN_FALL))
+	local Drop_TweenGoal = { Position = UDim2.fromScale(0.5, tip) }
+	local Drop_Tween: Tween = I.S.TweenService:Create(drop, _settings.DROP_PIN_TWEENINFO, Drop_TweenGoal)
+	Drop_Tween:Play()
+	targetScale.Scale = _settings.DROP_TARGET_POP
+	local Pop_TweenGoal = { Scale = 1 }
+	local Pop_Tween: Tween = I.S.TweenService:Create(targetScale, _settings.DROP_TARGET_TWEENINFO, Pop_TweenGoal)
+	Pop_Tween:Play()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

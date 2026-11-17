@@ -623,16 +623,200 @@ UPDATE_2026_11_16 = ["Fire_Grenade", "Fire_ClusterBomb", "Fire_VarietyGrenade", 
                      "Variety_Squeak", "Cluster_Split"]
 
 
+# --- 2026-11-17: the polish pass: the lobby's XP replay, the level-up and the frames, the free crate, the drop target,
+# the emote wheel, the Shiny and Golden weapons' accents over their blasts. The ticks are crisp new synthesis, as
+# make_crates.py's reel is; the calls and fanfares play on the classic samples (tracker.py), the Great Strategy's
+# instruments for the melodies. Each reseeds so it builds the same every time.
+
+def plus(*xs):
+    """Sums sounds of different lengths."""
+    out = np.zeros(max(len(x) for x in xs))
+    for x in xs:
+        out[: len(x)] += x
+    return out
+
+
+def twinkles(count, span, f_lo, f_hi, gain=0.3, ring=0.12, fall=1.6):
+    """Glints of light: short bright bell-like pings scattered over `span` seconds, thicker at the start."""
+    parts = []
+    for _ in range(count):
+        f = L.rng.uniform(f_lo, f_hi)
+        ping = L.modal([f, f * 2.76, f * 5.4], [ring, ring * 0.4, ring * 0.15], [1, 0.3, 0.1], ring * 5)
+        at = span * L.rng.random() ** fall
+        parts.append((ping, at, gain * L.rng.uniform(0.4, 1) * (1 - 0.6 * at / span)))
+    return stack(*parts)
+
+
+def coin(f, ring):
+    """A coin ringing: a bright metal strike whose two closest modes beat slowly against each other, so it shimmers."""
+    ring_ = L.modal([f, f * 1.0042, f * 2.09, f * 2.97, f * 4.13], [ring, ring * 0.9, ring * 0.45, ring * 0.3, ring * 0.15],
+                    [1, 0.8, 0.45, 0.3, 0.15], ring * 5)
+    return plus(ring_, L.click(0.0025, 4000) * 0.5)
+
+
+@sound("SCORED", -19)
+def Xp_Line():
+    """An XP line popping in on the post-match level bar ("Match played +100", "Victory +50"): a bright little chime, a
+    harp pluck and the finger chimes on G with a glockenspiel glint on top and the classic fast click as it pops in,
+    0.6 s."""
+    L.reseed(91)
+    bell = sampled([("harp", 0, 0.1, 79, 90), ("chimes", 0, 0.3, 91, 72), ("chimes", 0.025, 0.25, 98, 44)], 0.6,
+                   wet=0.18)
+    glint = fade(L.mallet(103, 0.5, "glock"), 0.0005, 0.25)
+    return stack((bell, 0, 1), (glint, 0.008, 0.1), (speed(load("clickfast"), 1.3), 0, 0.25))[: N(0.6)]
+
+
+@sound("BUILT", -22)
+def Xp_Tick():
+    """The XP bar filling, over and over as it fills: a tiny crisp tick, 50 ms (the very start of the classic fast
+    click, brightened, over a short glassy 'tik'), at a middle pitch so the game can raise its PlaybackSpeed as the bar
+    fills."""
+    L.reseed(92)
+    s = 0.05
+    cl = fade(L.spec(load("clickfast")[: N(0.012)], lo=1500), 0.0002, 0.006)
+    tik = L.modal([2350, 3530, 5300], [0.008, 0.005, 0.0025], [1, 0.4, 0.2], s)
+    return L.mix(s, (cl, 0, 0.6), (tik, 0.0003, 0.8), (L.click(0.002, 4000), 0, 0.4))
+
+
+@sound("SCORED", -16)
+def Level_Up():
+    """A new level: a short fanfare on the Great Strategy bright horn up the old 'level clear' steps (an A flat chord, a
+    B flat chord, then a held C major), the snare on each step, the bass drum and crash landing with the chord, horns
+    and strings under it and a finger-chime run up, 1.9 s."""
+    n = [("snare", 0.0, 0, 0, 72), ("snare", 0.15, 0, 0, 82)]
+    for at, dur, chord, bass in ((0.0, 0.11, (68, 72, 75), 44), (0.15, 0.11, (70, 74, 77), 46),
+                                 (0.3, 1.0, (72, 76, 79), 48)):
+        n += [("brass", at, dur, p, 104 if p == chord[-1] else 86) for p in chord]
+        n += [("brass2", at, dur, chord[-1] - 12, 80), ("horn", at, dur, bass, 88)]
+    n += [("bassdrum", 0.3, 0, 0, 108), ("crash", 0.3, 0, 0, 90)]
+    n += [("strings", 0.3, 1.1, p, 70) for p in (48, 55, 64, 72)]
+    n += [("chimes", 0.32 + i * 0.03, 0.4, p, 52) for i, p in enumerate((84, 88, 91, 96, 100))]
+    return sampled(n, 1.9, wet=0.28)
+
+
+@sound("SCORED", -15)
+def Frame_Unlock():
+    """A new prestige frame round the player's picture: grander and shinier than the level-up. A shimmer swelling in
+    (the crash cymbal reversed, the finger chimes climbing two octaves), then the orchestra hit, bass drum and crash on
+    a full C major chord (bright horns, horns, the choir and strings, held), the classic blade 'shing' glinting round
+    the rim, a bell ringing on top and glints falling away, 2.4 s."""
+    L.reseed(93)
+    hit = 0.5
+    swell_ = np.flip(sampled([("crash", 0, 0, 0, 110)], 0.5, wet=0.1)) * np.linspace(0.2, 1, N(0.5)) ** 1.5
+    run = [("chimes", 0.04 + i * 0.04, 0.35, p, 60 + i * 3)
+           for i, p in enumerate((84, 86, 88, 91, 93, 96, 98, 100, 103, 105, 108))]
+    n = run + [("hit", hit, 0, 0, 112), ("bassdrum", hit, 0, 0, 112), ("crash", hit, 0, 0, 96)]
+    n += [("brass", hit, 1.3, p, 100) for p in (72, 76, 79)] + [("brass2", hit, 1.3, 60, 90)]
+    n += [("horn", hit, 1.4, p, 84) for p in (48, 55, 60)]
+    n += [("choir", hit + 0.02, 1.5, p, 78) for p in (60, 64, 67, 72)] + [("lowchoir", hit, 1.5, 36, 86)]
+    n += [("strings", hit, 1.6, p, 74) for p in (43, 55, 64, 72)]
+    n += [("chimes", hit + 0.05 + i * 0.06, 0.5, p, 50) for i, p in enumerate((108, 103, 100, 96))]
+    body = sampled(n, 2.4, wet=0.32)
+    bell = stack((fade(L.mallet(96, 1.9, "bell"), 0.0005, 0.9), 0, 0.12), (fade(L.mallet(103, 1.8, "bell"), 0.0005, 0.9),
+                                                                          0.1, 0.07))
+    glints = twinkles(12, 1.1, 3200, 7000, 0.07, 0.1)
+    return stack((swell_, 0, 1.0), (body, 0, 1), (speed(load("unsheath"), 1.2), hit + 0.02, 0.3), (bell, hit, 1),
+                 (glints, hit + 0.25, 1))[: N(2.4)]
+
+
+@sound("SCORED", -17)
+def Free_Claim():
+    """Claiming the free crate for joining the group: a happy pop (a woody knock, the classic Kerplunk and flashbulb
+    and a soft thump, like a lid popping off), then a quick harp run up C major into a bright piano chord and a
+    finger-chime sparkle, 1 s."""
+    L.reseed(94)
+    pop = stack((speed(load("Kerplunk"), 1.4), 0, 0.9), (load("flashbulb"), 0, 0.6), (L.mallet(64, 0.2, "wood"), 0, 0.6),
+                (L.thump(180, 90, 0.015, 0.04, 0.25), 0, 0.3), (L.click(0.003, 2500), 0, 0.4))
+    n = [("harp", 0.06 + i * 0.04, 0.3, p, 92 + i * 4) for i, p in enumerate((72, 76, 79, 84))]
+    n += [("piano", 0.22, 0.6, p, 86) for p in (72, 76, 79)]
+    n += [("chimes", 0.22 + i * 0.05, 0.4, p, 66) for i, p in enumerate((96, 100, 103, 108))]
+    return stack((pop, 0, 0.45), (sampled(n, 1.0, wet=0.25), 0, 1), (twinkles(6, 0.45, 4000, 7500, 0.05), 0.25, 1))[
+        : N(1.0)]
+
+
+@sound("BUILT", -18)
+def Drop_Place():
+    """Placing the landing target before the drop: a soft, satisfying thump that locks in (a deep felt thock and a
+    woody 'tock' with a two-part latch click on top, the classic switch, low), and a short low harp note under it so
+    it feels set, 0.45 s."""
+    L.reseed(95)
+    s = 0.45
+    c1 = plus(L.modal([2900, 4300], [0.006, 0.004], [1, 0.5], 0.03), L.click(0.003, 3000) * 0.4)
+    c2 = plus(L.modal([2200, 3300], [0.007, 0.004], [1, 0.5], 0.03), L.click(0.003, 3000) * 0.3)
+    harp = sampled([("harp", 0, 0.12, 55, 96)], 0.4, wet=0.12)
+    return L.mix(s, (L.thump(160, 58, 0.02, 0.07, s), 0, 0.6), (L.mallet(67, s, "wood"), 0, 0.5),
+                 (L.mallet(55, s, "wood"), 0, 0.35), (c1, 0, 0.8), (c2, 0.04, 0.65),
+                 (speed(load("switch"), 0.8), 0.035, 2.0), (harp, 0.01, 0.6))
+
+
+@sound("BUILT", -21)
+def Emote_WheelOpen():
+    """The emote wheel spinning open: a soft quick whoosh (the classic swoosh, a touch faster and darker) over airy
+    noise sweeping up with a light flutter slowing as the wheel settles, 0.35 s."""
+    L.reseed(96)
+    s = 0.3
+    flutter = 0.65 + 0.35 * np.sin(2 * np.pi * np.cumsum(L.glide(34, 12, s, "log")) / SR)
+    air = L.bandsweep(L.noise(N(s)), 700, 2600, q=1.6) * L.swell(s, 0.45, 1.5) * flutter
+    return stack((L.spec(speed(load("swoosh"), 1.2), hi=5000), 0, 1), (air, 0, 0.35))
+
+
+@sound("BUILT", -26)
+def Emote_WheelHover():
+    """Pointing at another slice of the emote wheel: a very soft, rounded tick (a felt-tipped woody 'tk', lower and
+    duller than the XP tick), 50 ms."""
+    L.reseed(97)
+    s = 0.05
+    tr = L.spec(L.click(0.002, 1200), hi=5000)
+    return L.mix(s, (L.modal([1500, 2240], [0.007, 0.004], [1, 0.35], s), 0, 0.7),
+                 (L.modal([620], [0.01], [1], s), 0, 0.35), (tr, 0, 0.25))
+
+
+@sound("BUILT", -18)
+def Variant_Shiny():
+    """A Shiny weapon's blast: a sparkly, glassy shimmer laid over the explosion (a glass 'ting' ringing, high finger
+    chimes and glints scattered and thinning out, a fizz of light), all above 2 kHz so the boom comes through whole,
+    1 s."""
+    L.reseed(98)
+    f = 2640
+    glass = L.modal([f, f * 2.32, f * 4.25, f * 6.63], [0.5, 0.3, 0.15, 0.08], [1, 0.5, 0.3, 0.15], 1.0)
+    chimes = sampled([("chimes", 0.04 + i * 0.07, 0.3, p, 50 - i * 2) for i, p in enumerate((103, 108, 100, 105, 98, 103))],
+                     1.0, wet=0.3)
+    fizz = L.grains(1.0, 40, 6000, 11000, (0.002, 0.006), 1.3)
+    x = stack((glass, 0.02, 0.22), (chimes, 0, 0.8), (twinkles(16, 0.8, 3000, 8000, 0.12, 0.07), 0.02, 1),
+              (fizz, 0, 0.25))[: N(1.0)]
+    return fade(L.spec(x, lo=2000), 0.0005, 0.3)
+
+
+@sound("BUILT", -17)
+def Variant_Golden():
+    """A Golden weapon's blast: a richer, warmer shimmer than the Shiny one, with a coin ringing through it. Two coins
+    clinking ('ka-ching', each a bright metal ring beating slowly), the finger chimes running up C major, bells ringing
+    a C major chord and golden glints falling away, all above 1.2 kHz so the boom comes through whole, 1.4 s."""
+    L.reseed(99)
+    run = [("chimes", 0.1 + i * 0.035, 0.45, p, 50 + i * 2) for i, p in enumerate((84, 88, 91, 96, 100, 103, 108))]
+    chimes = sampled(run, 1.4, wet=0.32)
+    bells = stack(*[(L.mallet(p, 1.4, "bell"), 0.12 + i * 0.03, 0.09) for i, p in enumerate((84, 88, 91, 96))])
+    x = stack((coin(2637, 0.18), 0, 0.3), (coin(3136, 0.32), 0.075, 0.36), (chimes, 0, 0.8), (bells, 0, 1),
+              (twinkles(14, 1.1, 2600, 6500, 0.08, 0.12), 0.2, 1))[: N(1.4)]
+    return fade(L.spec(x, lo=1200), 0.0005, 0.45)
+
+
+UPDATE_2026_11_17 = ["Xp_Line", "Xp_Tick", "Level_Up", "Frame_Unlock", "Free_Claim", "Drop_Place", "Emote_WheelOpen",
+                     "Emote_WheelHover", "Variant_Shiny", "Variant_Golden"]
+UPDATES = {"update": UPDATE_2026_11_16, "update17": UPDATE_2026_11_17}
+
+
 # --- build -----------------------------------------------------------------------------------------------------------
 
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "out", "classic")
     os.makedirs(out, exist_ok=True)
     meta = {}
-    # Name some to build only them (python -I make_classic.py <out> Fire_Grenade ...); "update" builds the 2026-11-16 set
+    # Name some to build only them (python -I make_classic.py <out> Fire_Grenade ...); "update" builds the 2026-11-16
+    # set, "update17" the 2026-11-17 one
     names = sys.argv[2:] or list(SOUNDS)
-    if names == ["update"]:
-        names = UPDATE_2026_11_16
+    if len(names) == 1 and names[0] in UPDATES:
+        names = UPDATES[names[0]]
     for name in names:
         row = SOUNDS[name]
         fn = row["fn"]

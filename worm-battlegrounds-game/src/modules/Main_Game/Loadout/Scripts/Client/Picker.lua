@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -70,8 +71,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Opened
 
 --[[
-	Draws the picker when it opens: a card per weapon and utility, owned ones first by rarity with their copies, the
-	one in this slot selected and those in other slots in the equipped look, then the ones not owned yet, locked.
+	Draws the picker when it opens: a card per weapon and utility, owned ones first by rarity with their copies (a
+	Shiny one in its holo foil, a Golden one in its gold rim), the one in this slot selected and those in other slots
+	in the equipped look, then the ones not owned yet, locked.
 ]]
 function Module._onOpened(widgetName: string)
 	--[[ Checks ]]
@@ -123,6 +125,7 @@ function Module._onOpened(widgetName: string)
 	for index: number, itemId: string in ipairs(itemIds) do
 		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData
 		local owned: boolean = standard[itemId] ~= nil
+		local copies: number = tonumber(standard[itemId]) or 0
 		local inSlot: number? = Module._getSlotOf(loadoutRep, itemId)
 		local look: string = if inSlot == pickingSlot then "Selected" elseif inSlot then "Equipped" else ""
 
@@ -146,6 +149,8 @@ function Module._onOpened(widgetName: string)
 		card:FindFirstChild("S_Amount").Text = if owned then `x{standard[itemId]}` else ""
 		card:FindFirstChild("S_Rarity").ImageColor3 = I.Rarity.GetLook(item.Rarity).Base
 		card:FindFirstChild("S_Locked").Visible = not owned
+		background:FindFirstChild("S_Foil").Visible = copies >= _settings.SHINY_COPIES and copies < _settings.GOLDEN_COPIES
+		background:FindFirstChild("S_Gold").Visible = copies >= _settings.GOLDEN_COPIES
 		background:FindFirstChild("Stroke2").Image = card:GetAttribute(`Look_{look}Stroke2`)
 		background:FindFirstChild("Stroke").Image = card:GetAttribute(`Look_{look}Stroke`)
 		background:FindFirstChild("Stroke").ImageColor3 = card:GetAttribute(`Look_{look}StrokeColor`)

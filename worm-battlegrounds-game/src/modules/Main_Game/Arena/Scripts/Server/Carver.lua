@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -56,12 +57,12 @@ function Module.Carve(center: Vector3, radius: number, carveId: number)
 	local hits = {} --- @type { BasePart }
 	local found = {} --- @type { [BasePart]: boolean }
 	local pieces = {} --- @type { [BasePart]: { BasePart } }
-	local cutter = Cutter.Build(center, radius, bounds.Position.Z, bounds.Size.Z + _settings.CARVE_DEPTH_MARGIN, Loader.GetArenaFolder()) --- @type { BasePart }
+	local boxes = Cutter.Build(center, radius, bounds.Position.Z, bounds.Size.Z + _settings.CARVE_DEPTH_MARGIN, Loader.GetCutterFolder()) --- @type { BasePart }
 
 	--[[ Querying ]]
 
 	-- Each part any of the cutter's boxes reaches, once
-	for _boxIndex: number, box: BasePart in ipairs(cutter) do
+	for _boxIndex: number, box: BasePart in ipairs(boxes) do
 		for _hitIndex: number, part: BasePart in ipairs(I.S.Workspace:GetPartsInPart(box, Loader.GetTerrainParams())) do
 			if not found[part] then
 				found[part] = true
@@ -73,11 +74,11 @@ function Module.Carve(center: Vector3, radius: number, carveId: number)
 	--[[ Carving ]]
 
 	-- Every part is cut at the same time with one merged cutter, so the hole is ready in one go rather than a part a frame
-	local merged = if #hits > 0 then Cutter.Merge(cutter) else cutter --- @type { BasePart }
+	local cutter = if #hits > 0 then Cutter.Merge(boxes) else boxes --- @type { BasePart }
 	local running: number = #hits
 	for _index: number, part: BasePart in ipairs(hits) do
 		task.spawn(function()
-			pieces[part] = Cutter.Subtract(part, merged)
+			pieces[part] = Cutter.Subtract(part, cutter)
 			running -= 1
 		end)
 	end
@@ -110,12 +111,7 @@ function Module.Carve(center: Vector3, radius: number, carveId: number)
 
 	--[[ Cleaning ]]
 
-	for _index: number, box: BasePart in ipairs(cutter) do
-		box:Destroy()
-	end
-	for _index: number, box: BasePart in ipairs(merged) do
-		box:Destroy()
-	end
+	Cutter.Release(boxes, cutter)
 
 	--[[ Returning ]]
 

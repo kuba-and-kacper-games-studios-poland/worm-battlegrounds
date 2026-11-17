@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -14,6 +15,9 @@ local _scripts = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
 
 local Carver = require(_scripts:FindFirstChild("Client"):FindFirstChild("Carver")) --- @type Arena_Client_Carver
 local Falling = require(_scripts:FindFirstChild("Client"):FindFirstChild("Falling")) --- @type Arena_Client_Falling
+local PropBoxes = require(_scripts:FindFirstChild("Client"):FindFirstChild("PropBoxes")) --- @type Arena_Client_PropBoxes
+local Thrown = require(_scripts:FindFirstChild("Client"):FindFirstChild("Thrown")) --- @type Arena_Client_Thrown
+local PropCarver = require(_scripts:FindFirstChild("Client"):FindFirstChild("PropCarver")) --- @type Arena_Client_PropCarver
 local PropSeeThrough = require(_scripts:FindFirstChild("Client"):FindFirstChild("PropSeeThrough")) --- @type Arena_Client_PropSeeThrough
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -31,6 +35,18 @@ local PropSeeThrough = require(_scripts:FindFirstChild("Client"):FindFirstChild(
 
 local Module = {}
 
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	----------------------------
+	--------- REGISTRY ---------
+	----------------------------
+
+	--- @Topic
+
+	I.Topic.Register("Arena_PropThrown", { "BasePart" })
+end
+
 --%%%%%%%%%%%%%%%%%%%% Start
 
 function Module.Start()
@@ -40,8 +56,11 @@ function Module.Start()
 
 	local arenaFolder: Instance = I.Dirs.UmeWorkspace:WaitForChild(_localName)
 	Carver.Start(arenaFolder)
-	Falling.Start()
-	PropSeeThrough.Start(arenaFolder)
+	Falling.Start(arenaFolder)
+	PropBoxes.Start(arenaFolder)
+	Thrown.Start(arenaFolder)
+	PropCarver.Start(arenaFolder)
+	PropSeeThrough.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

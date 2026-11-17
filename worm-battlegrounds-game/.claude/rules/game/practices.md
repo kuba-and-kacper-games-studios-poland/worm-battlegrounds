@@ -17,11 +17,14 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
   server announces a carve before cutting it (Arena's `Arena_Carve`), and every client cuts the same stepped hole on
   local pieces at once, hiding the real parts until the server's pieces replace them (each piece carries its carve's
   number, so a later hole is cut into an earlier carve's pieces as they arrive). The server's terrain stays the only
-  one that collides and that queries see.
+  one that collides and that queries see. A client's cut is only a guess: one that fails (a piece the server just cut,
+  its shape not on that screen yet) is tried once more, then left to the server's pieces with no warning, and only the
+  server warns when a cut fails (Arena's `Cutter.Subtract`, `CUT_RETRY_SECONDS`, 2026-11-17).
 - **Cut-loose ground falls by the game's own gravity, locked to the plane** (the owner's pick, 2026-11-09, so players
   can build bridges): never Roblox physics. A loose group drops straight down without turning to where it first
-  touches the terrain (lowest group first), or out of the arena, and stays there anchored; the server moves it and
-  each client draws the same fall on its own frames (`Arena_Fall`).
+  touches the terrain (lowest group first), or out of the arena, and stays there anchored; the server moves it, and
+  each client hides the real parts and draws copies falling on its own frames (`Arena_Fall`), so no part has two
+  writers (2026-11-17).
 - **Ground is bedrock on the floor:** each island's waterline blocks carry `Arena_Indestructible` (a name from before
   blasts could cut it). Blasts cut bedrock like any terrain, so an island can be blasted down to the water; a bedrock
   piece holds up what touches it while its bottom still reaches the map's floor (the bottom of its lowest bedrock),
@@ -32,7 +35,16 @@ How this game uses ume and ume-gui, and its design decisions, for both folders. 
 - **Props break under blasts:** trees, bushes and rocks in a map's Decor are `Arena_Prop` Models built from parts
   (never collidable for snails). A blast cuts its hole through them with the same stepped cutter as the terrain, and
   the pieces no longer joined to the prop's base fly off; a prop whose ground is gone (under its trunk) falls. What
-  falls fades out. **Props stand behind the snails** (the testers and the owner, 2026-11-13: snails hid inside trees
+  falls fades out. **Props break on every screen at once** (the owner, 2026-11-17: "when the terrain explodes its
+  sloppy a bit"): each client cuts the props a blast reaches itself, with the server's prop cutter and split (Arena's
+  `PropCut`), hides the cut parts and throws what the cut frees at once; the server cuts every reached prop part at
+  once beside the terrain's carve, keeps only the standing pieces (the prop takes the carve's number, `Arena_Carve`),
+  and keeps what fell or flew off, unmoved, until every screen has faded it (`PROP_REMOVE_MARGIN`). **Prop pieces fly,
+  fall and fade on the game's own motion, drawn by each client** (Arena's `Thrown`), never Roblox physics and nothing
+  replicated per frame; a prop whose ground is gone drops the distance the server gives (`Arena_PropFall`), with the
+  ground under it when that falls too. **Cutters are reused:** a blast moves its side's spare cutter boxes into place
+  (Arena's Cutter `Build` / `Release`), never makes new ones, and the merged cutter is never parented (GeometryService
+  cuts anywhere, and a parented union replicates its mesh). **Props stand behind the snails** (the testers and the owner, 2026-11-13: snails hid inside trees
   and rocks): at load each moves back until its front is half a snail's length behind the plane, its pivot still on
   the ground, and one too deep for that is flattened along Z, which the camera along −Z barely sees (Arena's
   `PROP_BEHIND_GAP`). **A prop a snail stands inside turns see-through** (the owner, 2026-11-15: "the prop gets
@@ -147,6 +159,16 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   aim (up to 90° either way), and a snail standing still turns to face its aim (its player's screen; the server for
   bots), so the weapon never points back through it. A gun plays its pose's shot when it fires. It's drawn by each
   client from the snail's `HeldItem` (Combat's `Held` handler), never welded on the server.
+- **Shiny and Golden copies look special everywhere; Golden is a look only** (the owner, 2026-11-17): 10 copies make
+  an item Shiny (×1.05 damage, `ShinyAmount`, `SHINY_BOOST`), 100 make it Golden, which deals and boosts as Shiny. The
+  match card and participant carry `ShinyItems` and `GoldenItems`; the server writes the held copy's look on the snail
+  (`HeldVariant`, after `HeldItem`), a shot's in its `Combat_Shot` options (`Variant`) and a blast's in
+  `Combat_Explosion`, and every client draws it (Combat's `Variants`, `VARIANT_LOOKS`) over the normal effects, which
+  always play in full: a pearly sheen, outline and twinkles on a Shiny weapon, polished gold, a brighter sheen and
+  rising dust on a Golden one, a prism or gold line along their shots and star or gold sparks and rings in their blasts,
+  with `Variant_Shiny` and `Variant_Golden`. The looks come from the studio's Vfx prefabs painted in code, materials
+  (ForceField, Metal), Highlights and the model's own parts, never new pictures. Cards show it in the gui: an `S_Foil`
+  or `S_Gold` layer moved by `Utils_UIGradientMove` / `Utils_Motion` tags, which code only shows or hides.
 - **Shooting is Worms Armageddon's: point, hold to charge, let go** (the owner's pick, 2026-11-10, replacing the
   2026-11-07 power-by-distance drag). The weapon always points from the snail at the mouse (a finger on touch, the
   right stick on a pad). Holding the mouse button, RT or the HUD's FIRE (touch) fills the power at one even rate,
@@ -160,7 +182,10 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   as the power passes it, then a gap and the crosshair (a ring with an X, spinning, in the aiming snail's `Color`: its
   team's, or its own in a free-for-all). Every length is in units, a stud at MatchCamera's starting distance, so the
   aim looks the same at any zoom (zoomed in, the cone starts past the snail's grown ball). The screen that draws an aim
-  turns the held weapon with it at once (no wait for the server's copy). The turn running out never fires.
+  turns the held weapon with it at once (no wait for the server's copy). The turn running out never fires. **The
+  pad's aim is calm** (the owner, 2026-11-17: "the sensitivity for aiming is too high"): the right stick points the
+  aim, but a gentle lean only nudges it, a firm one eases it there, and it never moves while the stick springs back or
+  after LT (MatchHud's `Pad Aim` settings); LT's camera pan follows the zoom.
 - **Everyone sees the active snail aim:** its angle marker and power show on every screen through its turn, players'
   and bots' alike, from the `AimAngle`, `AimPower` and `AimTime` attributes Combat's `ShowAim` writes. Bots turn their
   marker, then fill their power, before they fire.
@@ -171,8 +196,9 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   punches** (the owner, 2026-11-12: "add screen shake on explosions and stuff like that to add more punch"): a shake
   is a sharp jolt then a rumble (`SHAKE_KICK`, `SHAKE_MAGNITUDE`), a hit on a snail adds its own by the damage, more
   on a knockout (`HIT_SHAKE_DAMAGE`, `KNOCKOUT_SHAKE`), and a gunshot kicks the view (`GUN_SHAKE`). The player's own
-  shot ticks and a hit on their own snail thumps. The chunks of ground a blast throws are physics parts in Arena's
-  `Chip` collision group: they bounce on the terrain, never on snails or shots, and fade after `DEBRIS_LIFETIME`.
+  shot ticks and a hit on their own snail thumps. The chunks of ground a blast throws come from a pool on each client
+  and fly on the game's own motion (Combat's `DEBRIS_*`, 2026-11-17): they bounce off the terrain only, never on snails
+  or shots, and fade after `DEBRIS_LIFETIME`.
 - **Big blows stop the world for a beat** (the owner's pick, 2026-11-10): a hit of Combat's `HITSTOP_DAMAGE` or more
   freezes the effects' particles and thrown chunks and holds the camera for a moment on every screen (`HITSTOP_*`,
   `I.MatchCamera.Freeze`), longer for a knockout, when the camera also punches in on the snail
@@ -293,9 +319,10 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
 - **A blast hurts at once; the crater follows** (the owner, 2026-11-13: the black hole "updates the terrain after a
   lag… and deals damage after a lag"): Blast hurts every snail the moment it shows, while the server cuts the crater,
   and throws them only once it's cut. Craters cut with one merged cutter (Arena's `Cutter.Merge`), and a client's own
-  pieces skip precise collision, so its hole shows in the blast's frame. The variety grenade bursts into four mini variety grenades (its `Bomblets`' `Mini`), and **each mini hatches a
-  digging worm** where it bursts (the owner, 2026-11-16: "verity should burst into digging worms", undoing the testers'
-  minis-only burst of 2026-11-13; its `Bomblets`' `Hatch` and its `Snails` row): the worm squeaks as it dives in and
+  pieces skip precise collision, so its hole shows in the blast's frame. The variety grenade bursts into four mini variety grenades (its `Bomblets`' `Mini`), and **each mini digs on
+  like a worm** where it bursts (the owner, 2026-11-16: "verity should burst into digging worms", undoing the testers'
+  minis-only burst of 2026-11-13; its `Bomblets`' `Hatch` and its `Snails` row), drawn as the mini itself, not a worm
+  (the owner, 2026-11-17: "instead of worms do smaller verity grenades… just replace the model"): it squeaks as it dives in and
   crunches as it digs (Combat's `SNAIL_DIG_SOUND_EVERY`), and the bomb sounds its burst (the row's `BurstSound`, the
   Cluster bomb's `Cluster_Split` too).
 - **A thrown shot leaves the snail moving until it bursts** (the owner, 2026-11-15: "throw it and run away"): after an
@@ -445,6 +472,10 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   group** (566704940, the game's owner), through Open Cloud, never under a person's account. Studio's Assistant
   uploads under the signed-in user, as the 2026-11-07 icons and the wind were (viridianscape): such a picture loads
   in that user's Studio but may not on the group's live servers.
+- **New icons are drawn in the weapon icons' look** (the owner, 2026-11-17: "check how our weapon icons look, make the
+  style similar", on flat sticker icons): chunky objects with a thick ink outline, three tones on every face (a light
+  top, the colour, a dark bottom), the brick studs on their faces, metal parts in light grey and a soft gloss on the
+  upper left (the mode icons' `art/modes/icons.py` draws them from those shared pieces).
 - **The game's guis are built from the theme's controls** (`WormBattlegroundsBrawl`, over `WormBattlegrounds`),
   never from raw `Primitive` nodes holding their own colours and sizes (as ume-gui's System guis are): `Widget` for
   every WidgetManager widget, `Box` for panels and cards, `Item` for item cards, `Cells` for lists and grids code
@@ -457,7 +488,7 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   `EmoteShop`, the gui maker's) converted node for node into
   `Primitive` nodes (their pictures, fonts and screen-fraction layout), with U_/S_ Ids, prefabs for lists, button tags
   and WidgetManager's widget shape added. Since 2026-11-12 the studio's `New_Guis` designs are ported the same way:
-  `PlaySolo` (MatchBoard's setup, at the bottom centre) and `MatchWaiting` (its own gui since 2026-11-15, the public
+  `PlaySolo` (MatchBoard's setup until 2026-11-17, when it took the custom lobby's window) and `MatchWaiting` (its own gui since 2026-11-15, the public
   match's waiting room at the bottom middle of the match server's screen), `KnockedOut`
   (MatchHud's `U_KnockedOut`), `MatchOver` (`Results`), `InvitePlayers` (`PartyInvite`), `CustomLobby` and
   `CustomLobbyPlayers` (`CustomLobby`'s two steps), `Shop`, and `Loading` (`TeleportGui`); the HUD's power and
@@ -470,6 +501,13 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   blocks). A block added to these screens since is built from the design's own pictures and fonts as `Primitive`
   nodes, never as a theme control (the turn callout and the tension band, 2026-11-10: the owner, on the GUI kit's
   Hazard plate, "this is old style, the new style is MatchBoard or MatchHud").
+- **A new piece is a copy of one the game already has** (the owner, 2026-11-17, on the polish pass's first build:
+  "make sure the colors, transparencies and overall style is the same as our guis in game… the guis are weird, they
+  don't fit, they overlap"): find the nearest piece on the screens the player already sees and copy it, its
+  pictures, sizes and colours, never a one-off panel, ring or colour. A timer is the turn timer's plate, a banner the
+  turn callout, a setup window the custom lobby's, a second button a copy of its neighbour's, a top-bar plate a
+  currency slot's, hints the HUD's pad-hint lines. Check a new piece in a play test beside what shows with it (the
+  notifications at the bottom middle, the top-right menu, the waiting room, the turn callout) before calling it done.
 - **Dialogs in the new look stay simple** (the owner, 2026-11-11, on a confirmation built from the Loadout slot's
   slanted art scaled up, the EMOTES title plate and a red X: "its ugly. dont make it too complicated"): one rounded
   dark panel (fill 25, 25, 35, a dark outer line and the grey 130 line inside, `UIStroke`s scaled by
@@ -516,11 +554,23 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   `Premium` shows it's premium by small touches (a gold tab, a halo, the violet
   backdrop, a PREMIUM tag, a pale-gold line), never another layout. Gui particles are `I.UIEmitter`'s. The sounds mix
   crisp clicks for the reel with the Great Strategy instruments for the melodies (`art/sfx/make_crates.py`).
-- **Joining the studio's group opens a free crate, once** (the owner, 2026-11-16): on the crates screen the
-  `FreeCrate` badge opens a dialog asking the player to like the game (which no game can check, so it's only asked)
-  and join The Snail Studio (566704940, the Group list's `SnailStudio`). CLAIM lights once they're in and opens one
+- **Joining the studio's group opens a free crate, once** (the owner, 2026-11-16): a gold FREE WEAPONS tile in the
+  lobby (left of STYLE, since 2026-11-17) and the `FreeCrate` badge on the crates screen open a dialog that sells it with
+  pictures, not text (the owner, 2026-11-17: "less text more visual"): the crate turning in light with rays and
+  twinkles, LIKE (the player is only asked: no game can check it) and JOIN The Snail Studio (566704940, the Group
+  list's `SnailStudio`) as two picture tiles. CLAIM lights once they're in and opens one
   Weapon crate on the crates screen like a bought one (Crates' `GROUP_CRATE`, paid with `"GroupReward"`); the server
   allows it once a player (`Crates.GroupCrateClaimed`) and only to members (`I.Crates.CanClaimGroupCrate`).
+- **The level shows at the top of the lobby, and every match's XP plays back there** (the owner, 2026-11-17: "when we
+  come back to lobby we want to see the progress bar filling and all that"): the `LevelPlate` gui's diamond, bar, XP and
+  next unlock on the currency slots' plate at the top centre (Progression's client). A match gives XP in lines (MatchRewards' `XP_PER_MATCH`, `XP_WIN`,
+  `XP_PER_KNOCKOUT`), which the server saves for the lobby (Progression's `Replay`, in the profile so it survives the
+  teleport) and the lobby plays once: the plate grows in the middle, the lines pop in, the bar fills with rising ticks
+  and sparks, each level-up bursts and shows what it opened. Any press skips it.
+- **Rank shows as a frame round the player's picture** (the owner, 2026-11-17: "prestige frame things… makes the
+  player feel like he is improving"): Progression's `FRAME_TIERS` (Bronze 5 to Mythic 100) paint a gradient over the
+  picture's rim (`I.G_Progression.ApplyFrame`), shining from Gold, spinning at Mythic: the party cards and the level
+  plate. Frames are rank only, never sold. In a match the portraits keep their team colours.
 - **Models that move in a ViewportFrame sit in a WorldModel inside it** (2026-11-11, measured on the ten-pack: the owner
   asked for it light on performance): moving even one part placed straight in a ViewportFrame redraws every mesh in
   it, about 25 ms a frame for ten crates, while the same crates moving in a WorldModel cost under 1 ms, and moving
@@ -540,7 +590,12 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   step weapons or tabs, RT charges and fires. A gui button a pad presses carries its action's first button as
   `Utils_GamepadKey` and a `Console_Hint` badge naming the action (`Console_Action`; the theme Button's `Hint`), and a
   screen of pad controls a hint strip of the same (MatchHud's `U_PadControls`); a pick list or panel that wants the
-  selection asks for it (`I.Console.Focus`). The game's own glyphs (`art/console_glyphs`) stay local until the owner
+  selection asks for it (`I.Console.Focus`). **In the lobby and open windows a pad drives a free cursor** (the owner,
+  2026-11-17: "in lobby we want a free cursor"): the Console module's `Cursor` (a white ring and dot drawn in code, no
+  picture) moves with the left stick, speeding up when held and slowing over buttons; the button under it is Roblox's
+  `GuiService.SelectedObject`, so A, B and the shortcuts work as with the selection; the right stick scrolls the list
+  under it and the D-pad hops the selection with the cursor following. A module never moves the cursor itself:
+  `I.Console.Focus` and `SetHome` send it. In a match it shows only while a widget is open. The game's own glyphs (`art/console_glyphs`) stay local until the owner
   approves them; then `HINT_STYLE` names their uploaded style.
 - **Chat shows in bubbles over the snails, never Roblox's** (the owner's pick, 2026-11-10: "Bubble Style B"): each
   client turns Roblox's bubble chat off and shows every player message it receives (the filtered
@@ -551,10 +606,31 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   (ChatBubbles' README). No snail on this screen, no bubble.
 - **An emote shows its icon in a speech bubble and plays on the snail** (the owner's pick, 2026-11-11: "the icons are
   going to appear over the player in a message bubble type of way when player clicks the emote + animation is going
-  to play"): over the snail in a match, in its chat stack (`I.ChatBubbles.ShowIcon`), and in the lobby beside the
-  player's name on their party card, the tail pointing at the name. Every screen plays the emote on the snail
-  (`I.SnailRig.Emote`); until an emote's animation is published under its name, a stand-in motion made in code plays.
-  Emote and bot pictures are the game's own drawn art (`art/emotes`, `art/bots`), uploaded to the group (2026-11-11).
+  to play"): over the snail in a match, in its chat stack (`I.ChatBubbles.ShowIcon`), and in the lobby over the
+  avatar's top right corner on their party card, the tail down at the picture (2026-11-17: it covered the name). Every
+  screen plays the emote on the snail (`I.SnailRig.Emote`); until an emote's animation is published under its name, a
+  stand-in motion made in code plays. Emote and bot pictures are the game's own drawn art (`art/emotes`, `art/bots`),
+  uploaded to the group (2026-11-11).
+- **Emotes are a hold-to-open wheel in a match** (the owner, 2026-11-17: "make the in game emotes menu better"): T or
+  X held, point, let go; a quick tap replays the last; one slice per emote in the emote shop's order, locked ones
+  greyed with their level (Cosmetics' `Emotes`). The emote button opens it to pick from with a click or tap.
+- **The drop picks the spot under the pointer, as it always did; only its look changed** (the owner, 2026-11-17:
+  "the old one was good - i just wanted to change it visually", after a ring projected onto the land under the
+  pointer, with snapping into islands, confused them): the spot is the point on the plane under the mouse, a tap or
+  the stick, and a click places it only where a snail fits (Match's `DropPicker`, as before 2026-11-17). The look is
+  new: every snail's spot shows the DropMarker pin, its tip on a small target on the spot (the aim crosshair's ring in
+  its colour and a dot: the owner, 2026-11-17, "make it subtle"), in its colour with its picture and name; the player's
+  own follows the pointer until placed, faded where a snail doesn't fit, others' are faded until placed, and a placed
+  pin drops in and its target pops in with `Drop_Place`. The drop's timer is the turn timer's plate ("0:15"), red for its last
+  seconds. Never put the target somewhere other than under the pointer.
+- **New players see their controls** (the owner, 2026-11-17: "add some hints… based on the device"): the
+  `ControlHints` list for the device in use shows while waiting and during the drop, for a player's first
+  `HINTS_MATCHES` matches (the `MatchesPlayed` statistic), never in the tutorial. It's a short list at the bottom left
+  in the HUD's pad-hint look, never a panel at the bottom middle, where notifications and the waiting room show (the
+  owner, 2026-11-17: "they overlay different notifications and guis"). Its labels are one or two words (Walk, Jump /
+  Fly, Shoot…) so they show at one size, and the tip line over it tells the holds.
+- **Round HUD shapes come from frames:** the emote wheel's slices are built from UIStroke, UICorner and UIGradient
+  half-plane cuts (a CanvasGroup's gradient for the second cut), never new pictures.
 - **Badges after a name are the server's, and every one shows** (the owner's pick, 2026-11-10: "if a player has
   multiple, display multiple"): the PlayerBadges server writes the `Badges` Player attribute (owner, developer by
   rank or role name in The Snail Studio's group, since its roles share rank 1, the AdminPanel's admins, Roblox staff, Video Stars, verified, Premium), and every
@@ -577,6 +653,9 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   readable"): the picture keeps the middle, the texts take the corners and a band along the bottom, every one in the
   heavy font with a black `UIStroke` (ScaledSize, about 0.14), on one line (a long name shrinks rather than wrap).
   The loadout's slot cards are the pattern: number top left, copies top right, the name under the picture.
+- **A text and its picture centred as one** (a price and its coin, 2026-11-17) is a centred label as wide as its
+  place, the picture placed by code from `TextBounds` (Loadout's `_centrePrice`): an AutomaticSize X label measures at
+  its TextSize and doesn't grow with screen-fraction layouts.
 - **Capitals stay capitals:** text in a capitals style (headings, titles, buttons, window and box titles) shows in
   capitals whatever code writes, through the `TextCase_Upper` tag the theme adds and the TextCase module (Utils). Code
   writes plain sentences ("You play in 3 turns"), never its own `string.upper`. A gui whose code writes into
@@ -706,23 +785,40 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   in Studio. The
   screen is the studio's `LobbyInventory` (2026-11-09): Party, the Loadout slots, the STYLE / WEAPONS / SKINS menu,
   ACTIVE LOBBIES (a scrolling row of cards, one per public mode) and SOLO VS BOTS (**Play with party** in a party) with
-  CUSTOM; no logo and no welcome line. **The Loadout is a column two cards wide** hanging from the right edge under
+  LOCAL and CUSTOM over it (one button's art, side by side), each button, card and setup title with its mode icon; no logo and no welcome line. **The Loadout is a column two cards wide** hanging from the right edge under
   the menu, its LOADOUT and EMOTES headings right-aligned, EMOTES right under the last row of cards shown, and
   **EMOTES is one button with Wave's icon** that opens the EMOTES panel
   (`EmoteShop`, its right edge on the column's), where an owned emote plays when pressed (the owner, 2026-11-15). **A lobby card is minimal** (the owner, 2026-11-15: "hide how many players are
   playing, and make the image much much bigger, in the background fading out to the right, but keep it readable"):
   the map's picture over the whole card (cut to its slanted frame), fading out before Join, the mode big and the map's name over it, no player
-  count, and a timer over Join counting down to the card's next map (the owner, 2026-11-16: "show the timer back"). The solo or party setup takes the board's place, whose lobby rows and buttons slide down off the
-  screen for it and back after (MatchBoard's `PLAY_*` settings, the owner's pick, 2026-11-12), at the bottom centre
-  (the owner's pick, 2026-11-12); custom lobbies open in a window. Crates and Skins are full-screen widgets: while either is open the lobby's guis hide
-  (Lobby's `FULL_SCREEN_WIDGETS` and `LOBBY_GUIS`). **A custom lobby stands on eight pods** (the owner, 2026-11-16):
+  count, and a timer over Join counting down to the card's next map (the owner, 2026-11-16: "show the timer back"). The solo, party or local setup takes the board's place, whose lobby rows and buttons slide down off the screen for
+  it and back after (MatchBoard's `PLAY_*` settings, the owner's pick, 2026-11-12). Since 2026-11-17 it's the custom
+  lobby's window (the owner: "make it look good… consistent with our guis", after a PlaySolo panel with a map strip
+  over it overlapped): its art, map cards (Random, then the rotation's maps for the match's size), player and bot
+  buttons and START, centred under the top bar as the custom lobby's window is, clear of the top-right menu; custom
+  lobbies open in that window too. **Every lobby window is a WidgetManager widget, so it blurs and dims the stage
+  behind it** (the owner, 2026-11-17: the custom lobby "makes the screen fade and blur, but the local one does not"):
+  the solo, party and local setup is its own widget, `MatchSetup`, never a frame inside the board's gui. **A window
+  hides the lobby pieces it would overlap** (the owner, 2026-11-17: "the guis are overlapping when we click weapon
+  selection - make sure they hide"): Crates, Skins and Shop cover the screen, so every lobby gui hides
+  (`FULL_SCREEN_WIDGETS`); a window in a panel's place hides that panel, and the weapon picker's tall window hides the
+  top row (the menu with FREE WEAPONS, the coins, the level) and the board, keeping Party and the Loadout column
+  (`PANEL_WIDGETS`); the free crate's dialog (`FreeCrateDialog`) is a widget too and does the same. A new lobby window
+  gets its row there. The FREE CRATE badge makes way while a crate opens on the
+  crates screen (Crates' `GroupReward.SetOpening`). **A custom lobby stands on eight pods** (the owner, 2026-11-16):
   while the player is in one, the stage swaps its pods for `PREFAB | CustomPods` (three in front, two raised behind
   them, three higher at the back, packed close), stands the lobby's members on them and backs the camera off until
   they all fit (Lobby's `STAGE_FIT_MARGIN`, `STAGE_CAMERA_EASE`); the Party column lists the lobby then (its members,
-  the owner's crown, + cards up to its size that open CustomLobby), and the lobby's member list ends in open slots.
+  the owner's crown, + cards up to its size that open CustomLobby; from 5 cards a second column of compact cards, and
+  the size picked on the create step shows before the lobby exists: 2026-11-17), and the lobby's member list ends in
+  open slots. The custom lobby's window takes the stage like the solo setup: the board slides away and the loadout
+  hides while it shows, and player counts the picked map isn't made for fade out (the server refuses them too).
   **Every stage snail holds the Bazooka and strikes a pose** (the owner, 2026-11-16: "make it feel organic and
   natural"): one of Lobby's `STAGE_POSES` at random, never the one it had, picked again when the members change or the
-  player comes back from a match; a pose without an uploaded id is skipped.
+  player comes back from a match; a pose without an uploaded id is skipped. **The stage camera never swoops in**
+  (the owner, 2026-11-17: "the camera at first tweaks, like it comes from somewhere else"): it's set on its marker at
+  once and eases only toward a new framing, from where it was held (Lobby's `Stage`), never from the live camera,
+  which Roblox moves as the avatar loads.
 - **Public matches are global** (the owner, 2026-11-15, replacing the per-server rows and timers of 2026-11-09):
   each public mode has one card, and Join sends the player and their party here straight to a match server: the
   fullest open match of that mode on any server with a seat for each of them, on one team where it fits, or a new one
@@ -747,6 +843,15 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   `LOCKED_*`), and the server refuses their joins and lobbies. A custom lobby the leader makes takes the whole party
   in at once, and a party shares a team where it fits; a party bigger than a public match's team (three in Duos) joins
   it all the same, if the match has a seat for each, and spills onto the next team with room (the testers, 2026-11-13).
+- **Local play is friends on one screen** (the owner, 2026-11-17: "he is sitting with his friends at his home"): the
+  lobby's LOCAL button opens the setup in its local form (2 to 8 players, bots, the map). Each local player is a guest
+  snail of the host's (`P_<hostId>_<n>`, the host's `UserId`, "Player n"), played from the host's screen with one
+  controller passed round; before each local turn the HUD's turn callout names whose it is, in their snail's colour,
+  and holds until a press (Match's `HandOff`, named before the turn shows so nothing else pops over it; the turn's
+  timer hides meanwhile). Which snail a player plays is asked, never assumed: `I.Match.GetControlledId(player)` on the
+  server and `I.Match.GetMyParticipantId()` / `I.Snails.GetMine()` on the client follow the active one, so every
+  request about "my snail" goes through them. Local matches pay nothing and count toward no statistic. One pad each
+  waits for a check that a second pad shows up as its own on Xbox.
 - **Check guis shown together for overlaps** before calling a layout done: PC sizes from 1024 × 768 to 3840 × 2160,
   tablets, and phones down to 667 × 375.
 

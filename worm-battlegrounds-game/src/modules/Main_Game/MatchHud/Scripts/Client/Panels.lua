@@ -1,10 +1,14 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
 local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointer").Value)
 local _localName = "MatchHud"
+
+--- @type MatchHud_Settings
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -17,6 +21,11 @@ local tickConnection: RBXScriptConnection?
 
 -- Whether the player closed the knocked-out panel to watch
 local spectating: boolean = false
+
+--[[ Drop Timer ]]
+
+-- The last second of the drop's timer that ticked
+local tickedSecond: number = 0
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -124,6 +133,7 @@ function Module._refresh()
 	--[[ Ticking ]]
 
 	if elems["Drop"].Visible and not tickConnection then
+		tickedSecond = 0
 		tickConnection = I.S.RunService.Heartbeat:Connect(Module._tick)
 	elseif not elems["Drop"].Visible and tickConnection then
 		tickConnection:Disconnect()
@@ -134,17 +144,31 @@ end
 --%%%%%%%%%%%%%%%%%%%% Tick
 
 --[[
-	Counts the drop phase's seconds down.
+	Counts the drop phase's seconds down on the turn timer's plate ("0:15"), and in the last DROP_WARN_FROM seconds turns
+	it the turn timer's red and ticks each second.
 ]]
 function Module._tick()
 	--[[ Local Variables ]]
 
 	local endsAt: number = matchFolder:GetAttribute("DropEndsAt") or 0
+	local left: number = math.max(endsAt - I.S.Workspace:GetServerTimeNow(), 0)
+	local warning: boolean = left > 0 and left <= _settings.DROP_WARN_FROM
+
+	-- Clamped before rounding up: math.ceil of the last fraction of a second is -0
+	local seconds: number = math.ceil(left)
 
 	--[[ Applying ]]
 
-	-- Clamped before rounding up: math.ceil of the last fraction of a second is -0
-	elems["DropTimer"].Text = tostring(math.ceil(math.max(endsAt - I.S.Workspace:GetServerTimeNow(), 0)))
+	elems["DropTimer"].Text = string.format("%d:%02d", seconds // 60, seconds % 60)
+	elems["DropTimer"].TextColor3 = if warning then _settings.TIMER_DANGER_COLOR else Color3.new(1, 1, 1)
+
+	--[[ Ticking ]]
+
+	-- Each of the last seconds ticks once, as it starts
+	if warning and seconds ~= tickedSecond then
+		tickedSecond = seconds
+		I.Sound.Play({ Name = "Turn_Tick", SoundGroup = "SFX" })
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Spectate

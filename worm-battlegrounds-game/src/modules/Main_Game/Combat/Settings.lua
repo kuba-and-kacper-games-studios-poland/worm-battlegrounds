@@ -144,7 +144,7 @@ local _settings = {
 
 	--[[
 		The most chunks of ground a blast throws, how fast they fly (studs per second), the smallest and biggest side
-		of a chunk (studs), and how long one lies on the ground before it fades (seconds)
+		of a chunk (studs), and how long one lies on the ground before it fades (seconds), then the fade
 	]]
 	DEBRIS_MAX = 16,
 
@@ -155,6 +155,17 @@ local _settings = {
 	DEBRIS_SIZE = { 0.3, 1 },
 
 	DEBRIS_LIFETIME = 2.5,
+	DEBRIS_FADE_TWEENINFO = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+
+	--[[
+		A chunk flies on the game's own motion, spinning at DEBRIS_SPIN radians a second: off the terrain it bounces
+		back with DEBRIS_BOUNCE of its speed into the ground and keeps DEBRIS_SLIDE of its speed along it, and once
+		slower than DEBRIS_REST_SPEED (studs per second) on ground flat enough it lies still
+	]]
+	DEBRIS_SPIN = 12,
+	DEBRIS_BOUNCE = 0.35,
+	DEBRIS_SLIDE = 0.6,
+	DEBRIS_REST_SPEED = 4,
 
 	--%%%%%%%%%%%%%%%%%%%% Effects
 
@@ -297,6 +308,98 @@ local _settings = {
 
 	-- How fast the active snail's weapon turns to another player's new aim (higher is snappier)
 	HELD_TURN_SPEED = 14,
+
+	--%%%%%%%%%%%%%%%%%%%% Variants
+
+	--[[
+		How a Shiny copy (Loadout's SHINY_COPIES) and a Golden one (GOLDEN_COPIES) look on every screen, by variant (the
+		snail's HeldVariant, a shot's Variant, a blast's): looks only, over the normal effects, which always play in full.
+		The held weapon: a Golden one turns gold (Gild: a plain part's colour from the first to the second by its
+		brightness, in Metal; a SurfaceAppearance, a SpecialMesh's texture or a decal tinted the second; a part with a
+		SurfaceAppearance or a textured MeshPart also covered by a gold copy GildCover see-through), then every look
+		wears a sheen (a ForceField copy of each part, its colour swaying between Sheen's two every SheenPeriod seconds),
+		an outline (a Highlight), Twinkle at random spots on it and Dust rising from it, each every Every seconds or so. A shot draws Trail (a trail effect,
+		painted TrailColor, TrailWidth of its width) beside its own and plays Glint along its way. A blast plays each of
+		Blast's effects, scaled by its radius over BLAST_VFX_RADIUS (one with Ring plays that many round the blast,
+		RingRadius of its radius out), and Sound. Effects are Vfx prefabs, painted Color; Front draws their particles
+		that many studs toward the camera
+	]]
+	--- @type { [string]: Combat_VariantLook }
+	VARIANT_LOOKS = {
+		Shiny = {
+
+			--[[ Held ]]
+
+			Sheen = { Color3.fromRGB(170, 235, 255), Color3.fromRGB(255, 190, 235) },
+			SheenPeriod = 2.4,
+			Outline = Color3.fromRGB(225, 240, 255),
+			OutlineTransparency = 0.35,
+			Twinkle = { Effect = "Glint", Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 205, 240)), Scale = 0.3, Every = 0.5, Front = 0.5 },
+
+			--[[ Shot ]]
+
+			Trail = "Trail_Variety",
+			TrailColor = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 170, 230)),
+				ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 240, 170)),
+				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(170, 255, 230)),
+				ColorSequenceKeypoint.new(0.75, Color3.fromRGB(170, 200, 255)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(230, 170, 255)),
+			}),
+			TrailWidth = 0.35,
+			Glint = { Effect = "Glint", Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 190, 235)), Scale = 0.35, Every = 0.15 },
+
+			--[[ Blast ]]
+
+			--- @type { Combat_VariantEffect }
+			Blast = {
+				{ Effect = "Glint", Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 180, 230)), Scale = 0.9, Ring = 10, RingRadius = 0.8 },
+				{ Effect = "Hit_Sparks", Color = ColorSequence.new(Color3.fromRGB(255, 225, 245), Color3.fromRGB(180, 235, 255)), Scale = 1.2 },
+			},
+			Sound = "Variant_Shiny",
+		},
+		Golden = {
+
+			--[[ Held ]]
+
+			Gild = { Color3.fromRGB(70, 42, 10), Color3.fromRGB(255, 200, 70) },
+			GildCover = 0.3,
+			Sheen = { Color3.fromRGB(255, 215, 110), Color3.fromRGB(255, 248, 210) },
+			SheenPeriod = 1.8,
+			Outline = Color3.fromRGB(255, 205, 80),
+			OutlineTransparency = 0.2,
+			Twinkle = { Effect = "Glint", Color = ColorSequence.new(Color3.fromRGB(255, 245, 200), Color3.fromRGB(255, 190, 60)), Scale = 0.5, Every = 0.22, Front = 0.5 },
+			Dust = { Effect = "Ember", Color = ColorSequence.new(Color3.fromRGB(255, 215, 100), Color3.fromRGB(200, 140, 30)), Scale = 0.4, Every = 0.15, Front = 0.3 },
+
+			--[[ Shot ]]
+
+			Trail = "Trail_Variety",
+			TrailColor = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 235, 160)),
+				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 185, 50)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 235, 160)),
+			}),
+			TrailWidth = 0.3,
+			Glint = { Effect = "Glint", Color = ColorSequence.new(Color3.fromRGB(255, 245, 200), Color3.fromRGB(255, 185, 50)), Scale = 0.55, Every = 0.07 },
+
+			--[[ Blast ]]
+
+			--- @type { Combat_VariantEffect }
+			Blast = {
+				{ Effect = "Explosion_Fire", Color = ColorSequence.new(Color3.fromRGB(255, 225, 130), Color3.fromRGB(230, 160, 30)), Scale = 1.3 },
+				{ Effect = "Hit_Sparks", Color = ColorSequence.new(Color3.fromRGB(255, 240, 180), Color3.fromRGB(255, 175, 40)), Scale = 2 },
+				{ Effect = "Glint", Color = ColorSequence.new(Color3.fromRGB(255, 250, 220), Color3.fromRGB(255, 190, 60)), Scale = 1.1, Ring = 12, RingRadius = 1 },
+			},
+			Sound = "Variant_Golden",
+		},
+	},
+
+	--[[
+		The gold copy over a textured part and the sheen copy over every part are these many times its size, so each
+		sits just outside what it covers
+	]]
+	VARIANT_COVER_GROW = 1.015,
+	VARIANT_SHEEN_GROW = 1.04,
 
 	--%%%%%%%%%%%%%%%%%%%% Aimbot
 

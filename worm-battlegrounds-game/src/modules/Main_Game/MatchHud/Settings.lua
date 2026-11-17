@@ -66,6 +66,17 @@ local _settings = {
 	CALLOUT_OTHER_GRADIENT = { Color3.fromRGB(255, 255, 255), Color3.fromRGB(200, 215, 235) },
 
 	--[[
+		Local play: while a local player's turn waits for the controller (Match's HandOff), the callout holds with their
+		snail's name, its lines in the snail's colour, and this line under it for the device in use (Utils' platforms)
+	]]
+	--- @type { [string]: string }
+	HANDOFF_TEXTS = {
+		Desktop = "Pass the controller, then click when ready",
+		Mobile = "Pass the device, then tap when ready",
+		Console = "Pass the controller, then press A",
+	},
+
+	--[[
 		When sudden death starts, the callout announces the rising liquid (the map's sea, the match's SeaKind) once the
 		turn's own callout is gone: SUDDEN_DEATH_TITLE with the liquid's name, no avatar, the lines in its colour, held
 		SUDDEN_DEATH_HOLD seconds while the title fills with it from the bottom (its gradient's offset tweened from
@@ -216,8 +227,30 @@ local _settings = {
 	--- @type { [string]: string }
 	TARGET_HINTS = { Pick = "Click on a target", TouchPick = "Tap on a target", Shoot = "Shoot!" },
 
-	-- On a pad: how far the right stick must lean to aim
+	--%%%%%%%%%%%%%%%%%%%% Pad Aim
+
+	--[[
+		The right stick points the aim (the owner's pick, 2026-11-17: it was twitchy). It does nothing under STICK_DEADZONE of
+		lean; a gentle lean, up to STICK_FIRM_LEAN, only nudges the aim toward the stick's way, from the first to the
+		second of STICK_NUDGE_SPEED degrees a second as it leans further, for fine aiming
+	]]
+	--- @type { number }
+	STICK_NUDGE_SPEED = { 5, 30 },
 	STICK_DEADZONE = 0.3,
+	STICK_FIRM_LEAN = 0.55,
+
+	--[[
+		A firm lean turns the aim to the stick's way in a quick ease, from the first to the second of STICK_TURN_SPEED
+		(higher is snappier: at 18 it's 95% there in a sixth of a second) up to full lean
+	]]
+	--- @type { number }
+	STICK_TURN_SPEED = { 8, 18 },
+
+	--[[
+		While the lean drops faster than this (lean per second), the stick is springing back as it's let go: the aim
+		holds still, so letting go before RT never moves it
+	]]
+	STICK_DROP_RATE = 1.5,
 
 	--%%%%%%%%%%%%%%%%%%%% Prediction
 
@@ -239,6 +272,54 @@ local _settings = {
 	PREDICTION_END_COLOR = Color3.fromRGB(235, 64, 52),
 	PREDICTION_IDLE_POWER = 0.6,
 	PREDICTION_IDLE_TRANSPARENCY = 0.4,
+
+	--%%%%%%%%%%%%%%%%%%%% Drop
+
+	-- The drop's timer (the turn timer's plate) turns TIMER_DANGER_COLOR from DROP_WARN_FROM seconds left, when Turn_Tick plays each second
+	DROP_WARN_FROM = 3,
+
+	--%%%%%%%%%%%%%%%%%%%% Control Hints
+
+	-- The controls listed at the bottom left of the screen while the player waits for the match and picks where to land
+	HINTS_GUI_NAME = "ControlHints",
+
+	--[[
+		The strip shows in a player's first HINTS_MATCHES matches only: once their MatchesPlayed statistic reaches it
+		(from their tenth match on) it stays hidden for good. Never in the tutorial match, which teaches the same
+	]]
+	HINTS_MATCHES = 9,
+
+	-- Seconds each tip stays over the strip, and the fade between two
+	HINT_TIP_SECONDS = 4,
+	HINT_TIP_TWEENINFO = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+
+	-- The tips the line over the strip turns through, in order
+	--- @type { string }
+	HINT_TIPS = {
+		"Tip: hold to charge a shot, let go to fire.",
+		"Tip: hold jump to fly with your jetpack.",
+		"Tip: the wind pushes every thrown shot. Check the arrow before you fire.",
+		"Tip: a full charge fires by itself.",
+		"Tip: after a throw you can keep moving. Run from your own blast!",
+		"Tip: falling into the open sea knocks you out at once.",
+		"Tip: grenades burst when they stop rolling.",
+	},
+
+	--%%%%%%%%%%%%%%%%%%%% Results XP
+
+	--[[
+		The Results screen's level bar, from the level before the match to after it: RESULTS_XP_DELAY seconds after the
+		screen opens, each of the match's XP lines (MatchRewards' XpLines) adds to the XP total with Xp_Line, then fills
+		the bar for RESULTS_XP_FILL_SECONDS (its share of that, for a stretch that reaches a level first), with
+		RESULTS_XP_TICKS Xp_Tick ticks climbing through RESULTS_XP_TICK_PITCH as it fills, RESULTS_XP_LINE_GAP seconds
+		apart; a level reached plays Level_Up and pops the level's diamond (RESULTS_LEVEL_TWEENINFO)
+	]]
+	RESULTS_XP_DELAY = 0.6,
+	RESULTS_XP_LINE_GAP = 0.25,
+	RESULTS_XP_FILL_SECONDS = 0.8,
+	RESULTS_XP_TICKS = 10,
+	RESULTS_XP_TICK_PITCH = NumberRange.new(0.9, 1.5),
+	RESULTS_LEVEL_TWEENINFO = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 }
 
 return _settings

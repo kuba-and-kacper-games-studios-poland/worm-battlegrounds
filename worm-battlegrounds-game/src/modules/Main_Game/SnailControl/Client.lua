@@ -95,10 +95,10 @@ function Module.Start()
 	-- Players move snails, not their parked avatars
 	require(I.S.Players.LocalPlayer.PlayerScripts:FindFirstChild("PlayerModule")):GetControls():Disable()
 
-	I.Dirs.UmeWorkspace:WaitForChild("Snails").ChildAdded:Connect(Module._onSnailAdded)
-	local mine: Model? = I.Snails.GetMine()
-	if mine then
-		Module._onSnailAdded(mine)
+	local snailsFolder: Folder = I.Dirs.UmeWorkspace:WaitForChild("Snails")
+	snailsFolder.ChildAdded:Connect(Module._onSnailAdded)
+	for _index: number, model: Instance in ipairs(snailsFolder:GetChildren()) do
+		Module._onSnailAdded(model)
 	end
 end
 
@@ -205,14 +205,71 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Snail Added
 
 --[[
-	Follows the local player's snail, when it's the one that appeared: its CanMove attribute turns their controls on
-	and off.
+	Follows every snail this screen plays (the local player's, and in local play their guests'): its CanMove attribute
+	turns the controls on for it and off. The player's own snail is the one followed until another gets its turn.
 ]]
 function Module._onSnailAdded(model: Instance)
 	--[[ Checks ]]
 
-	-- Skip other players' snails
-	if model ~= I.Snails.GetMine() then
+	-- Skip other players' snails and bots'
+	if not model:IsA("Model") or model:GetAttribute("UserId") ~= I.S.Players.LocalPlayer.UserId then
+		return
+	end
+
+	--[[ Saving ]]
+
+	if not mySnail and model.Name == `P_{I.S.Players.LocalPlayer.UserId}` then
+		Module._target(model)
+	end
+
+	--[[ Connections ]]
+
+	model:GetAttributeChangedSignal("CanMove"):Connect(function()
+		Module._onCanMove(model)
+	end)
+	-- A new jetpack fills the tank; the server's echoes of reports never put back fuel this screen already burned
+	local tank: number? = model:GetAttribute("JetpackFuel")
+	model:GetAttributeChangedSignal("JetpackFuel"):Connect(function()
+		local now: number? = model:GetAttribute("JetpackFuel")
+		if model == mySnail and now and not tank then
+			fuel = now
+			serverFuel = now
+			fullFuel = now
+		elseif model == mySnail then
+			fuel = math.min(fuel, now or 0)
+			serverFuel = math.min(serverFuel, now or 0)
+		end
+		tank = now
+	end)
+	Module._onCanMove(model)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Can Move
+
+--[[
+	Hands the controls to a snail of this screen's when the server lets it move, and takes them back when it stops.
+]]
+function Module._onCanMove(model: Model)
+	--[[ Applying ]]
+
+	if model:GetAttribute("CanMove") == true then
+		Module._target(model)
+		Module._setMoving(true)
+	elseif model == mySnail then
+		Module._setMoving(false)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Target
+
+--[[
+	Makes a snail the one the controls drive: its ball's grip at rest and while walking, and its jetpack's fuel.
+]]
+function Module._target(model: Model)
+	--[[ Checks ]]
+
+	-- Skip when it's already the one
+	if model == mySnail then
 		return
 	end
 
@@ -222,30 +279,9 @@ function Module._onSnailAdded(model: Instance)
 	mySnail = model
 	restPhysics = physics
 	walkPhysics = PhysicalProperties.new(physics.Density, 0, physics.Elasticity, 100, physics.ElasticityWeight)
-
-	--[[ Connections ]]
-
-	model:GetAttributeChangedSignal("CanMove"):Connect(function()
-		Module._setMoving(model:GetAttribute("CanMove") == true)
-	end)
-	-- A new jetpack fills the tank; the server's echoes of reports never put back fuel this screen already burned
-	local tank: number? = model:GetAttribute("JetpackFuel")
-	fuel = tank or 0
+	fuel = model:GetAttribute("JetpackFuel") or 0
 	serverFuel = fuel
 	fullFuel = fuel
-	model:GetAttributeChangedSignal("JetpackFuel"):Connect(function()
-		local now: number? = model:GetAttribute("JetpackFuel")
-		if now and not tank then
-			fuel = now
-			serverFuel = now
-			fullFuel = now
-		else
-			fuel = math.min(fuel, now or 0)
-			serverFuel = math.min(serverFuel, now or 0)
-		end
-		tank = now
-	end)
-	Module._setMoving(model:GetAttribute("CanMove") == true)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Set Moving

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -38,10 +39,12 @@ local Module = {}
 function Module.Init()
 	--[[ Network ]]
 
-	I.Network.GetEvent("MatchBoard_PlaySolo", { "Player", "string" }, { RateLimit = 1 })
+	I.Network.GetEvent("MatchBoard_PlaySolo", { "Player", "string", "string" }, { RateLimit = 1 })
 	I.Network.Fired("MatchBoard_PlaySolo", Module.PlaySolo)
-	I.Network.GetEvent("MatchBoard_PlayParty", { "Player", "string" }, { RateLimit = 1 })
+	I.Network.GetEvent("MatchBoard_PlayParty", { "Player", "string", "string" }, { RateLimit = 1 })
 	I.Network.Fired("MatchBoard_PlayParty", Module.PlayParty)
+	I.Network.GetEvent("MatchBoard_PlayLocal", { "Player", "string", "string", "number" }, { RateLimit = 1 })
+	I.Network.Fired("MatchBoard_PlayLocal", Module.PlayLocal)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -158,10 +161,11 @@ end
 
 --[[
 	**SERVER** |
-	Starts a 1v1 against one bot at a difficulty. Refused in a party of 2 or more.
+	Starts a 1v1 against one bot at a difficulty, on the map the player picked (when it's in the rotation for 2) or a
+	random one. Refused in a party of 2 or more.
 ]]
 --- @return boolean
-function Module.PlaySolo(player: Player, difficulty: string)
+function Module.PlaySolo(player: Player, difficulty: string, mapId: string)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return false
@@ -182,7 +186,7 @@ function Module.PlaySolo(player: Player, difficulty: string)
 
 	--[[ Launching ]]
 
-	return Module.Launch({ player }, "Solo", "Deathmatch", 2, Module.GetMap(2), difficulty)
+	return Module.Launch({ player }, "Solo", "Deathmatch", 2, Module.GetMap(2, mapId), difficulty)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Play Party
@@ -190,10 +194,11 @@ end
 --[[
 	**SERVER** |
 	Starts a friends-only deathmatch for the leader's party: with bots at a difficulty (PARTY_BOTS_PER_PLAYER per member),
-	or "None" for the party alone, which pays less. Refused unless the player leads a party of 2 or more here.
+	or "None" for the party alone, which pays less, on the map the leader picked (when it's in the rotation for that
+	size) or a random one. Refused unless the player leads a party of 2 or more here.
 ]]
 --- @return boolean
-function Module.PlayParty(player: Player, difficulty: string)
+function Module.PlayParty(player: Player, difficulty: string, mapId: string)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return false
@@ -219,8 +224,65 @@ function Module.PlayParty(player: Player, difficulty: string)
 
 	--[[ Launching ]]
 
-	local size: number = if difficulty == "None" then #members else math.min(#members * (1 + _settings.PARTY_BOTS_PER_PLAYER), _settings.PARTY_MAX_SIZE)
-	return Module.Launch(members, "Party", "Deathmatch", size, Module.GetMap(size), difficulty)
+	local size: number = Rotation.GetPlaySize(#members, difficulty)
+	return Module.Launch(members, "Party", "Deathmatch", size, Module.GetMap(size, mapId), difficulty)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play Local
+
+--[[
+	**SERVER** |
+	Starts a local match: the player and 1 to LOCAL_MAX_PLAYERS − 1 guests on their screen (each guest a snail of its
+	own, played from the host's screen, named LOCAL_GUEST_NAME), with a bot per player at a difficulty or none, on the
+	picked map or a random one. Pays nothing. Refused in a party of 2 or more.
+]]
+--- @return boolean
+function Module.PlayLocal(player: Player, difficulty: string, mapId: string, players: number)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return false
+	end
+
+	--[[ Checks ]]
+
+	-- Check if the difficulty exists
+	if difficulty ~= "None" and not table.find(_settings.SOLO_DIFFICULTIES, difficulty) then
+		return false
+	end
+
+	-- Check if the player count is allowed
+	if players ~= math.floor(players) or players < 2 or players > _settings.LOCAL_MAX_PLAYERS then
+		return false
+	end
+
+	-- Check if the player plays alone
+	if player:GetAttribute("PartyId") and #I.Party.GetMembers(player:GetAttribute("PartyId")) > 1 then
+		Module._tell({ player }, "Local play is for friends on one screen: leave your party first.")
+		return false
+	end
+
+	--[[ Roster ]]
+
+	local size: number = Rotation.GetPlaySize(players, difficulty)
+	local card = I.Matchmaking.GetCard(player) --- @type Matchmaking_Card
+	local roster = { { UserId = player.UserId, Card = card } } --- @type { Match_RosterEntry }
+	for guest: number = 2, players do
+		local guestCard = table.clone(card) --- @type Matchmaking_Card
+		guestCard.DisplayName = string.format(_settings.LOCAL_GUEST_NAME, guest)
+		table.insert(roster, { UserId = player.UserId, Guest = guest, Card = guestCard })
+	end
+
+	--[[ Launching ]]
+
+	return Module.Send({ player }, {
+		MatchId = I.S.HttpService:GenerateGUID(false),
+		Kind = "Local",
+		Mode = "Deathmatch",
+		Size = size,
+		MapId = Module.GetMap(size, mapId),
+		Difficulty = difficulty,
+		Roster = roster,
+	})
 end
 
 --%%%%%%%%%%%%%%%%%%%% Tell
@@ -243,16 +305,20 @@ end
 
 --[[
 	**SERVER** |
-	Returns a random map from MAP_POOL made for a match size, or any map in the pool when none is.
+	Returns the asked map when it's in MAP_POOL for a match size, else a random one of those (any map in the pool when
+	none is made for the size).
 ]]
 --- @return string
-function Module.GetMap(size: number)
+function Module.GetMap(size: number, askedId: string?)
 	--[[ Local Variables ]]
 
 	local pool = Rotation.GetPool(size) --- @type { string }
 
 	--[[ Returning ]]
 
+	if askedId and table.find(pool, askedId) then
+		return askedId
+	end
 	return pool[random:NextInteger(1, #pool)]
 end
 

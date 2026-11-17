@@ -19,6 +19,7 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 local Binds = require(_scripts:FindFirstChild("Client"):FindFirstChild("Binds")) --- @type Console_Client_Binds
 local Hints = require(_scripts:FindFirstChild("Client"):FindFirstChild("Hints")) --- @type Console_Client_Hints
 local Selection = require(_scripts:FindFirstChild("Client"):FindFirstChild("Selection")) --- @type Console_Client_Selection
+local Cursor = require(_scripts:FindFirstChild("Client"):FindFirstChild("Cursor")) --- @type Console_Client_Cursor
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -79,6 +80,7 @@ function Module.Start()
 
 	Hints.Start()
 	Selection.Start()
+	Cursor.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

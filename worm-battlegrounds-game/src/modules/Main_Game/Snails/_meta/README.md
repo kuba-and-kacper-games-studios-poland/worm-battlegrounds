@@ -69,7 +69,7 @@ attributes on the snail model, so the module creates no remotes.
 | Function | Returns | What it does |
 | --- | --- | --- |
 | `Get(participantId)` | `Model?` | The participant's snail |
-| `GetMine()` | `Model?` | The local player's snail (`P_<UserId>`) |
+| `GetMine()` | `Model?` | The snail this screen plays now (Match's `GetMyParticipantId`): the local player's (`P_<UserId>`), or in local play the active guest's |
 
 ## Usage
 

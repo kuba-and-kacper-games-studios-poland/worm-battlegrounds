@@ -29,6 +29,17 @@ local effectsFolder: Instance
 -- What's watched for falling into liquid, by its part
 local tracked = {} --- @type { [BasePart]: Atmosphere_Track }
 
+--[[ Props ]]
+
+--[[
+	The Decor parts a blast bursts (PROP_EFFECTS), by their prop (the nearest Model, or their folder), with the effect
+	each plays, and each prop's box on the plane (min X, min Y, max X, max Y), read again at the next blast after its
+	parts change, and each part's prop (for when it's taken away); so a blast looks only at the props near it
+]]
+local burstParts = {} --- @type { [Instance]: { [BasePart]: string } }
+local burstBoxes = {} --- @type { [Instance]: { number } }
+local burstProps = {} --- @type { [BasePart]: Instance }
+
 -- When a small thing last splashed, the map's terrain last arrived, and obsidian last steamed and hissed
 local smallSplashAt: number = -math.huge
 local terrainAt: number = -math.huge
@@ -66,7 +77,12 @@ function Module.Start(arena: Instance, match: Instance, combat: Instance, snails
 
 	I.Network.Fired("Arena_Carve", Module._onCarve)
 	I.Network.Fired("Arena_Fall", Module._onFall)
+	I.Topic.Subscribe("Arena_PropThrown", Module._onPropThrown)
 	arenaFolder.DescendantAdded:Connect(Module._onArenaAdded)
+	arenaFolder.ChildAdded:Connect(Module._watchDecor)
+	if arenaFolder:FindFirstChild("Decor") then
+		Module._watchDecor(arenaFolder:FindFirstChild("Decor"))
+	end
 	effectsFolder.ChildAdded:Connect(Module._onEffectAdded)
 	snails.ChildAdded:Connect(Module._watchSnail)
 	for _index: number, model: Instance in ipairs(snails:GetChildren()) do
@@ -96,6 +112,12 @@ function Module._step()
 			tracked[part] = nil
 			continue
 		end
+
+		-- A chip waiting to be thrown again (Combat keeps them, see-through) splashes nowhere, wherever it's put next
+		if track.Kind == "Chip" and part.Transparency >= 1 then
+			track.LastY = -math.huge
+			continue
+		end
 		local position: Vector3 = part.Position
 		if position.Y < track.LastY and now >= track.ReadyAt and (track.Kind ~= "Chip" or now - smallSplashAt >= _settings.SMALL_SPLASH_GAP) then
 			local surfaceY: number?
@@ -118,36 +140,39 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Carve
 
 --[[
-	Bursts every prop part a blast reaches: leaves, needles, bushes, cacti and twigs in their own colours, rocks in
-	dust. Arena_Carve comes before the server cuts the props, so they're whole here.
+	Bursts every prop part a blast reaches, of the props near it: leaves, needles, bushes, cacti and twigs in their own
+	colours, rocks in dust. Arena_Carve comes before any screen cuts the props, so they're whole here; parts this screen
+	hid (cut away ahead of the server) are left out, their pieces stand in for them.
 ]]
 function Module._onCarve(_carveId: number, center: Vector3, radius: number)
-	--[[ Data ]]
-
-	local decor: Instance? = arenaFolder:FindFirstChild("Decor")
-	if not decor then
-		return
-	end
-
 	--[[ Collecting ]]
 
 	-- The parts reached, by prop, then by the effect they play
 	local hits = {} --- @type { [Instance]: { [string]: { BasePart } } }
-	for _index: number, part: Instance in ipairs(decor:GetDescendants()) do
-		local effect: string? = _settings.PROP_EFFECTS[part.Name]
-		if not effect or not part:IsA("BasePart") then
-			continue
-		end
-		local offset: Vector3 = part.Position - center
-		local gapX: number = math.max(math.abs(offset.X) - part.Size.X / 2, 0)
-		local gapY: number = math.max(math.abs(offset.Y) - part.Size.Y / 2, 0)
+	--- @param parts { [BasePart]: string }
+	for prop: Instance, parts in pairs(burstParts) do
+		burstBoxes[prop] = burstBoxes[prop] or Module._getBurstBox(parts)
+		local box = burstBoxes[prop] --- @type { number }
+		local gapX: number = math.max(box[1] - center.X, center.X - box[3], 0)
+		local gapY: number = math.max(box[2] - center.Y, center.Y - box[4], 0)
 		if gapX * gapX + gapY * gapY > radius * radius then
 			continue
 		end
-		local prop: Instance = part:FindFirstAncestorWhichIsA("Model") or part.Parent
-		hits[prop] = hits[prop] or {}
-		hits[prop][effect] = hits[prop][effect] or {}
-		table.insert(hits[prop][effect], part)
+
+		for part: BasePart, effect: string in pairs(parts) do
+			if part.LocalTransparencyModifier >= 1 then
+				continue
+			end
+			local offset: Vector3 = part.Position - center
+			local partGapX: number = math.max(math.abs(offset.X) - part.Size.X / 2, 0)
+			local partGapY: number = math.max(math.abs(offset.Y) - part.Size.Y / 2, 0)
+			if partGapX * partGapX + partGapY * partGapY > radius * radius then
+				continue
+			end
+			hits[prop] = hits[prop] or {}
+			hits[prop][effect] = hits[prop][effect] or {}
+			table.insert(hits[prop][effect], part)
+		end
 	end
 
 	--[[ Bursting ]]
@@ -267,18 +292,103 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Arena Added
 
 --[[
-	Watches what turns up in the arena: a prop let go to fall (its weld), new obsidian (steam, once the map's own
-	terrain has settled in), and when the map's terrain arrives.
+	Watches what turns up in the arena: new obsidian in the map's terrain (steam, once the map's own terrain has
+	settled in; never a carved piece or a copy Arena draws), and when the map's terrain arrives.
 ]]
 function Module._onArenaAdded(item: Instance)
 	--[[ Watching ]]
 
 	if item.Name == "Terrain" and item.Parent == arenaFolder then
 		terrainAt = os.clock()
-	elseif item:IsA("WeldConstraint") and item.Name == "PropWeld" and item.Part0 then
-		Module._track(item.Part0, "Prop")
-	elseif item:IsA("BasePart") and item.Name == "Obsidian" and not item:GetAttribute("Arena_Carve") then
+	elseif item:IsA("BasePart") and item.Name == "Obsidian" and item.Parent == arenaFolder:FindFirstChild("Terrain") and not item:GetAttribute("Arena_Carve") then
 		Module._steamObsidian(item)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Prop Thrown
+
+--[[
+	Watches a piece of a prop that set off flying or falling on this screen (Arena's Arena_PropThrown), so it splashes
+	where it drops into liquid.
+]]
+function Module._onPropThrown(part: BasePart)
+	--[[ Watching ]]
+
+	Module._track(part, "Prop")
+end
+
+--%%%%%%%%%%%%%%%%%%%% Watch Decor
+
+--[[
+	A map's Decor: its parts that burst are kept by prop as they come and go, so a blast needn't look through it all.
+]]
+function Module._watchDecor(decor: Instance)
+	--[[ Checks ]]
+
+	-- Check if this is the map's Decor
+	if decor.Name ~= "Decor" then
+		return
+	end
+
+	--[[ Clearing ]]
+
+	burstParts = {}
+	burstBoxes = {}
+	burstProps = {}
+
+	--[[ Connections ]]
+
+	decor.DescendantAdded:Connect(function(item: Instance)
+		Module._keepBurstPart(item, true)
+	end)
+	decor.DescendantRemoving:Connect(function(item: Instance)
+		Module._keepBurstPart(item, false)
+	end)
+	for _index: number, item: Instance in ipairs(decor:GetDescendants()) do
+		Module._keepBurstPart(item, true)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Keep Burst Part
+
+--[[
+	Adds or takes away a Decor part a blast bursts (PROP_EFFECTS, by its name), under its prop, whose box is then read
+	again at the next blast.
+]]
+function Module._keepBurstPart(item: Instance, added: boolean)
+	--[[ Checks ]]
+
+	-- Check if this is a part that bursts
+	local effect: string? = _settings.PROP_EFFECTS[item.Name]
+	if not effect or not item:IsA("BasePart") then
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	-- A part taken away has left its prop by the time this runs (deferred signals), so it's found by what was kept
+	local prop: Instance? = if added then item:FindFirstAncestorWhichIsA("Model") or item.Parent else burstProps[item]
+
+	--[[ Checks ]]
+
+	-- Check if the part has a prop
+	if not prop then
+		return
+	end
+
+	--[[ Saving ]]
+
+	burstBoxes[prop] = nil
+	if added then
+		burstProps[item] = prop
+		burstParts[prop] = burstParts[prop] or {}
+		burstParts[prop][item] = effect
+	elseif burstParts[prop] then
+		burstProps[item] = nil
+		burstParts[prop][item] = nil
+		if next(burstParts[prop]) == nil then
+			burstParts[prop] = nil
+		end
 	end
 end
 
@@ -392,6 +502,36 @@ function Module._steamObsidian(part: BasePart)
 			RollOffMax = I.Settings["Combat"].SOUND_ROLLOFF_MAX,
 		})
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Burst Box
+
+--[[
+	Returns the box on the plane around a prop's parts that burst: min X, min Y, max X, max Y.
+]]
+--- @param parts { [BasePart]: string }
+--- @return { number }
+function Module._getBurstBox(parts)
+	--[[ Local Variables ]]
+
+	local box = { math.huge, math.huge, -math.huge, -math.huge } --- @type { number }
+
+	--[[ Measuring ]]
+
+	for part: BasePart in pairs(parts) do
+		local position: Vector3 = part.Position
+		local half: Vector3 = part.Size / 2
+		box[1] = math.min(box[1], position.X - half.X)
+		box[2] = math.min(box[2], position.Y - half.Y)
+		box[3] = math.max(box[3], position.X + half.X)
+		box[4] = math.max(box[4], position.Y + half.Y)
+	end
+
+	--[[ Returning ]]
+
+	return box
 end
 
 return Module

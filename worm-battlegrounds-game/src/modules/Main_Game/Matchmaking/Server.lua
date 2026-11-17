@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -348,9 +349,10 @@ function Module.GetCard(player: Player)
 
 	local items = {} --- @type { string }
 	local shinyItems = {} --- @type { [string]: boolean }
+	local goldenItems = {} --- @type { [string]: boolean }
 	local outfit = {} --- @type Cosmetics_Outfit
 	local skinShiny: boolean
-	items, shinyItems = I.Loadout.GetMatchLoadout(player)
+	items, shinyItems, goldenItems = I.Loadout.GetMatchLoadout(player)
 	outfit, skinShiny = I.Cosmetics.GetOutfit(player)
 
 	--[[ Returning ]]
@@ -367,6 +369,7 @@ function Module.GetCard(player: Player)
 
 		Loadout = items,
 		ShinyItems = shinyItems,
+		GoldenItems = goldenItems,
 		Skin = I.G_Cosmetics.GetOutfitText(outfit),
 		Shiny = skinShiny,
 	}

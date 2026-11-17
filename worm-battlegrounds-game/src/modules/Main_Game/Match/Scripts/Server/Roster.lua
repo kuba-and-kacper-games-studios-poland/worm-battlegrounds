@@ -132,8 +132,9 @@ function Module.Build()
 		local player: Player? = I.S.Players:GetPlayerByUserId(entry.UserId)
 		local loaded: boolean = I.Player.Valid(player)
 
-		-- What they take into the match, chosen in the lobby: read again once their data has loaded here
-		local card = if loaded and player then I.Matchmaking.GetCard(player) else entry.Card --- @type Matchmaking_Card?
+		-- What they take into the match, chosen in the lobby: read again once their data has loaded here (a local guest
+		-- keeps the card the lobby made for it, its own name on the host's things)
+		local card = if loaded and player and not entry.Guest then I.Matchmaking.GetCard(player) else entry.Card --- @type Matchmaking_Card?
 		if not card then
 			continue
 		end
@@ -145,14 +146,17 @@ function Module.Build()
 
 		--- @type Match_Participant
 		local participant = {
-			Id = `P_{entry.UserId}`,
+			-- A local match's guests are the host's own snails, each with an id of its own
+			Id = if entry.Guest then `P_{entry.UserId}_{entry.Guest}` else `P_{entry.UserId}`,
 			UserId = entry.UserId,
+			Guest = entry.Guest,
 			DisplayName = card.DisplayName,
 			Team = team,
 			Color = Color3.new(),
 			IsBot = false,
 			Loadout = if metadata.Kind == "Tutorial" then table.clone(_settings.TUTORIAL_LOADOUT) else card.Loadout,
 			ShinyItems = card.ShinyItems,
+			GoldenItems = card.GoldenItems,
 			Skin = card.Skin,
 			Shiny = card.Shiny,
 			Vip = card.Vip,

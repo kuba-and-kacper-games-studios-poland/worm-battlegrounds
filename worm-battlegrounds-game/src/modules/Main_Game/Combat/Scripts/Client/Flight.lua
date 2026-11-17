@@ -81,7 +81,7 @@ function Module._addShot(child: Instance)
 	end
 	flying[child] = {
 		Model = model,
-		Kind = if row then row.Kind else "Shot",
+		Kind = if row and not child:GetAttribute("Digger") then row.Kind else "Shot",
 		Last = child.Position,
 		Facing = if child.AssemblyLinearVelocity.X < 0 then -1 else 1,
 		Heading = -Vector3.yAxis,
@@ -127,22 +127,8 @@ function Module._removeShot(part: BasePart)
 
 	shot.Model:Destroy()
 	flying[part] = nil
-
-	-- The trail and the exhaust's last puffs stay where the shot ended until they have faded
-	local carrier: BasePart? = shot.Carrier
-	if carrier then
-		local fade: number = 0
-		for _index: number, effect: Instance in ipairs(carrier:GetDescendants()) do
-			if effect:IsA("Trail") then
-				fade = math.max(fade, effect.Lifetime)
-			elseif effect:IsA("ParticleEmitter") then
-				effect.Enabled = false
-				fade = math.max(fade, effect.Lifetime.Max)
-			end
-		end
-		task.delay(fade, function()
-			carrier:Destroy()
-		end)
+	if shot.Carrier then
+		Module.FadeTrailCarrier(shot.Carrier)
 	end
 	if not next(flying) and drawing then
 		drawing = false
@@ -167,9 +153,9 @@ end
 
 --[[
 	Puts a shot's model on its part: rockets and missiles point along their flight, thrown and rolled weapons tumble
-	with the part, a crawling spider bomb stands upright facing the way it crawls, and a variety grenade's worm points
-	the way it digs, swaying. The server moves the spider bomb and the worms, so their models glide after their parts
-	instead of jumping with each update.
+	with the part, a crawling spider bomb stands upright facing the way it crawls, and a variety grenade's worm (or the
+	mini grenade a mini hatches, a `Digger`) points the way it digs, swaying. The server moves the spider bomb and the
+	diggers, so their models glide after their parts instead of jumping with each update.
 ]]
 function Module._place(part: BasePart, deltaTime: number)
 	--[[ Local Variables ]]
@@ -287,6 +273,32 @@ function Module.MakeTrailCarrier(effect: string, position: Vector3, name: string
 	--[[ Returning ]]
 
 	return carrier
+end
+
+--%%%%%%%%%%%%%%%%%%%% Fade Trail Carrier
+
+--[[
+	Leaves a trail carrier where its shot ended: the trail and the exhaust's last puffs stay until they have faded
+	(its emitters stop), then it goes.
+]]
+function Module.FadeTrailCarrier(carrier: BasePart)
+	--[[ Stopping ]]
+
+	local fade: number = 0
+	for _index: number, effect: Instance in ipairs(carrier:GetDescendants()) do
+		if effect:IsA("Trail") then
+			fade = math.max(fade, effect.Lifetime)
+		elseif effect:IsA("ParticleEmitter") then
+			effect.Enabled = false
+			fade = math.max(fade, effect.Lifetime.Max)
+		end
+	end
+
+	--[[ Clearing ]]
+
+	task.delay(fade, function()
+		carrier:Destroy()
+	end)
 end
 
 return Module

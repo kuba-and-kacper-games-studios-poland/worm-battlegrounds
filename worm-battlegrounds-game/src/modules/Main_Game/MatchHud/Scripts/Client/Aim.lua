@@ -39,6 +39,14 @@ local pointer: Vector2? = nil
 local pointingTouch: InputObject? = nil
 local pointerByTouch: boolean = false
 
+--[[
+	The right stick's lean (the Console module's Aim), its length the frame before, and whether it waits to come back
+	to the middle before it aims again (it moved the camera)
+]]
+local stick: Vector2 = Vector2.zero
+local lastLean: number = 0
+local stickLocked: boolean = false
+
 local target: Vector3? = nil
 local lastSent: number = 0
 local stepConnection: RBXScriptConnection?
@@ -324,8 +332,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Input Changed
 
 --[[
-	Follows the mouse (held or not) and the pointing finger, which the aim points at every frame (Step), or the right
-	stick's direction.
+	Follows the mouse (held or not) and the pointing finger, which the aim points at every frame (Step), and the right
+	stick's lean, which turns the aim every frame (Aim With Stick).
 ]]
 function Module._onInputChanged(input: InputObject, _processed: boolean)
 	--[[ Pointing ]]
@@ -342,10 +350,8 @@ function Module._onInputChanged(input: InputObject, _processed: boolean)
 
 	--[[ Stick ]]
 
-	-- The stick moves the camera instead while CameraPan's button is held
-	if I.Console.IsAction("Aim", input.KeyCode) and input.Position.Magnitude >= _settings.STICK_DEADZONE and not I.Console.IsHeld("CameraPan") then
-		pointer = nil
-		angle = math.atan2(input.Position.Y, input.Position.X)
+	if I.Console.IsAction("Aim", input.KeyCode) then
+		stick = Vector2.new(input.Position.X, input.Position.Y)
 	end
 end
 
@@ -427,13 +433,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Every frame of the player's turn: fills a held press's power from none to full over Combat's CHARGE_SECONDS and
-	fires it at full, draws the crosshair and the power circles, shows the power on the slider and the angle over it
-	(with a homing missile, "Click on a target", then "Shoot!" until it charges, its crosshair on the mouse or finger
-	until a click places the target, then on the target), the FIRE button on touch screens with
-	the held weapon's icon, and sends the aim to the other players every AIM_SEND_INTERVAL.
+	Every frame of the player's turn: turns the aim with the right stick, fills a held press's power from none to full
+	over Combat's CHARGE_SECONDS and fires it at full, draws the crosshair and the power circles, shows the power on the
+	slider and the angle over it (with a homing missile, "Click on a target", then "Shoot!" until it charges, its
+	crosshair on the mouse or finger until a click places the target, then on the target), the FIRE button on touch
+	screens with the held weapon's icon, and sends the aim to the other players every AIM_SEND_INTERVAL.
 ]]
-function Module._step()
+function Module._step(deltaTime: number)
 	--[[ Checks ]]
 
 	-- Hide the aim between shots, while a shot sent waits for the server, for weapons fired at the feet and for a utility held
@@ -453,7 +459,8 @@ function Module._step()
 
 	--[[ Pointing ]]
 
-	-- Every frame, as the camera and the snail move under a still mouse too
+	-- Every frame, as the camera and the snail move under a still mouse too; a stick that aims takes over from the mouse
+	Module._aimWithStick(deltaTime)
 	if pointer then
 		Module._aimAtPointer(mine)
 	end
@@ -533,6 +540,54 @@ function Module._aimAtPointer(model: Model)
 	--[[ Aiming ]]
 
 	angle = math.atan2(toPointer.Y, toPointer.X)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Aim With Stick
+
+--[[
+	Turns the aim toward where the right stick points: a gentle lean (under STICK_FIRM_LEAN) only nudges it, at
+	STICK_NUDGE_SPEED, and a firm one eases it there quickly (STICK_TURN_SPEED), never in one jump. It holds still while
+	the lean drops faster than STICK_DROP_RATE (the stick springing back as it's let go), while CameraPan's button (LT)
+	moves the camera, and after that until the stick has come back under STICK_DEADZONE.
+]]
+function Module._aimWithStick(deltaTime: number)
+	--[[ Local Variables ]]
+
+	local lean: number = math.min(stick.Magnitude, 1)
+	local dropping: boolean = deltaTime > 0 and (lastLean - lean) / deltaTime > _settings.STICK_DROP_RATE
+	lastLean = lean
+
+	-- The stick moved the camera: it aims again once it's back in the middle
+	if I.Console.IsHeld("CameraPan") then
+		stickLocked = true
+	elseif lean < _settings.STICK_DEADZONE then
+		stickLocked = false
+	end
+
+	--[[ Checks ]]
+
+	-- Check if the stick leans past its dead zone, isn't springing back and isn't moving the camera
+	if stickLocked or dropping or lean < _settings.STICK_DEADZONE then
+		return
+	end
+
+	--[[ Aiming ]]
+
+	-- The shortest way round to the stick's angle
+	local turn: number = ((math.atan2(stick.Y, stick.X) - angle + math.pi) % (2 * math.pi)) - math.pi
+	pointer = nil
+	if lean < _settings.STICK_FIRM_LEAN then
+		local share: number = (lean - _settings.STICK_DEADZONE) / (_settings.STICK_FIRM_LEAN - _settings.STICK_DEADZONE)
+		local speed: number = math.rad(_settings.STICK_NUDGE_SPEED[1] + (_settings.STICK_NUDGE_SPEED[2] - _settings.STICK_NUDGE_SPEED[1]) * share)
+		angle += math.clamp(turn, -speed * deltaTime, speed * deltaTime)
+	else
+		local share: number = (lean - _settings.STICK_FIRM_LEAN) / (1 - _settings.STICK_FIRM_LEAN)
+		local rate: number = _settings.STICK_TURN_SPEED[1] + (_settings.STICK_TURN_SPEED[2] - _settings.STICK_TURN_SPEED[1]) * share
+		angle += turn * (1 - math.exp(-rate * deltaTime))
+	end
+
+	-- Kept between -180° and 180°, as the mouse's aim is
+	angle = math.atan2(math.sin(angle), math.cos(angle))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Draw

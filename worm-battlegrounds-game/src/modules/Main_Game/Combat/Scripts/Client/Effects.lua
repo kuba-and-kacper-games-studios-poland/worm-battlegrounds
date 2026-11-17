@@ -28,6 +28,19 @@ local random: Random = Random.new()
 -- Until when a hit stop holds the world (os.clock)
 local stoppedUntil: number = 0
 
+--[[ Debris ]]
+
+-- Chips free to throw again (each goes back once it has faded), so a blast moves parts instead of making them
+local spareChips = {} --- @type { BasePart }
+
+-- Each chip out now: its speed (zero once it lies still), its spin (radians a second about its axis) and when it was thrown
+local chipVelocities = {} --- @type { [BasePart]: Vector3 }
+local chipSpins = {} --- @type { [BasePart]: Vector3 }
+local chipThrownAt = {} --- @type { [BasePart]: number }
+
+local chipConnection: RBXScriptConnection? = nil
+local chipParams: RaycastParams = RaycastParams.new()
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -55,6 +68,7 @@ function Module.Start()
 	--[[ Feel ]]
 
 	shaker = I.CameraShake.new(I.S.Workspace.CurrentCamera)
+	chipParams.FilterType = Enum.RaycastFilterType.Include
 
 	--[[ Connections ]]
 
@@ -206,8 +220,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Hit Stop
 
 --[[
-	Stops the world for a beat: the effects' particles and the thrown chunks of ground freeze and the camera holds
-	(MatchCamera's Freeze), then all go on as they were. A stop already running isn't stretched.
+	Stops the world for a beat: the effects' particles freeze, the thrown chunks of ground hold still (their step waits
+	it out) and the camera holds (MatchCamera's Freeze), then all go on as they were. A stop already running isn't
+	stretched.
 ]]
 function Module._hitStop(seconds: number)
 	--[[ Checks ]]
@@ -220,7 +235,6 @@ function Module._hitStop(seconds: number)
 	--[[ Local Variables ]]
 
 	local emitters = {} --- @type { [ParticleEmitter]: number }
-	local chunks = {} --- @type { [BasePart]: Vector3 }
 	stoppedUntil = os.clock() + seconds
 
 	--[[ Freezing ]]
@@ -229,9 +243,6 @@ function Module._hitStop(seconds: number)
 		if child:IsA("ParticleEmitter") then
 			emitters[child] = child.TimeScale
 			child.TimeScale = 0
-		elseif child:IsA("BasePart") and child.Name == "Debris" and not child.Anchored then
-			chunks[child] = child.AssemblyLinearVelocity
-			child.Anchored = true
 		end
 	end
 	I.MatchCamera.Freeze(seconds)
@@ -242,20 +253,15 @@ function Module._hitStop(seconds: number)
 		for emitter: ParticleEmitter, timeScale: number in pairs(emitters) do
 			emitter.TimeScale = timeScale
 		end
-		for chunk: BasePart, velocity: Vector3 in pairs(chunks) do
-			if chunk.Parent then
-				chunk.Anchored = false
-				chunk.AssemblyLinearVelocity = velocity
-			end
-		end
 	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Throw Debris
 
 --[[
-	Throws chunks of the terrain and props around a blast up and away from it, in their colours: they bounce on the
-	terrain (never on snails or shots), lie there a moment, then fade. A blast in the air throws nothing.
+	Throws chunks of the terrain and props around a blast up and away from it, in their colours, from the spare chips
+	when there are some: they fly on the game's own motion (Step Chips) and bounce on the terrain only (never on snails
+	or shots), lie there a moment, then fade. A blast in the air throws nothing.
 ]]
 function Module._throwDebris(position: Vector3, size: number)
 	--[[ Local Variables ]]
@@ -288,31 +294,108 @@ function Module._throwDebris(position: Vector3, size: number)
 
 		--[[ Building ]]
 
-		local chip: Part = I.Create("Part")({
+		-- Placed before it's parented, so whatever watches the folder (Atmosphere's splashes) first sees it there
+		local chip: BasePart = table.remove(spareChips) or I.Create("Part")({
 			Name = "Debris",
-			Size = Vector3.new(random:NextNumber(sizes[1], sizes[2]), random:NextNumber(sizes[1], sizes[2]), random:NextNumber(sizes[1], sizes[2])),
-			CFrame = CFrame.new(position + direction * size * 0.4) * CFrame.Angles(random:NextNumber(0, math.pi), random:NextNumber(0, math.pi), 0),
-			Color = source.Color,
-			Material = source.Material,
-			MaterialVariant = source.MaterialVariant,
-			CollisionGroup = "Chip",
-			CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.6, 0.35),
+			Anchored = true,
+			CanCollide = false,
 			CanQuery = false,
 			CanTouch = false,
-			Parent = effectsFolder,
 		})
-		chip.AssemblyLinearVelocity = direction * random:NextNumber(_settings.DEBRIS_SPEED[1], _settings.DEBRIS_SPEED[2])
-		chip.AssemblyAngularVelocity = random:NextUnitVector() * 12
+		chip.Size = Vector3.new(random:NextNumber(sizes[1], sizes[2]), random:NextNumber(sizes[1], sizes[2]), random:NextNumber(sizes[1], sizes[2]))
+		chip.CFrame = CFrame.new(position + direction * size * 0.4) * CFrame.Angles(random:NextNumber(0, math.pi), random:NextNumber(0, math.pi), 0)
+		chip.Color = source.Color
+		chip.Material = source.Material
+		chip.MaterialVariant = source.MaterialVariant
+		chip.Transparency = 0
+		chip.Parent = effectsFolder
 
-		--[[ Fading ]]
+		--[[ Throwing ]]
 
-		local Chip_TweenInfo: TweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, _settings.DEBRIS_LIFETIME)
-		local Chip_TweenGoal = { Transparency = 1 }
-		local Chip_Tween: Tween = I.S.TweenService:Create(chip, Chip_TweenInfo, Chip_TweenGoal)
-		Chip_Tween:Play()
-		Chip_Tween.Completed:Once(function()
-			chip:Destroy()
-		end)
+		chipVelocities[chip] = direction * random:NextNumber(_settings.DEBRIS_SPEED[1], _settings.DEBRIS_SPEED[2])
+		chipSpins[chip] = random:NextUnitVector() * _settings.DEBRIS_SPIN
+		chipThrownAt[chip] = os.clock()
+	end
+
+	--[[ Connections ]]
+
+	if not chipConnection then
+		chipConnection = I.S.RunService.RenderStepped:Connect(Module._stepChips)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Step Chips
+
+--[[
+	Each frame while chips are out: moves every flying chip by the game's gravity, spinning, and bounces it off the
+	terrain (DEBRIS_BOUNCE of its speed into the ground comes back, DEBRIS_SLIDE of its speed along it stays) until it
+	lies still (DEBRIS_REST_SPEED), all in one move; a hit stop holds them. Each fades DEBRIS_LIFETIME after it was
+	thrown and goes back to the spare chips. Stops once none is out.
+]]
+function Module._stepChips(deltaTime: number)
+	--[[ Local Variables ]]
+
+	local now: number = os.clock()
+	local frozen: boolean = now < stoppedUntil
+	local step: number = math.min(deltaTime, 0.1)
+	local gravity: Vector3 = Vector3.new(0, -I.S.Workspace.Gravity, 0)
+	local terrain: Instance? = arenaFolder:FindFirstChild("Terrain")
+	local moved = {} --- @type { BasePart }
+	local cframes = {} --- @type { CFrame }
+	chipParams.FilterDescendantsInstances = if terrain then { terrain } else {}
+
+	--[[ Moving ]]
+
+	for chip: BasePart, velocity: Vector3 in pairs(chipVelocities) do
+		if frozen or velocity == Vector3.zero then
+			continue
+		end
+		local cframe: CFrame = chip.CFrame
+		local move: Vector3 = velocity * step + gravity * (0.5 * step * step)
+		local after: Vector3 = velocity + gravity * step
+		local position: Vector3 = cframe.Position + move
+		local hit: RaycastResult? = I.S.Workspace:Raycast(cframe.Position, move, chipParams)
+		if hit then
+			-- Off the ground, losing speed into it and along it; slow enough on ground flat enough, it lies still
+			local into: number = after:Dot(hit.Normal)
+			after = (after - hit.Normal * into) * _settings.DEBRIS_SLIDE - hit.Normal * into * _settings.DEBRIS_BOUNCE
+			position = hit.Position + hit.Normal * math.min(chip.Size.X, chip.Size.Y, chip.Size.Z) / 2
+			if after.Magnitude < _settings.DEBRIS_REST_SPEED and hit.Normal.Y > 0.5 then
+				after = Vector3.zero
+			end
+		end
+		local spin: Vector3 = chipSpins[chip]
+		local turn: CFrame = if after == Vector3.zero then CFrame.identity else CFrame.fromAxisAngle(spin.Unit, spin.Magnitude * step)
+		chipVelocities[chip] = after
+		table.insert(moved, chip)
+		table.insert(cframes, CFrame.new(position) * turn * cframe.Rotation)
+	end
+	if #moved > 0 then
+		I.S.Workspace:BulkMoveTo(moved, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+	end
+
+	--[[ Fading ]]
+
+	local fadeInfo: TweenInfo = _settings.DEBRIS_FADE_TWEENINFO
+	for chip: BasePart, thrownAt: number in pairs(chipThrownAt) do
+		local fade: number = (now - thrownAt - _settings.DEBRIS_LIFETIME) / fadeInfo.Time
+		if fade <= 0 then
+			continue
+		end
+		chip.Transparency = I.S.TweenService:GetValue(math.min(fade, 1), fadeInfo.EasingStyle, fadeInfo.EasingDirection)
+		if fade >= 1 then
+			chipVelocities[chip] = nil
+			chipSpins[chip] = nil
+			chipThrownAt[chip] = nil
+			table.insert(spareChips, chip)
+		end
+	end
+
+	--[[ Stopping ]]
+
+	if next(chipThrownAt) == nil and chipConnection then
+		chipConnection:Disconnect()
+		chipConnection = nil
 	end
 end
 

@@ -15,14 +15,14 @@ for the few sounds no classic one covers (the falling whistle, the fuse, the lav
 | --- | --- |
 | `snaillib.py` | The shared DSP: FFT filters and filter sweeps, oscillators and glides, modal mallets (marimba, glockenspiel, xylophone, woodblock, bell), thumps, debris grains, bubbles, snail babble, a small outdoor tail, seamless loops, levelling, WAV and OGG writing |
 | `make_sfx.py` | Every effect, one function per SoundsList name (its docstring says what it is) |
-| `make_classic.py` | The effects in the classic soundscape: CLASSIC (a Roblox 2009 sound played by its id), BUILT (made from them) and SCORED (on the Great Strategy font), with `classic.json` for the preview; its `UPDATE_2026_11_16` list is the 16 Nov set (below) |
+| `make_classic.py` | The effects in the classic soundscape: CLASSIC (a Roblox 2009 sound played by its id), BUILT (made from them) and SCORED (on the Great Strategy font), with `classic.json` for the preview; its `UPDATE_2026_11_16` list is the 16 Nov set and `UPDATE_2026_11_17` the 17 Nov draft (below) |
 | `tracker.py` | A tracker-style sampler: plays the classic Roblox sample pack's long single-note samples re-pitched per note, lays them on a seamless loop, adds a wrapping hall |
 | `make_levels.py` | The level music (the owner's pick, 2026-11-10, after Worms Armageddon's streams): each map's track is its ambience and a light song that sounds like the level, mixed as one, mostly one instrument at a time playing a bit of the tune, with a faster, driving sudden-death version (Rockslide Ridge stays epic all through, the owner's pick); and the lobby, the game's signature tune barely there over a meadow. On the classic samples, with hand drums and shakers in numpy. Since 2026-11-16 also the six new maps (below), each playing the snail tune (`snail()`: the lobby's call and answer as scale degrees) in its own mode |
 | `ambience.py` | The levels' ambience, built at a loop's length so it wraps with the music: wind (from Roblox's own falling-wind recording), mountain whistle, sand hiss, lava rumble and bubbles, embers, birds, crickets, leaves, rockfalls, a hawk, water drips; since 2026-11-16 cave drips in a long stone echo, the cave's air, lake water lapping, wind in long grass |
 | `make_themes.py` | The earlier themes (a different tune each, faster, and a heavier sudden death), replaced by `make_levels.py`; its note helpers (`midi`, `tune`, `chord`) are shared |
 | `make_music.py` | The music: the lobby loop, a battle loop per map (Picnic Plains, Desert, Rockslide Ridge) and its sudden-death version, the win and lose stings. One 4-bar theme runs through all of them in different modes and bands |
 | `make_crates.py` | Draft crate-opening sounds (2026-11-11, not approved yet): the reel's tick, landing and settle as crisp new synthesis, the crate, reveals and legendary calls on the classic samples; `out/crates/`, previewed in `../crates/` |
-| `make_preview.py` | `preview.html`: every piece and effect with a player (loops on repeat), where it plays and what it replaces, for review; given the update folder, the "Update 16 Nov" section at the top |
+| `make_preview.py` | `preview.html`: every piece and effect with a player (loops on repeat), where it plays and what it replaces, for review; given the update folder, the "Update 16 Nov" section at the top, and given the 17 Nov folder after it, the "Update 17 Nov" section above that |
 
 ## Build
 
@@ -41,6 +41,9 @@ python -I make_preview.py <classic> <music>  # preview.html next to this file, e
 python -I make_levels.py out/update_2026-11-16 VolcanoIsle VolcanoIsle_SuddenDeath EchoCaverns ...
 python -I make_classic.py out/update_2026-11-16 update
 python -I make_preview.py out/classic out/levels out/update_2026-11-16
+# The 17 Nov draft into its own folder (~5 s), then the preview with both sections:
+python -I make_classic.py out/update_2026-11-17 update17
+python -I make_preview.py out/classic out/levels out/update_2026-11-16 out/update_2026-11-17
 ```
 
 Loops render three times back to back and keep the middle pass, and their first 30 ms fade in from what really follows
@@ -56,6 +59,29 @@ Each effect writes `WB_<Name>.wav` (44.1 kHz, 16-bit mono) and `WB_<Name>.ogg` (
 length and peak. One-shots are levelled on their loudest 0.3 s (UI about -18 dB, weapons -14, big blasts -11) and
 soft-limited under -1 dBFS; the jetpack is a seamless loop levelled on its RMS. `out/` and `preview.html` aren't kept
 in the repo.
+
+## Update 17 Nov (2026-11-17, approved and uploaded)
+
+The polish pass's ten sounds, for names `SoundsList.lua` already has (they played stand-ins from the sets below until
+the owner approved them the same day): rendered into `out/update_2026-11-17/` (WAV and OGG) by `make_classic.py`'s `UPDATE_2026_11_17`
+and heard in `preview.html`'s "Update 17 Nov" section. The ticks are crisp new synthesis, as `make_crates.py`'s reel
+is; the chimes and fanfares play on the Great Strategy's instruments (`tracker.py`). The XP lines chime on G and the
+level-up lands on C, so the replay resolves into the fanfare. The Shiny and Golden accents are high-passed (2 kHz,
+1.2 kHz), so the blast under them keeps its whole body; over the classic Time Bomb boom they sit well above its highs,
+over the smaller classic blast about level with them.
+
+| SoundsList name | Length, level | What | Title |
+| --- | --- | --- | --- |
+| `Xp_Line` | 0.6 s, -19 dB | A harp pluck and finger chimes on G, a glockenspiel glint, the classic fast click as the line pops in | Snail Level Chime |
+| `Xp_Tick` | 50 ms, -22 | The start of the classic fast click over a short glassy tick at a middle pitch (the game may raise it as the bar fills) | Snail Level Tick |
+| `Level_Up` | 1.9 s, -16 | Bright-horn fanfare up A flat, B flat, a held C major chord; snare on each step, bass drum and crash on the chord, horns, strings, a chime run | Snail Level Up Fanfare |
+| `Frame_Unlock` | 2.4 s, -15 | A reversed crash and a two-octave chime run swelling into the orchestra hit on a full C major chord (bright horns, horns, choir, strings), the classic blade shing, a bell, falling glints | Snail Frame Unlock |
+| `Free_Claim` | 1.0 s, -17 | A lid popping (woody knock, classic Kerplunk and flashbulb, a soft thump), a harp run up C major into a piano chord and chimes | Snail Gift Claim |
+| `Drop_Place` | 0.45 s, -18 | A felt thump and woody tock with a two-part latch click (the classic switch, low) and a short low harp note | Snail Landing Lock |
+| `Emote_WheelOpen` | 0.35 s, -21 | The classic swoosh, a touch faster and darker, over airy noise sweeping up with a slowing flutter | Snail Wheel Open |
+| `Emote_WheelHover` | 50 ms, -26 | A very soft, rounded woody tick, lower and duller than the XP tick | Snail Wheel Tick |
+| `Variant_Shiny` | 1.0 s, -18 | A glass ting, high finger chimes and glints thinning out, a fizz of light, all over 2 kHz | Snail Shiny Sparkle |
+| `Variant_Golden` | 1.4 s, -17 | Two coins clinking (ka-ching), a chime run up C major, bells on a C major chord, golden glints, all over 1.2 kHz | Snail Golden Shimmer |
 
 ## Update 16 Nov (2026-11-16, approved and uploaded)
 
@@ -136,6 +162,16 @@ for sudden death. The 2026-11-16 set (28 uploads, "Reviewing" at upload; ids in 
 | Snail Vortex Collapse | `BlackHole_Collapse` | Snail Vortex Boom | `BlackHole_Burst` |
 | Snail Prism Chime | `Variety_Burst` | Snail Dig Crunch | `Variety_Dig` |
 | Snail Worm Squeak | `Variety_Squeak` | Snail Split Pop | `Cluster_Split` |
+
+The 2026-11-17 set (10 uploads from `out/upload/2026-11-17`, "Reviewing" at upload; ids in `SoundsList.lua`):
+
+| Title | SoundsList name | Title | SoundsList name |
+| --- | --- | --- | --- |
+| Snail Level Chime | `Xp_Line` | Snail Level Tick | `Xp_Tick` |
+| Snail Level Up Fanfare | `Level_Up` | Snail Frame Unlock | `Frame_Unlock` |
+| Snail Gift Claim | `Free_Claim` | Snail Landing Lock | `Drop_Place` |
+| Snail Wheel Open | `Emote_WheelOpen` | Snail Wheel Tick | `Emote_WheelHover` |
+| Snail Shiny Sparkle | `Variant_Shiny` | Snail Golden Shimmer | `Variant_Golden` |
 
 The 2026-11-10 set (37 uploads, all approved):
 

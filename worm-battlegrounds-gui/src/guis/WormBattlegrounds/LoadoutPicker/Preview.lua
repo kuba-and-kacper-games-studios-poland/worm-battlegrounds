@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "LoadoutPickerPreview"
@@ -8,13 +9,13 @@ local _localName: string = "LoadoutPickerPreview"
 
 --[[ Examples ]]
 
--- Cards: name, rarity colour, copies (0: not owned, locked), look ("" normal, "Equipped", "Selected")
+-- Cards: name, rarity colour, copies (0: not owned, locked; 10 shiny, 100 golden), look ("" normal, "Equipped", "Selected")
 --- @type { { any } }
 local ITEMS = {
 	{ "Grenade", Color3.fromRGB(68, 141, 224), 7, "Selected" },
-	{ "Shotgun", Color3.fromRGB(167, 79, 224), 3, "Equipped" },
+	{ "Shotgun", Color3.fromRGB(167, 79, 224), 12, "Equipped" },
 	{ "Uzi", Color3.fromRGB(79, 194, 97), 2, "Equipped" },
-	{ "Dynamite", Color3.fromRGB(224, 176, 35), 1, "" },
+	{ "Dynamite", Color3.fromRGB(224, 176, 35), 104, "" },
 	{ "Baseball bat", Color3.fromRGB(176, 176, 185), 5, "" },
 	{ "Minigun", Color3.fromRGB(224, 176, 35), 0, "" },
 	{ "Spider bomb", Color3.fromRGB(167, 79, 224), 0, "" },
@@ -22,6 +23,10 @@ local ITEMS = {
 
 -- Cards in each row, as Loadout's ITEMS_PER_ROW
 local ITEMS_PER_ROW: number = 3
+
+-- Copies that make an item shiny and golden, as Loadout's SHINY_COPIES and GOLDEN_COPIES
+local SHINY_COPIES: number = 10
+local GOLDEN_COPIES: number = 100
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -53,7 +58,8 @@ local Module = {
 
 --[[
 	Fills the grid as Loadout's Picker does: a row per three cards, each card cloned from the row's nested
-	ItemCard, the one in the slot selected, those in other slots equipped, the ones not owned locked.
+	ItemCard, the one in the slot selected, those in other slots equipped, the ones not owned locked, a shiny one
+	in its holo foil and a golden one in its gold rim.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -86,6 +92,8 @@ function Module.Apply(preview)
 			card:FindFirstChild("S_Rarity").ImageColor3 = item[2]
 			card:FindFirstChild("S_Amount").Text = if item[3] > 0 then `x{item[3]}` else ""
 			card:FindFirstChild("S_Locked").Visible = item[3] == 0
+			background:FindFirstChild("S_Foil").Visible = item[3] >= SHINY_COPIES and item[3] < GOLDEN_COPIES
+			background:FindFirstChild("S_Gold").Visible = item[3] >= GOLDEN_COPIES
 			background:FindFirstChild("Stroke2").Image = card:GetAttribute(`Look_{item[4]}Stroke2`)
 			background:FindFirstChild("Stroke").Image = card:GetAttribute(`Look_{item[4]}Stroke`)
 			background:FindFirstChild("Stroke").ImageColor3 = card:GetAttribute(`Look_{item[4]}StrokeColor`)

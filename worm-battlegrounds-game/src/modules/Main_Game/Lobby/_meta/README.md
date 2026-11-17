@@ -14,8 +14,9 @@ owner, 2026-11-16). Every snail on the stage holds the Bazooka (`STAGE_WEAPON`) 
 random, never the one it had, picked again when the members change or the player comes back from a match. Each client builds its own snails, so everyone sees themselves in front.
 The client shows the lobby's panels and holds the camera on the stage except while the player is in a match (the
 `InMatch` Player attribute, which only changes on the Studio map), and hides the panels while a full-screen widget
-(`FULL_SCREEN_WIDGETS`: Skins, Crates) is open, or the one panel a widget stands in for (`PANEL_WIDGETS`: the emote
-shop over Loadout), from WidgetManager's `WidgetManager_Opened` and `WidgetManager_Closed` Topics.
+(`FULL_SCREEN_WIDGETS`: Skins, Crates, Shop) is open, or the guis a widget stands in for (`PANEL_WIDGETS`: the emote
+shop, the custom lobby's window and the solo, party and local setup over Loadout; the weapon picker and the free crate
+dialog over the top row and the board), from WidgetManager's `WidgetManager_Opened` and `WidgetManager_Closed` Topics.
 
 | | |
 | --- | --- |
@@ -31,7 +32,7 @@ shop over Loadout), from WidgetManager's `WidgetManager_Opened` and `WidgetManag
 | --- | --- |
 | `Server.lua` | Routing on join, the rejoin offer, `Workspace.Ume.Lobby` (where clients stand the party's snails) |
 | `Client.lua` | Shows `LOBBY_GUIS` outside matches and while no full-screen widget is open, closes a lobby window still open when a match starts (the Studio map's custom lobby), asks "Rejoin your match?" |
-| `Scripts/Client/Stage.lua` | The stage: the camera on its marker outside matches (eased there, `STAGE_CAMERA_EASE`; in a custom lobby backed off along its look to fit every snail, `STAGE_FIT_MARGIN`), and the party's snails on its pods, or a custom lobby's on the `CustomPods` swapped in for them, each holding `STAGE_WEAPON` (`I.SnailRig.Hold`) in a random one of `STAGE_POSES` (looped from a random point, over the idle), rebuilt when someone joins or leaves the party or the custom lobby (`MatchBoard_RoomChanged`) or changes skin, and posed again when the members change or the player is back from a match (`InMatch`); `GetSnail` (`I.Lobby.GetStageSnail`), which ChatBubbles stands a member's chat bubbles over |
+| `Scripts/Client/Stage.lua` | The stage: the camera on its marker outside matches (set there at once, then eased to where it frames the stage, `STAGE_CAMERA_EASE`, from where it was held, never from the live camera, which Roblox moves as the avatar loads: 2026-11-17; in a custom lobby backed off along its look to fit every snail, `STAGE_FIT_MARGIN`), and the party's snails on its pods, or a custom lobby's on the `CustomPods` swapped in for them, each holding `STAGE_WEAPON` (`I.SnailRig.Hold`) in a random one of `STAGE_POSES` (looped from a random point, over the idle), rebuilt when someone joins or leaves the party or the custom lobby (`MatchBoard_RoomChanged`) or changes skin, and posed again when the members change or the player is back from a match (`InMatch`); `GetSnail` (`I.Lobby.GetStageSnail`), which ChatBubbles stands a member's chat bubbles over |
 | `Settings.lua` | `Lobby_Settings` |
 
 ## API
@@ -64,9 +65,9 @@ shop over Loadout), from WidgetManager's `WidgetManager_Opened` and `WidgetManag
 
 | Key | Default | What |
 | --- | --- | --- |
-| `LOBBY_GUIS` | Lobby, MatchBoard, Party, Loadout, Currency | The guis the client shows outside matches |
+| `LOBBY_GUIS` | Lobby, MatchBoard, Party, Loadout, Currency, LevelPlate | The guis the client shows outside matches |
 | `FULL_SCREEN_WIDGETS` | Skins, Crates, Shop | The widgets that cover the whole screen: `LOBBY_GUIS` hide while one is open |
-| `PANEL_WIDGETS` | EmoteShop: Loadout | The widgets that stand in one lobby panel's place, by widget: those panels hide while one is open |
+| `PANEL_WIDGETS` | EmoteShop, CustomLobby, MatchSetup: Loadout · LoadoutPicker, FreeCrateDialog: Lobby, MatchBoard, Currency, LevelPlate | The widgets that stand in some lobby guis' place, by widget: those guis hide while one is open (the weapon picker's tall window takes the top row, FREE WEAPONS with the menu, and the board) |
 | `STAGE_PREFAB`, `PODS_FOLDER`, `POD_PREFIX`, `CAMERA_MARKER`, `SNAIL_MARKER` | `"PREFAB \| Stage"`, `"Pods"`, `"Pod_"`, `"Camera"`, `"Snail"` | The stage's prefab in Lobby's assets, its pods (`Pod_1` the player's), and the markers the camera and each snail stand on |
 | `STAGE_FOV` | `50` | The stage camera's field of view (the `FOV` buff's base) |
 | `STAGE_SNAIL_SCALE` | `1.5` | How much bigger the stage's snails are than in a match (`Model:ScaleTo` on the built snail); each is lifted by what grew under its pivot, so its feet stay on its pod |

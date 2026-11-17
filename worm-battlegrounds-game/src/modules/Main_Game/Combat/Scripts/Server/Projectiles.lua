@@ -239,8 +239,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Options
 
 --[[
-	Returns a simulated shot's base options: a projectile's radius, and its shooter (when it has one) left out for
-	SHOOTER_GRACE. Behaviors add their own.
+	Returns a simulated shot's base options: a projectile's radius, its shooter (when it has one) left out for
+	SHOOTER_GRACE, and its Shiny or Golden look (Variant), which every client's Variants handler draws. Behaviors add
+	their own.
 ]]
 --- @param shot Combat_Shot?
 --- @return Combat_ShotOptions
@@ -250,6 +251,7 @@ function Module.GetOptions(shot)
 		Radius = _settings.PROJECTILE_SIZE / 2,
 		Shooter = if shot then shot.Shooter else nil,
 		GraceSteps = math.round(_settings.SHOOTER_GRACE / STEP),
+		Variant = if shot then shot.Variant else nil,
 	}
 	return options
 end

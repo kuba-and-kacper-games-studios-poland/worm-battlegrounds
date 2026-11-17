@@ -5,6 +5,7 @@
 --- # General #
 ---
 --- @field UserId number
+--- @field Guest number?
 ---
 --- # Team #
 ---
@@ -21,7 +22,7 @@ local _match_RosterEntry = {}
 --- # General #
 ---
 --- @field MatchId string
---- @field Kind "Public" | "Solo" | "Party" | "Custom" | "Tutorial"
+--- @field Kind "Public" | "Solo" | "Party" | "Custom" | "Tutorial" | "Local"
 --- @field Mode "Deathmatch" | "Duo" | "Trio" | "Quads" | "Teams"
 --- @field Size number
 --- @field MapId string
@@ -60,6 +61,8 @@ local _match_RoomSeat = {}
 --- @field Connected boolean
 --- @field Out boolean
 --- @field ShinyItems { [string]: boolean }?
+--- @field GoldenItems { [string]: boolean }?
+--- @field Guest number?
 local _match_Participant = {}
 
 --- @class Match_Placement

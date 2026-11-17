@@ -5,15 +5,26 @@ local _settings = {
 
 	-- The guis the lobby turns on: its menu first, then its panels
 	--- @type { string }
-	LOBBY_GUIS = { "Lobby", "MatchBoard", "Party", "Loadout", "Currency" },
+	LOBBY_GUIS = { "Lobby", "MatchBoard", "Party", "Loadout", "Currency", "LevelPlate" },
 
 	-- The widgets that cover the whole screen: the lobby's guis hide while one is open
 	--- @type { string }
 	FULL_SCREEN_WIDGETS = { "Skins", "Crates", "Shop" },
 
-	-- The widgets that stand in one lobby panel's place, by widget: those panels hide while one is open
+	--[[
+		The widgets that stand in some lobby guis' place, by widget: those guis hide while one is open. The weapon picker
+		and the free crate dialog are tall windows in the middle, so the top row (the menu with FREE WEAPONS, the coins,
+		the level) and the board at the bottom make way for them, and Party and the Loadout column stay (the owner,
+		2026-11-17: "make sure they hide")
+	]]
 	--- @type { [string]: { string } }
-	PANEL_WIDGETS = { EmoteShop = { "Loadout" } },
+	PANEL_WIDGETS = {
+		EmoteShop = { "Loadout" },
+		CustomLobby = { "Loadout" },
+		MatchSetup = { "Loadout" },
+		LoadoutPicker = { "Lobby", "MatchBoard", "Currency", "LevelPlate" },
+		FreeCrateDialog = { "Lobby", "MatchBoard", "Currency", "LevelPlate" },
+	},
 
 	--%%%%%%%%%%%%%%%%%%%% Stage
 

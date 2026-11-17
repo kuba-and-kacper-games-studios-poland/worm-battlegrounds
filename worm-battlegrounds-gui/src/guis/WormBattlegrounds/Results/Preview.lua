@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "ResultsPreview"
@@ -43,6 +44,7 @@ local Module = {
 	Settings = {
 		{ Control = "Slider", Id = "S_Players", Label = "Players", Value = 4, Min = 2, Max = 4, Step = 1 },
 		{ Control = "Toggle", Id = "S_LevelUp", Label = "Levelled up", Value = true },
+		{ Control = "Slider", Id = "S_XpShare", Label = "Level bar", Value = 0.38, Min = 0, Max = 1, Step = 0.01 },
 	},
 }
 
@@ -51,7 +53,8 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the placings, the first three in their medal colours, and shows the level-up line.
+	Fills the placings, the first three in their medal colours, shows the level-up line, and fills the level bar as far
+	as its slider (156 XP a level, as level 14's).
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -74,6 +77,8 @@ function Module.Apply(preview)
 	--[[ Earned ]]
 
 	preview.View:Get("U_Earned", "S_LevelUp").Instance.Visible = preview.Values.S_LevelUp
+	preview.View:Get("U_Earned", "S_XpFill").Instance.Size = UDim2.fromScale(preview.Values.S_XpShare, 1)
+	preview.View:Get("U_Earned", "S_XpCount").Instance.Text = `{math.floor(preview.Values.S_XpShare * 156)} / 156 XP`
 end
 
 return Module

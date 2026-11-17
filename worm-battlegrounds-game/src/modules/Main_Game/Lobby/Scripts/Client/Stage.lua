@@ -41,9 +41,10 @@ local posedFor: string = ""
 
 --[[ Camera ]]
 
--- Whether the camera is held on the stage, and where it eases to
+-- Whether the camera is held on the stage, where it eases to, and where the ease is (never read off the camera)
 local holding: boolean = false
 local cameraTarget: CFrame? = nil
+local heldCFrame: CFrame = CFrame.identity
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -370,7 +371,8 @@ function Module._refreshCamera()
 	if holding then
 		-- The FOV buff's base, so an open widget's FOV change still adds to it
 		I.Buff.Set("FOV", "Standard", _settings.STAGE_FOV)
-		I.S.Workspace.CurrentCamera.CFrame = cameraTarget or cameraMarker.CFrame
+		heldCFrame = cameraTarget or cameraMarker.CFrame
+		I.S.Workspace.CurrentCamera.CFrame = heldCFrame
 
 		-- After Roblox's camera scripts each frame, so nothing moves it off the stage
 		I.S.RunService:BindToRenderStep("Lobby_Stage", Enum.RenderPriority.Camera.Value + 1, Module._holdCamera)
@@ -384,7 +386,7 @@ end
 
 --[[
 	Eases the camera to where it frames the stage (its marker, or backed off to fit a custom lobby), looking along the
-	marker's front.
+	marker's front. The ease runs from where it was held, so Roblox moving the camera as the avatar loads never swoops it.
 ]]
 function Module._holdCamera(deltaTime: number)
 	--[[ Local Variables ]]
@@ -395,8 +397,9 @@ function Module._holdCamera(deltaTime: number)
 
 	--[[ Applying ]]
 
+	heldCFrame = heldCFrame:Lerp(target, alpha)
 	camera.CameraType = Enum.CameraType.Scriptable
-	camera.CFrame = camera.CFrame:Lerp(target, alpha)
+	camera.CFrame = heldCFrame
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

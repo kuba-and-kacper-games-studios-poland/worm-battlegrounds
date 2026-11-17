@@ -22,7 +22,7 @@ network.
 | --- | --- |
 | Folder | `src/modules/Main_Game/Atmosphere` |
 | Runs on | Server (the world folder only), Client · Lobby map, Match map, Studio map |
-| Uses | `I.Lighting`, `I.Vfx`, `I.BGM_Controller`, `I.Sound`, `I.Network` (listens to Arena's `Arena_Carve` and `Arena_Fall`), `I.Config.PlaceLoader`, `I.Settings` (Lobby's `CAMERA_MARKER`, Arena's `LIQUID_COLORS`, Combat's `SOUND_ROLLOFF_MIN`/`MAX`, Match's `WIND_MAX`) |
+| Uses | `I.Lighting`, `I.Vfx`, `I.BGM_Controller`, `I.Sound`, `I.Network` (listens to Arena's `Arena_Carve` and `Arena_Fall`), `I.Topic` (Arena's `Arena_PropThrown`), `I.Config.PlaceLoader`, `I.Settings` (Lobby's `CAMERA_MARKER`, Arena's `LIQUID_COLORS`, Combat's `SOUND_ROLLOFF_MIN`/`MAX`, Match's `WIND_MAX`) |
 
 ## Files
 
@@ -34,7 +34,7 @@ network.
 | `Scripts/Client/Mood.lua` | Picks the mood for where the player is, sets its lighting preset, music, particles, wind and the sudden-death layer; a map's particles and wind wait for its `Bounds` marker when it arrives after the markers |
 | `Scripts/Client/Wind.lua` | The wind's streaks: one `WIND_EFFECT` copy kept over the camera's view each frame (after MatchCamera, at the `Camera` render priority + 2), turned, sped up and thickened by the wind, breathing in gusts; and its sound: the map's `WindSound` loop eased to the wind's volume, and a `WIND_GUST_SOUND` whoosh at strong gusts' peaks; a change of wind bursts streaks across the view with the whoosh |
 | `Scripts/Client/Ambient.lua` | The ambient areas (a mood's `Ambient_` prefabs streaming over the map's bounds, or in front of the lobby stage camera), their wind, the liquid surface effects and ceiling grit on spots in view, and the lobby stage's drifting clouds |
-| `Scripts/Client/Reactions.lua` | The arena's reactions: prop bursts on `Arena_Carve`, splashes where watched things drop through a liquid's surface, splashes and landing dust for `Arena_Fall` groups, steam and the hiss from new obsidian |
+| `Scripts/Client/Reactions.lua` | The arena's reactions: prop bursts on `Arena_Carve` (only from the props near it: the Decor parts that burst are kept by prop as they come and go, each prop's box read again after it changes; parts a screen's cut hid are left out), splashes where watched things drop through a liquid's surface (chips Combat keeps see-through between blasts aren't watched; a prop's pieces from when Arena throws or drops them, `Arena_PropThrown`), splashes and landing dust for `Arena_Fall` groups, steam and the hiss from new obsidian in the map's terrain |
 | `Scripts/Client/Liquids.lua` | Reads the arena's liquid rectangles (their `Arena_Liquid` kind) at most every `LIQUID_REFRESH`: surfaces crossed going down, random open surface spots, the liquid at a point, and whether a surface is the sea's |
 | `Scripts/Client/Effects.lua` | Plays a Vfx prefab once like `I.Vfx.Play`, painted in a colour, pulled by the wind and with its counts scaled; whether a point is in view |
 | `_meta/_types.lua` | `Atmosphere_Profile` and its rows, `Atmosphere_Stream`, `Atmosphere_LiquidRect`, `Atmosphere_Track` |

@@ -19,6 +19,7 @@ local Shots = require(_scripts:FindFirstChild("Client"):FindFirstChild("Shots"))
 local Effects = require(_scripts:FindFirstChild("Client"):FindFirstChild("Effects")) --- @type Combat_Client_Effects
 local Aimbot = require(_scripts:FindFirstChild("Client"):FindFirstChild("Aimbot")) --- @type Combat_Client_Aimbot
 local Vortex = require(_scripts:FindFirstChild("Client"):FindFirstChild("Vortex")) --- @type Combat_Client_Vortex
+local Variants = require(_scripts:FindFirstChild("Client"):FindFirstChild("Variants")) --- @type Combat_Client_Variants
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -57,6 +58,8 @@ function Module.Start()
 	--------- STARTING ---------
 	----------------------------
 
+	-- Before Held, which dresses the weapons it puts in hands
+	Variants.Start()
 	Held.Start()
 	Flight.Start()
 	Shots.Start()

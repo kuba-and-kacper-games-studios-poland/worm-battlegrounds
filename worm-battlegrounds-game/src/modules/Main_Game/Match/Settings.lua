@@ -41,6 +41,30 @@ local _settings = {
 	]]
 	DROP_SPOT_CHOICES = 6,
 
+	--%%%%%%%%%%%%%%%%%%%% Drop Marker
+
+	--[[
+		Every participant's spot shows the DropMarker pin, its tip on the spot: the player's own follows the pointer until
+		they place it, faded DROP_PIN_FADE where a snail doesn't fit, and others' are faded until they place theirs (the
+		owner, 2026-11-17: the old picking "was good", only its look changed). A placed pin drops in from DROP_PIN_FALL of
+		its height above its spot
+	]]
+	DROP_PIN_FADE = 0.6,
+	DROP_PIN_FALL = 0.35,
+	DROP_PIN_TWEENINFO = TweenInfo.new(0.4, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out),
+
+	-- The small target under the pin's tip (the aim crosshair's ring and a dot) pops in from this many times its size when placed
+	DROP_TARGET_POP = 1.6,
+	DROP_TARGET_TWEENINFO = TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+
+	--%%%%%%%%%%%%%%%%%%%% Local Play
+
+	--[[
+		Local play (the owner, 2026-11-17): before each local player's turn MatchHud's turn callout names them on the
+		host's screen and the turn waits for a press, at most LOCAL_HANDOFF_SECONDS
+	]]
+	LOCAL_HANDOFF_SECONDS = 30,
+
 	--%%%%%%%%%%%%%%%%%%%% Tutorial
 
 	--[[

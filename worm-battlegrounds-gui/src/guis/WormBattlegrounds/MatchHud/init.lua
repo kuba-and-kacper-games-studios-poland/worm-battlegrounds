@@ -10,7 +10,8 @@ local _gui = {
 
 	--[[
 		The match screen, ported 1:1 from the studio's HUD (2026-11-09) as Primitive nodes, plus the old hud's kill
-		feed, emote wheel and phase blocks (theme controls). The MatchHud module turns it on, on the Match map
+		feed and waiting block (theme controls); the emote wheel is Primitive nodes in the hud's look, and the drop's
+		timer a copy of the turn timer's plate (2026-11-17). The MatchHud module turns it on, on the Match map
 	]]
 	Name = "MatchHud",
 	Theme = "WormBattlegroundsBrawl",
@@ -1832,15 +1833,13 @@ local _gui = {
 							ClickSound_SoundGroup = "UI",
 							HoverSound_PitchMin = 1,
 							ClickSound_Name = "Button_Click",
-							Utils_GamepadKey = "ButtonX",
 						},
 						Tags = {
-							["Utils_ButtonKey"] = {},
 							["Utils_ButtonScale"] = {},
 							["Utils_ButtonSound"] = {},
 						},
 						Children = {
-							-- X opens the wheel on a pad (its Utils_ButtonKey), shown on Console
+							-- Held, X opens the wheel on a pad (read by Cosmetics, the Console module's Emotes), shown on Console
 							{
 								Primitive = "ImageLabel",
 								Props = {
@@ -1848,15 +1847,74 @@ local _gui = {
 									AnchorPoint = Vector2.new(0.5, 0.5),
 									BackgroundTransparency = 1,
 									Image = "rbxassetid://116629055704033",
-									Position = UDim2.fromScale(0.14, 0.14),
+									Position = UDim2.fromScale(0.9, 0.2),
 									ScaleType = Enum.ScaleType.Fit,
-									Size = UDim2.fromScale(0.4, 0.4),
+									Size = UDim2.fromScale(0.38, 0.38),
 									SizeConstraint = Enum.SizeConstraint.RelativeYY,
 									Visible = false,
 									ZIndex = 8,
 								},
 								Attributes = { Console_Action = "Emotes" },
 								Tags = { Console_Hint = {} },
+							},
+							-- Held, T opens the wheel on a keyboard: its key cap, on Desktop
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "KeyHint",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundColor3 = Color3.fromRGB(232, 232, 240),
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.9, 0.2),
+									Size = UDim2.fromScale(0.32, 0.32),
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									ZIndex = 8,
+								},
+								Attributes = {
+									Utils_DesktopVisibility = true,
+									Utils_MobileVisibility = false,
+									Utils_ConsoleVisibility = false,
+									Utils_VRVisibility = false,
+								},
+								Tags = { Utils_HideOnPlatform = {} },
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.22, 0) } },
+									{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 2 } },
+									{
+										Primitive = "TextLabel",
+										Props = {
+											Name = "Key",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.5, 0.5),
+											Size = UDim2.fromScale(0.8, 0.8),
+											ZIndex = 9,
+											Text = "T",
+											TextColor3 = Color3.fromRGB(27, 27, 36),
+											TextSize = 24,
+											FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+											RichText = true,
+											TextScaled = true,
+										},
+									},
+								},
+							},
+							-- The button's emote (Cosmetics' WHEEL_BUTTON_EMOTE), its picture from its Inventory row
+							{
+								Primitive = "ImageLabel",
+								Id = "S_Icon",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.56, 0.4),
+									Size = UDim2.fromScale(0.58, 0.58),
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									ZIndex = 4,
+									Image = "rbxassetid://122190966104251",
+									ScaleType = Enum.ScaleType.Fit,
+								},
 							},
 							{
 								Primitive = "Frame",
@@ -2690,44 +2748,297 @@ local _gui = {
 					{ Primitive = "UIScale", Id = "S_ScreenScale" },
 				},
 			},
-			-- A circle of the player's emotes (PREFAB | WheelEmote), placed around the middle by code
+			--[[
+				The emote wheel (in the hud's look since 2026-11-17), round the middle of the screen: a ring of slices (PREFAB | WheelSlice, one per emote, which
+				Cosmetics builds and turns) on a dark backing that shows as their outline and the lines between them, the
+				pointed emote's name in the middle, and one button over it all that takes the presses (Cosmetics plays the
+				slice under the press, or the one the stick points at)
+			]]
 			{
 				Primitive = "Frame",
 				Id = "U_EmoteWheel",
 				Visible = false,
-				Tags = {
-					Utils_PlatformScale = {
-						Utils_DesktopScale = 0.75,
-						Utils_MobileScale = 1,
-						Utils_ConsoleScale = 1,
-						Utils_VRScale = 1,
-					},
-				},
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundTransparency = 1,
+					BorderSizePixel = 0,
 					Position = UDim2.fromScale(0.5, 0.5),
-					Size = UDim2.fromOffset(440, 440),
+					Size = UDim2.fromScale(0.44, 0.44),
+					ZIndex = 20,
 				},
 				Children = {
-					{ Primitive = "UIScale", Id = "S_ScreenScale" },
+					{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 1 } },
+					-- Cosmetics spins and grows the wheel in with it as it opens
+					{ Primitive = "UIScale", Id = "S_Pop" },
+					{
+						Primitive = "Frame",
+						Props = {
+							Name = "Backing",
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundColor3 = Color3.fromRGB(10, 10, 16),
+							BackgroundTransparency = 0.12,
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0.5),
+							Size = UDim2.fromScale(0.95, 0.95),
+							ZIndex = 20,
+						},
+						Children = {
+							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+						},
+					},
+					-- The slices, cloned in from PREFAB | WheelSlice
+					{
+						Primitive = "Frame",
+						Id = "S_Slices",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0.5),
+							Size = UDim2.fromScale(1, 1),
+							ZIndex = 21,
+						},
+					},
+					-- The middle: the pointed emote's name, and under it what opens one not owned yet
+					{
+						Primitive = "Frame",
+						Props = {
+							Name = "Middle",
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundColor3 = Color3.fromRGB(25, 25, 35),
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0.5),
+							Size = UDim2.fromScale(0.34, 0.34),
+							ZIndex = 25,
+						},
+						Children = {
+							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+							{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { Color = Color3.fromRGB(10, 10, 16), Thickness = 3 } },
+							{
+								Primitive = "UIStroke",
+								Tags = { Utils_UIStroke = {} },
+								Props = {
+									Name = "UIStroke_Inner",
+									BorderStrokePosition = Enum.BorderStrokePosition.Inner,
+									Color = Color3.fromRGB(130, 130, 130),
+									Thickness = 3,
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_Name",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.5, 0.45),
+									Size = UDim2.fromScale(0.8, 0.3),
+									ZIndex = 26,
+									Text = "Wave",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextSize = 40,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+									{
+										Primitive = "UIStroke",
+										Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+									},
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_Sub",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.5, 0.69),
+									Size = UDim2.fromScale(0.78, 0.15),
+									ZIndex = 26,
+									Text = "",
+									TextColor3 = Color3.fromRGB(225, 225, 235),
+									TextSize = 20,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+									{
+										Primitive = "UIStroke",
+										Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+									},
+								},
+							},
+						},
+					},
+					-- Takes every press on the wheel (and the pad's selection while it's open from the button)
+					{
+						Primitive = "ImageButton",
+						Id = "S_Hit",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							AutoButtonColor = false,
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Image = "",
+							ImageTransparency = 1,
+							Position = UDim2.fromScale(0.5, 0.5),
+							Size = UDim2.fromScale(0.95, 0.95),
+							ZIndex = 30,
+						},
+					},
 				},
 			},
-			-- The drop phase: everyone picks where to land, all at once (sized like the turn panel)
+			-- The drop phase, at the top middle: the turn timer's plate counting the drop's seconds down (red in the last ones), "Pick where to land" under it
 			{
-				Control = "Box",
+				Primitive = "Frame",
 				Id = "U_Drop",
-				Screen = true,
 				Visible = false,
-				Style = { "Hud", PlatformScale = { Utils_MobileScale = 0.7 } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0),
-					Position = UDim2.fromScale(0.5, 0.011),
-					Size = UDim2.fromOffset(480, 0),
+					BackgroundTransparency = 1,
+					BorderSizePixel = 0,
+					Position = UDim2.fromScale(0.5, 0.062),
+					Size = UDim2.fromScale(0.1563, 0.1361),
+					ZIndex = 4,
 				},
 				Children = {
-					{ Control = "Label", Text = "Pick where to land", Align = "Center", Style = "Title" },
-					{ Control = "Label", Id = "S_Timer", Text = "15", Align = "Center", Style = "Display" },
+					{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 2.0411 } },
+					{
+						Primitive = "Frame",
+						Props = {
+							Name = "Timer",
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 0,
+							Position = UDim2.fromScale(0.1633, 0),
+							Size = UDim2.fromScale(0.6734, 0.6939),
+						},
+						Children = {
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Background",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Size = UDim2.fromScale(1, 1),
+								},
+								Children = {
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.005, 0.049),
+											Size = UDim2.fromScale(0.9899, 0.902),
+											Image = "rbxassetid://135704870689213",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "958_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke2",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 1,
+											Size = UDim2.fromScale(1, 1),
+											ZIndex = 2,
+											Image = "rbxassetid://79416087709831",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_17__Frame__Stroke2_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 2,
+											Position = UDim2.fromScale(0.0099, 0.0196),
+											Size = UDim2.fromScale(0.9802, 0.9608),
+											ZIndex = 3,
+											Image = "rbxassetid://119568965341826",
+											ImageColor3 = Color3.fromRGB(130, 130, 130),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_18__Frame__Stroke_gray",
+										},
+									},
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_Timer",
+								Props = {
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0.1535, 0.2255),
+									Size = UDim2.fromScale(0.693, 0.5588),
+									ZIndex = 2,
+									Text = "0:15",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextSize = 48,
+									TextWrapped = true,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+							},
+						},
+					},
+					{
+						Primitive = "TextLabel",
+						Props = {
+							Name = "Title",
+							AnchorPoint = Vector2.new(0.5, 0),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 1,
+							Position = UDim2.fromScale(0.5, 0.7551),
+							Size = UDim2.fromScale(1.6, 0.2449),
+							ZIndex = 2,
+							Text = "Pick where to land",
+							TextColor3 = Color3.fromRGB(255, 255, 255),
+							TextSize = 30,
+							TextWrapped = true,
+							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+							RichText = true,
+							TextScaled = true,
+						},
+						Tags = {
+							["TextCase_Upper"] = {},
+						},
+						Children = {
+							{
+								Primitive = "UIStroke",
+								Props = {
+									Thickness = 0.1,
+									StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+								},
+							},
+						},
+					},
 				},
 			},
 			-- The player's snail is out: watch the rest, or leave keeping their place (the studio's KnockedOut, 2026-11-12)
@@ -4093,12 +4404,148 @@ local _gui = {
 				},
 			},
 		},
-		-- An emote on the wheel
-		["PREFAB | WheelEmote"] = {
-			Control = "Item",
+		--[[
+			One emote's slice of the wheel, as big as the wheel: Cosmetics turns its two cuts round its share of the ring,
+			puts its icon (with the lock and level of one not owned) at the share's middle, and lights it in the player's
+			colour, grown, while it's pointed at (its Look_* attributes are its rest look)
+		]]
+		["PREFAB | WheelSlice"] = {
+			Primitive = "Frame",
 			Parent = "U_EmoteWheel",
-			Style = "Small",
-			Props = { AnchorPoint = Vector2.new(0.5, 0.5) },
+			Props = {
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				Position = UDim2.fromScale(0.5, 0.5),
+				Size = UDim2.fromScale(1, 1),
+				ZIndex = 21,
+			},
+			Attributes = {
+				Look_Color = Color3.fromRGB(34, 34, 46),
+				Look_Transparency = 0.08,
+				Look_LockedIconColor = Color3.fromRGB(120, 120, 130),
+				Look_LockedIconTransparency = 0.35,
+			},
+			Children = {
+				-- Grows the pointed slice out from the wheel's middle
+				{ Primitive = "UIScale", Id = "S_Grow" },
+				-- The slice: a disc cut down to its share by two straight cuts through the middle, one gradient on the disc and one on the group
+				{
+					Primitive = "CanvasGroup",
+					Id = "S_Sector",
+					Props = {
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+						Position = UDim2.fromScale(0.5, 0.5),
+						Size = UDim2.fromScale(1, 1),
+						ZIndex = 21,
+					},
+					Children = {
+						{
+							Primitive = "UIGradient",
+							Id = "S_CutEnd",
+							Props = {
+								Rotation = 19,
+								Transparency = NumberSequence.new({
+									NumberSequenceKeypoint.new(0, 0),
+									NumberSequenceKeypoint.new(0.5, 0),
+									NumberSequenceKeypoint.new(0.501, 1),
+									NumberSequenceKeypoint.new(1, 1),
+								}),
+							},
+						},
+						{
+							Primitive = "Frame",
+							Id = "S_Wedge",
+							Props = {
+								AnchorPoint = Vector2.new(0.5, 0.5),
+								BackgroundColor3 = Color3.fromRGB(34, 34, 46),
+								BackgroundTransparency = 0.08,
+								BorderSizePixel = 0,
+								Position = UDim2.fromScale(0.5, 0.5),
+								Size = UDim2.fromScale(0.92, 0.92),
+								ZIndex = 21,
+							},
+							Children = {
+								{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+								{
+									Primitive = "UIGradient",
+									Id = "S_CutStart",
+									Props = {
+										Rotation = 161,
+										Transparency = NumberSequence.new({
+											NumberSequenceKeypoint.new(0, 0),
+											NumberSequenceKeypoint.new(0.5, 0),
+											NumberSequenceKeypoint.new(0.501, 1),
+											NumberSequenceKeypoint.new(1, 1),
+										}),
+									},
+								},
+							},
+						},
+					},
+				},
+				-- The emote's picture (its Inventory row's), a lock and its level on it while it isn't owned
+				{
+					Primitive = "ImageLabel",
+					Id = "S_Icon",
+					Props = {
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+						Position = UDim2.fromScale(0.5, 0.18),
+						Size = UDim2.fromScale(0.14, 0.14),
+						ZIndex = 23,
+						Image = "rbxassetid://122190966104251",
+						ScaleType = Enum.ScaleType.Fit,
+					},
+					Children = {
+						{
+							Primitive = "ImageLabel",
+							Id = "S_Lock",
+							Props = {
+								AnchorPoint = Vector2.new(0.5, 0.5),
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								Position = UDim2.fromScale(0.82, 0.78),
+								Size = UDim2.fromScale(0.55, 0.55),
+								Visible = false,
+								ZIndex = 24,
+								Image = "rbxassetid://131803930638166",
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = { _ImageName = "1055_97__LobbyInventory__LockIcon_image" },
+						},
+						{
+							Primitive = "TextLabel",
+							Id = "S_Level",
+							Props = {
+								AnchorPoint = Vector2.new(0.5, 0),
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								Position = UDim2.fromScale(0.5, 0.98),
+								Size = UDim2.fromScale(1.5, 0.38),
+								Visible = false,
+								ZIndex = 24,
+								Text = "Lv 10",
+								TextColor3 = Color3.fromRGB(255, 255, 255),
+								TextSize = 22,
+								FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+								RichText = true,
+								TextScaled = true,
+							},
+							Children = {
+								{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+								{
+									Primitive = "UIStroke",
+									Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.14, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	},
 }

@@ -29,6 +29,9 @@ local voted: boolean = false
 -- The Rematch button's own colours, put back after the tutorial greyed it (the Studio map plays on)
 local rematchColors = {} --- @type { [string]: Color3 }
 
+-- Which results the level bar plays: a newer results screen (or closing it) stops an older one's
+local xpRun: number = 0
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -56,6 +59,13 @@ function Module.Start()
 	elems["Coins"] = moduleGui:FindFirstChild("U_Earned", true):FindFirstChild("S_Coins", true) --- @type TextLabel
 	elems["Xp"] = moduleGui:FindFirstChild("S_Xp", true) --- @type TextLabel
 	elems["LevelUp"] = moduleGui:FindFirstChild("S_LevelUp", true) --- @type TextLabel
+	elems["XpRow"] = moduleGui:FindFirstChild("S_XpRow", true) --- @type Frame
+	elems["LevelPop"] = elems["XpRow"]:FindFirstChild("S_LevelPop", true) --- @type UIScale
+	elems["LevelGradient"] = elems["XpRow"]:FindFirstChild("S_LevelGradient", true) --- @type UIGradient
+	elems["LevelNum"] = elems["XpRow"]:FindFirstChild("S_LevelNum", true) --- @type TextLabel
+	elems["LevelTitle"] = elems["XpRow"]:FindFirstChild("S_LevelTitle", true) --- @type TextLabel
+	elems["XpFill"] = elems["XpRow"]:FindFirstChild("S_XpFill", true) --- @type Frame
+	elems["XpCount"] = elems["XpRow"]:FindFirstChild("S_XpCount", true) --- @type TextLabel
 	elems["Damage"] = moduleGui:FindFirstChild("S_Damage", true) --- @type TextLabel
 	elems["Knockouts"] = moduleGui:FindFirstChild("S_Knockouts", true) --- @type TextLabel
 	elems["BestShot"] = moduleGui:FindFirstChild("S_BestShot", true) --- @type TextLabel
@@ -89,7 +99,8 @@ end
 
 --[[
 	Opens the results when the match ends: every player's place (1st to 3rd in their medal colours), name in team colours
-	(their badges after it), username and coins, what the local player earned, their match stats, and the rematch vote.
+	(their badges after it), username and coins, what the local player earned (their level bar filling from before the
+	match to after it, when the server sent both), their match stats, and the rematch vote.
 ]]
 --- @param placements { Match_Placement }
 --- @param stats { [string]: Match_Stats }
@@ -101,6 +112,10 @@ function Module._onResults(placements, stats, earned)
 	local myStats = stats[myId] --- @type Match_Stats?
 	local myPlace: number? = nil
 	voted = false
+
+	-- A server from before the level bar sends no level before and after: its level-up line shows at once instead
+	local playsXp: boolean = earned.XpBefore ~= nil and earned.XpAfter ~= nil
+	xpRun += 1
 
 	--[[ Clearing ]]
 
@@ -150,9 +165,13 @@ function Module._onResults(placements, stats, earned)
 	--[[ Earned ]]
 
 	elems["Coins"].Text = `+{earned.Coins[myId] or "0"} coins`
-	elems["Xp"].Text = `+{earned.Xp} XP`
-	elems["LevelUp"].Visible = earned.LevelUp
+	elems["Xp"].Text = if playsXp then "+0 XP" else `+{earned.Xp} XP`
+	elems["LevelUp"].Visible = earned.LevelUp and not playsXp
 	elems["LevelUp"].Text = `Level up! Level {earned.Level}`
+	elems["XpRow"].Visible = playsXp
+	if playsXp then
+		Module._showLevel(earned.XpBefore.Level, earned.XpBefore.Into, earned.XpBefore.For)
+	end
 
 	--[[ Visibility ]]
 
@@ -174,6 +193,9 @@ function Module._onResults(placements, stats, earned)
 	I.WidgetManager.Open(_settings.RESULTS_GUI_NAME)
 	if not tickConnection then
 		tickConnection = I.S.RunService.Heartbeat:Connect(Module._tick)
+	end
+	if playsXp then
+		task.spawn(Module._playXp, earned, xpRun)
 	end
 
 	--[[ Sound ]]
@@ -213,6 +235,135 @@ function Module._tick()
 		return
 	end
 	elems["RematchText"].Text = (if voted then "Voted" else "Rematch") .. `  {votes}/{playing}  |  0:{string.format("%02d", left)}`
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play Xp
+
+--[[
+	Plays the match's XP on the level bar, from the level before the match: after RESULTS_XP_DELAY each XP line adds to
+	the total with Xp_Line and fills the bar with rising Xp_Tick ticks, and each level reached plays Level_Up. A newer
+	results screen, or closing this one, stops it.
+]]
+--- @param earned MatchRewards_Earned
+function Module._playXp(earned, run: number)
+	--[[ Local Variables ]]
+
+	-- An older server's results carry no lines: the match's XP is one
+	--- @type { Progression_XpLine }
+	local lines = earned.XpLines or { { Key = "Match", Label = "", Count = 1, Amount = earned.Xp } }
+	local level: number = earned.XpBefore.Level
+	local into: number = earned.XpBefore.Into
+	local cost: number = earned.XpBefore.For
+	local total: number = 0
+
+	--[[ Waiting ]]
+
+	task.wait(_settings.RESULTS_XP_DELAY)
+
+	--[[ Lines ]]
+
+	--- @param line Progression_XpLine
+	for _index: number, line in ipairs(lines) do
+		-- Stop once a newer results screen took over, or this one closed
+		if run ~= xpRun then
+			return
+		end
+
+		total += line.Amount
+		elems["Xp"].Text = `+{total} XP`
+		I.Sound.Play({ Name = "Xp_Line", SoundGroup = "UI" })
+
+		local left: number = line.Amount
+		while left > 0 and run == xpRun do
+			-- One stretch of the bar: up to the end of this level, or what's left of the line
+			local gain: number = if cost > 0 then math.min(left, cost - into) else left
+			Module._fillXp(into, into + gain, cost, gain / line.Amount, run)
+			into += gain
+			left -= gain
+
+			if cost > 0 and into >= cost then
+				level += 1
+				into = 0
+				cost = Module._getCost(earned, level)
+				Module._levelUp(level, cost)
+			end
+		end
+		task.wait(_settings.RESULTS_XP_LINE_GAP)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Fill Xp
+
+--[[
+	Fills the level bar from one amount of XP to another, a share of RESULTS_XP_FILL_SECONDS, counting the XP up with
+	Xp_Tick ticks that climb through RESULTS_XP_TICK_PITCH as the bar fills.
+]]
+function Module._fillXp(from: number, to: number, cost: number, share: number, run: number)
+	--[[ Local Variables ]]
+
+	local seconds: number = math.max(0.15, _settings.RESULTS_XP_FILL_SECONDS * share)
+	local ticks: number = math.max(1, math.round(_settings.RESULTS_XP_TICKS * share))
+	local pitch: NumberRange = _settings.RESULTS_XP_TICK_PITCH
+
+	--[[ Filling ]]
+
+	local Fill_TweenInfo: TweenInfo = TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local Fill_TweenGoal = { Size = UDim2.fromScale(if cost > 0 then to / cost else 1, 1) }
+	local Fill_Tween: Tween = I.S.TweenService:Create(elems["XpFill"], Fill_TweenInfo, Fill_TweenGoal)
+	Fill_Tween:Play()
+
+	--[[ Ticking ]]
+
+	for step: number = 1, ticks do
+		-- Stop once a newer results screen took over, or this one closed
+		if run ~= xpRun then
+			return
+		end
+
+		local through: number = from + (to - from) * step / ticks
+		local stepPitch: number = pitch.Min + (pitch.Max - pitch.Min) * (if cost > 0 then through / cost else 1)
+		elems["XpCount"].Text = if cost > 0 then `{math.floor(through)} / {cost} XP` else "Max level"
+		I.Sound.Play({ Name = "Xp_Tick", SoundGroup = "UI", PitchMin = stepPitch, PitchMax = stepPitch })
+		task.wait(seconds / ticks)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Level Up
+
+--[[
+	A level reached on the bar: Level_Up plays, the diamond pops in the new level's frame, the level-up line shows, and
+	the bar starts again from empty.
+]]
+function Module._levelUp(level: number, cost: number)
+	--[[ Applying ]]
+
+	I.Sound.Play({ Name = "Level_Up", SoundGroup = "UI" })
+	elems["LevelUp"].Text = `Level up! Level {level}`
+	elems["LevelUp"].Visible = true
+	Module._showLevel(level, 0, cost)
+
+	--[[ Tweening ]]
+
+	elems["LevelPop"].Scale = 1.4
+	local Pop_TweenGoal = { Scale = 1 }
+	local Pop_Tween: Tween = I.S.TweenService:Create(elems["LevelPop"], _settings.RESULTS_LEVEL_TWEENINFO, Pop_TweenGoal)
+	Pop_Tween:Play()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Show Level
+
+--[[
+	Shows a level on the bar at once: its number in the diamond in its prestige frame's colours (Progression's
+	ApplyFrame, as the lobby's plate), "Level 14", the fill and "60 / 156 XP" ("Max level" at the top).
+]]
+function Module._showLevel(level: number, into: number, cost: number)
+	--[[ Applying ]]
+
+	I.G_Progression.ApplyFrame(elems["LevelGradient"], level)
+	elems["LevelNum"].Text = tostring(level)
+	elems["LevelTitle"].Text = `Level {level}`
+	elems["XpFill"].Size = UDim2.fromScale(if cost > 0 then into / cost else 1, 1)
+	elems["XpCount"].Text = if cost > 0 then `{into} / {cost} XP` else "Max level"
 end
 
 --%%%%%%%%%%%%%%%%%%%% Vote Rematch
@@ -284,11 +435,12 @@ end
 --%%%%%%%%%%%%%%%%%%%% Close
 
 --[[
-	Closes the results and stops their rematch countdown.
+	Closes the results and stops their rematch countdown and level bar.
 ]]
 function Module._close()
 	--[[ Closing ]]
 
+	xpRun += 1
 	if tickConnection then
 		tickConnection:Disconnect()
 		tickConnection = nil
@@ -314,6 +466,33 @@ function Module._getOrdinal(place: number)
 	--[[ Returning ]]
 
 	return `{place}{suffix}`
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Cost
+
+--[[
+	Returns the XP a level costs, for the bar between the levels before and after the match: the client never gets the
+	level curve, but it rises by the same step every level, so a level between costs the share of the way from the
+	one before to the one after.
+]]
+--- @param earned MatchRewards_Earned
+--- @return number
+function Module._getCost(earned, level: number)
+	--[[ Data ]]
+
+	local before = earned.XpBefore --- @type Progression_Progress
+	local after = earned.XpAfter --- @type Progression_Progress
+
+	--[[ Checks ]]
+
+	-- Check if it's the level the match ended on
+	if level >= after.Level then
+		return after.For
+	end
+
+	--[[ Returning ]]
+
+	return math.round(before.For + (after.For - before.For) * (level - before.Level) / (after.Level - before.Level))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Tutorial

@@ -401,6 +401,23 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
+--%%%%%%%%%%%%%%%%%%%% Get Part
+
+--[[
+	Returns the part this client draws a simulated shot on while it flies (Variants rides its accents on it), else nil.
+]]
+--- @return Part?
+function Module.GetPart(id: number)
+	--[[ Data ]]
+
+	--- @type Combat_ClientShot?
+	local shot = shots[id]
+
+	--[[ Returning ]]
+
+	return if shot then shot.Part else nil
+end
+
 --%%%%%%%%%%%%%%%%%%%% Is Liquid
 
 --[[

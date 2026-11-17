@@ -27,7 +27,7 @@ applies, and the match HUD's touch buttons press the controls through `Hold`.
 | File | What it controls |
 | --- | --- |
 | `Server.lua` | The entry: `I.SnailControl` |
-| `Client.lua` | The local player's controls: binding, walking, facing, jumping, climbing, grip; turns off the default avatar controls |
+| `Client.lua` | The local player's controls: binding, walking, facing, jumping, climbing, grip; turns off the default avatar controls. It follows every snail this screen plays (the player's own, and in local play their guests', by the snail's `UserId`) and drives whichever the server lets move (`CanMove`), its grip and jetpack fuel |
 | `Settings.lua` | `SnailControl_Settings`: movement and the movement effects |
 | `ServerSettings.lua` | `SnailControl_ServerSettings`: the server's checks, under a server name so clients never learn their margins |
 | `Scripts/Server/Control.lua` | Starting and ending turns, the per-frame path, speed, height and stamina checks |

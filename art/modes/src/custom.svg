@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Custom: a violet studded panel with three metal sliders and coloured knobs -->
+  <defs><linearGradient id="purple_d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c79bff"/><stop offset="0.45" stop-color="#8f55f0"/><stop offset="1" stop-color="#5b2bb0"/></linearGradient><linearGradient id="dark_v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#59607a"/><stop offset="0.45" stop-color="#353a4e"/><stop offset="1" stop-color="#1f2232"/></linearGradient><linearGradient id="yellow_v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe766"/><stop offset="0.45" stop-color="#ffc21a"/><stop offset="1" stop-color="#d4870a"/></linearGradient><linearGradient id="cyan_v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9fbff"/><stop offset="0.45" stop-color="#5ff0ff"/><stop offset="1" stop-color="#1aa6c8"/></linearGradient><linearGradient id="red_v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b5e"/><stop offset="0.45" stop-color="#e8322a"/><stop offset="1" stop-color="#a3161a"/></linearGradient></defs>
+  <rect x="7" y="8" width="50" height="48" rx="9" fill="url(#purple_d)" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <rect x="14" y="17.8" width="36" height="4.4" rx="2.2" fill="url(#dark_v)" stroke="#171724" stroke-width="1.8" stroke-linejoin="round"/>
+  <rect x="18" y="15" width="8" height="10" rx="2.6" fill="url(#yellow_v)" stroke="#171724" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="19.6" y="16.4" width="4.8" height="2.6" rx="1" fill="#ffffff" opacity="0.6"/>
+  <rect x="14" y="29.8" width="36" height="4.4" rx="2.2" fill="url(#dark_v)" stroke="#171724" stroke-width="1.8" stroke-linejoin="round"/>
+  <rect x="37" y="27" width="8" height="10" rx="2.6" fill="url(#cyan_v)" stroke="#171724" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="38.6" y="28.4" width="4.8" height="2.6" rx="1" fill="#ffffff" opacity="0.6"/>
+  <rect x="14" y="41.8" width="36" height="4.4" rx="2.2" fill="url(#dark_v)" stroke="#171724" stroke-width="1.8" stroke-linejoin="round"/>
+  <rect x="26" y="39" width="8" height="10" rx="2.6" fill="url(#red_v)" stroke="#171724" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="27.6" y="40.4" width="4.8" height="2.6" rx="1" fill="#ffffff" opacity="0.6"/>
+  <rect x="10.40" y="11.35" width="3.20" height="3.20" rx="0.90" fill="#5b2bb0"/><rect x="10.40" y="10.90" width="3.20" height="3.20" rx="0.90" fill="#8f55f0"/><rect x="10.85" y="11.22" width="2.30" height="1.09" rx="0.54" fill="#c79bff" opacity="0.9"/>
+  <rect x="50.40" y="11.35" width="3.20" height="3.20" rx="0.90" fill="#5b2bb0"/><rect x="50.40" y="10.90" width="3.20" height="3.20" rx="0.90" fill="#8f55f0"/><rect x="50.85" y="11.22" width="2.30" height="1.09" rx="0.54" fill="#c79bff" opacity="0.9"/>
+  <rect x="10.40" y="50.35" width="3.20" height="3.20" rx="0.90" fill="#5b2bb0"/><rect x="10.40" y="49.90" width="3.20" height="3.20" rx="0.90" fill="#8f55f0"/><rect x="10.85" y="50.22" width="2.30" height="1.09" rx="0.54" fill="#c79bff" opacity="0.9"/>
+  <rect x="50.40" y="50.35" width="3.20" height="3.20" rx="0.90" fill="#5b2bb0"/><rect x="50.40" y="49.90" width="3.20" height="3.20" rx="0.90" fill="#8f55f0"/><rect x="50.85" y="50.22" width="2.30" height="1.09" rx="0.54" fill="#c79bff" opacity="0.9"/>
+  <ellipse cx="18" cy="11.5" rx="7" ry="1.6" fill="#ffffff" opacity="0.45" transform="rotate(0 18 11.5)"/>
+</svg>

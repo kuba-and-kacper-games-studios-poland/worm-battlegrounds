@@ -3,12 +3,15 @@
 The weapons and utilities a player takes into a match: 3 slots, plus one opened with coins (`COIN_SLOT_PRICE`) and
 one for each slot game pass owned (`SLOT_PASSES`, in any order), 6 at most. The Bazooka (`BASIC_WEAPON`) is always there and takes no slot. The lobby's `Loadout` panel (LOADOUT, at the
 right) shows a column of cards, two a row (`SLOTS_PER_ROW`, the gui's `U_Row1` to `U_Row4`, a lone last card on the right), with EMOTES moved up under the last row shown, numbered like the match's bar: the Bazooka, then each slot with its item's picture,
-name in its rarity's colour, copies (x5) and shiny mark, a + on an empty slot, and the lock with its price on the
-next slot to open (later ones hide): coins while the coin slot is closed, else the next pass's live Robux price. Pressing an open slot shows it selected and opens the `LoadoutPicker` widget
-(INVENTORY): every weapon and utility, owned ones first by rarity with their copies (the one in this slot selected,
+name in its rarity's colour, copies (x5) and its Shiny or Golden mark (`SHINY_COPIES`, `GOLDEN_COPIES`: the card in
+the gui's holo foil, `S_Foil`, or gold rim, `S_Gold`), a + on an empty slot, and the lock with its price on the
+next slot to open (later ones hide), the coin or Robux picture and the price centred under the lock as one: coins while the coin slot is closed, else the next pass's live Robux price. Pressing an open slot shows it selected and opens the `LoadoutPicker` widget
+(INVENTORY): every weapon and utility, owned ones first by rarity with their copies, a Shiny one in its foil and a Golden one in its gold rim (the one in this slot selected,
 those in other slots in the equipped look, uses and cooldown in the hover info), then the ones not owned yet,
 locked; **Empty** empties the slot. Pressing the next locked slot asks whether to open it with coins, or prompts the next slot pass once the coin
-slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLoadout` when it seats the player.
+slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLoadout` when it seats the player
+(through Matchmaking's card: `ShinyItems` and `GoldenItems`). Golden is a look only (the owner, 2026-11-17): a golden
+item is shiny too and deals and boosts as a shiny one; Combat draws it gold on every screen.
 
 | | |
 | --- | --- |
@@ -24,8 +27,8 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | --- | --- |
 | `Server.lua` | Setting slots, opening the coin slot, counting the pass slots (republished when one is bought), the match loadout |
 | `Client.lua` | Starts the panel and the picker, the client `I.Loadout` |
-| `Scripts/Client/Panel.lua` | The `Loadout` panel's cards: the basic weapon and the slots, the selected look while the picker is open; EMOTES (`U_EmoteSection`) moved up under the last row shown |
-| `Scripts/Client/Picker.lua` | The `LoadoutPicker` widget |
+| `Scripts/Client/Panel.lua` | The `Loadout` panel's cards: the basic weapon and the slots, their Shiny or Golden mark and card, the selected look while the picker is open, the lock's price centred with its picture (`_centrePrice`, again whenever its `TextBounds` change); EMOTES (`U_EmoteSection`) moved up under the last row shown |
+| `Scripts/Client/Picker.lua` | The `LoadoutPicker` widget, its Shiny and Golden cards in their foil and rim |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `loadout` command |
 | `Settings.lua` | `Loadout_Settings` |
 
@@ -39,7 +42,7 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | `UnlockSlot(player, slot: number)` | `boolean` | Opens the coin slot as the next locked slot, once per player |
 | `OpenAllSlots(player)` | `boolean` | Opens every slot for good, whatever passes they own, by saving each slot past the base as a coin slot (the `loadout unlock_slots` command) |
 | `GetUnlocked(player)` | `number` | How many slots are open: base, plus the coin slot, plus one per slot pass owned |
-| `GetMatchLoadout(player)` | `{ string }, { [string]: boolean }` | The items in open slots, and which are shiny |
+| `GetMatchLoadout(player)` | `{ string }, { [string]: boolean }, { [string]: boolean }` | The items in open slots, which are shiny (`SHINY_COPIES` or more), and which golden (`GOLDEN_COPIES` or more, shiny too) |
 
 ### Client: `I.Loadout`
 
@@ -75,7 +78,7 @@ slot is open. Buying a slot pass opens its slot at once. Match reads `GetMatchLo
 | `COIN_SLOT_PRICE` | `"2500"` | Coins for the one coin slot |
 | `SLOT_PASSES` | `{ "Slot5", "Slot6" }` | Game passes that each open one more slot; the panel offers them in this order |
 | `SLOT_CATEGORIES` | `{ "Weapon", "Utility" }` | Inventory categories a slot takes |
-| `SHINY_COPIES` | `10` | Copies that make an item shiny |
+| `SHINY_COPIES`, `GOLDEN_COPIES` | `10`, `100` | Copies that make an item shiny, and golden (a look only: Combat's `VARIANT_LOOKS`) |
 | `PANEL_GUI_NAME`, `PICKER_GUI_NAME` | `"Loadout"`, `"LoadoutPicker"` | The guis |
 | `BASIC_WEAPON` | `"Bazooka"` | The weapon every loadout has: first on the panel, never in the picker |
 | `SLOTS_PER_ROW`, `ITEMS_PER_ROW` | `2`, `3` | Cards in each of the panel's rows, and in each of the picker's rows |

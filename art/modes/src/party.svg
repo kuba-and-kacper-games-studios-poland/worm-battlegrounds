@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Party: a striped party hat with studs, a pom-pom and confetti -->
+  <defs><linearGradient id="purple_d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c79bff"/><stop offset="0.45" stop-color="#8f55f0"/><stop offset="1" stop-color="#5b2bb0"/></linearGradient><linearGradient id="yellow_v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe766"/><stop offset="0.45" stop-color="#ffc21a"/><stop offset="1" stop-color="#d4870a"/></linearGradient><linearGradient id="red_d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b5e"/><stop offset="0.45" stop-color="#e8322a"/><stop offset="1" stop-color="#a3161a"/></linearGradient></defs>
+  <rect x="6" y="16.4" width="6" height="3.2" rx="1" fill="#ffc21a" stroke="#171724" stroke-width="1.4" transform="rotate(20 9 18)"/>
+  <rect x="52" y="22.4" width="6" height="3.2" rx="1" fill="#1f8fe8" stroke="#171724" stroke-width="1.4" transform="rotate(-30 55 24)"/>
+  <rect x="9" y="44.4" width="6" height="3.2" rx="1" fill="#43c83a" stroke="#171724" stroke-width="1.4" transform="rotate(45 12 46)"/>
+  <rect x="51" y="48.4" width="6" height="3.2" rx="1" fill="#e8322a" stroke="#171724" stroke-width="1.4" transform="rotate(10 54 50)"/>
+  <path d="M32 8 L50 54 Q32 61 14 54 Z" fill="url(#purple_d)" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <clipPath id="hat"><path d="M32 8 L50 54 Q32 61 14 54 Z"/></clipPath>
+  <g clip-path="url(#hat)"><path d="M10 40 L54 30 L54 38 L10 48 Z" fill="url(#yellow_v)" stroke="#171724" stroke-width="1.6"/><path d="M10 24 L54 14 L54 20 L10 30 Z" fill="url(#yellow_v)" stroke="#171724" stroke-width="1.6"/></g>
+  <path d="M32 8 L50 54 Q32 61 14 54 Z" fill="none" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <rect x="25.40" y="48.85" width="3.20" height="3.20" rx="0.90" fill="#5b2bb0"/><rect x="25.40" y="48.40" width="3.20" height="3.20" rx="0.90" fill="#8f55f0"/><rect x="25.85" y="48.72" width="2.30" height="1.09" rx="0.54" fill="#c79bff" opacity="0.9"/>
+  <rect x="35.40" y="48.85" width="3.20" height="3.20" rx="0.90" fill="#5b2bb0"/><rect x="35.40" y="48.40" width="3.20" height="3.20" rx="0.90" fill="#8f55f0"/><rect x="35.85" y="48.72" width="2.30" height="1.09" rx="0.54" fill="#c79bff" opacity="0.9"/>
+  <rect x="30.40" y="31.85" width="3.20" height="3.20" rx="0.90" fill="#5b2bb0"/><rect x="30.40" y="31.40" width="3.20" height="3.20" rx="0.90" fill="#8f55f0"/><rect x="30.85" y="31.72" width="2.30" height="1.09" rx="0.54" fill="#c79bff" opacity="0.9"/>
+  <rect x="29.40" y="20.85" width="3.20" height="3.20" rx="0.90" fill="#d4870a"/><rect x="29.40" y="20.40" width="3.20" height="3.20" rx="0.90" fill="#ffc21a"/><rect x="29.85" y="20.72" width="2.30" height="1.09" rx="0.54" fill="#ffe766" opacity="0.9"/>
+  <rect x="22.40" y="39.85" width="3.20" height="3.20" rx="0.90" fill="#d4870a"/><rect x="22.40" y="39.40" width="3.20" height="3.20" rx="0.90" fill="#ffc21a"/><rect x="22.85" y="39.72" width="2.30" height="1.09" rx="0.54" fill="#ffe766" opacity="0.9"/>
+  <rect x="38.40" y="37.85" width="3.20" height="3.20" rx="0.90" fill="#d4870a"/><rect x="38.40" y="37.40" width="3.20" height="3.20" rx="0.90" fill="#ffc21a"/><rect x="38.85" y="37.72" width="2.30" height="1.09" rx="0.54" fill="#ffe766" opacity="0.9"/>
+  <circle cx="32" cy="10" r="5.5" fill="url(#red_d)" stroke="#171724" stroke-width="2.2" stroke-linejoin="round"/>
+  <circle cx="30.2" cy="8.2" r="1.6" fill="#ffffff" opacity="0.8"/>
+  <ellipse cx="28.8" cy="30" rx="1.6" ry="6" fill="#ffffff" opacity="0.35" transform="rotate(22 28.8 30)"/>
+</svg>

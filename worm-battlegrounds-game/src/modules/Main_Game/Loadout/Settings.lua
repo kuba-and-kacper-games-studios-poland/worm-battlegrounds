@@ -20,8 +20,9 @@ local _settings = {
 	--- @type { string }
 	SLOT_CATEGORIES = { "Weapon", "Utility" },
 
-	-- Copies of an item that make it shiny
+	-- Copies of an item that make it shiny, and golden (a look only: golden items deal and boost as shiny ones)
 	SHINY_COPIES = 10,
+	GOLDEN_COPIES = 100,
 
 	--%%%%%%%%%%%%%%%%%%%% Gui
 

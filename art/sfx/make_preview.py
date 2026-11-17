@@ -1,8 +1,10 @@
 """Builds preview.html: every effect (make_classic.py's classic.json) and piece of music with a player, what it replaces
 and where it plays, for review before anything is uploaded.
-python -I make_preview.py <folder with make_classic.py's WB_*.wav> <folder with WB_Music_*.wav> [<update folder>]
+python -I make_preview.py <folder with make_classic.py's WB_*.wav> <folder with WB_Music_*.wav> [<update folder>
+    [<17 Nov folder>]]
 The update folder (out/update_2026-11-16: make_levels.py's new maps and make_classic.py's "update" set) adds the
-"Update 16 Nov" section at the top."""
+"Update 16 Nov" section at the top; the 17 Nov folder (out/update_2026-11-17: make_classic.py's "update17" set) adds
+the "Update 17 Nov" section above it."""
 
 import base64
 import html
@@ -253,6 +255,61 @@ def update_section(folder):
     return "".join(rows)
 
 
+# --- Update 17 Nov (2026-11-17): the polish pass's sounds, from out/update_2026-11-17 ----------------------------------
+# name -> (where it plays, the stand-in SoundsList plays under that name today). The "what" is make_classic.py's.
+UPDATE_17_FX = [
+    ("Post-match XP and levels", [
+        ("Xp_Line", "Each XP line popping in on the post-match level bar (\"Match played +100\", \"Victory +50\")",
+         "the stand-in, the classic electronic ping (12221990)"),
+        ("Xp_Tick", "Over and over while the XP bar fills (the game may raise its pitch as it fills)",
+         "the stand-in, Crate_Tick (Snail Crate Tick)"),
+        ("Level_Up", "Reaching a new level", "the stand-in, Reveal_Epic (Snail Reveal Epic)"),
+        ("Frame_Unlock", "Unlocking a new prestige frame (Bronze, Silver, Gold...) round the player's picture",
+         "the stand-in, Reveal_Legendary (Snail Reveal Legendary)"),
+    ]),
+    ("Free crate", [
+        ("Free_Claim", "Pressing CLAIM on the free weapon crate for joining the group",
+         "the stand-in, Crate_Unlock (Snail Crate Unlock)"),
+    ]),
+    ("Drop and emote wheel", [
+        ("Drop_Place", "Placing the landing target before parachuting in (again each time it's moved)",
+         "the stand-in, Snail_Land (Snail Land Thump)"),
+        ("Emote_WheelOpen", "The emote wheel spinning open", "the stand-in, the classic swoosh (12222200)"),
+        ("Emote_WheelHover", "Pointing at another slice of the emote wheel",
+         "the stand-in, the classic fast click (12221976)"),
+    ]),
+    ("Shiny and Golden weapons", [
+        ("Variant_Shiny", "Over a Shiny weapon's blast, layered on the explosion",
+         "the stand-in, Reveal_Shiny (Snail Reveal Shiny)"),
+        ("Variant_Golden", "Over a Golden weapon's blast, layered on the explosion",
+         "the stand-in, Crate_GoldHit (Snail Crate Gold Hit)"),
+    ]),
+]
+
+
+def update17_section(folder):
+    """The "Update 17 Nov" section: the polish pass's ten sounds, each with what it is, where it plays and the stand-in
+    it takes over, from the update's own folder."""
+    with open(os.path.join(folder, "classic.json"), encoding="utf-8") as f:
+        meta = json.load(f)
+    rows = ["<h2>Update 17 Nov</h2><p class='lead'>New since your last listen (2026-11-17), a draft, not uploaded: the "
+            "polish pass's ten sounds. The post-match XP replay (each line's chime and the bar's tick), the level-up "
+            "fanfare and the prestige frame's sting, the free crate's claim, the drop's landing target, the emote "
+            "wheel, and the accents over a Shiny or Golden weapon's blast. The ticks are crisp new synthesis, as the "
+            "crate reel's is; the chimes and fanfares play on the Great Strategy's instruments. The XP lines chime on "
+            "G and the level-up lands on C, so the replay resolves into the fanfare. The Shiny and Golden accents "
+            "keep under 2 kHz and 1.2 kHz empty, so the blast's boom comes through whole. The game plays stand-ins "
+            "from the earlier sets under these names until these are approved.</p>"]
+    for title, items in UPDATE_17_FX:
+        rows.append(f"<h3>{html.escape(title)}</h3><div class='grid'>")
+        for name, where, replaces in items:
+            row = meta[name]
+            audio = player(os.path.join(folder, f"WB_{name}.wav"), row["loop"])
+            rows.append(card(name, row["what"], where, replaces, audio, row["kind"]))
+        rows.append("</div>")
+    return "".join(rows)
+
+
 # Sounds remade since the last preview (the owner's notes, 2026-11-10)
 REMADE = {"Turn_Yours", "Turn_Start", "Lobby", "Battle_PicnicPlains", "Battle_PicnicPlains_SuddenDeath",
           "Battle_Desert", "Battle_Desert_SuddenDeath"}
@@ -275,8 +332,10 @@ def main():
     folder = sys.argv[1]
     music = sys.argv[2] if len(sys.argv) > 2 else None
     update = sys.argv[3] if len(sys.argv) > 3 else None
+    update17 = sys.argv[4] if len(sys.argv) > 4 else None
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "preview.html")
-    rows = [update_section(update)] if update else []
+    rows = [update17_section(update17)] if update17 else []
+    rows += [update_section(update)] if update else []
     with open(os.path.join(folder, "classic.json"), encoding="utf-8") as f:
         meta = json.load(f)
     if music:

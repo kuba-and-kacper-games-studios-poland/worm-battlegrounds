@@ -114,7 +114,8 @@ end
 
 --[[
 	**CLIENT** |
-	Returns whether any of an action's gamepad buttons is held on the first gamepad.
+	Returns whether any of an action's gamepad buttons is held on any connected gamepad, so the pad in use counts
+	whichever slot Roblox gave it.
 ]]
 --- @return boolean
 function Module.IsHeld(action: string)
@@ -127,9 +128,11 @@ function Module.IsHeld(action: string)
 
 	--[[ Checking ]]
 
-	for _index: number, keyCode: Enum.KeyCode in ipairs(row.Keys) do
-		if I.S.UserInputService:IsGamepadButtonDown(Enum.UserInputType.Gamepad1, keyCode) then
-			return true
+	for _index: number, pad: Enum.UserInputType in ipairs(I.S.UserInputService:GetConnectedGamepads()) do
+		for _keyIndex: number, keyCode: Enum.KeyCode in ipairs(row.Keys) do
+			if I.S.UserInputService:IsGamepadButtonDown(pad, keyCode) then
+				return true
+			end
 		end
 	end
 

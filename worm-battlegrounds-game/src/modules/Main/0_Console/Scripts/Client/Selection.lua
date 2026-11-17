@@ -12,6 +12,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
 
 local Binds = require(script.Parent:FindFirstChild("Binds")) --- @type Console_Client_Binds
+local Cursor = require(script.Parent:FindFirstChild("Cursor")) --- @type Console_Client_Cursor
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -83,8 +84,8 @@ end
 --[[
 	**CLIENT** |
 	On Console, keeps the gamepad's selection in a container while it shows and no widget is open (a pick list, a
-	panel): B there calls onBack, or keeps the selection when there is none. Its A button (Utils_ButtonKey) is selected
-	first.
+	panel), or sends the free cursor into it: B there calls onBack, or keeps the selection when there is none. Its A
+	button (Utils_ButtonKey) is selected first.
 ]]
 function Module.Focus(container: GuiObject, onBack: (() -> ())?)
 	--[[ Checks ]]
@@ -150,13 +151,26 @@ end
 --[[
 	Puts the selection where the player is, on Console: in the open widget when it has buttons no key presses (a widget
 	whose every button has a key is left to its keys), else in the focus, else on the home button. With nowhere to go,
-	or off Console, it clears it, unless forced (Navigate), which then tries NAVIGATION_GUIS.
+	or off Console, it clears it, unless forced (Navigate), which then tries NAVIGATION_GUIS. While the free cursor runs
+	it sends the cursor there instead (into any open widget), unless the cursor already points inside.
 ]]
 function Module._select(forced: boolean?)
 	--[[ Local Variables ]]
 
 	local current: GuiObject? = I.S.GuiService.SelectedObject
 	local target: Instance? = if I.Platform.Current == "Console" or forced then Module._getTarget(forced == true) else nil
+
+	--[[ Cursor ]]
+
+	-- The cursor selects what it points at: it goes onto the target's first button
+	if Cursor.IsActive() then
+		local hovered: GuiObject? = Cursor.GetHovered()
+		local first: GuiObject? = if target and not (hovered and Module._isInside(hovered, target)) then Module._getFirst(target) else nil
+		if first then
+			Cursor.MoveTo(first)
+		end
+		return
+	end
 
 	--[[ Checks ]]
 
@@ -180,7 +194,8 @@ end
 
 --[[
 	Backs out the way B would without a selection: the widget's B button closes it when that button is WidgetManager's
-	(or else is selected, so A presses it), the focus calls its onBack, and anywhere else the selection comes back.
+	(or else is selected, or has the cursor sent onto it, so A presses it), the focus calls its onBack, and anywhere
+	else the selection comes back.
 ]]
 function Module._back(widget: ScreenGui?)
 	--[[ Checks ]]
@@ -196,6 +211,8 @@ function Module._back(widget: ScreenGui?)
 		local backButton: GuiButton? = Module._getKeyButton(widget, Binds.GetAction("Back").Keys[1].Name)
 		if backButton and backButton:GetAttribute("Interact_ModuleName") == "WidgetManager" then
 			I.WidgetManager.Close(widget.Name)
+		elseif backButton and Cursor.IsActive() then
+			Cursor.MoveTo(backButton)
 		elseif backButton then
 			I.S.GuiService.SelectedObject = backButton
 		else
@@ -219,7 +236,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Navigate
 
 --[[
-	View: ends the selection, or starts it where the player is, in NAVIGATION_GUIS when nothing else wants it.
+	View: ends the selection, or starts it where the player is, in NAVIGATION_GUIS when nothing else wants it. While the
+	free cursor runs it brings the cursor there instead.
 ]]
 --- @return Enum.ContextActionResult
 function Module._onNavigate(_action: string, state: Enum.UserInputState, _input: InputObject)
@@ -232,7 +250,8 @@ function Module._onNavigate(_action: string, state: Enum.UserInputState, _input:
 
 	--[[ Toggling ]]
 
-	if I.S.GuiService.SelectedObject then
+	-- The cursor keeps its selection: View only brings it to where the selection starts
+	if I.S.GuiService.SelectedObject and not Cursor.IsActive() then
 		clearing = true
 		I.S.GuiService.SelectedObject = nil
 	else
@@ -248,7 +267,8 @@ end
 
 --[[
 	When a selection ends: B (Roblox clears the selection on B before scripts see the press) backs out, and a selected
-	element that went away (a refreshed list, a closed panel) has the selection put back where the player is.
+	element that went away (a refreshed list, a closed panel) has the selection put back where the player is. The free
+	cursor puts its own selection back, so with it only B backs out.
 ]]
 function Module._onSelectionChanged()
 	--[[ Local Variables ]]
@@ -269,11 +289,22 @@ function Module._onSelectionChanged()
 		return
 	end
 
+	-- Skip the cursor leaving a button: it ended that selection itself
+	if Cursor.IsActive() and not Cursor.GetHovered() then
+		return
+	end
+
 	--[[ Backing Out ]]
 
 	-- After this frame's input, so the B press is seen
 	task.defer(function()
 		local backHeld: boolean = Binds.IsHeld("Back") or os.clock() - lastBack <= _settings.BACK_WINDOW
+		if Cursor.IsActive() then
+			if backHeld then
+				Module._back(widget)
+			end
+			return
+		end
 		if previous and Module._isShown(previous) then
 			if backHeld then
 				Module._back(widget)
@@ -325,8 +356,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Target
 
 --[[
-	Returns where the selection belongs now: the open widget (when it needs one, or always when forced), the focus, what
-	was selected before the widgets opened, the home button, or when forced the first shown gui of NAVIGATION_GUIS.
+	Returns where the selection belongs now: the open widget (when it needs one, always when forced or for the free
+	cursor), the focus, what was selected before the widgets opened, the home button, or when forced the first shown gui
+	of NAVIGATION_GUIS.
 ]]
 --- @return Instance?
 function Module._getTarget(forced: boolean)
@@ -334,7 +366,7 @@ function Module._getTarget(forced: boolean)
 
 	local widget: ScreenGui? = I.WidgetManager.GetCurrent()
 	if widget then
-		return if forced or Module._needsSelection(widget) then widget else nil
+		return if forced or Cursor.IsActive() or Module._needsSelection(widget) then widget else nil
 	end
 
 	--[[ Focus And Home ]]

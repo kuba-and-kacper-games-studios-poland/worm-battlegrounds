@@ -10,6 +10,10 @@ local _localName = "Combat"
 --- @type Combat_Settings
 local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
 
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local Variants = require(script.Parent:FindFirstChild("Variants")) --- @type Combat_Client_Variants
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 --[[ Folders ]]
@@ -19,9 +23,10 @@ local effectsFolder: Instance
 
 --[[ Held ]]
 
--- The snail holding a weapon now, which weapon, its model in the world and the angle it points at
+-- The snail holding a weapon now, which weapon in which look (Shiny, Golden), its model in the world and the angle it points at
 local holder: Model? = nil
 local heldId: string? = nil
+local heldVariant: string? = nil
 local heldModel: Model? = nil
 local heldAngle: number = 0
 local stepConnection: RBXScriptConnection?
@@ -69,13 +74,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Snail
 
 --[[
-	Looks again at who holds what whenever a snail's turn, weapon or state changes.
+	Looks again at who holds what whenever a snail's turn, weapon, its look or the snail's state changes.
 ]]
 function Module._watchSnail(model: Instance)
 	--[[ Connections ]]
 
 	model.AttributeChanged:Connect(function(attribute: string)
-		if attribute == "Active" or attribute == "HeldItem" or attribute == "Alive" or attribute == "Ghost" then
+		if attribute == "Active" or attribute == "HeldItem" or attribute == "HeldVariant" or attribute == "Alive" or attribute == "Ghost" then
 			Module._refresh()
 		end
 	end)
@@ -116,20 +121,22 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Puts the active snail's weapon in its hands during its turn (a copy of the weapon's model, in the weapon's pose),
-	swaps it when the snail picks another, and takes it away once the turn ends. When the shot is away, a gun with its
-	own pose plays its shot first (for its whole burst) and goes after.
+	Puts the active snail's weapon in its hands during its turn (a copy of the weapon's model, in the weapon's pose,
+	dressed in its Shiny or Golden look when the shooter's copy is one: the snail's HeldVariant), swaps it when the
+	snail picks another, and takes it away once the turn ends. When the shot is away, a gun with its own pose plays its
+	shot first (for its whole burst) and goes after.
 ]]
 function Module._refresh()
 	--[[ Data ]]
 
 	local snail: Model? = Module._getHolder()
 	local itemId: string? = snail and snail:GetAttribute("HeldItem")
+	local variant: string? = snail and snail:GetAttribute("HeldVariant")
 
 	--[[ Checks ]]
 
 	-- Skip when nothing changes
-	if snail == holder and itemId == heldId then
+	if snail == holder and itemId == heldId and variant == heldVariant then
 		return
 	end
 
@@ -141,6 +148,7 @@ function Module._refresh()
 	end
 	holder = snail
 	heldId = itemId
+	heldVariant = variant
 
 	-- Stop following when no snail holds a weapon
 	if not snail or not itemId then
@@ -157,6 +165,7 @@ function Module._refresh()
 	heldAngle = drawnAngle or Module._getAimAngle(snail)
 	I.SnailRig.Hold(snail:FindFirstChild("Skin"), itemId, heldModel)
 	I.SnailRig.SetAim(snail:FindFirstChild("Skin"), heldAngle)
+	Variants.Dress(heldModel, variant)
 	heldModel.Parent = effectsFolder
 
 	--[[ Connections ]]

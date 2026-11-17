@@ -18,6 +18,7 @@ local Drops = require(script.Parent:FindFirstChild("Drops")) --- @type Crates_Cl
 local Showcase = require(script.Parent:FindFirstChild("Showcase")) --- @type Crates_Client_Showcase
 local Result = require(script.Parent:FindFirstChild("Result")) --- @type Crates_Client_Result
 local Stage3D = require(script.Parent:FindFirstChild("Stage3D")) --- @type Crates_Client_Stage3D
+local GroupReward = require(script.Parent:FindFirstChild("GroupReward")) --- @type Crates_Client_GroupReward
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -234,8 +235,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Intro
 
 --[[
-	The shop makes way (tabs and balance up, odds left, buttons down) and the screen dims; the 2D crate gives way to the
-	3D crates, which drop in, wait for the tap (unless Quick open is on) and burst open into the reels.
+	The shop makes way (tabs and balance up, odds left, buttons down, the FREE CRATE badge gone) and the screen dims;
+	the 2D crate gives way to the 3D crates, which drop in, wait for the tap (unless Quick open is on) and burst open.
 ]]
 --- @param row Crates_CrateData
 function Module._intro(row, count: number)
@@ -249,6 +250,7 @@ function Module._intro(row, count: number)
 		Showcase.SetOpening(false)
 	end
 	Showcase.SetOpening(true)
+	GroupReward.SetOpening(true)
 	if not shopOut then
 		shopOut = true
 		for name: string, offset: UDim2 in pairs(REGIONS_OUT) do
@@ -640,6 +642,7 @@ function Module._finish(instant: boolean)
 	end
 	elems["Center"].Visible = true
 	Showcase.SetOpening(false)
+	GroupReward.SetOpening(false)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Clear Result

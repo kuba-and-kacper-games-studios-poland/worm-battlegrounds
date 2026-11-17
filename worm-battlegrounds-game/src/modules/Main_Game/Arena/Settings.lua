@@ -21,6 +21,13 @@ local _settings = {
 	-- How long a hole a client cut on its own waits for the server's pieces, in seconds, before it's undone
 	PREDICT_TIMEOUT = 3,
 
+	--[[
+		A cut a client can't make (a piece the server cut a moment ago, its shape not on that screen yet: the owner's
+		"Could not carve … Bigoak.Trunk", 2026-11-17) is tried once more this many seconds later, then left to the
+		server's pieces without a warning; the server still warns when its own cut fails
+	]]
+	CUT_RETRY_SECONDS = 0.15,
+
 	--%%%%%%%%%%%%%%%%%%%% Land Spots
 
 	--[[
@@ -43,8 +50,7 @@ local _settings = {
 
 	--[[
 		The collision groups registered at start, each with the groups it never collides with: snails stand on terrain
-		but pass through each other and the place's own parts, ghosts touch nothing, and the chips blasts throw
-		(Combat's client effects) bounce on terrain only
+		but pass through each other and the place's own parts, and ghosts touch nothing
 	]]
 	--- @type { [string]: { string } }
 	COLLISION_GROUPS = {
@@ -52,7 +58,6 @@ local _settings = {
 		Snail = { "Snail", "Default" },
 		Projectile = { "Projectile", "Default" },
 		Ghost = { "Default", "Terrain", "Snail", "Projectile", "Ghost" },
-		Chip = { "Chip", "Default", "Snail", "Projectile", "Ghost" },
 	},
 
 	--%%%%%%%%%%%%%%%%%%%% Debris
@@ -81,24 +86,29 @@ local _settings = {
 
 	--[[
 		How fast a blast throws what it cuts off a prop (and a one-part prop it reaches), in studs per second, and the
-		most it spins it, in radians per second
+		most it spins it, in radians per second (each screen throws it on the game's own motion)
 	]]
 	PROP_KNOCK_SPEED = 35,
 	PROP_KNOCK_SPIN = 6,
 
-	-- How long a fallen or thrown prop lies before it fades out, in seconds, and the fade
+	-- How long a fallen or thrown prop lies before it fades out, in seconds, and the fade (its time and easing)
 	PROP_FADE_DELAY = 3,
 	PROP_FADE_TWEENINFO = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
 
 	--[[
+		How much longer than that fade the server keeps what it threw or dropped off a prop, unmoved, in seconds, for
+		the screens that started drawing it a little late
+	]]
+	PROP_REMOVE_MARGIN = 1,
+
+	--[[
 		A prop a snail stands inside (on the plane, within PROP_SEE_THROUGH_MARGIN studs of the prop's box) turns this
 		see-through on every screen, so the snail is never lost behind a tree, a bush or a cactus; it fades in and out at
-		PROP_SEE_THROUGH_SPEED a second, and the props' boxes are read again every PROP_SEE_THROUGH_REFRESH seconds
+		PROP_SEE_THROUGH_SPEED a second
 	]]
 	PROP_SEE_THROUGH = 0.7,
 	PROP_SEE_THROUGH_MARGIN = 1,
 	PROP_SEE_THROUGH_SPEED = 5,
-	PROP_SEE_THROUGH_REFRESH = 0.5,
 
 	--%%%%%%%%%%%%%%%%%%%% Liquid
 

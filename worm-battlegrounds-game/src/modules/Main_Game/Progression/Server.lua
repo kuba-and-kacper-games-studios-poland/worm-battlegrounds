@@ -8,7 +8,10 @@ local I = require(game:GetService("ReplicatedStorage"):FindFirstChild("UmePointe
 local _localName = "Progression"
 
 --- @type Progression_Settings
-local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("ServerSettings"))
+local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("Settings"))
+
+--- @type Progression_ServerSettings
+local _serverSettings = require(script:FindFirstAncestor(_localName):FindFirstChild("ServerSettings"))
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -32,6 +35,13 @@ function Module.Init()
 	------ INITIALIZATION ------
 	----------------------------
 
+	-- The last matches' XP the lobby hasn't played back yet (a JSON Progression_Replay, "" when there's none)
+	--- @type Player_ProfileData
+	local _pt = I.Player.ProfileTemplate
+	_pt["Progression"] = {
+		Replay = "",
+	}
+
 	I.G_Player.OnPlayerAdded(I.Priority.Replicator, function(player: Player)
 		I.Replicator.CreateFolder(player, _localName)
 	end)
@@ -44,6 +54,10 @@ function Module.Init()
 	--- @Topic
 	I.Topic.Register("Progression_LevelUp", { "Player", "number" })
 
+	--- @Network
+	I.Network.GetEvent("Progression_ReplaySeen", { "Player" })
+	I.Network.Fired("Progression_ReplaySeen", Module._onReplaySeen)
+
 	----------------------------
 	---- ASSIGN TO INSTANCE ----
 	----------------------------
@@ -54,10 +68,13 @@ function Module.Init()
 
 		AddXP = Module.AddXP,
 		AddLevels = Module.AddLevels,
+		SetReplay = Module.SetReplay,
 
 		--[[ Methods ]]
 
 		GetLevel = Module.GetLevel,
+		GetProgress = Module.GetProgress,
+		GetReplay = Module.GetReplay,
 	}
 end
 
@@ -66,7 +83,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Setup Player
 
 --[[
-	Shows a joining player's level: the Level attribute, their Progression folder and the player list.
+	Shows a joining player's level: the Level attribute, their Progression folder (with any XP replay still to play)
+	and the player list.
 ]]
 function Module._setupPlayer(player: Player)
 	-- Check if player is valid | SERVER
@@ -78,6 +96,33 @@ function Module._setupPlayer(player: Player)
 
 	I.Leaderstats.AddValue(player, "Level", Module.GetLevel(player), "IntValue", 2)
 	Module._publish(player)
+	I.Replicator.Set(player, _localName, "Replay", I.Player.GetProfile(player).Data["Progression"]["Replay"])
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Replay Seen
+
+--[[
+	Forgets a player's XP replay once their lobby has played it.
+]]
+function Module._onReplaySeen(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Progression"]
+
+	--[[ Saving ]]
+
+	moduleData["Replay"] = ""
+
+	--[[ Publishing ]]
+
+	I.Replicator.Set(player, _localName, "Replay", "")
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -143,11 +188,49 @@ function Module.AddLevels(player: Player, levels: number)
 
 	--[[ Local Variables ]]
 
-	local target: number = math.clamp(Module.GetLevel(player) + math.floor(levels), 1, _settings.MAX_LEVEL)
+	local target: number = math.clamp(Module.GetLevel(player) + math.floor(levels), 1, _serverSettings.MAX_LEVEL)
 
 	--[[ Returning ]]
 
 	return Module.AddXP(player, Module._getTotalFor(target) - Module._getXP(player))
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Replay
+
+--[[
+	**SERVER** |
+	Saves the XP a player's matches gave since their lobby last played it back (the lines, their level and XP before
+	and after, and what each level on the way costs), and hands it to their client, which plays it in the lobby and
+	then asks to forget it.
+]]
+--- @param replay Progression_Replay
+function Module.SetReplay(player: Player, replay)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Progression"]
+
+	--[[ Costs ]]
+
+	-- Each level's cost on the way, so the client fills the bar without knowing the curve
+	replay.Costs = {}
+	for level: number = replay.Before.Level, replay.After.Level do
+		table.insert(replay.Costs, if level >= _serverSettings.MAX_LEVEL then 0 else _serverSettings.LEVEL_BASE_XP + _serverSettings.LEVEL_STEP_XP * level)
+	end
+
+	--[[ Saving ]]
+
+	moduleData["Replay"] = I.S.HttpService:JSONEncode(replay)
+
+	--[[ Publishing ]]
+
+	I.Replicator.Set(player, _localName, "Replay", moduleData["Replay"])
 end
 
 --%%%%%%%%%%%%%%%%%%%% Publish
@@ -161,7 +244,7 @@ function Module._publish(player: Player)
 
 	local level: number = Module.GetLevel(player)
 	local into: number = Module._getXP(player) - Module._getTotalFor(level)
-	local cost: number = if level >= _settings.MAX_LEVEL then 0 else _settings.LEVEL_BASE_XP + _settings.LEVEL_STEP_XP * level
+	local cost: number = if level >= _serverSettings.MAX_LEVEL then 0 else _serverSettings.LEVEL_BASE_XP + _serverSettings.LEVEL_STEP_XP * level
 
 	--[[ Saving ]]
 
@@ -188,13 +271,66 @@ function Module.GetLevel(player: Player)
 
 	--[[ Calculating ]]
 
-	while level < _settings.MAX_LEVEL and xp >= Module._getTotalFor(level + 1) do
+	while level < _serverSettings.MAX_LEVEL and xp >= Module._getTotalFor(level + 1) do
 		level += 1
 	end
 
 	--[[ Returning ]]
 
 	return level
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Progress
+
+--[[
+	**SERVER** |
+	Returns a player's level, the XP they have into it and the XP it takes (0 at MAX_LEVEL).
+]]
+--- @return Progression_Progress
+function Module.GetProgress(player: Player)
+	--[[ Local Variables ]]
+
+	local level: number = Module.GetLevel(player)
+
+	--[[ Returning ]]
+
+	return {
+		Level = level,
+		Into = Module._getXP(player) - Module._getTotalFor(level),
+		For = if level >= _serverSettings.MAX_LEVEL then 0 else _serverSettings.LEVEL_BASE_XP + _serverSettings.LEVEL_STEP_XP * level,
+	}
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Replay
+
+--[[
+	**SERVER** |
+	Returns the XP replay a player's lobby hasn't played yet, or nil.
+]]
+--- @return Progression_Replay?
+function Module.GetReplay(player: Player)
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local saved: string = profileData["Progression"]["Replay"]
+
+	--[[ Checks ]]
+
+	-- Check if there's a replay waiting
+	if saved == "" then
+		return nil
+	end
+
+	--[[ Decoding ]]
+
+	local success: boolean
+	local result: any | string?
+	success, result = pcall(I.S.HttpService.JSONDecode, I.S.HttpService, saved)
+
+	--[[ Returning ]]
+
+	return if success then result else nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get XP
@@ -220,7 +356,7 @@ function Module._getTotalFor(level: number)
 
 	--[[ Returning ]]
 
-	return _settings.LEVEL_BASE_XP * steps + _settings.LEVEL_STEP_XP * steps * (steps + 1) / 2
+	return _serverSettings.LEVEL_BASE_XP * steps + _serverSettings.LEVEL_STEP_XP * steps * (steps + 1) / 2
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

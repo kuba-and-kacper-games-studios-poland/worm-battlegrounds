@@ -1,13 +1,17 @@
 # Results
 
 The end of a match: MATCH OVER, the player's place, every player's card (place, avatar, name with badges, username,
-coins), what the player earned (coins, XP, level up), their match stats, **Rematch** (votes and time left) and
+coins), what the player earned (coins, XP, level up) with their level bar filling from before the match to after it,
+their match stats, **Rematch** (votes and time left) and
 **Back to lobby**. It has no close button and can't be closed.
 
 **Look.** The studio's `MatchOver` design (2026-11-12), ported 1:1 as `Primitive` nodes (its pictures, Londrina
 font and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive`
 ports"). A dark slanted panel in the middle of the screen, kept in shape by its `UIAspectRatioConstraint`. The first
-three cards wear gold, silver and bronze outlines and place colours; Rematch is yellow, Back to lobby dark.
+three cards wear gold, silver and bronze outlines and place colours; Rematch is yellow, Back to lobby dark. Added on
+2026-11-17 as `Primitive` nodes under the coins line: the lobby's level plate (`LevelPlate`) small, its diamond, title,
+bar and XP count with the same colours, so the earned panel holds three rows (coins and XP, the level bar, the
+stats).
 
 |  |  |
 | --- | --- |
@@ -23,7 +27,13 @@ three cards wear gold, silver and bronze outlines and place colours; Rematch is 
 | --- | --- | --- |
 | `U_Widget` › `S_Result` | TextLabel (rich, `TextCase_Upper`) | "You placed `<font>`2nd`</font>`!", the place in its colour |
 | `U_Placings` | Frame with a horizontal UIListLayout | Holds one `Placing` per player; four fit across, more share the width (MatchHud's `RESULTS_FIT_PLACINGS`) |
-| `U_Earned` | Frame | `S_Coins`, `S_Xp`, `S_LevelUp` (hidden until a level up) on one line; the match stats `S_Damage`, `S_Knockouts`, `S_BestShot` on the next |
+| `U_Earned` | Frame | `S_Coins`, `S_Xp` (the XP total, counted up line by line), `S_LevelUp` (hidden until a level up) on one line; the level bar (`S_XpRow`) under it; the match stats `S_Damage`, `S_Knockouts`, `S_BestShot` on the last |
+| `U_Earned` › `S_XpRow` | Frame (hidden for results with no level before and after the match) | The level bar |
+| `S_XpRow` › `S_LevelPop` | UIScale on the diamond's `Badge` | Pops from 1.4 to 1 when a level is reached |
+| `S_XpRow` › `S_LevelGradient` | UIGradient on the diamond (a square turned 45°) | The level's prestige frame colours (`I.G_Progression.ApplyFrame`) |
+| `S_XpRow` › `S_LevelNum`, `S_LevelTitle` | TextLabel (`S_LevelTitle` `TextCase_Upper`) | "14", "Level 14" |
+| `S_XpRow` › `S_XpFill` | Frame in the dark `Track` (the gold to orange gradient and its gloss) | `Size` X = the share of the level filled |
+| `S_XpRow` › `S_XpCount` | TextLabel | "60 / 156 XP", "Max level" at the top |
 | `U_Widget` › `S_Rematch` | ImageButton | Votes for a rematch; its `S_Text` shows votes and time left ("Rematch  1/2  \|  0:15") |
 | `U_Widget` › `S_Lobby` | ImageButton | Back to the lobby |
 
@@ -35,7 +45,8 @@ three cards wear gold, silver and bronze outlines and place colours; Rematch is 
 
 ## Driven by
 
-The game's `MatchHud` module opens it with `I.WidgetManager.Open("Results")` when the match ends.
+The game's `MatchHud` module opens it with `I.WidgetManager.Open("Results")` when the match ends, and plays the level
+bar from MatchRewards' `XpBefore` to `XpAfter` (its `Results` handler).
 
 ## Preview
 
@@ -45,6 +56,7 @@ The game's `MatchHud` module opens it with `I.WidgetManager.Open("Results")` whe
 | --- | --- |
 | `S_Players` (Slider, 2 to 4) | Players |
 | `S_LevelUp` (Toggle) | Shows the level-up line |
+| `S_XpShare` (Slider, 0 to 1) | How far the level bar is filled ("59 / 156 XP") |
 
 ## Integration
 
@@ -68,3 +80,5 @@ Both buttons show their pad button in a `PadHint` badge on Console (`Console_Hin
 | --- | --- | --- |
 | Hover, press | Buttons | `Utils_ButtonScale`: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds |
 | Place | `Placing` › `S_Place`, `S_Stroke` | 1st to 3rd take `Look_<1-3>PlaceColor` and `Look_<1-3>StrokeColor` (gold 255, 200, 40; silver; bronze), the rest `Look_PlaceColor` (white) and `Look_StrokeColor` (grey 130) |
+| Level bar filling | `S_XpFill`, `S_XpCount`, `S_Xp` | After MatchHud's `RESULTS_XP_DELAY` each XP line adds to `S_Xp` with `Xp_Line`, then the fill tweens (quad out, a share of `RESULTS_XP_FILL_SECONDS`) while `Xp_Tick` ticks climb through `RESULTS_XP_TICK_PITCH` |
+| Level reached | `S_LevelPop`, `S_LevelGradient`, `S_LevelUp` | `Level_Up`; the diamond pops (`RESULTS_LEVEL_TWEENINFO`, 0.3 s back out) in the new level's frame, "Level up! Level 15" shows, the bar starts again from empty |

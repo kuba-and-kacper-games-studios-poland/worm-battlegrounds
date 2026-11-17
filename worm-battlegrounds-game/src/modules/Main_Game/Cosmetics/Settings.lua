@@ -26,11 +26,55 @@ local _settings = {
 	-- How long an emote plays on the snail and its bubble shows beside a name in the lobby, in seconds
 	EMOTE_SECONDS = 3,
 
-	-- The gap between a name on a lobby party card and the emote bubble beside it, in design px
-	CARD_BUBBLE_GAP = 8,
+	--[[
+		The emote bubble over a lobby party card stands on the avatar's top right, inside the avatar so any layout or
+		scale carries it: its tail's tip CARD_BUBBLE_ANCHOR of the avatar across and down, the bubble CARD_BUBBLE_SIZE of
+		the avatar's height tall
+	]]
+	CARD_BUBBLE_ANCHOR = Vector2.new(0.84, 0.1),
+	CARD_BUBBLE_SIZE = 0.62,
 
-	-- How far from the wheel's centre its emotes sit, as a share of its size
-	WHEEL_RADIUS = 0.38,
+	--%%%%%%%%%%%%%%%%%%%% Emote Wheel
+
+	-- The match HUD's emote button's emote: its picture on the button, and what a quick tap plays before any other
+	WHEEL_BUTTON_EMOTE = "Emote_Wave",
+
+	--[[
+		Holding WHEEL_KEY (keyboard) or the Console module's Emotes button (X on a pad) opens the wheel; letting go plays
+		the emote pointed at, and a press shorter than WHEEL_TAP_SECONDS plays the last one again instead
+	]]
+	WHEEL_KEY = Enum.KeyCode.T,
+	WHEEL_TAP_SECONDS = 0.25,
+
+	-- The left stick points at a slice once it leans this far
+	WHEEL_STICK_DEADZONE = 0.5,
+
+	--[[
+		The ring, in shares of the wheel's size: the slices' icons sit WHEEL_ICON_RADIUS out from the middle, and the
+		pointer points at the slice in its direction from the middle, at nothing inside WHEEL_DEAD_RADIUS (the middle's
+		disc); WHEEL_SLICE_GAP degrees part two slices
+	]]
+	WHEEL_ICON_RADIUS = 0.32,
+	WHEEL_DEAD_RADIUS = 0.17,
+	WHEEL_SLICE_GAP = 2,
+
+	--[[
+		The slice pointed at grows to WHEEL_HOVER_SCALE (WHEEL_HOVER_TWEENINFO). Opening, the wheel spins in from
+		WHEEL_OPEN_SPIN degrees and WHEEL_OPEN_SCALE of its size (WHEEL_OPEN_TWEENINFO)
+	]]
+	WHEEL_HOVER_SCALE = 1.06,
+	WHEEL_HOVER_TWEENINFO = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	WHEEL_OPEN_SPIN = -40,
+	WHEEL_OPEN_SCALE = 0.6,
+	WHEEL_OPEN_TWEENINFO = TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+
+	--[[
+		A slice not owned yet shows WHEEL_LEVEL_TEXT under its lock (above level 1), and the middle says under its name
+		the level it unlocks at, or once it has, where to buy it
+	]]
+	WHEEL_LEVEL_TEXT = "Lv %d",
+	WHEEL_LOCKED_TEXT = "Unlocks at level %d",
+	WHEEL_SHOP_TEXT = "Get it in the emote shop",
 
 	--%%%%%%%%%%%%%%%%%%%% Previews
 

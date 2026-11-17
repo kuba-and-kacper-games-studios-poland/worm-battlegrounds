@@ -62,6 +62,12 @@ local _settings = {
 		TabPrevious = { Keys = { Enum.KeyCode.ButtonL1 }, Hint = "Tab" },
 		TabNext = { Keys = { Enum.KeyCode.ButtonR1 }, Hint = "Tab" },
 
+		--[[ Cursor ]]
+
+		-- The cursor's sticks, bound while it shows, over SnailControl's Move and Roblox's own stick controls
+		Cursor = { Keys = { Enum.KeyCode.Thumbstick1 }, Hint = "Point", Priority = Enum.ContextActionPriority.High.Value + 1 },
+		Scroll = { Keys = { Enum.KeyCode.Thumbstick2 }, Hint = "Scroll", Priority = Enum.ContextActionPriority.High.Value + 1 },
+
 		--[[ Lobby ]]
 
 		Custom = { Keys = { Enum.KeyCode.ButtonX }, Hint = "Custom", Gui = true },
@@ -81,6 +87,61 @@ local _settings = {
 	-- The guis Navigate (View) starts the selection in when no widget, focus or home shows, in order
 	--- @type { string }
 	NAVIGATION_GUIS = { "MatchBoard", "Lobby", "Loadout", "Party", "MatchHud", "TopBar" },
+
+	--%%%%%%%%%%%%%%%%%%%% Cursor
+
+	--[[
+		The place loader's map that is only a match (the match place's): there, as while the InMatch Player attribute is
+		on, the free cursor runs only while a window is open; elsewhere on Console it always runs
+	]]
+	MATCH_MAP_ID = "Match",
+
+	--[[
+		The free cursor's ScreenGui, built in code over every other gui: a white ring CURSOR_SIZE of the screen's height
+		across, its line CURSOR_RING_WIDTH of that, with a dot CURSOR_DOT_SIZE of it in the middle, both edged in
+		CURSOR_EDGE_COLOR (CURSOR_EDGE_WIDTH of the ring's line either side) so it shows on white panels too
+	]]
+	CURSOR_GUI_NAME = "ConsoleCursor",
+	CURSOR_DISPLAY_ORDER = 2000000,
+	CURSOR_SIZE = 0.034,
+	CURSOR_RING_WIDTH = 0.1,
+	CURSOR_DOT_SIZE = 0.24,
+	CURSOR_COLOR = Color3.fromRGB(255, 255, 255),
+	CURSOR_EDGE_COLOR = Color3.fromRGB(20, 20, 30),
+	CURSOR_EDGE_TRANSPARENCY = 0.45,
+	CURSOR_EDGE_WIDTH = 0.4,
+
+	--[[
+		How the left stick moves it: from CURSOR_DEADZONE of lean, at CURSOR_SPEED's first speed rising to its second at
+		full lean (screen heights a second) along the lean to the power of CURSOR_CURVE, so small leans stay fine. Held
+		past CURSOR_BOOST_LEAN it speeds up to CURSOR_BOOST times that over CURSOR_BOOST_TIME seconds
+	]]
+	--- @type { number }
+	CURSOR_SPEED = { 0.18, 0.9 },
+	CURSOR_DEADZONE = 0.15,
+	CURSOR_CURVE = 2,
+	CURSOR_BOOST = 1.9,
+	CURSOR_BOOST_LEAN = 0.9,
+	CURSOR_BOOST_TIME = 0.5,
+
+	--[[
+		Over a button it moves at CURSOR_BUTTON_SLOW of its speed, and with the stick let go it drifts to the button's
+		middle at CURSOR_MAGNET (higher is snappier) when that is within CURSOR_MAGNET_REACH of the screen's height
+	]]
+	CURSOR_BUTTON_SLOW = 0.45,
+	CURSOR_MAGNET = 6,
+	CURSOR_MAGNET_REACH = 0.08,
+
+	--[[
+		Sent onto a button (a window opening, the D-pad hopping the selection there in the last CURSOR_DPAD_FOLLOW
+		seconds) it glides at CURSOR_GLIDE (higher is snappier)
+	]]
+	CURSOR_GLIDE = 16,
+	CURSOR_DPAD_FOLLOW = 0.4,
+
+	-- The right stick scrolls the list under the cursor from SCROLL_DEADZONE of lean, up to SCROLL_SPEED screen heights a second
+	SCROLL_DEADZONE = 0.2,
+	SCROLL_SPEED = 1.5,
 
 	--%%%%%%%%%%%%%%%%%%%% Names
 

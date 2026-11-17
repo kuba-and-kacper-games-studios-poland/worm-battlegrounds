@@ -414,6 +414,9 @@ local _gui = {
 				ClickSound_SoundGroup = "UI",
 				Look_EmptyStrokeColor = Color3.fromRGB(61, 61, 61),
 				ClickSound_Name = "Button_Click",
+				Look_ShinyColor = Color3.fromRGB(255, 175, 235),
+				Look_GoldenColor = Color3.fromRGB(255, 196, 0),
+				Look_PriceGap = 0.15,
 			},
 			Tags = {
 				["Utils_ButtonScale"] = {},
@@ -483,6 +486,381 @@ local _gui = {
 							},
 							Attributes = {
 								_ImageName = "1117_57__LobbyInventory__Stroke_gray",
+							},
+						},
+						{
+							Primitive = "Frame",
+							Id = "S_Foil",
+							Props = {
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 3,
+								Size = UDim2.fromScale(1, 1),
+								Visible = false,
+								ZIndex = 4,
+							},
+							Children = {
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Holo",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										LayoutOrder = 0,
+										Position = UDim2.fromScale(0.003, 0.0463),
+										Size = UDim2.fromScale(0.9941, 0.9074),
+										Image = "rbxassetid://91511289193689",
+										ImageTransparency = 0.55,
+										ScaleType = Enum.ScaleType.Fit,
+									},
+									Children = {
+										{
+											Primitive = "UIGradient",
+											Props = {
+												Color = ColorSequence.new({
+													ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 150, 220)),
+													ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 235, 150)),
+													ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140, 255, 220)),
+													ColorSequenceKeypoint.new(0.75, Color3.fromRGB(140, 190, 255)),
+													ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 150, 255)),
+												}),
+												Rotation = 35,
+											},
+											Tags = { ["Utils_UIGradientMove"] = { Utils_MoveSpeed = 0.25 } },
+										},
+									},
+								},
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Sheen",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										LayoutOrder = 1,
+										Position = UDim2.fromScale(0.003, 0.0463),
+										Size = UDim2.fromScale(0.9941, 0.9074),
+										ZIndex = 2,
+										Image = "rbxassetid://91511289193689",
+										ImageTransparency = 0.25,
+										ScaleType = Enum.ScaleType.Fit,
+									},
+									Children = {
+										{
+											Primitive = "UIGradient",
+											Props = {
+												Rotation = 25,
+												Transparency = NumberSequence.new({
+													NumberSequenceKeypoint.new(0, 1),
+													NumberSequenceKeypoint.new(0.38, 1),
+													NumberSequenceKeypoint.new(0.5, 0.1),
+													NumberSequenceKeypoint.new(0.62, 1),
+													NumberSequenceKeypoint.new(1, 1),
+												}),
+											},
+											Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Sweep", Utils_MotionSpeed = 1 } },
+										},
+									},
+								},
+								{
+									Primitive = "Frame",
+									Props = {
+										Name = "Sparkle",
+										AnchorPoint = Vector2.new(0.5, 0.5),
+										BackgroundTransparency = 1,
+										LayoutOrder = 2,
+										Position = UDim2.fromScale(0.12, 0.56),
+										Size = UDim2.fromScale(0.16, 0.16),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = 3,
+									},
+									Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Twinkle", Utils_MotionSpeed = 1.3 } },
+									Children = {
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Across",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 235, 250),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(1, 0.16),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Down",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 235, 250),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(0.16, 1),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+									},
+								},
+								{
+									Primitive = "Frame",
+									Props = {
+										Name = "Sparkle",
+										AnchorPoint = Vector2.new(0.5, 0.5),
+										BackgroundTransparency = 1,
+										LayoutOrder = 3,
+										Position = UDim2.fromScale(0.88, 0.62),
+										Size = UDim2.fromScale(0.12, 0.12),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = 3,
+									},
+									Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Twinkle", Utils_MotionSpeed = 0.9 } },
+									Children = {
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Across",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(220, 245, 255),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(1, 0.16),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Down",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(220, 245, 255),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(0.16, 1),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							Primitive = "Frame",
+							Id = "S_Gold",
+							Props = {
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 4,
+								Size = UDim2.fromScale(1, 1),
+								Visible = false,
+								ZIndex = 4,
+							},
+							Children = {
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Wash",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										LayoutOrder = 0,
+										Position = UDim2.fromScale(0.003, 0.0463),
+										Size = UDim2.fromScale(0.9941, 0.9074),
+										Image = "rbxassetid://91511289193689",
+										ImageColor3 = Color3.fromRGB(255, 196, 60),
+										ImageTransparency = 0.8,
+										ScaleType = Enum.ScaleType.Fit,
+									},
+								},
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Sheen",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										LayoutOrder = 1,
+										Position = UDim2.fromScale(0.003, 0.0463),
+										Size = UDim2.fromScale(0.9941, 0.9074),
+										ZIndex = 2,
+										Image = "rbxassetid://91511289193689",
+										ImageColor3 = Color3.fromRGB(255, 240, 190),
+										ImageTransparency = 0.35,
+										ScaleType = Enum.ScaleType.Fit,
+									},
+									Children = {
+										{
+											Primitive = "UIGradient",
+											Props = {
+												Rotation = 25,
+												Transparency = NumberSequence.new({
+													NumberSequenceKeypoint.new(0, 1),
+													NumberSequenceKeypoint.new(0.38, 1),
+													NumberSequenceKeypoint.new(0.5, 0.1),
+													NumberSequenceKeypoint.new(0.62, 1),
+													NumberSequenceKeypoint.new(1, 1),
+												}),
+											},
+											Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Sweep", Utils_MotionSpeed = 1 } },
+										},
+									},
+								},
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Rim",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										ClipsDescendants = true,
+										LayoutOrder = 2,
+										Position = UDim2.fromScale(0.0133, 0.0185),
+										Size = UDim2.fromScale(0.9735, 0.963),
+										ZIndex = 3,
+										Image = "rbxassetid://81979878629232",
+										ScaleType = Enum.ScaleType.Fit,
+									},
+									Children = {
+										{
+											Primitive = "UIGradient",
+											Props = {
+												Color = ColorSequence.new({
+													ColorSequenceKeypoint.new(0, Color3.fromRGB(170, 110, 20)),
+													ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 200, 60)),
+													ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 240, 170)),
+													ColorSequenceKeypoint.new(0.7, Color3.fromRGB(255, 200, 60)),
+													ColorSequenceKeypoint.new(1, Color3.fromRGB(170, 110, 20)),
+												}),
+												Rotation = 45,
+											},
+											Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Glint", Utils_MotionSpeed = 1 } },
+										},
+									},
+								},
+								{
+									Primitive = "Frame",
+									Props = {
+										Name = "Sparkle",
+										AnchorPoint = Vector2.new(0.5, 0.5),
+										BackgroundTransparency = 1,
+										LayoutOrder = 3,
+										Position = UDim2.fromScale(0.12, 0.56),
+										Size = UDim2.fromScale(0.18, 0.18),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = 4,
+									},
+									Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Twinkle", Utils_MotionSpeed = 1.3 } },
+									Children = {
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Across",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 236, 160),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(1, 0.16),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Down",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 236, 160),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(0.16, 1),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+									},
+								},
+								{
+									Primitive = "Frame",
+									Props = {
+										Name = "Sparkle",
+										AnchorPoint = Vector2.new(0.5, 0.5),
+										BackgroundTransparency = 1,
+										LayoutOrder = 4,
+										Position = UDim2.fromScale(0.88, 0.62),
+										Size = UDim2.fromScale(0.14, 0.14),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = 4,
+									},
+									Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Twinkle", Utils_MotionSpeed = 0.9 } },
+									Children = {
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Across",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 250, 220),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(1, 0.16),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Down",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 250, 220),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(0.16, 1),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -624,7 +1002,7 @@ local _gui = {
 						Visible = false,
 						ZIndex = 6,
 						Text = "Shiny",
-						TextColor3 = Color3.fromRGB(255, 196, 0),
+						TextColor3 = Color3.fromRGB(255, 175, 235),
 						TextSize = 18,
 						TextWrapped = false,
 						TextXAlignment = Enum.TextXAlignment.Right,
@@ -677,8 +1055,8 @@ local _gui = {
 								BackgroundTransparency = 1,
 								BorderSizePixel = 0,
 								LayoutOrder = 3,
-								Position = UDim2.fromScale(0.62, 0.72),
-								Size = UDim2.fromScale(0.5, 0.28),
+								Position = UDim2.fromScale(0.5, 0.72),
+								Size = UDim2.fromScale(0.9, 0.28),
 								ZIndex = 5,
 								Text = "2,500",
 								FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
@@ -687,7 +1065,7 @@ local _gui = {
 								TextScaled = true,
 								TextWrapped = false,
 								RichText = true,
-								TextXAlignment = Enum.TextXAlignment.Left,
+								TextXAlignment = Enum.TextXAlignment.Center,
 							},
 							Children = {
 								{
@@ -701,7 +1079,7 @@ local _gui = {
 										AnchorPoint = Vector2.new(1, 0.5),
 										BackgroundTransparency = 1,
 										LayoutOrder = 0,
-										Position = UDim2.new(0, -3, 0.5, 0),
+										Position = UDim2.new(0.5, -24, 0.5, 0),
 										Size = UDim2.fromScale(1, 1),
 										SizeConstraint = Enum.SizeConstraint.RelativeYY,
 										ZIndex = 5,

@@ -40,6 +40,9 @@ local shownMaps = {} --- @type { [string]: string }
 local playShown: boolean = true
 local playHomes = {} --- @type { [GuiObject]: UDim2 }
 
+-- Whether the custom lobby's window shows, which takes the play screen's place like the setup panel
+local customOpen: boolean = false
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -64,7 +67,9 @@ function Module.Start()
 	moduleGui = I.UserInterface.UI[_settings.BOARD_GUI_NAME]
 	elems["Play"] = moduleGui:FindFirstChild("U_Play") --- @type Frame
 	elems["Solo"] = elems["Play"]:FindFirstChild("S_Solo", true) --- @type ImageButton
+	elems["SoloIcon"] = elems["Play"]:FindFirstChild("S_SoloIcon", true) --- @type ImageLabel
 	elems["Custom"] = elems["Play"]:FindFirstChild("S_Custom", true) --- @type ImageButton
+	elems["Local"] = elems["Play"]:FindFirstChild("S_Local", true) --- @type ImageButton
 	elems["Rows"] = elems["Play"]:FindFirstChild("U_Rows", true) --- @type ScrollingFrame
 	prefabs["Row"] = elems["Rows"]:FindFirstChild("PREFAB | Row") --- @type Frame
 
@@ -78,7 +83,7 @@ function Module.Start()
 
 	--[[ Setup ]]
 
-	Setup.Start(moduleGui, Module._refresh)
+	Setup.Start(Module._refresh)
 
 	--[[ Connections ]]
 
@@ -89,6 +94,7 @@ function Module.Start()
 		Module._watchRow(config)
 	end
 	I.Interact.OnPress(elems["Solo"], Module._onPlay)
+	I.Interact.OnPress(elems["Local"], Module._onLocal)
 	I.Interact.OnPress(elems["Custom"], function()
 		if elems["Custom"]:GetAttribute("Interact_Function") == "" then
 			I.WidgetManager.ShowMessage("Your party's leader picks the match.")
@@ -111,6 +117,22 @@ function Module.Start()
 	--[[ Timers ]]
 
 	I.DoEvery.Every(_settings.TIMER_TICK, Module._tick)
+
+	--[[ Custom Lobby ]]
+
+	-- The custom lobby's window takes the stage too: the board slides away while it shows
+	I.Topic.Subscribe("WidgetManager_Opened", function(widgetName: string)
+		if widgetName == _settings.CUSTOM_GUI_NAME then
+			customOpen = true
+			Module._refresh()
+		end
+	end)
+	I.Topic.Subscribe("WidgetManager_Closed", function(widgetName: string)
+		if widgetName == _settings.CUSTOM_GUI_NAME then
+			customOpen = false
+			Module._refresh()
+		end
+	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -202,6 +224,26 @@ function Module._onPlay()
 	Setup.Open(localPlayer:GetAttribute("PartyId") ~= nil)
 end
 
+--%%%%%%%%%%%%%%%%%%%% On Local
+
+--[[
+	LOCAL opens the setup for a match of friends on this screen; a party plays together instead, so it asks them to leave
+	it first.
+]]
+function Module._onLocal()
+	--[[ Checks ]]
+
+	-- Check if the player is alone (a party plays together from Solo vs bots)
+	if Module._isPartyMember() or I.S.Players.LocalPlayer:GetAttribute("PartyLeader") then
+		I.WidgetManager.ShowMessage("Local play is for friends on this screen: leave your party first.")
+		return
+	end
+
+	--[[ Opening ]]
+
+	Setup.Open(false, true)
+end
+
 --%%%%%%%%%%%%%%%%%%%% Tick
 
 --[[
@@ -229,7 +271,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the board: Solo vs bots (Play with party in a party), and each public card's mode, the map it plays now (the
+	Draws the board: Solo vs bots (Play with party in a party) with its mode icon, and each public card's mode and its
+	icon (MODE_ICONS), the map it plays now (the
 	rotation's, the same on every server), its picture, how long until the next map, and Join. The setup panel shows
 	in the board's place, which slides away for it. A party member's Join, Play and Custom are greyed out (their leader
 	picks), but Custom opens their leader's lobby once they're in it.
@@ -251,6 +294,7 @@ function Module._refresh()
 		shownMaps[rowId] = Rotation.GetMap(config:GetAttribute("Mode"), config:GetAttribute("Size"))
 		local mapRow = _settings.MAPS[shownMaps[rowId]] --- @type MatchBoard_MapRow
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
+		line:FindFirstChild("S_ModeIcon", true).Image = _settings.MODE_ICONS[config:GetAttribute("Mode")] or ""
 		line:FindFirstChild("S_Map", true).Text = mapRow.Name
 		line:FindFirstChild("S_Timer", true).Text = string.format("%d:%02d", shownSeconds // 60, shownSeconds % 60)
 		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if member then "Host picks" else "Join"
@@ -262,7 +306,9 @@ function Module._refresh()
 
 	--[[ Play ]]
 
-	elems["Solo"]:FindFirstChild("Name1").Text = if member then "Waiting for host" elseif I.S.Players.LocalPlayer:GetAttribute("PartyId") then "Play with party" else "Solo vs bots"
+	local inParty: boolean = I.S.Players.LocalPlayer:GetAttribute("PartyId") ~= nil
+	elems["Solo"]:FindFirstChild("Name1").Text = if member then "Waiting for host" elseif inParty then "Play with party" else "Solo vs bots"
+	elems["SoloIcon"].Image = _settings.MODE_ICONS[if inParty then "Party" else "Bots"]
 	Module._setLocked(elems["Solo"], member)
 
 	--[[ Custom ]]
@@ -276,7 +322,7 @@ function Module._refresh()
 
 	--[[ Panels ]]
 
-	Module._slidePlay(not Setup.IsOpen())
+	Module._slidePlay(not Setup.IsOpen() and not customOpen)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Slide Play

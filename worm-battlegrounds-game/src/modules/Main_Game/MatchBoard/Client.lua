@@ -49,6 +49,7 @@ function Module.Init()
 		--[[ Methods ]]
 
 		GetCustomRoom = Custom.GetMyRoom,
+		GetPickedSize = Custom.GetPickedSize,
 	}
 end
 

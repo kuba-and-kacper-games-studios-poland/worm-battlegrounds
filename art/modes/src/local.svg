@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Local: a red studded couch with a gamepad on its seat -->
+  <defs><linearGradient id="red_v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b5e"/><stop offset="0.45" stop-color="#e8322a"/><stop offset="1" stop-color="#a3161a"/></linearGradient><linearGradient id="red_d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b5e"/><stop offset="0.45" stop-color="#e8322a"/><stop offset="1" stop-color="#a3161a"/></linearGradient><linearGradient id="wood_v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7c27a"/><stop offset="0.45" stop-color="#d98c3c"/><stop offset="1" stop-color="#8f531c"/></linearGradient><linearGradient id="dark_v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#59607a"/><stop offset="0.45" stop-color="#353a4e"/><stop offset="1" stop-color="#1f2232"/></linearGradient></defs>
+  <rect x="9" y="10" width="46" height="26" rx="7" fill="url(#red_v)" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <rect x="16.30" y="15.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="16.30" y="15.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="16.78" y="15.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <rect x="24.30" y="15.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="24.30" y="15.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="24.78" y="15.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <rect x="36.30" y="15.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="36.30" y="15.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="36.78" y="15.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <rect x="44.30" y="15.78" width="3.40" height="3.40" rx="0.95" fill="#a3161a"/><rect x="44.30" y="15.30" width="3.40" height="3.40" rx="0.95" fill="#e8322a"/><rect x="44.78" y="15.64" width="2.45" height="1.16" rx="0.57" fill="#ff6b5e" opacity="0.9"/>
+  <rect x="3" y="26" width="12" height="26" rx="5" fill="url(#red_d)" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <rect x="49" y="26" width="12" height="26" rx="5" fill="url(#red_d)" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <rect x="11" y="34" width="42" height="16" rx="5" fill="url(#red_v)" stroke="#171724" stroke-width="2.6" stroke-linejoin="round"/>
+  <rect x="8" y="50" width="6" height="6" rx="1.5" fill="url(#wood_v)" stroke="#171724" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="50" y="50" width="6" height="6" rx="1.5" fill="url(#wood_v)" stroke="#171724" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M20 34 Q20 27 27 27 L37 27 Q44 27 44 34 L46 44 Q46 49 41 48 L37 43 L27 43 L23 48 Q18 49 18 44 Z" fill="url(#dark_v)" stroke="#171724" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M24.5 32 h5 M27 29.5 v5" stroke="#f2f5fa" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="38" cy="30.5" r="1.5" fill="#ffc21a" stroke="#171724" stroke-width="0.8"/>
+  <circle cx="41" cy="33" r="1.5" fill="#e8322a" stroke="#171724" stroke-width="0.8"/>
+  <circle cx="35" cy="33" r="1.5" fill="#1f8fe8" stroke="#171724" stroke-width="0.8"/>
+  <circle cx="38" cy="35.5" r="1.5" fill="#43c83a" stroke="#171724" stroke-width="0.8"/>
+  <ellipse cx="18" cy="14" rx="6" ry="1.8" fill="#ffffff" opacity="0.45" transform="rotate(0 18 14)"/>
+</svg>

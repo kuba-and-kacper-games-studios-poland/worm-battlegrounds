@@ -32,10 +32,11 @@ local Module = {}
 
 --[[
 	**SERVER** |
-	A blast: tells every client, hurts every snail in play within its radius at once (from damageMax at the center to
-	damageEdge at the edge) and credits the shooter, while it carves a round hole; once the hole is cut, throws each
-	snail it hurt away from the center (tilted up) with the knockback class (None throws nobody). Returns, after the
-	carve, the damage dealt to snails other than the shooter's.
+	A blast: tells every client (with the shooter's Shiny or Golden copy, for its accents), hurts every snail in play
+	within its radius at once (from damageMax at the center to damageEdge at the edge, more for a shiny copy, a golden
+	one as much) and credits the shooter, while it carves a round hole; once the hole is cut, throws each snail it hurt
+	away from the center (tilted up) with the knockback class (None throws nobody). Returns, after the carve, the
+	damage dealt to snails other than the shooter's.
 ]]
 --- @return number
 function Module.Explode(center: Vector3, radius: number, itemId: string, sourceId: string?, shiny: boolean?, damageMax: number, damageEdge: number, knockback: string)
@@ -45,6 +46,7 @@ function Module.Explode(center: Vector3, radius: number, itemId: string, sourceI
 	local rootRadius: number = I.Settings["Snails"].ROOT_SIZE / 2
 	local knockSpeed: number = I.G_Arsenal.GetKnockback(knockback)
 	local multiplier: number = if shiny then I.Settings["Arsenal"].SHINY_DAMAGE_MULTIPLIER else 1
+	local variant: string? = if shiny then Module.GetVariant(sourceId, itemId) else nil
 	local throws = {} --- @type { [string]: Vector3 }
 	local carved: boolean = false
 	local dealt: number = 0
@@ -59,7 +61,7 @@ function Module.Explode(center: Vector3, radius: number, itemId: string, sourceI
 
 	--[[ Publishing ]]
 
-	I.Network.FireAll("Combat_Explosion", position, radius, itemId, shiny == true)
+	I.Network.FireAll("Combat_Explosion", position, radius, itemId, variant)
 
 	--[[ Carving ]]
 
@@ -224,6 +226,34 @@ function Module.IsTeammate(participantId: string, sourceId: string?)
 	--[[ Returning ]]
 
 	return victim ~= nil and shooter ~= nil and participantId ~= sourceId and victim.Team == shooter.Team
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Variant
+
+--[[
+	Returns how special a participant's copy of an item looks: "Golden" (Loadout's GOLDEN_COPIES owned), "Shiny"
+	(SHINY_COPIES), or nil. Looks only: a golden copy deals and boosts as a shiny one.
+]]
+--- @return string?
+function Module.GetVariant(participantId: string?, itemId: string)
+	--[[ Data ]]
+
+	--- @type Match_Participant?
+	local participant = if participantId then I.Match.GetParticipant(participantId) else nil
+
+	--[[ Checks ]]
+
+	-- Check if the participant is in the match
+	if not participant then
+		return nil
+	end
+
+	--[[ Returning ]]
+
+	if participant.GoldenItems and participant.GoldenItems[itemId] then
+		return "Golden"
+	end
+	return if participant.ShinyItems and participant.ShinyItems[itemId] then "Shiny" else nil
 end
 
 return Module

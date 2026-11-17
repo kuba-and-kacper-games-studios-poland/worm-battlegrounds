@@ -4,7 +4,10 @@ Pays players when a match ends: coins by kind, size and place, XP, statistics, t
 deathmatch and team matches pay by place; a solo match pays only a win, by the bot's difficulty; a party match (friends
 only) pays as a public deathmatch of its size, or `PARTY_NO_BOTS_SHARE` of that without bots; custom and tutorial
 matches pay no coins, and custom lobbies give no XP. Against farming, the last two places are paid only after `ANTI_FARM_ROUNDS` rounds or a knockout
-by another player. The Double Coins pass doubles coins. Leavers get nothing.
+by another player. The Double Coins pass doubles coins. Leavers get nothing. XP comes line by line: `XP_PER_MATCH` for
+playing, `XP_WIN` for a win (first place, or the winning team) and `XP_PER_KNOCKOUT` for each snail knocked out (the
+owner's pick, 2026-11-17). The lines are queued for the lobby's XP replay (`I.Progression.SetReplay`), added to any
+still waiting (a rematch on the same server), and sent with the results.
 
 | | |
 | --- | --- |
@@ -34,7 +37,8 @@ It listens to `Match_ParticipantOut`, `Match_PhaseChanged` and `Match_Ended`.
 ## Data
 
 Writes the `MatchesPlayed`, `Wins`, `Knockouts` and `DamageDealt` statistics, and coins and XP through their modules.
-`MatchRewards_Earned`: `Coins` (`{ [participantId]: string }`), `Xp`, `Level`, `LevelUp`.
+`MatchRewards_Earned`: `Coins` (`{ [participantId]: string }`), `Xp`, `Level`, `LevelUp`, and `XpLines`
+(`{ Progression_XpLine }`), `XpBefore` and `XpAfter` (`Progression_Progress`) for the Results screen's level bar.
 
 ## Settings
 
@@ -47,4 +51,6 @@ Writes the `MatchesPlayed`, `Wins`, `Knockouts` and `DamageDealt` statistics, an
 | `PARTY_NO_BOTS_SHARE` | `0.5` | The share of a deathmatch's coins a party match without bots pays |
 | `ANTI_FARM_ROUNDS` | `2` | Rounds the last two places must play to be paid |
 | `DOUBLE_COINS_PASS` | `"DoubleCoins"` | The pass that doubles coins |
-| `XP_PER_MATCH`, `XP_KINDS` | `100`; Public, Solo, Party (not Custom) | XP for a match of those kinds; a custom lobby gives none |
+| `XP_PER_MATCH`, `XP_KINDS` | `100`; Public, Solo, Party (not Custom) | XP for playing a match of those kinds; a custom lobby gives none |
+| `XP_WIN`, `XP_PER_KNOCKOUT` | `50`, `10` | XP on top for a win and for each knockout |
+| `XP_LABELS` | "Match played", "Victory", "1 knockout" (and the several forms) | The XP lines' text in the replay and Results |

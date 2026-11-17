@@ -260,7 +260,7 @@ local _gui = {
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,
 													LayoutOrder = 1,
-													Position = UDim2.fromScale(0.0706, 0.1607),
+													Position = UDim2.fromScale(0.0706, 0.07),
 													Size = UDim2.fromScale(0.8643, 0.25),
 													ZIndex = 2,
 												},
@@ -380,15 +380,205 @@ local _gui = {
 													},
 												},
 											},
+											--[[
+												Under the coins line (2026-11-17), the lobby's level plate small: the level in a diamond in
+												its prestige frame's colours, LEVEL 14, the bar and "60 / 156 XP", which MatchHud's Results
+												fills from the level before the match to after it
+											]]
+											{
+												Primitive = "Frame",
+												Id = "S_XpRow",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 2,
+													Position = UDim2.fromScale(0.0706, 0.37),
+													Size = UDim2.fromScale(0.8643, 0.28),
+													ZIndex = 4,
+												},
+												Children = {
+													-- The diamond: a square turned 45°, the frame's colours on its fill, the level over it
+													{
+														Primitive = "Frame",
+														Props = {
+															Name = "Badge",
+															AnchorPoint = Vector2.new(0, 0.5),
+															BackgroundTransparency = 1,
+															BorderSizePixel = 0,
+															Position = UDim2.fromScale(0, 0.5),
+															Size = UDim2.fromScale(1.25, 1.25),
+															SizeConstraint = Enum.SizeConstraint.RelativeYY,
+															ZIndex = 5,
+														},
+														Children = {
+															-- Pops the diamond when a level is reached
+															{ Primitive = "UIScale", Id = "S_LevelPop" },
+															{
+																Primitive = "Frame",
+																Props = {
+																	Name = "Diamond",
+																	AnchorPoint = Vector2.new(0.5, 0.5),
+																	BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+																	BorderSizePixel = 0,
+																	Position = UDim2.fromScale(0.5, 0.5),
+																	Rotation = 45,
+																	Size = UDim2.fromScale(0.7, 0.7),
+																	ZIndex = 5,
+																},
+																Children = {
+																	{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.18, 0) } },
+																	{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { Color = Color3.fromRGB(25, 25, 35), Thickness = 2 } },
+																	{
+																		Primitive = "UIGradient",
+																		Id = "S_LevelGradient",
+																		Props = {
+																			Color = ColorSequence.new(Color3.fromRGB(150, 150, 165), Color3.fromRGB(70, 70, 82)),
+																			Rotation = 45,
+																		},
+																	},
+																},
+															},
+															{
+																Primitive = "TextLabel",
+																Id = "S_LevelNum",
+																Props = {
+																	AnchorPoint = Vector2.new(0.5, 0.5),
+																	BackgroundTransparency = 1,
+																	BorderSizePixel = 0,
+																	Position = UDim2.fromScale(0.5, 0.52),
+																	Size = UDim2.fromScale(0.62, 0.46),
+																	ZIndex = 6,
+																	Text = "14",
+																	TextColor3 = Color3.fromRGB(255, 255, 255),
+																	TextSize = 22,
+																	FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+																	RichText = true,
+																	TextScaled = true,
+																},
+																Children = {
+																	{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+																	{ Primitive = "UIStroke", Props = { Thickness = 0.12, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+																},
+															},
+														},
+													},
+													{
+														Primitive = "TextLabel",
+														Id = "S_LevelTitle",
+														Props = {
+															AnchorPoint = Vector2.new(0, 0.5),
+															BackgroundTransparency = 1,
+															BorderSizePixel = 0,
+															Position = UDim2.fromScale(0.075, 0.5),
+															Size = UDim2.fromScale(0.16, 0.82),
+															ZIndex = 4,
+															Text = "LEVEL 14",
+															FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+															TextColor3 = Color3.fromRGB(255, 255, 255),
+															TextSize = 24,
+															TextScaled = true,
+															TextWrapped = true,
+															TextXAlignment = Enum.TextXAlignment.Left,
+															RichText = true,
+														},
+														Tags = { TextCase_Upper = {} },
+														Children = {
+															{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+															{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+														},
+													},
+													-- The bar: a dark track, the gold fill with its gloss
+													{
+														Primitive = "Frame",
+														Props = {
+															Name = "Track",
+															AnchorPoint = Vector2.new(0, 0.5),
+															BackgroundColor3 = Color3.fromRGB(13, 13, 20),
+															BorderSizePixel = 0,
+															Position = UDim2.fromScale(0.25, 0.5),
+															Size = UDim2.fromScale(0.52, 0.5),
+															ZIndex = 4,
+														},
+														Children = {
+															{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+															{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { Color = Color3.fromRGB(25, 25, 35), Thickness = 2 } },
+															{
+																Primitive = "Frame",
+																Id = "S_XpFill",
+																Props = {
+																	AnchorPoint = Vector2.new(0, 0.5),
+																	BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+																	BorderSizePixel = 0,
+																	Position = UDim2.fromScale(0, 0.5),
+																	Size = UDim2.fromScale(0.38, 1),
+																	ZIndex = 5,
+																},
+																Children = {
+																	{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+																	{
+																		Primitive = "UIGradient",
+																		Props = {
+																			Color = ColorSequence.new({
+																				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 226, 122)),
+																				ColorSequenceKeypoint.new(0.55, Color3.fromRGB(255, 176, 0)),
+																				ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 138, 0)),
+																			}),
+																			Rotation = 90,
+																		},
+																	},
+																	{
+																		Primitive = "Frame",
+																		Props = {
+																			Name = "Gloss",
+																			AnchorPoint = Vector2.new(0.5, 0),
+																			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+																			BackgroundTransparency = 0.55,
+																			BorderSizePixel = 0,
+																			Position = UDim2.fromScale(0.5, 0.12),
+																			Size = UDim2.new(1, -4, 0.3, 0),
+																			ZIndex = 6,
+																		},
+																		Children = { { Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } } },
+																	},
+																},
+															},
+														},
+													},
+													{
+														Primitive = "TextLabel",
+														Id = "S_XpCount",
+														Props = {
+															AnchorPoint = Vector2.new(1, 0.5),
+															BackgroundTransparency = 1,
+															BorderSizePixel = 0,
+															Position = UDim2.fromScale(1, 0.5),
+															Size = UDim2.fromScale(0.21, 0.72),
+															ZIndex = 4,
+															Text = "60 / 156 XP",
+															FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+															TextColor3 = Color3.fromRGB(232, 232, 240),
+															TextSize = 20,
+															TextScaled = true,
+															TextWrapped = true,
+															TextXAlignment = Enum.TextXAlignment.Right,
+															RichText = true,
+														},
+														Children = {
+															{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+															{ Primitive = "UIStroke", Props = { Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+														},
+													},
+												},
+											},
 											{
 												Primitive = "Frame",
 												Props = {
 													Name = "StatsList",
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,
-													LayoutOrder = 2,
-													Position = UDim2.fromScale(0.2044, 0.5893),
-													Size = UDim2.fromScale(0.5845, 0.1875),
+													LayoutOrder = 3,
+													Position = UDim2.fromScale(0.2044, 0.72),
+													Size = UDim2.fromScale(0.5845, 0.17),
 													ZIndex = 3,
 												},
 												Children = {

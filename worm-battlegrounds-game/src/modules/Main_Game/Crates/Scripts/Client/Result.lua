@@ -27,6 +27,9 @@ local floating: boolean = false
 local rainbow: boolean = false
 local homeDisk: UDim2 = UDim2.new()
 
+-- The Shiny cards' foils and the Golden cards' rims the loop turns, with how fast (degrees a second)
+local spinning = {} --- @type { [UIGradient]: number }
+
 -- The big card's place (the result's S_CardSlot), and the seconds before its words come in, by entrance
 local CARD_HOME: UDim2 = UDim2.fromScale(0.5, 0.39)
 
@@ -80,7 +83,8 @@ end
 --[[
 	Shows the big card for a result, coming in one of its entrances (flying out of the reel from a card, popping,
 	squashing, fading in like a ghost, or floating up), in its rarity's glow and rays, then its rarity bar, name and
-	copies to shiny; a mood keeps the rays turning through the rainbow or the card floating.
+	copies to shiny (past shiny, a weapon's or utility's copies to golden: "SHINY!" and "GOLDEN!" as they turn), the
+	card in its Shiny foil or Golden rim; a mood keeps the rays turning through the rainbow or the card floating.
 ]]
 --- @param result Crates_Result
 function Module.ShowBig(result, entrance: string, from: Frame?, mood: string?)
@@ -94,7 +98,10 @@ function Module.ShowBig(result, entrance: string, from: Frame?, mood: string?)
 	local slot: CanvasGroup = elems["CardSlot"]
 	local scale: UIScale = slot:FindFirstChild("S_CardScale")
 	local color: Color3 = Reel.GetRarityColor(item.Rarity)
-	local shown: number = math.min(result.Copies, _settings.SHINY_COPIES)
+	local toGolden: boolean = result.Copies > _settings.SHINY_COPIES and table.find(_settings.GOLDEN_CATEGORIES, item.Category) ~= nil
+	local goal: number = if toGolden then _settings.GOLDEN_COPIES else _settings.SHINY_COPIES
+	local shown: number = math.min(result.Copies, goal)
+	local justGolden: boolean = toGolden and result.Copies == _settings.GOLDEN_COPIES
 	local after: number = TEXT_DELAYS[entrance] or 0.6
 
 	--[[ Card ]]
@@ -108,6 +115,7 @@ function Module.ShowBig(result, entrance: string, from: Frame?, mood: string?)
 	card.AnchorPoint = Vector2.new(0.5, 0.5)
 	card.Position = UDim2.fromScale(0.5, 0.5)
 	card:FindFirstChild("S_New", true).Visible = result.Copies == 1
+	Module._dressCard(card, result)
 	single.Visible = true
 
 	--[[ Words ]]
@@ -115,8 +123,19 @@ function Module.ShowBig(result, entrance: string, from: Frame?, mood: string?)
 	Module._drawRarityBar(single:FindFirstChild("S_RarityBar", true), item.Rarity)
 	single:FindFirstChild("S_Name", true).Text = item.Name
 	local label: TextLabel = single:FindFirstChild("S_Label", true)
-	label.Text = if result.JustShiny then "SHINY!" else `{shown} / {_settings.SHINY_COPIES} copies to shiny`
-	label.TextColor3 = if result.JustShiny then Color3.fromRGB(255, 224, 102) else Color3.fromRGB(230, 232, 239)
+
+	if justGolden then
+		label.Text = "GOLDEN!"
+	elseif result.JustShiny then
+		label.Text = "SHINY!"
+	elseif toGolden and result.Copies > goal then
+		label.Text = "Golden"
+	elseif toGolden then
+		label.Text = `{shown} / {goal} to golden`
+	else
+		label.Text = `{shown} / {goal} copies to shiny`
+	end
+	label.TextColor3 = if toGolden and result.Copies >= goal then _settings.GOLDEN_COLOR elseif result.JustShiny then _settings.SHINY_COLOR else Color3.fromRGB(230, 232, 239)
 	local fill: Frame = single:FindFirstChild("S_Fill", true)
 	fill.Size = UDim2.fromScale(0, 1)
 
@@ -186,13 +205,18 @@ function Module.ShowBig(result, entrance: string, from: Frame?, mood: string?)
 		Words_Tween:Play()
 	end
 	local Fill_TweenInfo: TweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, 0, false, after + 0.45)
-	local Fill_TweenGoal = { Size = UDim2.fromScale(shown / _settings.SHINY_COPIES, 1) }
+	local Fill_TweenGoal = { Size = UDim2.fromScale(shown / goal, 1) }
 	local Fill_Tween: Tween = I.S.TweenService:Create(fill, Fill_TweenInfo, Fill_TweenGoal)
 	Fill_Tween:Play()
-	if result.JustShiny then
+	if justGolden then
+		task.delay(after + 0.5, function()
+			I.Sound.Play({ Name = "Variant_Golden", SoundGroup = "SFX" })
+			Effects.Burst("Stars", Module.GetCardPoint(), 60, _settings.GOLDEN_COLOR)
+		end)
+	elseif result.JustShiny then
 		task.delay(after + 0.5, function()
 			I.Sound.Play({ Name = "Reveal_Shiny", SoundGroup = "SFX" })
-			Effects.Burst("Stars", Module.GetCardPoint(), 40, Color3.fromRGB(255, 224, 102))
+			Effects.Burst("Stars", Module.GetCardPoint(), 40, _settings.SHINY_COLOR)
 		end)
 	end
 end
@@ -200,8 +224,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Name Card
 
 --[[
-	Names a pack's card: its rarity bar and name under it, NEW when it's the first copy, a little pop and burst, and
-	for the best one the BEST ribbon, its rarity's reveal sound and a bigger burst.
+	Names a pack's card: its rarity bar and name under it, NEW when it's the first copy, its Shiny foil or Golden rim,
+	a little pop and burst, and for the best one the BEST ribbon, its rarity's reveal sound and a bigger burst.
 ]]
 --- @param result Crates_Result
 function Module.NameCard(card: Frame, result, slot: Vector2, cardSize: Vector2, isBest: boolean, count: number)
@@ -224,6 +248,7 @@ function Module.NameCard(card: Frame, result, slot: Vector2, cardSize: Vector2, 
 	card:FindFirstChild("S_New", true).Visible = result.Copies == 1
 	card:FindFirstChild("S_Best", true).Visible = isBest
 	info.Parent = elems["Cards"]
+	Module._dressCard(card, result)
 
 	--[[ Popping ]]
 
@@ -327,7 +352,7 @@ end
 
 --[[
 	Each frame while the result shows: the rays turn (through the rainbow for the party), the black hole's disk turns
-	(its flipbook), and a floating card bobs.
+	(its flipbook), a floating card bobs, and the Shiny cards' foils and Golden cards' rims turn.
 ]]
 function Module._startResultLoop()
 	--[[ Checks ]]
@@ -356,7 +381,56 @@ function Module._startResultLoop()
 			elems["CardSlot"].Position = CARD_HOME + UDim2.fromScale(0, math.sin(now * 2) * 0.012)
 			elems["CardSlot"].Rotation = math.sin(now * 1.6) * 1.5
 		end
+		for gradient: UIGradient, spin: number in pairs(spinning) do
+			if gradient.Parent then
+				gradient.Rotation = (now * spin) % 360
+			else
+				spinning[gradient] = nil
+			end
+		end
 	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Dress Card
+
+--[[
+	Dresses a result's card when its item is Shiny or Golden now: a holo foil over it (a white copy of its picture with
+	SHINY_FOIL turning through it) or a gold rim (a copy of its outline in GOLDEN_RIM, the glint turning round it),
+	turned by the result loop until the card goes.
+]]
+--- @param result Crates_Result
+function Module._dressCard(card: Frame, result)
+	--[[ Local Variables ]]
+
+	local variant: string? = Module._getVariant(result)
+
+	--[[ Checks ]]
+
+	-- Check if the item is Shiny or Golden now
+	if not variant then
+		return
+	end
+
+	--[[ Building ]]
+
+	local golden: boolean = variant == "Golden"
+	local background: Frame = card:FindFirstChild("Background")
+	local layer: ImageLabel = background:FindFirstChild(if golden then "S_Stroke" else "Main"):Clone()
+	layer:ClearAllChildren()
+	layer.Name = variant
+	layer.ImageColor3 = Color3.new(1, 1, 1)
+	layer.ImageTransparency = if golden then 0 else _settings.SHINY_FOIL_TRANSPARENCY
+	layer.ZIndex = 2
+	local gradient: UIGradient = I.Create("UIGradient")({
+		Color = if golden then _settings.GOLDEN_RIM else _settings.SHINY_FOIL,
+		Parent = layer,
+	})
+	layer.Parent = background
+
+	--[[ Saving ]]
+
+	spinning[gradient] = if golden then _settings.GOLDEN_RIM_SPIN else _settings.SHINY_FOIL_SPIN
+	Module._startResultLoop()
 end
 
 --%%%%%%%%%%%%%%%%%%%% Draw Rarity Bar
@@ -388,6 +462,28 @@ end
 --- @return Vector2
 function Module.GetCardPoint()
 	return elems["Result"].AbsolutePosition + elems["Result"].AbsoluteSize * Vector2.new(0.5, 0.39)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Variant
+
+--[[
+	Returns how special a result's item is now, by its copies: "Golden" (GOLDEN_COPIES, a weapon or utility:
+	GOLDEN_CATEGORIES), "Shiny" (SHINY_COPIES), or nil.
+]]
+--- @param result Crates_Result
+--- @return string?
+function Module._getVariant(result)
+	--[[ Data ]]
+
+	--- @type Inventory_ItemData
+	local item = I.G_Inventory.Items[result.ItemId]
+
+	--[[ Returning ]]
+
+	if result.Copies >= _settings.GOLDEN_COPIES and table.find(_settings.GOLDEN_CATEGORIES, item.Category) then
+		return "Golden"
+	end
+	return if result.Copies >= _settings.SHINY_COPIES then "Shiny" else nil
 end
 
 return Module

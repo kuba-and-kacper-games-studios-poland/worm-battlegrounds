@@ -18,6 +18,7 @@ local _scripts: Folder = script.Parent:FindFirstChild("Scripts")
 
 local DropPicker = require(_scripts:FindFirstChild("Client"):FindFirstChild("DropPicker")) --- @type Match_Client_DropPicker
 local WaitingRoom = require(_scripts:FindFirstChild("Client"):FindFirstChild("WaitingRoom")) --- @type Match_Client_WaitingRoom
+local HandOff = require(_scripts:FindFirstChild("Client"):FindFirstChild("HandOff")) --- @type Match_Client_HandOff
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -89,6 +90,7 @@ function Module.Start()
 	Module._createConnections()
 	DropPicker.Start(matchFolder)
 	WaitingRoom.Start(matchFolder)
+	HandOff.Start(matchFolder)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization
@@ -162,11 +164,23 @@ end
 
 --[[
 	**CLIENT** |
-	Returns the local player's participant id.
+	Returns the participant this screen plays now: the active one when it's a snail of the local player's (in local
+	play the host plays every guest's snail), else their own.
 ]]
 --- @return string
 function Module.GetMyParticipantId()
-	return `P_{I.S.Players.LocalPlayer.UserId}`
+	--[[ Local Variables ]]
+
+	local localPlayer: Player = I.S.Players.LocalPlayer
+	local active: string? = Module.GetActive()
+	local info: Configuration? = if active then Module.GetParticipantInfo(active) else nil
+
+	--[[ Returning ]]
+
+	if active and info and not info:GetAttribute("IsBot") and info:GetAttribute("UserId") == localPlayer.UserId then
+		return active
+	end
+	return `P_{localPlayer.UserId}`
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Participant Info

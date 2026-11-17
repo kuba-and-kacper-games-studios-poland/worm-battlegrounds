@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type UmeGui_Gui
@@ -46,11 +47,12 @@ local _gui = {
 									BackgroundTransparency = 1,
 									BorderSizePixel = 0,
 									LayoutOrder = 1,
-									Position = UDim2.fromScale(0.5002, 0.5),
+									Position = UDim2.fromScale(0.5002, 0.564),
 									Size = UDim2.fromScale(0.4504, 0.6981),
 									ZIndex = 2,
 								},
 								Children = {
+									{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 1.1469 } },
 									{
 										Primitive = "Frame",
 										Props = { Name = "Background", BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 0, Size = UDim2.fromScale(1, 1) },
@@ -132,6 +134,22 @@ local _gui = {
 											ZIndex = 2,
 										},
 										Children = {
+											-- The custom lobby's mode icon, before the title
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "ModeIcon",
+													AnchorPoint = Vector2.new(0, 0.5),
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													Position = UDim2.fromScale(0, 0.42),
+													Size = UDim2.fromScale(1.25, 1.25),
+													SizeConstraint = Enum.SizeConstraint.RelativeYY,
+													ZIndex = 2,
+													Image = "rbxassetid://99448007204452",
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
 											{
 												Primitive = "TextLabel",
 												Props = {
@@ -139,7 +157,7 @@ local _gui = {
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,
 													LayoutOrder = 0,
-													Position = UDim2.fromScale(0, 0.0857),
+													Position = UDim2.fromScale(0.135, 0.0857),
 													Size = UDim2.fromScale(0.4425, 0.6714),
 													Text = "CUSTOM LOBBY",
 													FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
@@ -2229,12 +2247,13 @@ local _gui = {
 									BackgroundTransparency = 1,
 									BorderSizePixel = 0,
 									LayoutOrder = 1,
-									Position = UDim2.fromScale(0.4561, 0.4491),
+									Position = UDim2.fromScale(0.5002, 0.564),
 									Size = UDim2.fromScale(0.4835, 0.5824),
 									ZIndex = 2,
 									Visible = false,
 								},
 								Children = {
+									{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 1.4757 } },
 									{
 										Primitive = "Frame",
 										Props = { Name = "Background", BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 0, Size = UDim2.fromScale(1, 1) },
@@ -2316,6 +2335,22 @@ local _gui = {
 											ZIndex = 2,
 										},
 										Children = {
+											-- The custom lobby's mode icon, before the title
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "ModeIcon",
+													AnchorPoint = Vector2.new(0, 0.5),
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													Position = UDim2.fromScale(0, 0.42),
+													Size = UDim2.fromScale(1.25, 1.25),
+													SizeConstraint = Enum.SizeConstraint.RelativeYY,
+													ZIndex = 2,
+													Image = "rbxassetid://99448007204452",
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
 											{
 												Primitive = "TextLabel",
 												Props = {
@@ -2323,7 +2358,7 @@ local _gui = {
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,
 													LayoutOrder = 0,
-													Position = UDim2.fromScale(0, 0.0857),
+													Position = UDim2.fromScale(0.135, 0.0857),
 													Size = UDim2.fromScale(0.4001, 0.6714),
 													Text = "CUSTOM LOBBY",
 													FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),

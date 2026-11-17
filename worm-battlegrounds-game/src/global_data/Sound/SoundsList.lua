@@ -172,6 +172,30 @@ local data = {
 	["Match_Win"] = { 96177429150503 },
 	["Match_Lose"] = { 123846876335583 },
 
+	--%%%%%%%%%%%%%%%%%%%% Polish pass (the sound kit's 17 Nov update, uploaded 2026-11-17)
+
+	--[[ Levels: the lobby's XP replay and the frames ]]
+
+	["Xp_Line"] = { 110710270773656 },
+	["Xp_Tick"] = { 93301600404825 },
+	["Level_Up"] = { 86569810342605 },
+	["Frame_Unlock"] = { 94250786007519 },
+
+	--[[ The free crate for joining the group ]]
+
+	["Free_Claim"] = { 85804626362349 },
+
+	--[[ Match screens: the landing target and the emote wheel ]]
+
+	["Drop_Place"] = { 87841069953186 },
+	["Emote_WheelOpen"] = { 112250812308627 },
+	["Emote_WheelHover"] = { 101996198618237 },
+
+	--[[ Shiny and Golden weapons: the accent over a shot's blast ]]
+
+	["Variant_Shiny"] = { 108815618336609 },
+	["Variant_Golden"] = { 97871228100028 },
+
 	--%%%%%%%%%%%%%%%%%%%%
 }
 return data

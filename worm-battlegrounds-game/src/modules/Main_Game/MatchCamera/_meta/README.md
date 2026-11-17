@@ -25,7 +25,8 @@ the zoom), except a hand move and a shot in flight, which it must keep up with. 
 by dragging with the right mouse button, holding the mouse at the screen's left or right edge (inside the window, and
 only while the view can still go that way), a finger dragged on
 the arena (one finger, except on the player's own turn before the shot, when one finger points the aim; two fingers
-always), or the right stick while LT is held (the Console module's `Aim` and `CameraPan`). Outside the player's own
+always), or the right stick while LT is held (the Console module's `Aim` and `CameraPan`; held on any connected pad), at
+`STICK_PAN_SPEED` scaled with the zoom, so it crosses the screen as fast zoomed in as out. Outside the player's own
 turn before the shot, moving the view by hand leaves what the camera follows: it stays where the player puts it
 (catching up at `MANUAL_SPEED`) while they hold the pan (the right mouse button, a finger, LT) and until
 `MANUAL_HOLD` seconds after their last move, then glides back to what it follows. Every turn, the first too, starts
@@ -94,7 +95,7 @@ Match's `Match_TurnStarted`.
 | `TRAVEL_ZOOM_OUT`, `TRAVEL_ZOOM_DISTANCE` | `0.2`, `80` | Gliding to the next snail, the view zooms out by up to this share of the player's zoom, in full from this many studs away, and back in as it arrives |
 | `BLAST_KICK`, `BIG_BLAST_KICK`, `BLAST_KICK_SECONDS` | `0.06`, `0.12`, `0.6` | A blast the camera follows pushes the view in by this share of the zoom (the second for a blast of `BIG_BLAST_RADIUS` or more), easing back over this many seconds |
 | `MANUAL_HOLD`, `MANUAL_SPEED` | `5`, `15` | A view moved by hand (outside the player's own turn before the shot) stays where they put it while they hold the pan and until this many seconds after their last move, or until the next turn starts (whose glide to its snail ignores the hand until it arrives), catching up this quickly |
-| `STICK_PAN_SPEED` | `60` | Right-stick panning speed at full lean, in studs per second |
+| `STICK_PAN_SPEED` | `60` | Right-stick panning speed at full lean, in studs per second at `DISTANCE`, times the zoom over `DISTANCE` (about 25 at `ZOOM_MIN`, 109 at `ZOOM_MAX`) |
 | `EDGE_PAN_MARGIN`, `EDGE_PAN_SPEED` | `0.015`, `60` | The mouse this close to the screen's left or right edge (a share of its height) pans the view sideways, in studs per second; not while the left button is held (an aim) |
 | `STICK_DEADZONE` | `0.2` | How far the right stick must lean |
 

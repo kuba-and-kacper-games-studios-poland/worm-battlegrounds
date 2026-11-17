@@ -38,6 +38,22 @@ local _settings = {
 		Teams = "Teams",
 	},
 
+	--[[
+		The mode icons (art/modes, drawn in the weapon icons' look) that change with the board: each public card's by its
+		mode, and SOLO VS BOTS's and the setup's title's by the match it sets up (Bots, Party, Local). LOCAL, CUSTOM, the
+		custom lobby's title and the Random map card carry theirs in the gui
+	]]
+	--- @type { [string]: string }
+	MODE_ICONS = {
+		Deathmatch = "rbxassetid://101410705091276",
+		Duo = "rbxassetid://130275829062405",
+		Trio = "rbxassetid://130310099327594",
+		Quads = "rbxassetid://137708705569595",
+		Bots = "rbxassetid://70468282427332",
+		Party = "rbxassetid://120087464798832",
+		Local = "rbxassetid://126362872028871",
+	},
+
 	-- The bots' difficulty in public matches
 	PUBLIC_DIFFICULTY = "Medium",
 
@@ -111,6 +127,7 @@ local _settings = {
 		Solo = "Win reward",
 		Party = "Pays coins like a public match",
 		PartyNoBots = "Pays half the coins of a public match",
+		Local = "No rewards",
 	},
 
 	-- The coins a solo win pays by the bots' difficulty, shown in the setup (MatchRewards' SOLO_COINS, which pays them)
@@ -120,6 +137,17 @@ local _settings = {
 	-- A party match with bots adds this many bots per party member, up to PARTY_MAX_SIZE snails in all
 	PARTY_BOTS_PER_PLAYER = 1,
 	PARTY_MAX_SIZE = 8,
+
+	--%%%%%%%%%%%%%%%%%%%% Local
+
+	--[[
+		Local play (the owner, 2026-11-17): friends on one screen taking turns with one controller passed round, the
+		host's screen playing every local snail; how many players it starts with and takes at most, and what each
+		guest's snail is called ("Player 2")
+	]]
+	LOCAL_PLAYERS = 2,
+	LOCAL_MAX_PLAYERS = 8,
+	LOCAL_GUEST_NAME = "Player %d",
 
 	--%%%%%%%%%%%%%%%%%%%% Custom
 
@@ -138,6 +166,9 @@ local _settings = {
 
 	BOARD_GUI_NAME = "MatchBoard",
 	CUSTOM_GUI_NAME = "CustomLobby",
+
+	-- The solo, party and local setup: a WidgetManager widget like the custom lobby's window, for its blur and dim
+	SETUP_GUI_NAME = "MatchSetup",
 
 	-- A party member's Join, Play and Custom buttons while their leader picks the match: the face, its outline, the text
 	LOCKED_MAIN_COLOR = Color3.fromRGB(70, 70, 80),

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "MatchHudPreview"
@@ -213,7 +214,7 @@ function Module.Apply(preview)
 
 	--[[ Emote Wheel ]]
 
-	Module._placeWheel(preview.Fill("PREFAB | WheelEmote", 9))
+	Module._placeWheel(preview.Fill("PREFAB | WheelSlice", 9))
 
 	--[[ Screen ]]
 
@@ -287,23 +288,42 @@ end
 --%%%%%%%%%%%%%%%%%%%% Place Wheel
 
 --[[
-	Places the emotes on a circle around the wheel's middle, the first at the top, as the Cosmetics module does.
+	Cuts the wheel's slices round the ring and places their icons as the Cosmetics module does (its WHEEL_ICON_RADIUS
+	and WHEEL_SLICE_GAP), the first at the top lit and grown in a team's colour, the last two not owned yet.
 ]]
---- @param emotes { UmeGui_Subview }
-function Module._placeWheel(emotes)
+--- @param slices { UmeGui_Subview }
+function Module._placeWheel(slices)
+	--[[ Local Variables ]]
+
+	local share: number = 360 / math.max(#slices, 1)
+
 	--[[ Placing ]]
 
-	--- @param emote UmeGui_Subview
-	for index: number, emote in ipairs(emotes) do
-		local angle: number = (index - 1) / #emotes * math.pi * 2
-		emote.Root.Instance.Position = UDim2.fromScale(0.5 + math.sin(angle) * 0.4, 0.5 - math.cos(angle) * 0.4)
+	--- @param slice UmeGui_Subview
+	for index: number, slice in ipairs(slices) do
+		local root: Frame = slice.Root.Instance
+		local icon: ImageLabel = slice:Get("S_Icon").Instance
+		local middle: number = (index - 1) * share
+		local owned: boolean = index <= #slices - 2
+		local lit: boolean = index == 1
+		slice:Get("S_CutStart").Instance.Rotation = middle - share / 2 + 1 + 180
+		slice:Get("S_CutEnd").Instance.Rotation = middle + share / 2 - 1
+		slice:Get("S_Wedge").Instance.BackgroundColor3 = if lit then SNAILS[1][2] else root:GetAttribute("Look_Color")
+		slice:Get("S_Wedge").Instance.BackgroundTransparency = if lit then 0 else root:GetAttribute("Look_Transparency")
+		slice:Get("S_Grow").Instance.Scale = if lit then 1.06 else 1
+		icon.Position = UDim2.fromScale(0.5 + math.sin(math.rad(middle)) * 0.32, 0.5 - math.cos(math.rad(middle)) * 0.32)
+		icon.ImageColor3 = if owned then Color3.new(1, 1, 1) else root:GetAttribute("Look_LockedIconColor")
+		icon.ImageTransparency = if owned then 0 else root:GetAttribute("Look_LockedIconTransparency")
+		slice:Get("S_Lock").Instance.Visible = not owned
+		slice:Get("S_Level").Instance.Visible = not owned
+		root.ZIndex = if lit then 22 else 21
 	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Apply Screen Scale
 
 --[[
-	Scales the kept blocks (kill feed, wheel, phase panels) to the previewed screen as the game's ScreenScale does: its
+	Scales the kept blocks (kill feed, waiting panel) to the previewed screen as the game's ScreenScale does: its
 	height over the design height (or its width over the design width on a narrower screen), bigger on short Mobile
 	screens and never under the floor on others, times each block's device scale. The design's own frames scale by
 	their screen fractions.

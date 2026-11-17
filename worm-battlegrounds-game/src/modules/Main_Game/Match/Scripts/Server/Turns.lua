@@ -39,6 +39,10 @@ local windRound: number = 0
 local turnDeadline: number = 0
 local turnSeconds: number? = nil
 
+-- In local play, the snail whose turn waits for its player to take the controller, and whether they pressed
+local handOffId: string? = nil
+local handOffReady: boolean = false
+
 --[[ World ]]
 
 local matchFolder: Folder
@@ -164,8 +168,16 @@ function Module.RunTurn()
 	matchFolder:SetAttribute("TurnOrder", table.concat(Module._getUpcoming(), ","))
 	-- A dropped player's snail plays on under a bot until they come back
 	local autopilot: boolean = participant.IsBot or not participant.Connected
+	local handOff: boolean = Roster.GetMetadata().Kind == "Local" and not autopilot
 	matchFolder:SetAttribute("Autopilot", autopilot and not participant.IsBot)
+	-- Named before the turn shows, so the host's screen holds the turn's callout for the hand-off
+	if handOff then
+		matchFolder:SetAttribute("HandOff", participantId)
+	end
 	matchFolder:SetAttribute("ActiveId", participantId)
+	if handOff then
+		Module._waitHandOff(participantId)
+	end
 	Module._setDeadline(turnSeconds or _settings.TURN_SECONDS)
 	setPhase("Turn")
 	I.Topic.Publish("Match_TurnStarted", participantId)
@@ -261,6 +273,52 @@ function Module._rollWind()
 		wind = Module._getRandomWind()
 	end
 	matchFolder:SetAttribute("Wind", wind)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Wait Hand Off
+
+--[[
+	Local play: with the snail whose turn comes named on the host's screen (the HandOff attribute), waits until its
+	player presses, at most LOCAL_HANDOFF_SECONDS, so the controller can be passed before the timer starts.
+]]
+function Module._waitHandOff(participantId: string)
+	--[[ Waiting ]]
+
+	handOffId = participantId
+	handOffReady = false
+	local deadline: number = os.clock() + _settings.LOCAL_HANDOFF_SECONDS
+	while not handOffReady and os.clock() < deadline and #I.S.Players:GetPlayers() > 0 do
+		task.wait()
+	end
+
+	--[[ Clearing ]]
+
+	handOffId = nil
+	matchFolder:SetAttribute("HandOff", nil)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Hand Off Ready
+
+--[[
+	The host's screen says the next local player has the controller.
+]]
+function Module.OnHandOffReady(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Checks ]]
+
+	-- Check if a turn of a snail this player plays waits
+	local participant = if handOffId then Roster.GetParticipant(handOffId) else nil --- @type Match_Participant?
+	if not participant or participant.UserId ~= player.UserId then
+		return
+	end
+
+	--[[ Saving ]]
+
+	handOffReady = true
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Shot Fired

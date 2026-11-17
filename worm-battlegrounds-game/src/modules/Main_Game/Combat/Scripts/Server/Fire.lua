@@ -14,6 +14,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 local Uses = require(script.Parent:FindFirstChild("Uses")) --- @type Combat_Server_Uses
 local Projectiles = require(script.Parent:FindFirstChild("Projectiles")) --- @type Combat_Server_Projectiles
+local Blast = require(script.Parent:FindFirstChild("Blast")) --- @type Combat_Server_Blast
 local Rocket = require(script.Parent:FindFirstChild("Behaviors"):FindFirstChild("Rocket")) --- @type Combat_Rocket
 local Bouncer = require(script.Parent:FindFirstChild("Behaviors"):FindFirstChild("Bouncer")) --- @type Combat_Bouncer
 local Crawler = require(script.Parent:FindFirstChild("Behaviors"):FindFirstChild("Crawler")) --- @type Combat_Crawler
@@ -69,7 +70,7 @@ function Module._onFire(player: Player, itemId: string, angle: number, power: nu
 
 	--[[ Firing ]]
 
-	Module.Fire(`P_{player.UserId}`, itemId, angle, power, target)
+	Module.Fire(I.Match.GetControlledId(player), itemId, angle, power, target)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Use Utility
@@ -92,7 +93,7 @@ function Module._onUseUtility(player: Player, itemId: string)
 
 	--[[ Using ]]
 
-	Module.UseUtility(`P_{player.UserId}`, itemId)
+	Module.UseUtility(I.Match.GetControlledId(player), itemId)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Detonate
@@ -115,13 +116,14 @@ function Module._onDetonate(player: Player)
 
 	--[[ Detonating ]]
 
-	Roller.Detonate(`P_{player.UserId}`)
+	Roller.Detonate(I.Match.GetControlledId(player))
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Select
 
 --[[
-	A player picked an item in their loadout bar: their snail holds it, for everyone to see.
+	A player picked an item in their loadout bar: their snail holds it, for everyone to see, in its Shiny or Golden
+	look when their copy is one (HeldVariant).
 ]]
 function Module._onSelect(player: Player, itemId: string)
 	-- Check if player is valid | SERVER
@@ -131,7 +133,7 @@ function Module._onSelect(player: Player, itemId: string)
 
 	--[[ Data ]]
 
-	local model: Model? = I.Snails.Get(`P_{player.UserId}`)
+	local model: Model? = I.Snails.Get(I.Match.GetControlledId(player))
 
 	--[[ Checks ]]
 
@@ -148,6 +150,7 @@ function Module._onSelect(player: Player, itemId: string)
 	--[[ Saving ]]
 
 	model:SetAttribute("HeldItem", itemId)
+	model:SetAttribute("HeldVariant", Blast.GetVariant(model.Name, itemId))
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Aim
@@ -170,7 +173,7 @@ function Module._onAim(player: Player, angle: number, power: number)
 
 	--[[ Showing ]]
 
-	Module.ShowAim(`P_{player.UserId}`, nil, angle, power)
+	Module.ShowAim(I.Match.GetControlledId(player), nil, angle, power)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -241,6 +244,7 @@ function Module.Fire(participantId: string, itemId: string, angle: number, power
 		ItemId = itemId,
 		Row = row,
 		Shiny = Module._isShiny(participant, itemId),
+		Variant = Blast.GetVariant(participantId, itemId),
 		-- A weapon placed at the feet starts inside the snail's ball, so a wall in front can't swallow it
 		Origin = if row.Aim == "Feet" then root.Position else Projectiles.GetStart(root.Position, direction, model),
 		Direction = direction,
@@ -330,7 +334,7 @@ end
 --[[
 	**SERVER** |
 	Shows a snail's aim to every player: its angle and power, stamped with the server time (AimTime) so clients draw
-	its aim line while the stamps keep coming. `itemId`, when given, is the weapon it holds.
+	its aim line while the stamps keep coming. `itemId`, when given, is the weapon it holds (with its HeldVariant).
 ]]
 function Module.ShowAim(participantId: string, itemId: string?, angle: number, power: number)
 	--[[ Data ]]
@@ -348,6 +352,7 @@ function Module.ShowAim(participantId: string, itemId: string?, angle: number, p
 
 	if itemId then
 		model:SetAttribute("HeldItem", itemId)
+		model:SetAttribute("HeldVariant", Blast.GetVariant(participantId, itemId))
 	end
 
 	-- A bot's snail turns to face its aim (a player's own screen turns theirs), so its weapon never points back through it

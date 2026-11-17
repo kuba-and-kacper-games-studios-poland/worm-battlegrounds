@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -110,7 +111,8 @@ function Module._payOut(placements, stats, metadata)
 	for _index: number, placement in ipairs(placements) do
 		local participant = I.Match.GetParticipant(placement.ParticipantId) --- @type Match_Participant?
 		local player: Player? = if participant and not participant.IsBot then I.S.Players:GetPlayerByUserId(participant.UserId) else nil
-		if not player or not I.Player.Valid(player) then
+		-- A local match's guests are the host's own snails: the host is paid (and sent the results) once, as their own
+		if not player or not I.Player.Valid(player) or (participant and participant.Guest) then
 			continue
 		end
 
@@ -126,7 +128,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Pay Player
 
 --[[
-	Pays one player their coins, XP and statistics, saves their profile, and sends them their results.
+	Pays one player their coins, XP (line by line, queued for their lobby's replay) and statistics, saves their
+	profile, and sends them their results.
 ]]
 --- @param placement Match_Placement
 --- @param placements { Match_Placement }
@@ -153,20 +156,33 @@ function Module._payPlayer(player: Player, placement, placements, stats, metadat
 
 	--[[ XP ]]
 
-	local xp: number = if _settings.XP_KINDS[metadata.Kind] then _settings.XP_PER_MATCH else 0
+	local lines = Module._getXpLines(placement, entry, metadata) --- @type { Progression_XpLine }
+	local xp: number = 0
+	--- @param line Progression_XpLine
+	for _index: number, line in ipairs(lines) do
+		xp += line.Amount
+	end
+	local before = I.Progression.GetProgress(player) --- @type Progression_Progress
 	local level: number
 	local leveledUp: boolean
 	level, leveledUp = I.Progression.AddXP(player, xp)
+	local after = I.Progression.GetProgress(player) --- @type Progression_Progress
+	if xp > 0 then
+		Module._queueReplay(player, lines, before, after)
+	end
 
 	--[[ Statistics ]]
 
-	I.Statistic.Add(player, "MatchesPlayed", "1")
-	if placement.Place == 1 then
-		I.Statistic.Add(player, "Wins", "1")
-	end
-	if entry then
-		I.Statistic.Add(player, "Knockouts", tostring(entry.Knockouts))
-		I.Statistic.Add(player, "DamageDealt", tostring(math.floor(entry.Damage)))
+	-- A local match is friends on one screen: it counts toward no statistic
+	if metadata.Kind ~= "Local" then
+		I.Statistic.Add(player, "MatchesPlayed", "1")
+		if placement.Place == 1 then
+			I.Statistic.Add(player, "Wins", "1")
+		end
+		if entry then
+			I.Statistic.Add(player, "Knockouts", tostring(entry.Knockouts))
+			I.Statistic.Add(player, "DamageDealt", tostring(math.floor(entry.Damage)))
+		end
 	end
 
 	--[[ Saving ]]
@@ -182,11 +198,121 @@ function Module._payPlayer(player: Player, placement, placements, stats, metadat
 		Xp = xp,
 		Level = level,
 		LevelUp = leveledUp,
+		XpLines = lines,
+		XpBefore = before,
+		XpAfter = after,
 	}
 	I.Network.Fire("Match_Results", player, placements, stats, earned)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Queue Replay
+
+--[[
+	Adds a match's XP to what the player's lobby will play back: added to the lines still waiting from earlier matches
+	(their level before stays the first match's), so a rematch on the same server shows both.
+]]
+--- @param lines { Progression_XpLine }
+--- @param before Progression_Progress
+--- @param after Progression_Progress
+function Module._queueReplay(player: Player, lines, before, after)
+	--[[ Data ]]
+
+	local waiting = I.Progression.GetReplay(player) --- @type Progression_Replay?
+
+	--[[ Merging ]]
+
+	local merged = {} --- @type { Progression_XpLine }
+	local byKey = {} --- @type { [string]: Progression_XpLine }
+	--- @param line Progression_XpLine
+	for _index: number, line in ipairs(if waiting then waiting.Lines else {}) do
+		table.insert(merged, line)
+		byKey[line.Key] = line
+	end
+	--- @param line Progression_XpLine
+	for _index: number, line in ipairs(lines) do
+		local kept = byKey[line.Key] --- @type Progression_XpLine?
+		if kept then
+			kept.Count += line.Count
+			kept.Amount += line.Amount
+			kept.Label = Module._getXpLabel(kept.Key, kept.Count)
+		else
+			table.insert(merged, table.clone(line))
+		end
+	end
+
+	--[[ Saving ]]
+
+	I.Progression.SetReplay(player, {
+		Lines = merged,
+		Before = if waiting then waiting.Before else before,
+		After = after,
+		Costs = {},
+	})
+end
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Xp Lines
+
+--[[
+	Returns the XP a place earns, line by line: XP_PER_MATCH for playing, XP_WIN for a win and XP_PER_KNOCKOUT for
+	each snail knocked out. Nothing for the kinds of match XP_KINDS leaves out.
+]]
+--- @param placement Match_Placement
+--- @param entry Match_Stats?
+--- @param metadata Match_Metadata
+--- @return { Progression_XpLine }
+function Module._getXpLines(placement, entry, metadata)
+	--[[ Checks ]]
+
+	-- Check if the kind of match gives XP
+	if not _settings.XP_KINDS[metadata.Kind] then
+		return {}
+	end
+
+	--[[ Local Variables ]]
+
+	local knockouts: number = if entry then entry.Knockouts else 0
+
+	--- @type { Progression_XpLine }
+	local lines = {
+		{ Key = "Played", Label = Module._getXpLabel("Played", 1), Count = 1, Amount = _settings.XP_PER_MATCH },
+	}
+
+	--[[ Building ]]
+
+	if placement.Place == 1 then
+		table.insert(lines, { Key = "Win", Label = Module._getXpLabel("Win", 1), Count = 1, Amount = _settings.XP_WIN })
+	end
+	if knockouts > 0 then
+		table.insert(lines, {
+			Key = "Knockouts",
+			Label = Module._getXpLabel("Knockouts", knockouts),
+			Count = knockouts,
+			Amount = knockouts * _settings.XP_PER_KNOCKOUT,
+		})
+	end
+
+	--[[ Returning ]]
+
+	return lines
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Xp Label
+
+--[[
+	Returns an XP line's text for a count of it (XP_LABELS).
+]]
+--- @return string
+function Module._getXpLabel(key: string, count: number)
+	--[[ Local Variables ]]
+
+	local labels = _settings.XP_LABELS[key] --- @type { string }
+
+	--[[ Returning ]]
+
+	return if count == 1 then labels[1] else string.format(labels[2], count)
+end
 
 --%%%%%%%%%%%%%%%%%%%% Get Coins
 

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -101,7 +102,7 @@ function Module._updatePlayer(player: Player)
 
 	--[[ Data ]]
 
-	local snail: Model? = if player:GetAttribute("Aimbot") then I.Snails.Get(`P_{player.UserId}`) else nil
+	local snail: Model? = if player:GetAttribute("Aimbot") then I.Snails.Get(I.Match.GetControlledId(player)) else nil
 	local itemId: string? = snail and snail:GetAttribute("HeldItem")
 
 	--[[ Checks ]]

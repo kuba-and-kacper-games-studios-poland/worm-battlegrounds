@@ -7,12 +7,46 @@ local _settings = {
 	--- @type { number }
 	COUNTS = { 1, 3, 10 },
 
-	-- Copies of an item that make it shiny
+	-- Copies of an item that make it shiny, and golden (a look only; Loadout's SHINY_COPIES and GOLDEN_COPIES)
 	SHINY_COPIES = 10,
+	GOLDEN_COPIES = 100,
 
 	-- Currencies bought with Robux: rolling crates with them is a paid random item, hidden where the policy restricts it
 	--- @type { string }
 	PAID_CURRENCIES = { "Diamonds" },
+
+	--%%%%%%%%%%%%%%%%%%%% Shiny And Golden
+
+	-- The inventory categories that go golden (weapons and utilities; snail pieces only go shiny)
+	--- @type { string }
+	GOLDEN_CATEGORIES = { "Weapon", "Utility" },
+
+	--[[
+		A result's words and stars once it's shiny, and golden; and the result card's look: a shiny card's holo foil (a
+		rainbow turning through a white copy of its picture), a golden card's rim (its outline in gold, a glint turning
+		round it)
+	]]
+	SHINY_COLOR = Color3.fromRGB(255, 175, 235),
+	GOLDEN_COLOR = Color3.fromRGB(255, 205, 60),
+	SHINY_FOIL = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 150, 220)),
+		ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 235, 150)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140, 255, 220)),
+		ColorSequenceKeypoint.new(0.75, Color3.fromRGB(140, 190, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 150, 255)),
+	}),
+	GOLDEN_RIM = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(170, 110, 20)),
+		ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 200, 60)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 245, 190)),
+		ColorSequenceKeypoint.new(0.7, Color3.fromRGB(255, 200, 60)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(170, 110, 20)),
+	}),
+
+	-- How see-through the shiny card's foil is, and how fast the foil and the gold rim's glint turn (degrees a second)
+	SHINY_FOIL_TRANSPARENCY = 0.55,
+	SHINY_FOIL_SPIN = 40,
+	GOLDEN_RIM_SPIN = 90,
 
 	--%%%%%%%%%%%%%%%%%%%% Special Crates
 
@@ -382,15 +416,30 @@ local _settings = {
 		BADGE_MAX+ past BADGE_MAX
 	]]
 	LOBBY_GUI_NAME = "Lobby",
-	BADGE_FREE = "FREE",
+	BADGE_FREE = "1",
 	BADGE_MAX = 9,
 
 	--[[
-		The free group crate's gui (FreeCrate: its badge on the crates screen and its dialog), and what CLAIM says before
-		the player is in the group
+		The free group crate's guis (FreeCrate: its tile in the lobby and its badge on the crates screen; FreeCrateDialog:
+		the dialog they open, a WidgetManager widget), and what CLAIM says before the player is in the group
 	]]
 	GROUP_GUI_NAME = "FreeCrate",
+	GROUP_DIALOG_GUI_NAME = "FreeCrateDialog",
 	GROUP_JOIN_FIRST = "Join The Snail Studio group first, then claim your free crate!",
+
+	--[[
+		The free crate's dialog: degrees a second its light rays wheel and its crate turns, seconds a light takes to sweep
+		the lobby tile and a lit CLAIM (then a pause), and twinkles a second round the crate
+	]]
+	GROUP_RAYS_SPEED = 18,
+	GROUP_CRATE_SPIN = 40,
+	GROUP_SHINE_SECONDS = 0.8,
+	GROUP_SHINE_PAUSE = 1.8,
+	GROUP_SPARKLE_RATE = 7,
+
+	-- The dialog popping open, and CLAIM's pulse once it's lit
+	GROUP_POP_TWEENINFO = TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+	GROUP_PULSE_TWEENINFO = TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
 }
 
 return _settings

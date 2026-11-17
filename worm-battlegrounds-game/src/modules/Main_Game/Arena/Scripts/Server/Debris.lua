@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -105,9 +106,11 @@ end
 
 --[[
 	Walks the terrain from each seed through the parts it touches. A group that reaches no bedrock standing on the
-	floor falls (Fall), except a ledge's biggest piece, which keeps floating.
+	floor falls (Fall), except a ledge's biggest piece, which keeps floating. Returns the groups that fall, with how far
+	and from when (props standing on one fall with it).
 ]]
 --- @param seeds { BasePart }
+--- @return { Arena_Fall }
 function Module.Drop(seeds)
 	--[[ Local Variables ]]
 
@@ -148,11 +151,9 @@ function Module.Drop(seeds)
 		end
 	end
 
-	--[[ Dropping ]]
+	--[[ Returning ]]
 
-	if #falling > 0 then
-		Module._fall(falling)
-	end
+	return if #falling > 0 then Module._fall(falling) else {}
 end
 
 --%%%%%%%%%%%%%%%%%%%% Fall
@@ -160,9 +161,11 @@ end
 --[[
 	Drops groups cut loose straight down along the arena's plane, never turning: each falls by the game's gravity to
 	where it first touches the terrain under it (lowest group first, so one above lands where the one under it will
-	lie), or out of the arena. Every client draws the same fall from Arena_Fall.
+	lie), or out of the arena. Every client draws the same fall from Arena_Fall. Returns each group with its drop and
+	the server time it starts falling.
 ]]
 --- @param groups { { BasePart } }
+--- @return { Arena_Fall }
 function Module._fall(groups)
 	--[[ Data ]]
 
@@ -172,6 +175,7 @@ function Module._fall(groups)
 
 	local killHeight: number = bounds.Position.Y - bounds.Size.Y / 2 - _settings.DEBRIS_KILL_DEPTH
 	local drops = {} --- @type { number }
+	local falls = {} --- @type { Arena_Fall }
 
 	--[[ Releasing ]]
 
@@ -215,20 +219,26 @@ function Module._fall(groups)
 
 	--- @param group { BasePart }
 	for index: number, group in ipairs(groups) do
+		local started: number = I.S.Workspace:GetServerTimeNow()
 		fallingGroups += 1
-		task.spawn(Module._watch, group, drops[index], killHeight)
+		table.insert(falls, { Parts = group, Drop = drops[index], Started = started })
+		task.spawn(Module._watch, group, drops[index], killHeight, started)
 	end
+
+	--[[ Returning ]]
+
+	return falls
 end
 
 --%%%%%%%%%%%%%%%%%%%% Watch
 
 --[[
-	Moves a falling group down by the game's gravity each frame until it has dropped its distance, then leaves it where
-	it landed and lets the liquid around it move; a group that fell out of the arena is removed. Either way the liquid
-	looks again at where the group fell from, which is empty now.
+	Moves a falling group down by the game's gravity each frame from server time `started` until it has dropped its
+	distance, then leaves it where it landed and lets the liquid around it move; a group that fell out of the arena is
+	removed. Either way the liquid looks again at where the group fell from, which is empty now.
 ]]
 --- @param group { BasePart }
-function Module._watch(group, drop: number, killHeight: number)
+function Module._watch(group, drop: number, killHeight: number, started: number)
 	--[[ Local Variables ]]
 
 	local fromLow: Vector3
@@ -238,7 +248,6 @@ function Module._watch(group, drop: number, killHeight: number)
 	for index: number, part: BasePart in ipairs(group) do
 		starts[index] = part.CFrame
 	end
-	local started: number = I.S.Workspace:GetServerTimeNow()
 	local fallen: number = 0
 
 	--[[ Publishing ]]

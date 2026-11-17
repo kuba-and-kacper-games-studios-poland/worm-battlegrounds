@@ -263,7 +263,7 @@ function Module._onFuel(player: Player, left: number)
 
 	--[[ Data ]]
 
-	local participantId: string = `P_{player.UserId}`
+	local participantId: string = I.Match.GetControlledId(player)
 	local control = controls[participantId] --- @type SnailControl_Control?
 	local model: Model? = I.Snails.Get(participantId)
 

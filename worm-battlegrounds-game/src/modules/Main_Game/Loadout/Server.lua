@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -290,10 +291,13 @@ end
 
 --[[
 	**SERVER** |
-	Returns what a player takes into a match: the items in their open slots, in order, and which of them are shiny
-	(SHINY_COPIES or more copies). Items they no longer own are left out.
+	Returns what a player takes into a match: the items in their open slots, in order, which of them are shiny
+	(SHINY_COPIES or more copies) and which golden (GOLDEN_COPIES or more, shiny too). Items they no longer own are
+	left out.
 ]]
---- @return { string }, { [string]: boolean }
+--- @return { string }
+--- @return { [string]: boolean }
+--- @return { [string]: boolean }
 function Module.GetMatchLoadout(player: Player)
 	--[[ Data ]]
 
@@ -305,20 +309,23 @@ function Module.GetMatchLoadout(player: Player)
 
 	local items = {} --- @type { string }
 	local shiny = {} --- @type { [string]: boolean }
+	local golden = {} --- @type { [string]: boolean }
 
 	--[[ Collecting ]]
 
 	for slot: number = 1, Module.GetUnlocked(player) do
 		local itemId: string = moduleData["Slots"][slot] or ""
 		if itemId ~= "" and Module._canSlot(player, itemId) then
+			local copies: number = tonumber(I.Inventory.GetItem(player, itemId)) or 0
 			table.insert(items, itemId)
-			shiny[itemId] = (tonumber(I.Inventory.GetItem(player, itemId)) or 0) >= _settings.SHINY_COPIES
+			shiny[itemId] = copies >= _settings.SHINY_COPIES
+			golden[itemId] = copies >= _settings.GOLDEN_COPIES
 		end
 	end
 
 	--[[ Returning ]]
 
-	return items, shiny
+	return items, shiny, golden
 end
 
 --%%%%%%%%%%%%%%%%%%%% Coin Slots Open

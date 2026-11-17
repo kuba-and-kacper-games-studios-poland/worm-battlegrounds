@@ -36,11 +36,23 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% XP
 
-	-- XP for finishing a match, and the kinds of match that give it (custom lobbies give none: the testers, 2026-11-13)
+	-- XP for finishing a match, and the kinds of match that give it (custom lobbies give none: the testers, 2026-11-13; local play neither)
 	XP_PER_MATCH = 100,
 
 	--- @type { [string]: boolean }
-	XP_KINDS = { Public = true, Solo = true, Party = true, Custom = false },
+	XP_KINDS = { Public = true, Solo = true, Party = true, Custom = false, Local = false },
+
+	-- On top of XP_PER_MATCH: a win (first place, or the winning team), and each snail the player knocked out
+	XP_WIN = 50,
+	XP_PER_KNOCKOUT = 10,
+
+	-- The lines the lobby's XP replay shows, for one and for several (several matches before the player's lobby saw them)
+	--- @type { [string]: { string } }
+	XP_LABELS = {
+		Played = { "Match played", "%d matches played" },
+		Win = { "Victory", "%d victories" },
+		Knockouts = { "1 knockout", "%d knockouts" },
+	},
 }
 
 return _settings

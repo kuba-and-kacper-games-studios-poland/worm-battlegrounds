@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -88,6 +89,22 @@ function Module.GetPool(size: number)
 	--[[ Returning ]]
 
 	return if #pool > 0 then pool else table.clone(_settings.MAP_POOL)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Play Size
+
+--[[
+	Returns how many snails a solo or party match from the setup panel holds: 2 for solo, the party alone with no bots,
+	or PARTY_BOTS_PER_PLAYER bots per member (PARTY_MAX_SIZE at most).
+]]
+--- @return number
+function Module.GetPlaySize(members: number, difficulty: string)
+	--[[ Returning ]]
+
+	if members <= 1 then
+		return 2
+	end
+	return if difficulty == "None" then members else math.min(members * (1 + _settings.PARTY_BOTS_PER_PLAYER), _settings.PARTY_MAX_SIZE)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Shuffle

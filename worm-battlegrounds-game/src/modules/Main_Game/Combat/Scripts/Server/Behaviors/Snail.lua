@@ -38,14 +38,21 @@ local Module = {}
 --[[
 	One of a variety grenade's worms: it digs one way at SNAIL_SPEED, eating a tunnel through the terrain, and hurts
 	every snail it touches by the row's Damage a hit, Hits times at most, until SNAIL_LIFETIME runs out or it digs
-	into water or lava. It squeaks as it dives in and crunches as it bites (Variety_Squeak, Variety_Dig).
+	into water or lava. It squeaks as it dives in and crunches as it bites (Variety_Squeak, Variety_Dig). One a mini
+	bomb hatches is drawn as that mini (its bomb's model at the bomblets' Mini size, `Digger`), digging the same.
 ]]
 --- @param shot Combat_Shot
 function Module.Run(shot, from: Vector3, direction: Vector3)
 	--[[ Local Variables ]]
 
 	local snails = shot.Row.Snails --- @type Arsenal_Snails
-	local part: Part = Projectiles.Spawn("Snail", "Worm", from, Vector3.zero, false, 0, true)
+	local bomblets = shot.Row.Bomblets --- @type Arsenal_Bomblets?
+	local mini: number? = if bomblets and bomblets.Hatch then bomblets.Mini else nil
+	local part: Part = Projectiles.Spawn("Snail", if mini then shot.ItemId else "Worm", from, Vector3.zero, false, 0, true)
+	if mini then
+		part:SetAttribute("Digger", true)
+		part:SetAttribute("DrawScale", (_settings.PROJECTILE_DRAW_SCALES[shot.ItemId] or _settings.PROJECTILE_DRAW_SCALE) * mini)
+	end
 	local started: number = os.clock()
 	local lastBite: number = 0
 	local lastHit = {} --- @type { [Model]: number }

@@ -11,8 +11,12 @@ it: the box comes back when that window closes, while the invite lasts (`INVITE_
 the leader, then a **+** card per free place for a player who may invite, and the red Leave button by the PARTY title
 while in a party) without its own remote. In a custom lobby (MatchBoard's `I.MatchBoard.GetCustomRoom`, redrawn on its
 `MatchBoard_RoomChanged` Topic) the column lists the lobby instead: its members in this server, the crown on its owner, no
-Kick or Leave, and a **+** card per free place up to its size that opens the `CustomLobby` window (2026-11-16). With
-more cards than `MAX_PARTY`, the column shrinks to fit them (a `S_FitScale` UIScale the client adds to `U_Members`).
+Kick or Leave, and a **+** card per free place up to its size that opens the `CustomLobby` window (2026-11-16). While
+the player picks a size on the custom lobby's create step (`I.MatchBoard.GetPickedSize`), the column already shows that
+many places. More than `COLUMN_CARDS` cards fill a second column (`S_MembersRight`, a copy of `U_Members` the client
+makes `SECOND_COLUMN_X` card widths to the right), and every card turns compact: no name, username or badges, only the
+avatar, level and crown (2026-11-17). Every card's rim (the card's `Stroke` picture, whitened, with an `S_Prestige`
+UIGradient the client adds) shows the player's prestige frame (`I.G_Progression.ApplyFrame`).
 
 | | |
 | --- | --- |
@@ -68,6 +72,7 @@ more cards than `MAX_PARTY`, the column shrinks to fit them (a `S_FitScale` UISc
 | Key | Default | What |
 | --- | --- | --- |
 | `MAX_PARTY` | `4` | The most players in a party |
+| `COLUMN_CARDS`, `SECOND_COLUMN_X` | `4`, `1.3` | The most cards one column holds, and how far right of it (in card widths) the second column stands |
 | `INVITE_SECONDS` | `30` | How long an invite stays open |
 | `GUI_NAME` | `"Party"` | The party column |
 | `INVITE_GUI_NAME`, `INVITED_GUI_NAME` | `"PartyInvite"`, `"PartyInvited"` | The invite list, and the box an invited player answers (WidgetManager widgets) |

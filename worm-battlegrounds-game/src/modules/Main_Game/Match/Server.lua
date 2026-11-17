@@ -81,6 +81,8 @@ function Module.Init()
 	--- @Network
 	I.Network.GetEvent("Match_PickDrop", { "Player", "number", "number" }, { RateLimit = 10 })
 	I.Network.Fired("Match_PickDrop", Phases.PickDrop)
+	I.Network.GetEvent("Match_HandOffReady", { "Player" }, { RateLimit = 4 })
+	I.Network.Fired("Match_HandOffReady", Turns.OnHandOffReady)
 	I.Network.GetEvent("Match_KnockedOut")
 
 	----------------------------
@@ -105,6 +107,7 @@ function Module.Init()
 		GetParticipants = Roster.GetParticipants,
 		FindParticipant = Roster.FindParticipant,
 		GetActive = Module.GetActive,
+		GetControlledId = Module.GetControlledId,
 		GetPhase = Module.GetPhase,
 		GetWind = Module.GetWind,
 		GetMetadata = Roster.GetMetadata,
@@ -244,7 +247,29 @@ function Module.IsActivePlayer(player: Player)
 
 	--[[ Returning ]]
 
-	return Module.GetActive() == `P_{player.UserId}` and not Module.IsAutopilot()
+	local participant = Roster.GetParticipant(Module.GetActive() or "") --- @type Match_Participant?
+	return participant ~= nil and not participant.IsBot and participant.UserId == player.UserId and not Module.IsAutopilot()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Controlled Id
+
+--[[
+	**SERVER** |
+	Returns the participant a player plays right now: the active one when it's a snail of theirs (in local play the
+	host plays every guest's snail), else their own.
+]]
+--- @return string
+function Module.GetControlledId(player: Player)
+	--[[ Data ]]
+
+	local participant = Roster.GetParticipant(Module.GetActive() or "") --- @type Match_Participant?
+
+	--[[ Returning ]]
+
+	if participant and not participant.IsBot and participant.UserId == player.UserId then
+		return participant.Id
+	end
+	return `P_{player.UserId}`
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Autopilot

@@ -303,9 +303,9 @@ function Module._update(deltaTime: number)
 		end
 	end
 
-	-- LT with the right stick pans (the Console module's CameraPan and Aim), and so does the mouse at the screen's left or right edge
+	-- LT with the right stick pans (the Console module's CameraPan and Aim), as fast across the screen at any zoom, and so does the mouse at the screen's left or right edge
 	if stickPan.Magnitude >= _settings.STICK_DEADZONE and I.Console.IsHeld("CameraPan") then
-		Module._addPan(Vector3.new(stickPan.X, stickPan.Y, 0) * _settings.STICK_PAN_SPEED * deltaTime)
+		Module._addPan(Vector3.new(stickPan.X, stickPan.Y, 0) * _settings.STICK_PAN_SPEED * zoom / _settings.DISTANCE * deltaTime)
 	end
 	-- A mouse left at the edge once the view can't go further that way isn't a move, or it would hold the view there forever
 	local edge: number = Module._getEdgePan(camera)

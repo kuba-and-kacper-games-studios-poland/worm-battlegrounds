@@ -33,6 +33,9 @@ local pickedDifficulty: string = "None"
 local myRoomId: string? = nil
 local leaving: boolean = false
 
+-- Whether the window shows (the create step while the player is in no lobby)
+local windowOpen: boolean = false
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -88,7 +91,9 @@ function Module.Start()
 		choice.Parent = elems["Maps"]
 		I.Interact.OnPress(choice, function()
 			pickedMap = mapId
+			Module._fitSize()
 			Module._refreshChoices()
+			I.Topic.Publish("MatchBoard_RoomChanged")
 		end)
 	end
 
@@ -102,8 +107,13 @@ function Module.Start()
 	end
 	for _index: number, size: number in ipairs({ 2, 4, 6, 8 }) do
 		I.Interact.OnPress(Module._getButton(`S_Players{size}`), function()
+			-- Check if the picked map is made for this size
+			if not table.find(_settings.MAPS[pickedMap].Sizes, size) then
+				return
+			end
 			pickedSize = size
 			Module._refreshChoices()
+			I.Topic.Publish("MatchBoard_RoomChanged")
 		end)
 	end
 	for _index: number, difficulty: string in ipairs(_settings.CUSTOM_DIFFICULTIES) do
@@ -137,10 +147,36 @@ function Module.Start()
 	I.S.Players.PlayerRemoving:Connect(Module._refreshRoom)
 	I.Network.Fired("MatchBoard_Invited", Module._onInvited)
 	I.Topic.Subscribe("WidgetManager_Opened", Module._onOpened)
+	I.Topic.Subscribe("WidgetManager_Closed", Module._onClosed)
 	Module._refreshChoices()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Set Picked
+
+--[[
+	Marks a button or map choice as picked, or not (the setup panel's too), in the design's looks it keeps (its Look_*
+	attributes): a white outline and text when picked, grey when not.
+]]
+function Module.SetPicked(button: ImageButton, picked: boolean)
+	--[[ Elements ]]
+
+	local background: Frame = button:FindFirstChild("Background")
+	local stroke: ImageLabel = background:FindFirstChild("Stroke")
+	local label: TextLabel = button:FindFirstChild("Name1") or button:FindFirstChild("S_Name")
+
+	--[[ Applying ]]
+
+	stroke.ImageColor3 = button:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+	label.TextColor3 = button:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
+
+	-- Buttons of one size share the picked and unpicked outline pictures; the bots' row keeps each button's own
+	if button:GetAttribute("Look_Stroke") then
+		stroke.Image = button:GetAttribute(if picked then "Look_SelectedStroke" else "Look_Stroke")
+		background:FindFirstChild("Stroke2").Image = button:GetAttribute(if picked then "Look_SelectedStroke2" else "Look_Stroke2")
+	end
+end
 
 --%%%%%%%%%%%%%%%%%%%% On Opened
 
@@ -157,29 +193,100 @@ function Module._onOpened(widgetName: string)
 
 	--[[ Refreshing ]]
 
+	windowOpen = true
 	Module._refreshChoices()
 	Module._refreshRoom()
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Closed
+
+--[[
+	Tells Party the create step's size no longer stands in for a lobby when the window closes.
+]]
+function Module._onClosed(widgetName: string)
+	--[[ Checks ]]
+
+	-- Check if it's this window
+	if widgetName ~= _settings.CUSTOM_GUI_NAME then
+		return
+	end
+
+	--[[ Publishing ]]
+
+	windowOpen = false
+	I.Topic.Publish("MatchBoard_RoomChanged")
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Choices
 
 --[[
-	Marks the picked map, mode, player count and bots.
+	Marks the picked map, mode, player count and bots, and greys out the player counts the picked map isn't made for.
 ]]
 function Module._refreshChoices()
 	--[[ Applying ]]
 
 	for _index: number, mapId: string in ipairs(_settings.CUSTOM_MAP_POOL) do
-		Module._setPicked(elems["Maps"]:FindFirstChild(mapId), mapId == pickedMap)
+		Module.SetPicked(elems["Maps"]:FindFirstChild(mapId), mapId == pickedMap)
 	end
 	for _index: number, mode: string in ipairs({ "Deathmatch", "Teams" }) do
-		Module._setPicked(elems["Create"]:FindFirstChild(`S_{mode}`, true), mode == pickedMode)
+		Module.SetPicked(elems["Create"]:FindFirstChild(`S_{mode}`, true), mode == pickedMode)
 	end
 	for _index: number, size: number in ipairs({ 2, 4, 6, 8 }) do
-		Module._setPicked(elems["Create"]:FindFirstChild(`S_Players{size}`, true), size == pickedSize)
+		local button: ImageButton = elems["Create"]:FindFirstChild(`S_Players{size}`, true)
+		Module.SetPicked(button, size == pickedSize)
+		Module._setFaded(button, not table.find(_settings.MAPS[pickedMap].Sizes, size))
 	end
 	for _index: number, difficulty: string in ipairs(_settings.CUSTOM_DIFFICULTIES) do
-		Module._setPicked(elems["Create"]:FindFirstChild(`S_Bots{difficulty}`, true), difficulty == pickedDifficulty)
+		Module.SetPicked(elems["Create"]:FindFirstChild(`S_Bots{difficulty}`, true), difficulty == pickedDifficulty)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Fit Size
+
+--[[
+	Moves the picked player count to the nearest one the picked map is made for, when it isn't one.
+]]
+function Module._fitSize()
+	--[[ Local Variables ]]
+
+	local sizes = _settings.MAPS[pickedMap].Sizes --- @type { number }
+
+	--[[ Checks ]]
+
+	-- Check if the map already holds the picked count
+	if table.find(sizes, pickedSize) then
+		return
+	end
+
+	--[[ Fitting ]]
+
+	local best: number = sizes[1]
+	for _index: number, size: number in ipairs(sizes) do
+		if math.abs(size - pickedSize) < math.abs(best - pickedSize) then
+			best = size
+		end
+	end
+	pickedSize = best
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Faded
+
+--[[
+	Fades a choice the picked map can't take (its pictures and text see-through), or brings back the design's own
+	transparency, which each part keeps on itself (Look_Transparency) the first time.
+]]
+function Module._setFaded(button: ImageButton, faded: boolean)
+	--[[ Applying ]]
+
+	for _index: number, part: Instance in ipairs(button:GetDescendants()) do
+		local property: string? = if part:IsA("ImageLabel") then "ImageTransparency" elseif part:IsA("TextLabel") then "TextTransparency" else nil
+		if property then
+			if part:GetAttribute("Look_Transparency") == nil then
+				part:SetAttribute("Look_Transparency", part[property])
+			end
+			local own: number = part:GetAttribute("Look_Transparency")
+			part[property] = if faded then 1 - (1 - own) * 0.35 else own
+		end
 	end
 end
 
@@ -344,31 +451,6 @@ function Module._onInvited(fromUserId: number, roomId: string)
 	end)
 end
 
---%%%%%%%%%%%%%%%%%%%% Set Picked
-
---[[
-	Marks a button or map choice as picked, or not, in the design's looks it keeps (its Look_* attributes): a white
-	outline and text when picked, grey when not.
-]]
-function Module._setPicked(button: ImageButton, picked: boolean)
-	--[[ Elements ]]
-
-	local background: Frame = button:FindFirstChild("Background")
-	local stroke: ImageLabel = background:FindFirstChild("Stroke")
-	local label: TextLabel = button:FindFirstChild("Name1") or button:FindFirstChild("S_Name")
-
-	--[[ Applying ]]
-
-	stroke.ImageColor3 = button:GetAttribute(if picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
-	label.TextColor3 = button:GetAttribute(if picked then "Look_SelectedTextColor" else "Look_TextColor")
-
-	-- Buttons of one size share the picked and unpicked outline pictures; the bots' row keeps each button's own
-	if button:GetAttribute("Look_Stroke") then
-		stroke.Image = button:GetAttribute(if picked then "Look_SelectedStroke" else "Look_Stroke")
-		background:FindFirstChild("Stroke2").Image = button:GetAttribute(if picked then "Look_SelectedStroke2" else "Look_Stroke2")
-	end
-end
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
 --%%%%%%%%%%%%%%%%%%%% Get My Room
@@ -399,6 +481,18 @@ function Module.GetMyRoom()
 	--[[ Returning ]]
 
 	return nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Picked Size
+
+--[[
+	**CLIENT** |
+	Returns the player count picked on the create step while the window shows it (the player is in no lobby yet), so
+	Party can show that many places before the lobby exists; nil otherwise.
+]]
+--- @return number?
+function Module.GetPickedSize()
+	return if windowOpen and Module.GetMyRoom() == nil then pickedSize else nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Button

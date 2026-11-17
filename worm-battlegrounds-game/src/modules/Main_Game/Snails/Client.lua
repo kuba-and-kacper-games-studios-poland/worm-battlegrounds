@@ -98,11 +98,12 @@ end
 
 --[[
 	**CLIENT** |
-	Returns the local player's snail, or nil when they have none.
+	Returns the snail this screen plays now (Match's GetMyParticipantId): the local player's, or in local play the
+	active guest's; nil when there's none.
 ]]
 --- @return Model?
 function Module.GetMine()
-	return snailsFolder:FindFirstChild(`P_{I.S.Players.LocalPlayer.UserId}`)
+	return snailsFolder:FindFirstChild(I.Match.GetMyParticipantId())
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

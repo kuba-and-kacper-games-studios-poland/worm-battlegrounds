@@ -48,6 +48,7 @@ local Module = {
 		{ Control = "Slider", Id = "S_Unlocked", Label = "Open slots", Value = 3, Min = 3, Max = 6, Step = 1 },
 		{ Control = "Slider", Id = "S_Selected", Label = "Picking slot (0: none)", Value = 1, Min = 0, Max = 6, Step = 1 },
 		{ Control = "Toggle", Id = "S_Shiny", Label = "First item shiny", Value = false },
+		{ Control = "Toggle", Id = "S_Golden", Label = "Second item golden", Value = false },
 	},
 }
 
@@ -57,7 +58,8 @@ local Module = {
 
 --[[
 	Fills the panel as Loadout's Panel does: the basic weapon, then filled, empty, picked and locked slots, two a row
-	(a lone last card on the right), and EMOTES right under the last row shown.
+	(a lone last card on the right), a shiny card in its holo foil and a golden one in its gold rim, the lock's price
+	centred with its picture, and EMOTES right under the last row shown.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -77,6 +79,8 @@ function Module.Apply(preview)
 		local locked: boolean = slot > unlocked
 		local empty: boolean = item == "" and not locked
 		local selected: boolean = slot > 0 and slot == preview.Values.S_Selected
+		local golden: boolean = cell == 3 and preview.Values.S_Golden
+		local shiny: boolean = cell == 2 and preview.Values.S_Shiny or golden
 		local stroke: ImageLabel = root:FindFirstChild("Background"):FindFirstChild("Stroke")
 
 		root.LayoutOrder = cell
@@ -88,13 +92,23 @@ function Module.Apply(preview)
 		card:Get("S_Icon").Instance.Visible = item ~= "" and not locked
 		card:Get("S_Amount").Instance.Text = if item ~= "" and not locked and cell > 1 then "x3" else ""
 		card:Get("S_Plus").Instance.Visible = empty
-		card:Get("S_Shiny").Instance.Visible = cell == 2 and preview.Values.S_Shiny
+		card:Get("S_Shiny").Instance.Visible = shiny
+		card:Get("S_Shiny").Instance.Text = if golden then "Golden" else "Shiny"
+		card:Get("S_Shiny").Instance.TextColor3 = root:GetAttribute(if golden then "Look_GoldenColor" else "Look_ShinyColor")
+		card:Get("S_Foil").Instance.Visible = shiny and not golden
+		card:Get("S_Gold").Instance.Visible = golden
 		card:Get("S_Lock").Instance.Visible = locked
 		card:Get("S_Price").Instance.Text = if slot == 4 then COIN_PRICE else ROBUX_PRICE
 		card:Get("S_Price").Instance:FindFirstChild("CurrencyIcon").Image = if slot == 4 then COIN_ICON else ROBUX_ICON
 		root:FindFirstChild("Background"):FindFirstChild("Stroke2").Image = root:GetAttribute(if selected then "Look_SelectedStroke2" else "Look_Stroke2")
 		stroke.Image = root:GetAttribute(if selected then "Look_SelectedStroke" else "Look_Stroke")
 		stroke.ImageColor3 = root:GetAttribute(if selected then "Look_SelectedStrokeColor" elseif empty then "Look_EmptyStrokeColor" else "Look_StrokeColor")
+
+		-- The lock's price and its picture centred as one, as Loadout's Panel does (again once its TextBounds arrive)
+		Module._centrePrice(root)
+		card:Get("S_Price").Instance:GetPropertyChangedSignal("TextBounds"):Connect(function()
+			Module._centrePrice(root)
+		end)
 	end
 
 	--[[ Emotes ]]
@@ -105,6 +119,29 @@ function Module.Apply(preview)
 	local padding: number = slots:FindFirstChildOfClass("UIListLayout").Padding.Scale
 	local rowStep: number = (preview.View:Get("U_Row1").Instance.Size.Y.Scale + padding) * slots.Size.Y.Scale
 	preview.View:Get("U_EmoteSection").Instance.Position = UDim2.fromScale(0, EMOTES_TOP - (maxRows - shownRows) * rowStep)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Centre Price
+
+--[[
+	Centres a locked slot's price and its picture under the lock as one, as Loadout's Panel does: the text moves right by
+	half the picture and its gap (the card's Look_PriceGap of the picture's width), the picture that gap left of the text.
+]]
+function Module._centrePrice(root: ImageButton)
+	--[[ Elements ]]
+
+	local price: TextLabel = root:FindFirstChild("S_Price", true)
+	local icon: ImageLabel = price:FindFirstChild("CurrencyIcon")
+
+	--[[ Local Variables ]]
+
+	local iconWidth: number = icon.AbsoluteSize.X
+	local gap: number = iconWidth * root:GetAttribute("Look_PriceGap")
+
+	--[[ Placing ]]
+
+	price.Position = UDim2.new(0.5, (iconWidth + gap) / 2, price.Position.Y.Scale, 0)
+	icon.Position = UDim2.new(0.5, -price.TextBounds.X / 2 - gap, 0.5, 0)
 end
 
 return Module

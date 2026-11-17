@@ -12,6 +12,7 @@
 ---
 --- @field Loadout { string }
 --- @field ShinyItems { [string]: boolean }
+--- @field GoldenItems { [string]: boolean }
 --- @field Skin string
 --- @field Shiny boolean
 local _matchmaking_Card = {}

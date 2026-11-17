@@ -2,7 +2,8 @@
 
 A private lobby to play friends (pays no coins). First the player creates it (map, mode, players, bots), then the room shows who's in, who can be invited, **Invite friends**, **Start** (owner) and **Leave**.
 
-**Look.** The studio's `CustomLobby` (the create step) and `CustomLobbyPlayers` (the room) designs (2026-11-12), ported 1:1 as `Primitive` nodes (their pictures, fonts and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive` ports"). Dark slanted panels with a red ✕ in their headers. The picked map, mode, player count and bots wear a white outline and white text, the rest grey; Create lobby and Start are yellow, Leave dark.
+**Look.** The studio's `CustomLobby` (the create step) and `CustomLobbyPlayers` (the room) designs (2026-11-12), ported 1:1 as `Primitive` nodes (their pictures, fonts and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive` ports"). Dark slanted panels with the custom mode's icon (`ModeIcon`, `art/modes`) before the title and a red ✕ in their headers, both centred under the lobby's top bar (0.564 down, each with its
+aspect ratio kept, since 2026-11-17: at the middle the FREE WEAPONS tile covered the ✕). The picked map, mode, player count and bots wear a white outline and white text, the rest grey; Create lobby and Start are yellow, Leave dark.
 
 |  |  |
 | --- | --- |

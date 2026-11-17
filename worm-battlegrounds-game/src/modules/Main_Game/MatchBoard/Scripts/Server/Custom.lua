@@ -60,8 +60,8 @@ end
 
 --[[
 	**SERVER** |
-	Makes a custom lobby the player owns, on a map from CUSTOM_MAP_POOL, in Deathmatch or Teams, for 2 to 8 snails, its empty
-	places filled with bots of a CUSTOM_DIFFICULTIES difficulty, or with none. Only a party's leader makes one, and
+	Makes a custom lobby the player owns, on a map from CUSTOM_MAP_POOL, in Deathmatch or Teams, for 2, 4, 6 or 8 snails
+	the map is made for, its empty places filled with bots of a CUSTOM_DIFFICULTIES difficulty, or with none. Only a party's leader makes one, and
 	their party is in it at once (their windows stay closed until they open CUSTOM).
 ]]
 --- @return boolean
@@ -75,6 +75,11 @@ function Module.Create(player: Player, mapId: string, mode: string, size: number
 
 	-- Check if the lobby's settings are allowed
 	if not table.find(_settings.CUSTOM_MAP_POOL, mapId) or (mode ~= "Deathmatch" and mode ~= "Teams") or size % 2 ~= 0 then
+		return false
+	end
+
+	-- Check if the size is one the map is made for (2 to 8)
+	if size < 2 or size > 8 or not table.find(_settings.MAPS[mapId].Sizes, size) then
 		return false
 	end
 

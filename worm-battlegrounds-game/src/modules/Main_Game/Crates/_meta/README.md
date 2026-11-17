@@ -11,8 +11,9 @@ up a ball of light that flashes into the reels. A reel of item cards rolls under
 3-pack, ten columns for a 10-pack) and slows onto each result, then the results are revealed. A legendary first lands
 as a gold ★ card; then a golden crate drops in and is tapped open, a golden reel picks which legendary (when the crate
 holds more than one), and the legendary plays its own drop. Hidden crates never show or open. A player in The Snail
-Studio's group opens one Weapon crate free, once (`GROUP_CRATE`, the owner, 2026-11-16): the `FreeCrate` gui's badge on
-the crates screen opens a dialog asking them to like the game and join the group, and CLAIM opens it like a bought one.
+Studio's group opens one Weapon crate free, once (`GROUP_CRATE`, the owner, 2026-11-16): the `FreeCrate` gui's gold
+FREE WEAPONS tile in the lobby and its badge on the crates screen open a dialog (the crate turning in light, LIKE and
+JOIN as picture tiles), and CLAIM opens it like a bought one (2026-11-17: the tile and the dialog's look).
 
 | | |
 | --- | --- |
@@ -29,7 +30,7 @@ the crates screen opens a dialog asking them to like the game and join the group
 | `Global.lua` | The crate rows and pack prices; warns at start when a crate's odds don't add up to 100 or name an unknown item |
 | `Client.lua` | Starts the client handlers |
 | `Scripts/Client/Panel.lua` | The Crates widget: tabs (on a pad LB and RB step through them while it's open, the Console module's `TabPrevious` and `TabNext`), the balance chips, a row of buy buttons per currency (coins on top, diamonds under them), the lobby menu's Weapons and Skins buttons and badge, opening |
-| `Scripts/Client/GroupReward.lua` | The free group crate (the `FreeCrate` gui, `GROUP_GUI_NAME`): enabled while the crates screen shows and the crate is unclaimed (`GroupCrateClaimed` `false`); its badge opens the dialog, whose `S_CrateView` shows the crate's 3D model; JOIN (`I.Group.PromptJoin`) or JOINED by the player's membership (`I.Group.IsMember`, followed through `I.Group.GetChangedSignal`), and CLAIM in its `Look_*` colours, lit once they're in. CLAIM closes the dialog and opens the crate on the crates screen like a bought one (`Panel.Open(GROUP_CRATE, 1, "GroupReward")`), or says `GROUP_JOIN_FIRST` before they're in |
+| `Scripts/Client/GroupReward.lua` | The free group crate (the `FreeCrate` gui, `GROUP_GUI_NAME`): enabled while the crate is unclaimed (`GroupCrateClaimed` `false`) and the lobby's screens (the `Lobby` gui) or the crates screen show; the badge hides while a crate opens there (`SetOpening`, from Reveal, 2026-11-17: it showed over the opening); the lobby's tile and the crates screen's badge open the dialog, its own WidgetManager widget (`FreeCrateDialog`, `GROUP_DIALOG_GUI_NAME`, since 2026-11-17: so it blurs and dims like every lobby window), with `I.WidgetManager.Open`, drawn on `WidgetManager_Opened`; opened from the badge, it opens the crates screen again when it closes, unless something else takes its place (a message over it hands it back after). The dialog's crate (`S_CrateView`, in a WorldModel) turns while light rays wheel and twinkles rise (`GROUP_*`); LIKE only ticks; JOIN (`I.Group.PromptJoin`) ticks by the player's membership (`I.Group.IsMember`, followed through `I.Group.GetChangedSignal`); CLAIM in its `Look_*` colours, locked until they're in, then gold, pulsing and shining. CLAIM plays `Free_Claim`, shakes the crate, opens the crates screen in the dialog's place and the crate there like a bought one (`Panel.Open(GROUP_CRATE, 1, "GroupReward")`), or says `GROUP_JOIN_FIRST` before they're in; a claimed crate's dialog closes |
 | `Scripts/Client/Odds.lua` | The Crates widget's odds list, by rarity; a snail piece shows a snail wearing it live on its card (`SkinModels`) |
 | `Scripts/Client/SkinModels.lua` | The snail pieces' snails on cards: `Put` shows a snail wearing an item's piece (Cosmetics' `BuildSnail` on its `GetShowcase` outfit), posed in its idle frame (`I.SnailRig.Pose`), in a card's `S_Model` viewport, framed on the piece as the Style screen frames it (Cosmetics' `GetPieceShot`); `Release` takes it off; spare snails wait in a pool by piece; `GetPicture` is a piece's reel picture (`PIECE_PICTURES`). While the widget is open it draws a card's snail again once the card holds still where it's seen (`SKIN_REDRAW_FRAMES`): Roblox doesn't draw a viewport that changed while it moved or was hidden until it changes again where it's seen |
 | `Scripts/Client/Showcase.lua` | The crate on its pedestal: its 3D model (the row's `Model`) in `U_Crate`'s viewport, dressed in the crate's `Look` (glow, rays, beam, ring, ambient particles, STANDARD or PREMIUM tag, name plate; the premium crate's halo and violet backdrop), turning rays, a bob, a sway and a breathing glow while the widget is open, a pop when the crate changes, and the leap off the pedestal when a crate is bought |
@@ -37,7 +38,7 @@ the crates screen opens a dialog asking them to like the game and join the group
 | `Scripts/Client/Effects.lua` | Every gui effect: bursts, rings, confetti, streams (flames, bubbles, rain, vortex, orbit), flashes, tints, shakes and each rarity's reveal burst, drawn with `I.UIEmitter` on the result's back and front layers |
 | `Scripts/Client/Drops.lua` | The legendaries' own drops (`LEGENDARY_DROPS`): the black hole opens over the reels with its disk turning, pulls the whole opening into itself (`S_Swallow`) with streaks of light, and implodes, the variety grenade bursts into confetti and smileys, the skeleton rises green in flames, the low gravity potion floats up in bubbles; any other legendary gets the plain legendary reveal |
 | `Scripts/Client/Stage3D.lua` | The 3D crates: clones the crate's model (its row's `Model`) into the stage's ViewportFrame in the pack's layout, drops them in, waits for the tap (not with Quick open), and opens them: a rattle with the hatches straining, the hatches springing open, the walls falling outward (each piece turned about its hinge in code), and a Neon ball of light rising and swelling into the flash. Draws the 2D effects at points projected from its camera, and dresses the legendary's golden crate (gold light, gold rays, sparkles). Preloads the models at start |
-| `Scripts/Client/Result.lua` | The result's drawing: the big card (its entrances, rays, words and copies bar), a pack's card names, the pack's summary, and the result loop (turning and rainbow rays, the black hole's disk, a floating card) |
+| `Scripts/Client/Result.lua` | The result's drawing: the big card (its entrances, rays, words and copies bar), a pack's card names, the pack's summary, a Shiny or Golden card's look (`_dressCard`: a foil or gold rim it makes over the card's own pictures, until the Crates gui's `PREFAB \| Card` has them), and the result loop (turning and rainbow rays, the black hole's disk, a floating card, the foils and rims) |
 | `Scripts/Client/Reveal.lua` | The opening from start to end: the intro (the shop making way, then `Stage3D`), the reels, the heartbeat under an epic or legendary, the gold moment (the gold card, the golden crate, the golden reel or a rising card, the drop), the reveal of one big card or a pack's row or grid, Skip, Quick open, Open again and Continue |
 | `Settings.lua` | `Crates_Settings` |
 | `Data/Crates/<CrateId>.lua` | One row per crate (`Crates_CrateData`): `Weapon`, `Premium`, `Utility`, `Skin`, `Tutorial` |
@@ -139,7 +140,12 @@ What the client plays, in order:
    as the first did. When the crate holds more than one legendary, a golden reel of them rolls (`GOLDEN_SECONDS`) to
    say which; else the legendary's card rises out of the crate. Then `Drops` plays its drop (`LEGENDARY_DROPS`).
 6. **Reveal.** One result is one big card with its rarity's rays and burst (`REVEAL_RAYS`, `Reveal_<Rarity>`), its
-   rarity bar, name and copies to shiny. A pack's cards fly from the reels to a row of three (`TRIO_*`) or a grid of
+   rarity bar, name and copies to shiny ("3 / 10 copies to shiny"); past shiny a weapon's or utility's copies to golden
+   (`GOLDEN_CATEGORIES`: "34 / 100 to golden"), with SHINY! (`Reveal_Shiny`, `SHINY_COLOR` stars) and GOLDEN!
+   (`Variant_Golden`, `GOLDEN_COLOR` stars) on the copy that turns it, and "Golden" past it. A Shiny item's card (the
+   big one and a pack's) wears a holo foil (a white copy of its picture with `SHINY_FOIL` turning through it, at
+   `SHINY_FOIL_TRANSPARENCY`) and a Golden one a gold rim (a copy of its outline in `GOLDEN_RIM`, turning), turned by
+   the result loop (`SHINY_FOIL_SPIN`, `GOLDEN_RIM_SPIN`). A pack's cards fly from the reels to a row of three (`TRIO_*`) or a grid of
    five by two (`TEN_*`) and are named in turn (`TRIO_STEP`, `TEN_STEP`), NEW and BEST tags on them, each legendary
    holding the middle first (`PACK_LEGENDARY_HOLD`); a summary counts the rarities and new items. A snail piece's card here,
    like the odds list's, shows a snail wearing it live.
@@ -155,11 +161,19 @@ reel. Closing the widget ends an opening at once.
 | Key | Default | What |
 | --- | --- | --- |
 | `COUNTS` | `{ 1, 3, 10 }` | Pack sizes the server accepts, one buy button each per currency (`U_<currency>X<count>`) |
-| `SHINY_COPIES` | `10` | Copies that make an item shiny |
+| `SHINY_COPIES`, `GOLDEN_COPIES` | `10`, `100` | Copies that make an item shiny, and golden (a look only; Loadout's keys of the same names) |
+| `GOLDEN_CATEGORIES` | `{ "Weapon", "Utility" }` | The inventory categories that go golden; snail pieces only go shiny |
+| `SHINY_COLOR`, `GOLDEN_COLOR` | pearly pink, gold | The result's words and stars once it's shiny, and golden |
+| `SHINY_FOIL`, `SHINY_FOIL_TRANSPARENCY`, `SHINY_FOIL_SPIN` | a rainbow, `0.55`, `40` | A Shiny card's holo foil: its colours, how see-through, and how fast it turns (degrees a second) |
+| `GOLDEN_RIM`, `GOLDEN_RIM_SPIN` | dark to pale gold, `90` | A Golden card's rim: its colours, and how fast its glint turns |
 | `PAID_CURRENCIES` | `{ "Diamonds" }` | Currencies bought with Robux: rolls with them are paid random items |
 | `VIP_CRATE` | `"Skin"` | VIP's free daily crate (the coins row's x1) |
 | `GROUP_CRATE`, `GROUP_NAME` | `"Weapon"`, `"SnailStudio"` | The crate a player opens free once for joining the studio's group (its name in the Group module's list, `src/global_data/Group/Groups.lua`: 566704940) and liking the game, which no game can check, so it's only asked |
-| `GROUP_GUI_NAME`, `GROUP_JOIN_FIRST` | `"FreeCrate"`, "Join The Snail Studio group first, then claim your free crate!" | The free crate's gui (its badge and dialog), and what CLAIM says before the player is in the group |
+| `GROUP_GUI_NAME`, `GROUP_DIALOG_GUI_NAME`, `GROUP_JOIN_FIRST` | `"FreeCrate"`, `"FreeCrateDialog"`, "Join The Snail Studio group first, then claim your free crate!" | The free crate's guis (its lobby tile and badge; the dialog they open, a WidgetManager widget), and what CLAIM says before the player is in the group |
+| `GROUP_RAYS_SPEED`, `GROUP_CRATE_SPIN` | `18`, `40` | Degrees a second the dialog's rays wheel and its crate turns |
+| `GROUP_SHINE_SECONDS`, `GROUP_SHINE_PAUSE` | `0.8`, `1.8` | The light sweeping the tile and a lit CLAIM, then the pause |
+| `GROUP_SPARKLE_RATE` | `7` | Twinkles a second round the crate |
+| `GROUP_POP_TWEENINFO`, `GROUP_PULSE_TWEENINFO` | Back 0.35 s, Sine 0.6 s looping | The dialog popping open, CLAIM's pulse once lit |
 | `INTRO_TWEENINFO`, `QUICK_INTRO_TWEENINFO` | 0.56 s, 0.26 s | The shop making way |
 | `STAGE_LAYOUTS` | 1, 3 and 10 (`Crates_StageLayout`) | Where the 3D crates stand by pack size (studs; the camera looks along +Z at their fronts), their scale and turn, the camera and the point it looks at |
 | `STAGE_FOV`, `STAGE_ASPECT` | `26`, 16 / 9 | The stage camera's field of view, and the screen shape the layouts are framed for (a narrower screen backs the camera off) |
@@ -203,7 +217,7 @@ reel. Closing the widget ends an opening at once.
 | `GUI_NAME` | `"Crates"` | The widget it drives |
 | `PAY_CURRENCIES` | `{ "Coins", "Diamonds" }` | The currencies crates are paid in, top to bottom: a balance chip (`U_Pay<currency>`) and a row of buy buttons (`S_<currency>Row`, `U_<currency>X<count>`) each, shown for the currencies the crate takes |
 | `PRICE_FREE` | `"FREE"` | The x1 price while VIP's daily crate is free |
-| `LOBBY_GUI_NAME`, `BADGE_FREE`, `BADGE_MAX` | `"Lobby"`, `"FREE"`, `9` | The gui with the corner menu, and the badge on its Weapons button: `BADGE_FREE` while a free crate waits, else how many crates the coins open, `9+` past `BADGE_MAX` |
+| `LOBBY_GUI_NAME`, `BADGE_FREE`, `BADGE_MAX` | `"Lobby"`, `"1"`, `9` | The gui with the corner menu, and the badge on its Weapons button: `BADGE_FREE` while a free crate waits, else how many crates the coins open, `9+` past `BADGE_MAX` |
 
 ## Sounds
 
@@ -212,7 +226,7 @@ Played by name from `SoundsList.lua` (its Crates category), in the `SFX` group: 
 `Crate_Spin`, `Crate_Tick`, `Crate_Land` (also the flash out of the 3D crates), `Crate_Settle` (also a 3D crate
 landing), `Crate_Tease`, `Crate_GoldHit` (the gold card, and the golden crate landing), `Crate_Premium` (the premium
 crate stepping onto the pedestal), `Card_Flip`, `Results_Open`, `Reveal_<Rarity>` (Common to Legendary),
-`Reveal_Shiny`, and the drops' `Legend_BlackHole`, `Legend_Variety`, `Legend_Skeleton`, `Legend_LowGravity`. They come
+`Reveal_Shiny`, `Variant_Golden` (GOLDEN!), and the drops' `Legend_BlackHole`, `Legend_Variety`, `Legend_Skeleton`, `Legend_LowGravity`. They come
 from `art/sfx/make_crates.py` (the sound kit's README). The tap that opens the 3D crates plays `Button_Click` (`UI`
 group).
 
@@ -231,7 +245,7 @@ gui's README lists every element, prefab and `Look_*` attribute.
 
 The `Lobby` gui's corner menu opens it: `U_Menu` › `S_Weapons` and `S_Skins` (each with a `Crates_CrateId` attribute,
 `"Weapon"` and `"Skin"`) select that crate's tab, then `I.WidgetManager.Open("Crates")`. The badge on Weapons
-(`U_Menu` › `S_Badge` › `S_Count`) reads FREE while VIP's daily crate waits, else how many of
+(`U_Menu` › `S_Badge` › `S_Count`) reads 1 while VIP's daily crate waits (no "FREE" beside the FREE WEAPONS tile), else how many of
 the cheapest coin crate the player's coins open (`9+` past 9, hidden at none), redrawn on `Currency_Changed`. The old
 `CrateOpen` and `CrateOdds` guis are no longer used.
 

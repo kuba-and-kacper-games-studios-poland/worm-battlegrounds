@@ -124,7 +124,7 @@ end
 --[[
 	One of a bomb's bomblets (a cluster bomb's, a variety grenade's): thrown up and out at a random angle and speed, in
 	its bomb's wind, it explodes on contact. With Mini it's drawn as a small copy of its bomb (its model and trail, at that share of its size).
-	With Hatch a worm digs out of its blast, down one of SNAIL_DIRECTIONS at random.
+	With Hatch it digs on from its blast like a worm (Snail, drawn as the mini), down one of SNAIL_DIRECTIONS at random.
 ]]
 --- @param shot Combat_Shot
 function Module._runBomblet(shot, from: Vector3)

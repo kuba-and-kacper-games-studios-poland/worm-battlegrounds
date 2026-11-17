@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -24,6 +25,7 @@ local KillFeed = require(_scripts:FindFirstChild("Client"):FindFirstChild("KillF
 local TouchControls = require(_scripts:FindFirstChild("Client"):FindFirstChild("TouchControls")) --- @type MatchHud_Client_TouchControls
 local Results = require(_scripts:FindFirstChild("Client"):FindFirstChild("Results")) --- @type MatchHud_Client_Results
 local TopBar = require(_scripts:FindFirstChild("Client"):FindFirstChild("TopBar")) --- @type MatchHud_Client_TopBar
+local Hints = require(_scripts:FindFirstChild("Client"):FindFirstChild("Hints")) --- @type MatchHud_Client_Hints
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -68,6 +70,7 @@ function Module.Start()
 	TouchControls.Start(moduleGui)
 	Results.Start()
 	TopBar.Start()
+	Hints.Start()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control

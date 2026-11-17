@@ -120,7 +120,10 @@ local _settings = {
 	MANUAL_HOLD = 5,
 	MANUAL_SPEED = 15,
 
-	-- Panning with the right stick (while LT is held), in studs per second at full lean, and how far it must lean
+	--[[
+		Panning with the right stick (while LT is held), in studs per second at full lean at DISTANCE, scaled with the
+		zoom (slower zoomed in, faster zoomed out, so it crosses the screen as fast at any zoom), and how far it must lean
+	]]
 	STICK_PAN_SPEED = 60,
 	STICK_DEADZONE = 0.2,
 

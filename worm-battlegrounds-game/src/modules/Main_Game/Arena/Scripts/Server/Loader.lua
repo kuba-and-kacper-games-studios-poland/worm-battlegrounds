@@ -16,6 +16,10 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 local templates = {} --- @type { [string]: Model }
 
 local arenaFolder: Folder
+
+-- Where the cutters' boxes stay between blasts (Arena's Cutter), kept through map loads
+local cutterFolder: Folder
+
 local terrainFolder: Folder?
 local markersFolder: Folder?
 local boundsPart: BasePart?
@@ -54,6 +58,10 @@ function Module.Init()
 	arenaFolder = I.Create("Folder")({
 		Name = _localName,
 		Parent = I.Dirs.UmeWorkspace,
+	})
+	cutterFolder = I.Create("Folder")({
+		Name = "Cutters",
+		Parent = arenaFolder,
 	})
 	terrainParams.FilterType = Enum.RaycastFilterType.Include
 	terrainParams.FilterDescendantsInstances = {}
@@ -164,7 +172,12 @@ function Module.Load(mapId: string)
 
 	--[[ Clearing ]]
 
-	arenaFolder:ClearAllChildren()
+	-- Everything but the cutters' boxes, which the next map's blasts use again
+	for _index: number, child: Instance in ipairs(arenaFolder:GetChildren()) do
+		if child ~= cutterFolder then
+			child:Destroy()
+		end
+	end
 
 	--[[ Cloning ]]
 
@@ -276,6 +289,16 @@ end
 --- @return Folder
 function Module.GetArenaFolder()
 	return arenaFolder
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Cutter Folder
+
+--[[
+	Returns Workspace.Ume.Arena.Cutters, where the cutters' boxes stay between blasts.
+]]
+--- @return Folder
+function Module.GetCutterFolder()
+	return cutterFolder
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Terrain

@@ -88,6 +88,11 @@ function Module.Start(opener)
 		I.Interact.OnPress(box, function()
 			Module._onSlotPressed(slot)
 		end)
+
+		-- The lock's price and its picture stay centred as one whenever the price or the card's size changes
+		box:FindFirstChild("S_Price", true):GetPropertyChangedSignal("TextBounds"):Connect(function()
+			Module._centrePrice(box)
+		end)
 	end
 
 	--[[ Connections ]]
@@ -152,9 +157,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws every slot: its item's picture, name in its rarity's colour, copies and shiny mark; a + on an empty open
-	slot; the lock and price on the next slot to open (later ones hide): coins while the coin slot is closed, else the
-	next slot pass's Robux price; the selected look while its picker is open. EMOTES follows the last row shown.
+	Draws every slot: its item's picture, name in its rarity's colour, copies, and its Shiny (SHINY_COPIES) or Golden
+	(GOLDEN_COPIES) mark and card (the holo foil, or the gold rim); a + on an empty open slot; the lock and price on
+	the next slot to open (later ones hide): coins while the coin slot is closed, else the next slot pass's Robux
+	price; the selected look while its picker is open. EMOTES follows the last row shown.
 ]]
 function Module._refresh()
 	--[[ Checks ]]
@@ -177,8 +183,11 @@ function Module._refresh()
 		local locked: boolean = slot > unlocked
 		local empty: boolean = not item and not locked
 		local selected: boolean = slot == selectedSlot
+		local shiny: boolean = item ~= nil and copies >= _settings.SHINY_COPIES
+		local golden: boolean = item ~= nil and copies >= _settings.GOLDEN_COPIES
 		local background: Frame = box:FindFirstChild("Background")
 		local stroke: ImageLabel = background:FindFirstChild("Stroke")
+		local mark: TextLabel = box:FindFirstChild("S_Shiny")
 
 		box.Visible = slot <= unlocked + 1
 		box:FindFirstChild("S_Icon").Image = if item then item.IconId else ""
@@ -187,13 +196,20 @@ function Module._refresh()
 		box:FindFirstChild("S_Amount").Text = if item then `x{copies}` else ""
 		box:FindFirstChild("S_Number").Visible = item ~= nil
 		box:FindFirstChild("S_Plus").Visible = empty
-		box:FindFirstChild("S_Shiny").Visible = item ~= nil and copies >= _settings.SHINY_COPIES
+		mark.Visible = shiny
+		mark.Text = if golden then "Golden" else "Shiny"
+		mark.TextColor3 = box:GetAttribute(if golden then "Look_GoldenColor" else "Look_ShinyColor")
+		background:FindFirstChild("S_Foil").Visible = shiny and not golden
+		background:FindFirstChild("S_Gold").Visible = golden
 		box:FindFirstChild("S_Lock").Visible = locked
 		box:FindFirstChild("S_Price", true).Text = price
 		box:FindFirstChild("CurrencyIcon", true).Image = if coinSlot then _settings.COIN_ICON else _settings.ROBUX_ICON
 		background:FindFirstChild("Stroke2").Image = box:GetAttribute(if selected then "Look_SelectedStroke2" else "Look_Stroke2")
 		stroke.Image = box:GetAttribute(if selected then "Look_SelectedStroke" else "Look_Stroke")
 		stroke.ImageColor3 = box:GetAttribute(if selected then "Look_SelectedStrokeColor" elseif empty then "Look_EmptyStrokeColor" else "Look_StrokeColor")
+
+		-- The price and its picture centred as one (again once the new price's TextBounds arrive)
+		Module._centrePrice(box)
 	end
 
 	--[[ Emotes ]]
@@ -258,6 +274,30 @@ function Module._onSlotPressed(slot: number)
 			I.WidgetManager.ShowMessage("Not enough coins yet.")
 		end
 	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Centre Price
+
+--[[
+	Centres a locked slot's price and its coin (or Robux) picture under the lock as one, whatever the price's length
+	("2,500", "199", "..."): the text moves right by half the picture and its gap (the card's Look_PriceGap of the
+	picture's width), and the picture sits that gap left of the text's first letter.
+]]
+function Module._centrePrice(box: ImageButton)
+	--[[ Elements ]]
+
+	local price: TextLabel = box:FindFirstChild("S_Price", true)
+	local icon: ImageLabel = price:FindFirstChild("CurrencyIcon")
+
+	--[[ Local Variables ]]
+
+	local iconWidth: number = icon.AbsoluteSize.X
+	local gap: number = iconWidth * box:GetAttribute("Look_PriceGap")
+
+	--[[ Placing ]]
+
+	price.Position = UDim2.new(0.5, (iconWidth + gap) / 2, price.Position.Y.Scale, 0)
+	icon.Position = UDim2.new(0.5, -price.TextBounds.X / 2 - gap, 0.5, 0)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods

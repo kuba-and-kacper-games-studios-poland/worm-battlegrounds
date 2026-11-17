@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 local _localName: string = "MatchBoardPreview"
@@ -35,7 +36,6 @@ local Module = {
 
 	--- @type { UmeGui_Node }
 	Settings = {
-		{ Control = "Dropdown", Id = "S_Panel", Label = "Panel", Options = { "Play", "Setup" }, Value = "Play" },
 		{ Control = "Toggle", Id = "S_Party", Label = "Leads a party", Value = false },
 	},
 }
@@ -45,19 +45,13 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Shows the picked panel: the board with one lobby card per public mode, or the setup (with No bots and the party's
-	title for a party leader).
+	Shows the board with one lobby card per public mode (Play with party for a party leader).
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
 	--[[ Local Variables ]]
 
 	local party: boolean = preview.Values.S_Party
-
-	--[[ Panels ]]
-
-	preview.View:Get("U_Play").Instance.Visible = preview.Values.S_Panel == "Play"
-	preview.View:Get("U_Setup").Instance.Visible = preview.Values.S_Panel == "Setup"
 
 	--[[ Play ]]
 
@@ -71,12 +65,6 @@ function Module.Apply(preview)
 		row:Get("S_Map").Instance.Text = MAPS[index]
 		row:Get("S_Join").Instance:FindFirstChild("Name1").Text = "Join"
 	end
-
-	--[[ Setup ]]
-
-	preview.View:Get("U_Setup", "S_Title").Instance.Text = if party then "Play with party" else "Play solo"
-	preview.View:Get("U_Setup", "S_None").Instance.Visible = party
-	preview.View:Get("U_Setup", "S_RewardAmount").Instance.Visible = not party
 end
 
 return Module

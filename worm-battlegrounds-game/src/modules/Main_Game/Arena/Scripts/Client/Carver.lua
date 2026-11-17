@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -134,6 +135,33 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
+--%%%%%%%%%%%%%%%%%%%% Drop
+
+--[[
+	Takes away the pieces this screen cut from a part: the server removed it (its own pieces replace them), or it
+	started to fall (Falling: the server cuts no ground while it falls). The part stays hidden. While re-cuts run the
+	pieces wait, so the server's pieces are cut before these go.
+]]
+function Module.Drop(part: BasePart)
+	--[[ Data ]]
+
+	local prediction = predicted[part] --- @type Arena_Prediction?
+	if not prediction then
+		return
+	end
+
+	--[[ Clearing ]]
+
+	predicted[part] = nil
+	for _index: number, piece: BasePart in ipairs(prediction.Pieces) do
+		if recarving > 0 then
+			table.insert(stale, piece)
+		else
+			piece:Destroy()
+		end
+	end
+end
+
 --%%%%%%%%%%%%%%%%%%%% Predict
 
 --[[
@@ -212,7 +240,7 @@ function Module._predict(parts, carve)
 		else
 			part.AncestryChanged:Connect(function()
 				if not part:IsDescendantOf(arenaFolder) then
-					Module._drop(part)
+					Module.Drop(part)
 				end
 			end)
 		end
@@ -223,39 +251,8 @@ function Module._predict(parts, carve)
 
 	--[[ Cleaning ]]
 
-	for _index: number, box: BasePart in ipairs(boxes) do
-		box:Destroy()
-	end
-	for _index: number, box: BasePart in ipairs(cutter) do
-		box:Destroy()
-	end
+	Cutter.Release(boxes, cutter)
 	predicting = false
-end
-
---%%%%%%%%%%%%%%%%%%%% Drop
-
---[[
-	Takes away the pieces this screen cut from a part the server removed: its own pieces replace them. While re-cuts run
-	they wait, so the server's pieces are cut before these go.
-]]
-function Module._drop(part: BasePart)
-	--[[ Data ]]
-
-	local prediction = predicted[part] --- @type Arena_Prediction?
-	if not prediction then
-		return
-	end
-
-	--[[ Clearing ]]
-
-	predicted[part] = nil
-	for _index: number, piece: BasePart in ipairs(prediction.Pieces) do
-		if recarving > 0 then
-			table.insert(stale, piece)
-		else
-			piece:Destroy()
-		end
-	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Undo
@@ -296,6 +293,16 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
+--%%%%%%%%%%%%%%%%%%%% Is Predicted
+
+--[[
+	Returns whether this screen shows its own pieces of a part (the part hidden until the server's replace it).
+]]
+--- @return boolean
+function Module.IsPredicted(part: BasePart)
+	return predicted[part] ~= nil
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Hits
 
 --[[
@@ -318,21 +325,21 @@ function Module._getHits(carve)
 	local params: OverlapParams = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = { terrain }
-	local cutter = Cutter.Build(carve.Center, carve.Radius, bounds.Position.Z, bounds.Size.Z + _settings.CARVE_DEPTH_MARGIN, piecesFolder) --- @type { BasePart }
+	local boxes = Cutter.Build(carve.Center, carve.Radius, bounds.Position.Z, bounds.Size.Z + _settings.CARVE_DEPTH_MARGIN, piecesFolder) --- @type { BasePart }
 	local hits = {} --- @type { BasePart }
 	local found = {} --- @type { [BasePart]: boolean }
 
 	--[[ Querying ]]
 
-	for _boxIndex: number, box: BasePart in ipairs(cutter) do
+	for _boxIndex: number, box: BasePart in ipairs(boxes) do
 		for _hitIndex: number, part: BasePart in ipairs(I.S.Workspace:GetPartsInPart(box, params)) do
 			if not found[part] then
 				found[part] = true
 				table.insert(hits, part)
 			end
 		end
-		box:Destroy()
 	end
+	Cutter.Release(boxes, boxes)
 
 	--[[ Returning ]]
 
