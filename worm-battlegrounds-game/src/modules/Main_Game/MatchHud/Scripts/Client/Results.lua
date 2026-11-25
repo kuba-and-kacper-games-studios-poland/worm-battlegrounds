@@ -26,9 +26,6 @@ local matchFolder: Folder
 local tickConnection: RBXScriptConnection?
 local voted: boolean = false
 
--- The Rematch button's own colours, put back after the tutorial greyed it (the Studio map plays on)
-local rematchColors = {} --- @type { [string]: Color3 }
-
 -- Which results the level bar plays: a newer results screen (or closing it) stops an older one's
 local xpRun: number = 0
 
@@ -56,7 +53,7 @@ function Module.Start()
 	moduleGui = I.UserInterface.UI[_settings.RESULTS_GUI_NAME]
 	elems["Result"] = moduleGui:FindFirstChild("S_Result", true) --- @type TextLabel
 	elems["Placings"] = moduleGui:FindFirstChild("U_Placings", true) --- @type ScrollingFrame
-	elems["Coins"] = moduleGui:FindFirstChild("U_Earned", true):FindFirstChild("S_Coins", true) --- @type TextLabel
+	elems["Diamonds"] = moduleGui:FindFirstChild("U_Earned", true):FindFirstChild("S_Diamonds", true) --- @type TextLabel
 	elems["Xp"] = moduleGui:FindFirstChild("S_Xp", true) --- @type TextLabel
 	elems["LevelUp"] = moduleGui:FindFirstChild("S_LevelUp", true) --- @type TextLabel
 	elems["XpRow"] = moduleGui:FindFirstChild("S_XpRow", true) --- @type Frame
@@ -71,17 +68,8 @@ function Module.Start()
 	elems["BestShot"] = moduleGui:FindFirstChild("S_BestShot", true) --- @type TextLabel
 	elems["Rematch"] = moduleGui:FindFirstChild("S_Rematch", true) --- @type ImageButton
 	elems["RematchText"] = elems["Rematch"]:FindFirstChild("S_Text") --- @type TextLabel
-	elems["RematchMain"] = elems["Rematch"]:FindFirstChild("Main", true) --- @type ImageLabel
-	elems["RematchStroke"] = elems["Rematch"]:FindFirstChild("Stroke", true) --- @type ImageLabel
-	elems["RematchMask"] = elems["Rematch"]:FindFirstChild("Mask", true) --- @type ImageLabel
 	elems["Lobby"] = moduleGui:FindFirstChild("S_Lobby", true) --- @type ImageButton
 	prefabs["Placing"] = elems["Placings"]:FindFirstChild("PREFAB | Placing") --- @type Frame
-
-	--[[ Saving ]]
-
-	rematchColors.Main = elems["RematchMain"].ImageColor3
-	rematchColors.Stroke = elems["RematchStroke"].ImageColor3
-	rematchColors.Text = elems["RematchText"].TextColor3
 
 	--[[ Connections ]]
 
@@ -99,13 +87,21 @@ end
 
 --[[
 	Opens the results when the match ends: every player's place (1st to 3rd in their medal colours), name in team colours
-	(their badges after it), username and coins, what the local player earned (their level bar filling from before the
-	match to after it, when the server sent both), their match stats, and the rematch vote.
+	(their badges after it), username and diamonds, what the local player earned (their level bar filling from before the
+	match to after it, when the server sent both), their match stats, and the rematch vote. The tutorial match shows the
+	Tutorial module's win card instead (the owner, 2026-11-24).
 ]]
 --- @param placements { Match_Placement }
 --- @param stats { [string]: Match_Stats }
 --- @param earned MatchRewards_Earned
 function Module._onResults(placements, stats, earned)
+	--[[ Checks ]]
+
+	-- Check if it's a match with results (not the tutorial)
+	if Module._isTutorial() then
+		return
+	end
+
 	--[[ Local Variables ]]
 
 	local myId: string = I.Match.GetMyParticipantId()
@@ -151,7 +147,7 @@ function Module._onResults(placements, stats, earned)
 		nameLabel.Text = entry and entry:GetAttribute("DisplayName") or "?"
 		nameLabel.TextColor3 = entry and entry:GetAttribute("Color") or Color3.new(1, 1, 1)
 		I.PlayerBadges.Show(nameLabel, userId)
-		row:FindFirstChild("S_Coins", true).Text = `+{earned.Coins[placement.ParticipantId] or "0"} coins`
+		row:FindFirstChild("S_Diamonds", true).Text = `+{earned.Diamonds[placement.ParticipantId] or "0"} diamonds`
 		if entry then
 			Teams.SetAvatar(avatar, entry)
 		end
@@ -164,7 +160,7 @@ function Module._onResults(placements, stats, earned)
 
 	--[[ Earned ]]
 
-	elems["Coins"].Text = `+{earned.Coins[myId] or "0"} coins`
+	elems["Diamonds"].Text = `+{earned.Diamonds[myId] or "0"} diamonds`
 	elems["Xp"].Text = if playsXp then "+0 XP" else `+{earned.Xp} XP`
 	elems["LevelUp"].Visible = earned.LevelUp and not playsXp
 	elems["LevelUp"].Text = `Level up! Level {earned.Level}`
@@ -172,15 +168,6 @@ function Module._onResults(placements, stats, earned)
 	if playsXp then
 		Module._showLevel(earned.XpBefore.Level, earned.XpBefore.Into, earned.XpBefore.For)
 	end
-
-	--[[ Visibility ]]
-
-	-- The tutorial match always goes back to the lobby: its Rematch shows grey (its gold Mask hidden) and does nothing
-	local colors = if Module._isTutorial() then _settings.LOCKED_REMATCH_COLORS else rematchColors --- @type { [string]: Color3 }
-	elems["RematchMask"].Visible = not Module._isTutorial()
-	elems["RematchMain"].ImageColor3 = colors.Main
-	elems["RematchStroke"].ImageColor3 = colors.Stroke
-	elems["RematchText"].TextColor3 = colors.Text
 
 	--[[ Stats ]]
 
@@ -230,10 +217,6 @@ function Module._tick()
 
 	--[[ Applying ]]
 
-	if Module._isTutorial() then
-		elems["RematchText"].Text = "Rematch"
-		return
-	end
 	elems["RematchText"].Text = (if voted then "Voted" else "Rematch") .. `  {votes}/{playing}  |  0:{string.format("%02d", left)}`
 end
 
@@ -372,13 +355,6 @@ end
 	Votes to play the match again.
 ]]
 function Module._voteRematch()
-	--[[ Checks ]]
-
-	-- Check if the match can be played again
-	if Module._isTutorial() then
-		return
-	end
-
 	--[[ Sending ]]
 
 	voted = true
@@ -498,7 +474,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Tutorial
 
 --[[
-	Returns whether this is the tutorial match, which can't be played again.
+	Returns whether this is the tutorial match, which has no results screen.
 ]]
 --- @return boolean
 function Module._isTutorial()

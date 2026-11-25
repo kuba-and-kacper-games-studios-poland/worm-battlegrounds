@@ -52,6 +52,36 @@ local _gui = {
 							{
 								Primitive = "ImageLabel",
 								Props = {
+									Name = "MainFill",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Position = UDim2.fromScale(0.0012, 0.0079),
+									Size = UDim2.fromScale(0.9977, 0.9841),
+									Image = "rbxassetid://77472703148536",
+									ImageColor3 = Color3.fromRGB(25, 25, 35),
+									ScaleType = Enum.ScaleType.Fit,
+								},
+								Attributes = { _ImageName = "1228_43__MatchWaiting__Main_gray" },
+							},
+							{
+								Primitive = "ImageLabel",
+								Props = {
+									Name = "MainFill",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Position = UDim2.fromScale(0.0012, 0.0079),
+									Size = UDim2.fromScale(0.9977, 0.9841),
+									Image = "rbxassetid://77472703148536",
+									ImageColor3 = Color3.fromRGB(25, 25, 35),
+									ScaleType = Enum.ScaleType.Fit,
+								},
+								Attributes = { _ImageName = "1228_43__MatchWaiting__Main_gray" },
+							},
+							{
+								Primitive = "ImageLabel",
+								Props = {
 									Name = "Stroke2",
 									BackgroundTransparency = 1,
 									BorderSizePixel = 0,
@@ -69,6 +99,23 @@ local _gui = {
 								Primitive = "ImageLabel",
 								Props = {
 									Name = "Stroke",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									ClipsDescendants = true,
+									LayoutOrder = 2,
+									Position = UDim2.fromScale(0.0031, 0.0032),
+									Size = UDim2.fromScale(0.9938, 0.9936),
+									ZIndex = 3,
+									Image = "rbxassetid://93052246754497",
+									ImageColor3 = Color3.fromRGB(130, 130, 130),
+									ScaleType = Enum.ScaleType.Fit,
+								},
+								Attributes = { _ImageName = "1244_177__MatchWaiting__Stroke_gray" },
+							},
+							{
+								Primitive = "ImageLabel",
+								Props = {
+									Name = "StrokeFill",
 									BackgroundTransparency = 1,
 									BorderSizePixel = 0,
 									ClipsDescendants = true,
@@ -103,15 +150,32 @@ local _gui = {
 						Primitive = "Frame",
 						Props = { Name = "Header", BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 1, Position = UDim2.fromScale(0.1456, 0.0461), Size = UDim2.fromScale(0.7381, 0.0747), ZIndex = 2 },
 						Children = {
+							-- The mode's glyph (MatchBoard's MODE_ICONS), set by code
+							{
+								Primitive = "ImageLabel",
+								Id = "S_ModeIcon",
+								Props = {
+									AnchorPoint = Vector2.new(0, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0, 0.5),
+									Size = UDim2.fromScale(0.95, 0.95),
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									ScaleType = Enum.ScaleType.Fit,
+								},
+							},
+							-- The mode and the map
 							{
 								Primitive = "TextLabel",
-								Id = "S_Countdown",
+								Id = "S_Title",
 								Props = {
 									BackgroundTransparency = 1,
 									BorderSizePixel = 0,
 									LayoutOrder = 0,
-									Size = UDim2.fromScale(1, 1),
-									Text = "MATCH STARTS IN 0:23",
+									Position = UDim2.fromScale(0.13, 0),
+									Size = UDim2.fromScale(0.87, 1),
+									Text = "DEATHMATCH · ECHO CAVERNS",
 									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 									TextColor3 = Color3.fromRGB(255, 255, 255),
 									TextSize = 40,
@@ -124,16 +188,16 @@ local _gui = {
 								Children = {
 									{
 										Primitive = "UIStroke",
-										Props = { Thickness = 0.075, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+										Props = { Thickness = 0.06, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 									},
 								},
 							},
 						},
 					},
-					-- The mode, the map and the players
+					-- When the match starts, in gold (RoWorld's), and why it starts early once full or voted
 					{
 						Primitive = "TextLabel",
-						Id = "S_Info",
+						Id = "S_Status",
 						Props = {
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
@@ -141,9 +205,9 @@ local _gui = {
 							Position = UDim2.fromScale(0.1367, 0.1479),
 							Size = UDim2.fromScale(0.7304, 0.0382),
 							ZIndex = 3,
-							Text = "DEATHMATCH  |  1 / 4 PLAYERS",
+							Text = "STARTS IN 0:23",
 							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
-							TextColor3 = Color3.fromRGB(200, 200, 205),
+							TextColor3 = Color3.fromRGB(255, 196, 70),
 							TextSize = 20,
 							TextScaled = true,
 							TextWrapped = true,
@@ -154,21 +218,21 @@ local _gui = {
 						Children = {
 							{
 								Primitive = "UIStroke",
-								Props = { Thickness = 0.15, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+								Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 							},
 						},
 					},
 					{
 						Primitive = "TextLabel",
+						Id = "S_PlayersHeader",
 						Props = {
-							Name = "HeaderText",
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
 							LayoutOrder = 3,
 							Position = UDim2.fromScale(0.1222, 0.2114),
-							Size = UDim2.fromScale(0.1768, 0.0445),
+							Size = UDim2.fromScale(0.5, 0.0445),
 							ZIndex = 4,
-							Text = "PLAYERS",
+							Text = "PLAYERS 1/4",
 							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 							TextColor3 = Color3.fromRGB(255, 255, 255),
 							TextSize = 24,
@@ -181,7 +245,7 @@ local _gui = {
 						Children = {
 							{
 								Primitive = "UIStroke",
-								Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+								Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 							},
 						},
 					},
@@ -341,7 +405,7 @@ local _gui = {
 											Position = UDim2.fromScale(0.5, 0.5),
 											Size = UDim2.fromScale(0.9345, 0.4062),
 											ZIndex = 2,
-											Text = "READY 0/1",
+											Text = "VOTE TO START 0/1",
 											FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 											TextColor3 = Color3.fromRGB(255, 255, 255),
 											TextSize = 22,
@@ -353,7 +417,7 @@ local _gui = {
 										Children = {
 											{
 												Primitive = "UIStroke",
-												Props = { Thickness = 0.1364, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+												Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 											},
 										},
 									},
@@ -489,7 +553,7 @@ local _gui = {
 										Children = {
 											{
 												Primitive = "UIStroke",
-												Props = { Thickness = 0.1364, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+												Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 											},
 										},
 									},
@@ -555,6 +619,36 @@ local _gui = {
 						{
 							Primitive = "ImageLabel",
 							Props = {
+								Name = "MainFill",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 0,
+								Position = UDim2.fromScale(0.0052, 0.0714),
+								Size = UDim2.fromScale(0.9895, 0.8571),
+								Image = "rbxassetid://108317005774963",
+								ImageColor3 = Color3.fromRGB(25, 25, 35),
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = { _ImageName = "1228_74__MatchWaiting__Main_gray" },
+						},
+						{
+							Primitive = "ImageLabel",
+							Props = {
+								Name = "MainFill",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 0,
+								Position = UDim2.fromScale(0.0052, 0.0714),
+								Size = UDim2.fromScale(0.9895, 0.8571),
+								Image = "rbxassetid://108317005774963",
+								ImageColor3 = Color3.fromRGB(25, 25, 35),
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = { _ImageName = "1228_74__MatchWaiting__Main_gray" },
+						},
+						{
+							Primitive = "ImageLabel",
+							Props = {
 								Name = "Stroke2",
 								BackgroundTransparency = 1,
 								BorderSizePixel = 0,
@@ -572,6 +666,23 @@ local _gui = {
 							Primitive = "ImageLabel",
 							Props = {
 								Name = "Stroke",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								ClipsDescendants = true,
+								LayoutOrder = 2,
+								Position = UDim2.fromScale(0.004, 0.0286),
+								Size = UDim2.fromScale(0.9921, 0.9429),
+								ZIndex = 3,
+								Image = "rbxassetid://88908455759643",
+								ImageColor3 = Color3.fromRGB(130, 130, 130),
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = { _ImageName = "1255_65__MatchWaiting__Stroke_gray" },
+						},
+						{
+							Primitive = "ImageLabel",
+							Props = {
+								Name = "StrokeFill",
 								BackgroundTransparency = 1,
 								BorderSizePixel = 0,
 								ClipsDescendants = true,
@@ -625,7 +736,7 @@ local _gui = {
 					Children = {
 						{
 							Primitive = "UIStroke",
-							Props = { Thickness = 0.15, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+							Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 						},
 					},
 				},
@@ -652,7 +763,7 @@ local _gui = {
 					Children = {
 						{
 							Primitive = "UIStroke",
-							Props = { Thickness = 0.1333, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+							Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 						},
 					},
 				},
@@ -680,7 +791,7 @@ local _gui = {
 					Children = {
 						{
 							Primitive = "UIStroke",
-							Props = { Thickness = 0.15, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+							Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 						},
 					},
 				},

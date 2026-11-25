@@ -43,23 +43,24 @@ runs while it's held); a press that only charges never fires by itself.
 | --- | --- | --- | --- | --- |
 | Walk | Left stick, D-pad ← → | Left stick, D-pad ← → | `Move`, `WalkLeft`, `WalkRight` | SnailControl |
 | Jump; hold to fly the jetpack | A | Cross | `Jump` | SnailControl |
-| Aim: push where to aim; a gentle push nudges it slowly, a firm one turns it there | Right stick | Right stick | `Aim` | MatchHud (Aim), MatchCamera |
-| Charge and fire | Hold RT, let go | Hold R2, let go | `Fire` | MatchHud (Aim) |
-| Cancel the aim | B | Circle | `CancelAim` | MatchHud (Aim) |
+| Aim and power: push to move the crosshair (farther from the snail is more power); a gentle push moves it finely | Right stick | Right stick | `Aim` | MatchHud (Aim), MatchCamera |
+| Fire the aim | RT | R2 | `Fire` | MatchHud (Aim) |
+| Clear the aim | B | Circle | `CancelAim` | MatchHud (Aim) |
 | Previous, next weapon slot | LB, RB | L1, R1 | `WeaponPrevious`, `WeaponNext` | MatchHud (LoadoutBar): a weapon is picked at once, a utility only gets the cursor |
 | Use the utility the cursor is on | Y | Triangle | `UseUtility` | MatchHud (LoadoutBar) |
 | Emote wheel | Hold X, point with the left stick, let go (a quick tap replays the last emote); B closes it | Square | `Emotes` (Gui) | Cosmetics reads the held button (`I.Console.IsAction("Emotes")`); `MatchHud`'s `U_EmoteButton` opens it to pick from, focused |
 | Move the camera (slower zoomed in, faster zoomed out) | Hold LT, right stick | Hold L2, right stick | `CameraPan` | MatchCamera |
 | Zoom in, out | D-pad ↑, ↓ (held) | D-pad ↑, ↓ | `ZoomIn`, `ZoomOut` | MatchCamera |
 | Pick the landing spot, drop | Left stick, A | Left stick, Cross | `Move`, `PlaceDrop` | Match (DropPicker) |
+| Watch on after being knocked out (closes the knocked-out screen) | X | Square | `Spectate` (Gui) | `MatchHud`'s `S_Spectate`; its PLAY AGAIN is A (`Confirm`) |
 | HUD buttons (Leave game, the music button, slots) | View, then the selection | Touchpad | `Navigate` | Console |
 | Pause, settings, leave the game | Menu (Roblox's) | Options (Roblox's) | | Roblox |
 
 The turn order is always on the screen (`MatchHud`'s turn list), so no button opens a scoreboard. MatchHud's Aim reads
-`Fire`, `Aim`, `CancelAim` and `CameraPan` through `I.Console` (`IsAction`, `IsHeld`). The right stick points the aim
-(MatchHud's `STICK_*` settings): a lean under its dead zone does nothing, a gentle one only nudges the aim toward it, a
-firm one turns it there in a quick ease, and the aim holds still while the stick springs back as it's let go, while LT
-moves the camera, and after LT until the stick has come back to the middle. In a match the free cursor runs only while
+`Fire`, `Aim`, `CancelAim` and `CameraPan` through `I.Console` (`IsAction`, `IsHeld`). The right stick moves the
+crosshair as a drag does (MatchHud's `STICK_*` settings, 2026-11-24): a lean under its dead zone does nothing, a
+gentle one moves it finely, a full one fast; it holds still while LT moves the camera, and after LT until the stick
+has come back to the middle. RT fires the aim where it was left, which the snail keeps into its next turn. In a match the free cursor runs only while
 a window is open (Results, a confirmation, the settings), so it never takes the sticks from aiming and walking.
 
 ### In the lobby and menus
@@ -72,7 +73,7 @@ a window is open (Results, a confirmation, the settings), so it never takes the 
 | Back, close | B | Circle | `Back` (Gui) | Close buttons (`Utils_ButtonKey`), the setup's Back, dialogs' red answers (the confirmation's DECLINE, `PartyInvited`'s NO THANKS); with a selection, Selection backs out |
 | Decline (a dialog) | X | Square | `Decline` (Gui) | Nothing since 2026-11-13, when `PartyInvited`'s NO THANKS moved to B |
 | Previous, next tab | LB, RB | L1, R1 | `TabPrevious`, `TabNext` | Crates (while its widget is open) |
-| Solo vs bots (Play with party) | A (the selection rests on it) | Cross | | MatchBoard (`SetHome`) |
+| Play solo (Play with party) | A (the selection rests on it) | Cross | | MatchBoard (`SetHome`) |
 | Custom lobby | X | Square | `Custom` (Gui) | `MatchBoard`'s `S_Custom` |
 | Style (skins) | LB | L1 | `Style` (Gui) | `Lobby`'s `S_Style` |
 | Crates | RB | R1 | `Crates` (Gui) | `Lobby`'s `S_Weapons` |
@@ -107,7 +108,7 @@ From what Roblox reserves and how popular Roblox and console games map pads (202
 | `Unbind(action: string)` | | Unbinds it; nothing when it isn't bound |
 | `Focus(container: GuiObject, onBack: (() -> ())?)` | | On Console, keeps the selection in the container while it shows and no widget is open (its A button first, else its first selectable button), or with the cursor running sends the cursor onto that button; B there calls `onBack`, or keeps the selection without one. One focus at a time; focusing the same container again does nothing |
 | `Unfocus(container: GuiObject)` | | Ends that container's focus; the selection goes back where the player is |
-| `SetHome(button: GuiObject)` | | The button the selection rests on, on Console, while no widget, focus or earlier selection wants it (the lobby's Solo vs bots) |
+| `SetHome(button: GuiObject)` | | The button the selection rests on, on Console, while no widget, focus or earlier selection wants it (the lobby's Play solo) |
 | `RefreshHints()` | | Shows every `Console_Hint` element on Console and hides it elsewhere, with its icons for the player's pad. It runs on its own when a hint is added, the platform changes or another kind of pad is used |
 | `GetAction(action: string)` | `Console_Action?` | The action's `ACTIONS` row; warns when there is none |
 | `IsAction(action: string, keyCode: Enum.KeyCode)` | `boolean` | Whether the key is one of the action's buttons, for input read from UserInputService's events |

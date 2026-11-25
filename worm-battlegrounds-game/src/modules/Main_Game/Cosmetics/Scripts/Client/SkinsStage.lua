@@ -22,6 +22,9 @@ local height: number = 0
 local reach: number = 0
 local camera: Camera
 
+-- The posed snail's bones: the camera centres them across the view (the rig's parts keep their rest-pose boxes)
+local bones = {} --- @type { Bone }
+
 --[[ Camera ]]
 
 -- Where the camera eases to (the open slot's STAGE_FOCUS) and where it is now
@@ -123,13 +126,19 @@ function Module.Show(outfit)
 
 	--[[ Saving ]]
 
-	local box: CFrame
-	local size: Vector3
-	box, size = model:GetBoundingBox()
-	center = box.Position
-	height = size.Y
-	reach = size.Magnitude * _settings.STAGE_DISTANCE
+	local low: Vector3
+	local high: Vector3
+	low, high = Module._getVisibleBounds(model)
+	center = (low + high) / 2
+	height = high.Y - low.Y
+	reach = (high - low).Magnitude * _settings.STAGE_DISTANCE
 	shownOutfit = text
+	table.clear(bones)
+	for _index: number, bone: Instance in ipairs(model:GetDescendants()) do
+		if bone:IsA("Bone") then
+			table.insert(bones, bone)
+		end
+	end
 	Module._place()
 end
 
@@ -203,7 +212,8 @@ end
 
 --[[
 	Puts the camera where the current view says: round the snail's middle (Yaw), above it (Pitch), at the whole snail's
-	distance times Zoom, looking at a point Height of the snail up from its middle.
+	distance times Zoom, looking at a point Height of the snail up from its middle, then slides it sideways so the posed
+	snail sits in the middle of the view as it's seen from there.
 ]]
 function Module._place()
 	--[[ Local Variables ]]
@@ -214,6 +224,24 @@ function Module._place()
 	--[[ Placing ]]
 
 	camera.CFrame = CFrame.lookAt(look + turn * Vector3.new(0, 0, -reach * current.Zoom), look)
+
+	--[[ Centring ]]
+
+	-- How far across the view the bones reach either way, as the view's slope, and how deep the snail is
+	local left: number = math.huge
+	local right: number = -math.huge
+	local depth: number = 0
+	for _index: number, bone: Bone in ipairs(bones) do
+		local seen: Vector3 = camera.CFrame:PointToObjectSpace(bone.TransformedWorldCFrame.Position)
+		left = math.min(left, seen.X / -seen.Z)
+		right = math.max(right, seen.X / -seen.Z)
+		depth += -seen.Z / #bones
+	end
+	-- Skip before a snail is shown
+	if #bones == 0 then
+		return
+	end
+	camera.CFrame *= CFrame.new((left + right) / 2 * depth, 0, 0)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Mouse Down
@@ -283,6 +311,43 @@ function Module._onDragEnded(input: InputObject)
 	elseif input == touchDragging then
 		touchDragging = nil
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Visible Bounds
+
+--[[
+	Returns the corners of the box round the parts of a snail that show, so the camera centres on the snail itself, not
+	on its rig's hidden parts (the RootPart, the weapon's Handle).
+]]
+--- @return Vector3
+--- @return Vector3
+function Module._getVisibleBounds(model: Model)
+	--[[ Local Variables ]]
+
+	local low: Vector3 = Vector3.one * math.huge
+	local high: Vector3 = -Vector3.one * math.huge
+
+	--[[ Measuring ]]
+
+	for _index: number, part: Instance in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") and part.Transparency < 1 then
+			local cf: CFrame = part.CFrame
+			local half: Vector3 = part.Size / 2
+			local reachOut: Vector3 = Vector3.new(
+				math.abs(cf.XVector.X) * half.X + math.abs(cf.YVector.X) * half.Y + math.abs(cf.ZVector.X) * half.Z,
+				math.abs(cf.XVector.Y) * half.X + math.abs(cf.YVector.Y) * half.Y + math.abs(cf.ZVector.Y) * half.Z,
+				math.abs(cf.XVector.Z) * half.X + math.abs(cf.YVector.Z) * half.Y + math.abs(cf.ZVector.Z) * half.Z
+			)
+			low = low:Min(cf.Position - reachOut)
+			high = high:Max(cf.Position + reachOut)
+		end
+	end
+
+	--[[ Returning ]]
+
+	return low, high
 end
 
 return Module

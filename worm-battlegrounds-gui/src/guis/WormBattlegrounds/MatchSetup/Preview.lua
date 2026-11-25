@@ -12,6 +12,17 @@ local _localName: string = "MatchSetupPreview"
 --- @type { string }
 local MAPS = { "Random", "Picnic Plains", "Desert", "Rolling Plains" }
 
+-- Solo's difficulty cards and their glyphs (MatchBoard's DIFFICULTY_ICONS)
+--- @type { string }
+local DIFFICULTIES = { "Easy", "Medium", "Hard" }
+
+--- @type { string }
+local GLYPHS = { "rbxassetid://88105304367362", "rbxassetid://94010149349376", "rbxassetid://103240032909077" }
+
+-- Their colours (MatchBoard's DIFFICULTY_COLORS): the wash and the glyph's tint
+--- @type { Color3 }
+local COLORS = { Color3.fromRGB(110, 220, 110), Color3.fromRGB(255, 190, 70), Color3.fromRGB(255, 85, 80) }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -42,7 +53,8 @@ local Module = {
 
 --[[
 	Shows the setup for the picked match: its title, the players row for local play, No bots for a party or local play,
-	the coins a solo win pays, and the map cards with Random first.
+	the diamonds a solo win pays, and the map cards with Random first; solo shows the difficulty cards (Medium picked)
+	instead of the maps and the bots row.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -54,8 +66,25 @@ function Module.Apply(preview)
 
 	preview.View:Get("U_Setup", "S_Title").Instance.Text = if kind == "Local" then "Local play" elseif kind == "Party" then "Play with party" else "Play solo"
 	preview.View:Get("U_Setup", "S_PlayersRow").Instance.Visible = kind == "Local"
+	preview.View:Get("U_Setup", "S_WindBox").Instance.Visible = kind == "Local"
 	preview.View:Get("U_Setup", "S_None").Instance.Visible = kind ~= "Solo"
 	preview.View:Get("U_Setup", "S_RewardAmount").Instance.Visible = kind == "Solo"
+	preview.View:Get("U_Setup", "S_DifficultyRow").Instance.Visible = kind == "Solo"
+	preview.View:Get("U_Setup", "S_MapRow").Instance.Visible = kind ~= "Solo"
+	preview.View:Get("U_Setup", "S_BotsRow").Instance.Visible = kind ~= "Solo"
+
+	--[[ Difficulties ]]
+
+	local difficultyCards = preview.Fill("PREFAB | Difficulty", #DIFFICULTIES, preview.View:Get("U_Setup", "S_DifficultyList").Instance) --- @type { UmeGui_Subview }
+
+	--- @param card UmeGui_Subview
+	for index: number, card in ipairs(difficultyCards) do
+		card.Root.Instance.LayoutOrder = index
+		card:Get("S_Name").Instance.Text = DIFFICULTIES[index]
+		card:Get("S_Glyph").Instance.Image = GLYPHS[index]
+		card:Get("S_Glyph").Instance.ImageColor3 = Color3.new(1, 1, 1):Lerp(COLORS[index], 0.45)
+		card:Get("S_Tint").Instance.ImageColor3 = COLORS[index]
+	end
 
 	--[[ Maps ]]
 

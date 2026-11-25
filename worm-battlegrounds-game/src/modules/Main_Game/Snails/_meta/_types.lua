@@ -107,8 +107,14 @@ local _snails_EffectState = {}
 ---
 --- @field CameraAt Vector3
 --- @field AimBase number?
+--- @field PowerBase number?
 --- @field SawTurn boolean
 local _snails_TagTurn = {}
+
+--- @class Snails_TagLayout
+---
+--- @field Compact boolean
+local _snails_TagLayout = {}
 
 --%%%%%%%%%%%%%%%%%%%% Flight
 

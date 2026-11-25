@@ -1,7 +1,7 @@
 # WidgetManager_Confirmation
 
 System's `WidgetManager_Confirmation` made the game's own: the dialog that asks the player to confirm something
-("Open slot 4 for 2500 coins?"), with a title, the question, and **ACCEPT** and **DECLINE**.
+("Open slot 2 for 375 diamonds?"), with a title, the question, and **ACCEPT** and **DECLINE**.
 
 **Look.** The game's screens (MatchBoard, Loadout, the crate shop), kept simple at the owner's ask (2026-11-11: "dont
 make it too complicated"): one rounded dark panel in the screens' fill (25, 25, 35) with a dark outer line and the

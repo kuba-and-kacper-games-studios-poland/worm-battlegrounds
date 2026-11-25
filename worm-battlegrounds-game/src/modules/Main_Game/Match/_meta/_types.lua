@@ -27,6 +27,13 @@ local _match_RosterEntry = {}
 --- @field Size number
 --- @field MapId string
 --- @field Difficulty "Easy" | "Medium" | "Hard" | "Nightmare" | "Tutorial" | "None"
+--- @field Wind boolean?
+---
+--- # Display #
+---
+--- @field ModeName string?
+--- @field ModeIcon string?
+--- @field MapName string?
 ---
 --- # Players #
 ---
@@ -62,6 +69,7 @@ local _match_RoomSeat = {}
 --- @field Out boolean
 --- @field ShinyItems { [string]: boolean }?
 --- @field GoldenItems { [string]: boolean }?
+--- @field ItemLooks { [string]: string }?
 --- @field Guest number?
 local _match_Participant = {}
 

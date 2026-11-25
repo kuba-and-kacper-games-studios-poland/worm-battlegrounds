@@ -64,7 +64,7 @@ function Module.Start()
 
 	moduleGui = I.UserInterface.UI[_settings.GROUP_GUI_NAME]
 	elems["Button"] = moduleGui:FindFirstChild("U_Button") --- @type ImageButton
-	elems["LobbyButton"] = moduleGui:FindFirstChild("U_LobbyButton") --- @type ImageButton
+	elems["LobbyButton"] = moduleGui:FindFirstChild("U_LobbyButton", true) --- @type ImageButton
 	elems["TileShine"] = elems["LobbyButton"]:FindFirstChild("S_TileShine", true) --- @type UIGradient
 	elems["TileBob"] = elems["LobbyButton"]:FindFirstChild("S_TileBob", true) --- @type UIScale
 	elems["DialogGui"] = I.UserInterface.UI[_settings.GROUP_DIALOG_GUI_NAME] --- @type ScreenGui
@@ -459,6 +459,7 @@ function Module._getSparkles()
 			Parent = elems["Sparkles"],
 			Rate = _settings.GROUP_SPARKLE_RATE,
 			Texture = _settings.FX_TEXTURES.Star,
+			EmissionShape = "Rectangle",
 			EmissionArea = Vector2.new(0.8, 0.8),
 			SizeSpace = "Scale",
 			Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.4, 0.07), NumberSequenceKeypoint.new(1, 0) }),

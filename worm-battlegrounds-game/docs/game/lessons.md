@@ -2251,3 +2251,459 @@ opening; and the client logged "Could not carve … Bigoak.Trunk" (CSG error -4)
   worked in Studio, even straight after they arrived, so the cause wasn't found; the four failures matched the four
   server-cut trunk pieces, and the terrain's client cutter already fell back quietly. A client's cut is only a guess
   the server's pieces correct, so a failed one is tried once more and then dropped silently; the server still warns.
+
+## The LobbyRework lobby, one match per mode, and coins that fly in (2026-11-24)
+
+**Before.** The board was the 2026-11-09 `LobbyInventory` port: ACTIVE LOBBIES with four minimal cards (no player
+count since 2026-11-15) and SOLO VS BOTS. Names, badges and levels were on the party cards, and the level plate sat at
+the top centre with LEVEL n beside its diamond. The stage was the meadow with its decorations, big platforms and ring
+beams. The lobby's buttons wore `art/modes` icons in the weapon icons' look. A Join that found no open match on the
+card's map opened a new server, and that match only reached Matchmaking's store when the server booted.
+
+**Why it changed.** The studio made `LobbyRework` (in Studio's `Workspace.NewGuis`): new cards with the players seated
+on them, PLAY SOLO, LOCAL and CUSTOM, a nameplate for the snails and white outlined glyphs for the icons. The owner
+asked for three cards ("we want only 3 segments"), the counts back ("it updates every 3 seconds or so, 40/60, 20/50"),
+the names over the snails, no level at the top ("we don't need to see 14 and LEVEL 14"), a calm stage ("the rest is
+just a background") and the coins paid shown "like Brawl Stars with the trophies". And two players pressing JOIN
+within about 5 to 15 seconds each got an empty match of their own.
+
+**Now.** The board, the nameplate and the "+" bubbles are `Primitive` ports of the design; each mode fills one match
+at a time (Matchmaking's frontier); the stage is small pads before a quiet backdrop of stepped hills; the level plate
+shows only for the XP replay, after the coins fly into their slot; the lobby's icons are `art/ui_glyphs`, uploaded to
+the group, and the lobby's sky is a painted skybox of its own (`art/lobby_sky`, on Lighting's Sky). Things learned on the way:
+
+- **The design's outline pictures were cut off at their edges.** Each button's `Stroke2` (the dark outer outline) is a
+  picture a few pixels bigger than the fill, and the export had clipped it, so the outline vanished along the edges. A
+  stretched copy of the fill doesn't fix it: scaling a slanted shape moves its slants, so the outline is thick on one
+  side and gone on the other. The outline is now the fill picture itself in ink, eight copies nudged 3 design pixels
+  in the eight directions under the fill (a `Stroke2` Frame of eight ImageLabels), which follows any shape evenly.
+- **UmeGui renumbers nodes that have no `LayoutOrder`.** A ported node without one gets its place in the array, which
+  reordered the design's layers and list items; every new node now carries the design's `LayoutOrder` explicitly.
+- **The designer's mode and coin pictures drew blank in game.** They show in the design in Studio but not in a play
+  test, so the cards keep MatchBoard's `MODE_ICONS` and the payout uses the Currency module's coin, and the design's
+  pictures stay only as placeholders in the gui; the cause wasn't confirmed. New icons are the game's own glyphs,
+  uploaded to The Snail Studio group through Open Cloud.
+- **A match that exists only once its server boots can't be found in time.** The store learned of a new match only
+  when its server opened it, 5 to 15 seconds after the Join, so every Join in that window saw no match and opened its
+  own. Now the lobby puts the match in the store first, pending, with the group seated, and then takes the mode's
+  frontier for it in one `UpdateAsync` that only succeeds while the frontier still holds the stale match it found or
+  nothing live. Two lobbies racing both write a pending match, but only one takes the frontier; the other closes its
+  own and joins the winner's. Reading one key per mode is also cheap enough for every lobby to show the counts every
+  3 seconds. Checked in Studio: a Join made a frontier at 1/4 and the room, and a second claim for the mode landed in
+  the same match (2/4). The live path, a second player waiting for a server that is still booting, can't run in
+  Studio and is unchecked.
+- **The framework's `I.Teleport` reserves the server inside the teleport.** So the lobby that opens a match has no
+  `AccessCode` to write: the pending match has none until its server boots and opens it again (`Open` merges, keeping
+  the seats claimed meanwhile and the start the lobby promised, `MIN_ROOM_SECONDS` at least). A group seated in a
+  pending match polls `I.Matchmaking.Get` (up to `SERVER_WAIT_SECONDS`) until the code is there, then follows.
+
+Rules: Guis (UI icons are white ink-outlined glyphs; Every match's XP plays back in the lobby; Coins paid fly into the
+coins slot; The lobby is a party stage: the calm background, names and levels over the snails, a lobby card; Public
+matches are global: each mode fills one match at a time).
+
+## Level rewards make the starter weapons Shiny and Golden (2026-11-24)
+
+The owner asked how players could get a Shiny or Golden Bazooka, Grenade or Shotgun, which come from the tutorial and
+never drop from crates, and picked level rewards: Shiny at 10, 20 and 30, Golden at 60, 75 and 90 ("the pros at 90 level
+have the golden bazooka"), each with an unlock as good as the crate opening.
+
+- **The look is worked out from the level, never saved.** Giving 10 or 100 copies would have needed a Bazooka item
+  (it has no copies and takes no slot) and a one-time grant for every player already past a reward level. Instead
+  Progression's `GetWeaponVariant` reads the level, and Loadout takes the better of it and the copies everywhere it
+  decides Shiny or Golden (the match, the panel, the picker), so a player already at level 35 has the Shiny Bazooka
+  with nothing written to their save.
+- **Say what the reward does.** The first draft's Golden line said only "solid gold"; the owner asked to show that
+  Golden deals +5% too "so players dont feel scammed". Every unlock line now starts with "+5% damage".
+- **A flat picture can't look golden.** Tinting a coloured icon gold leaves it its colour (the green Bazooka stayed
+  green), so the unlock's card shows the weapon's 3D model, gilded the way Combat gilds a held Golden weapon. Combat
+  doesn't run in the lobby, so Progression's settings copy its Golden look (`UNLOCK_GILD*`).
+- **Studio's play-test captures don't draw ViewportFrames.** In a play test even a fresh ViewportFrame with a red part
+  captured as its background alone, while the same views captured in edit mode show their models. Check a viewport's
+  model in the Gui tool's preview, or by eye in the play test.
+
+- **The stage shows it too, with one gilding.** The owner then asked for the lobby's stage snails to hold their Shiny or
+  Golden Bazooka. Combat's `Variants` gilded held weapons, and the unlock card already had a copy of it; a third copy
+  for the stage was one too many, so `Gild` and `MakeCopy` moved to Arsenal's Global (which runs on both maps) and all
+  three call it. A snail re-dressed on a `Level` change has to go through the stage's refresh, which stands it on its
+  pod: re-dressing it alone left it at the stage prefab's origin.
+- **A WeldConstraint made outside the world doesn't hold.** Matches showed the Golden Bazooka green with a gold glow
+  while the stage showed it gold: Combat's `Held` dresses the weapon before parenting it, and the cover copies'
+  WeldConstraints, made then, left them where they were made (about 380 studs off), so only the outline showed. The
+  stage parents first, so its copies held. The copies now use a `Weld` with no offset, which holds in any order.
+
+Rules: Snails (Shiny and Golden copies look special everywhere: levels open the starter weapons' looks).
+
+## Public matches broke live, not in Studio, and JOIN showed nothing (2026-11-24)
+
+The owner's first live test of the one-match-per-mode lobby: JOIN warned "Couldn't join a Deathmatch match" in the
+lobby's Output, and once a match did start its waiting room showed no players or counts while the match server's
+Output filled with errors.
+
+- **Each place loads only its own map's modules, and Studio loads both.** MatchBoard (lobby only) read
+  `I.Settings["Match"].WAITING_SECONDS` to time a match it opens, and Match's waiting room (match only) read
+  `I.Settings["MatchBoard"]` for the mode's and map's names and icon. Disabled modules are destroyed at start, so both
+  were nil live, while Studio's map, which loads both halves, played fine. MatchBoard now keeps its own copy of
+  `WAITING_SECONDS`, and the lobby sends the names and icon in the public match's metadata, which Match writes on its
+  folder for the waiting room. The rule now says a module of one map never reads the other's at all.
+- **A press that waits on the network shows something at once.** JOIN reads and writes MemoryStore and may reserve a
+  server before the teleport puts its card up, a few seconds in which nothing showed and players pressed again. The
+  card's template is server-only (ume's UtilityGuis), so the server puts it up the moment the press arrives
+  (`I.Transition.Show`) and takes it down if no teleport follows; the teleport's own card then replaces it in place.
+- **A lone player waits 30 seconds for others, not 15.** The owner's Play again landed in a fresh match that bots
+  filled after 15 seconds: with few players online, nobody else had pressed JOIN on Deathmatch in that window. The
+  waiting room now takes joins for 30 seconds.
+
+Rules: Maps and placeholders (Two places, one file); Maps and placeholders (Public matches are global: the waiting room).
+
+## The tutorial becomes one shot, and the wind goes quiet (2026-11-24)
+
+The owner found the tutorial too long and too wordy for new players: a dark TUTORIAL panel with a sentence on every
+step, a Grenade round, a strong-wind round and two equip steps. They rated a drafts page (real Studio screens with the
+new pieces drawn over them) and asked for it built: land, drag, FIRE, one hit wins, pick a weapon, coins.
+
+- **Two or three words, in the HUD's own text.** The hints are the turn banner's outlined white text with no panel,
+  next to the snail tag's red arrow (the old arrow, built from a frame and a ▼, "looks very AI"). The first build's
+  36 px read as part of YOUR TURN! beside it; 48 px reads as its own line.
+- **Point from where there's room.** An arrow always from above landed on the drop pin, on the win card's title and on
+  the loadout card over the free slot. `Spotlight.Show` takes a side: from below for the drop and CONTINUE, from the
+  left for the picker and the loadout.
+- **Win with one hit, and never lose.** The bot has 10 health, so even a blast's edge knocks it out. Its own turn
+  (after a miss) first aimed at the ground between the snails, which a crater had thinned, and the bot went out on its
+  own turn; it now fires away from the player, at the power landing farthest from both, and passes when none is safe.
+- **Pay where the player sees it.** The coins moved from the match's end to the equip step, so they fly into the coins
+  slot as the tutorial ends; END TUTORIAL pays them too, asks first (a thumb dragging the aim can catch the top bar),
+  and the guide hides under that question.
+- **A loadout that already holds a starter finishes the step on arrival.** The guide only checked when the loadout
+  changed, so a tester whose Studio profile kept its Grenade sat on "Pick a weapon" forever. Studio saves to its own
+  store, so a Studio tester's tutorial flags and loadout need clearing to see it again.
+- **Wind is an option, off by default.** The owner turned it off in every match, the tutorial too, and made it a choice
+  in custom lobbies and local play. The match's metadata carries `Wind`, the server keeps it at 0 without it, and the
+  HUD hides the wind plate (`WindOn`) so nobody reads a 0.
+
+Rules: Snails (The tutorial is one shot, then one weapon; Every thrown shot flies like the rocket); Guis (The tutorial
+points with a red arrow, never a blackout; Only the player's own snail wears the full tag).
+
+## Phone fixes: the homing missile's aim, the timer and the intro's box (2026-11-25)
+
+The owner played on a phone and sent a list: the homing missile couldn't be aimed, the turn timer sat in the aim, the
+round intro drew a grey box, and the bar labels read oddly.
+
+- **A weapon with two inputs needs both on screen.** The homing missile's press placed its target and FIRE sent the
+  angle and power of whatever was aimed last, which no screen showed, so players saw it fly off at the bazooka's old
+  aim. Now the target locks first (a red copy of the crosshair marks it, since a 1.5-stud ball was ten pixels at the
+  match camera's distance), then the launch drags like a bazooka's, and NEW TARGET beside FIRE lets go of it.
+- **A full-screen effect in a safe-area gui stops in a box.** MatchHud lays out in the safe area (below Roblox's top
+  bar on phones, inside the notch), so a frame of the gui's full size ends there and clips there. The intro is now
+  stretched in code over the device's screen (the gui's coordinates start below Roblox's inset unless it ignores it),
+  in a gui with `ClipToDeviceSafeArea` off.
+- **Phones have no room above the snail.** The camera keeps the snail near the middle of a short screen, so the
+  timer plate and its YOUR TURN line sat where a high aim goes. On phones the panel moves up and shrinks, and the
+  line goes (the callout and the arrow already say it).
+- **Mixed pieces can look broken without being broken.** The two "bugged" lobby snails (a Brimstone body with the
+  Ringmaster Topper, a Midnight body with the Field Helmet) build exactly the same in Studio: the hat pieces carry their
+  set's hair and the bodies their set's horns and mask, so pieces from different artists' skins clash.
+- **Effects placed on reference copies move by the camera's frame, not the copy's pivot.** The studio's `BiomeVfx`
+  sat on rotated copies of older map builds; seen from their camera side every effect part was square to it, so
+  each one went across by its place along the map's width and height (clouds, rays, the lava sheet) or onto the real
+  map's own features (leaves under the oaks), into a `Vfx` folder the loader clones with the map.
+
+Rules: Snails (Aiming is drag, lock, FIRE); Guis (On phones the turn panel keeps out of the aim; Screen-wide effects
+cover the whole device).
+
+## Each map gets a sky of its own (2026-11-25)
+
+The owner asked for custom skyboxes on Picnic Plains, Volcano Isle, Rockslide Ridge and Desert, "just a background, so
+players focus on the main level", previewed first and rated.
+
+- **The match camera sees one fixed window of the sky.** It always looks along −Z at pitch 0 with a 30° field of view
+  (MatchCamera's `FOV`, first taken for 70°), so only the `SkyboxFt` side shows, about ±26° across and ±15° up and
+  down, whatever the pan or zoom. Each sky was
+  composed for that window (`art/map_skies`): tall things such as Volcano Isle's two volcanoes stand at the sides,
+  where the map doesn't cover them, and the rest of the sphere stays calm and seamless.
+- **A preset is shared, a sky isn't.** Rockslide Ridge and Echo Caverns share `Cave`, Desert and Mirage Mesa share
+  `Desert`, so a sky in a preset would land on both maps. The sky is a layer over the preset (Atmosphere's
+  `MAP_SKY_*`), set from the map's row and taken off on a map without one.
+- **Rockslide Ridge is a cave.** Its back wall and ceiling fill the bounds and the `Cave` preset's dark haze closes in
+  what's left, so its sky shows only faintly past the side walls and over the roof. It stays, as it costs nothing
+  and matches the map if the haze is ever lightened.
+- **An Atmosphere hides the sky under the horizon.** The owner's first look in a match: "the bottom half is too long…
+  the top part where actual skybox is is barely visible". With any density, Roblox paints everything below the
+  horizon in the Atmosphere's colour (a magenta Atmosphere proved it), and a level camera spends half its view there;
+  even the skies' own band of haze near the horizon covered most of the rest at 30°. The skies were repainted tilted
+  forward 10° with the blue from just over the horizon, and a map with its own sky clears the Atmosphere (density,
+  haze and glare 0, offset 1) on its sky layer; sudden death leaves a cleared density alone. Lowering the Offset alone, the density to 0.15,
+  or the density to 0 with the preset's haze left on, wasn't enough.
+- **Randomness inside the paint function seams the cube.** The first Volcano faces drew the smoke plumes from the
+  random generator on each face, so every face had different smoke and the edges didn't meet (seam ratio 5.7). Shapes
+  are built once in `build()`, and `skies.py` prints the seam check for every set.
+- **A map rebuilt as something else needs its mood checked, not just its template.** The same day the owner cut the
+  rotation to three maps and swapped in new builds; Echo Caverns came back an open snowy mountain, still on the
+  `Cave` mood, whose dark haze and ceiling grit were made for an enclosed cavern. It took the meadow's light and a
+  sky instead. Map builds made in another MapLab arrive in `Plastic`, which this place's `2022 Stud` variant doesn't
+  dress: make them SmoothPlastic when they go in.
+
+Rules: Snails (Each place has its own mood); Maps and placeholders (Only the rotation's maps play outside custom
+lobbies).
+
+## Eight items disabled, kept by their owners (2026-11-25)
+
+The owner kept eleven items (Variety Grenade, Homing Missile, Medkit, Cluster Bomb, Jetpack, Spider Bomb, Bandage,
+Golf Club, Uzi, Grenade, Shotgun) and disabled the rest "from gacha and inventory", so players who already have them
+keep them and new players never see them.
+
+- **Disabling is a flag, never deleting the row.** Saved inventories and loadouts hold the ids, so the Inventory and
+  Arsenal rows stay: `Disabled = true` on the item row keeps it out of the picker for players who don't own it, and
+  the crates' odds simply leave it out.
+- **The odds were scaled, not rewritten.** Each crate's kept items were multiplied by the same factor to add up to
+  100 again, so their rarities stay in the same order and ratio.
+- **Bots lost them too** (Bots' `LOADOUTS`, `POTIONS`), so no bot fights with a weapon players can't get. The brain
+  still knows how to use every item: a bot that takes over a dropped player's snail plays that player's loadout,
+  disabled items and all. The parity probe tests the Nightmare loadout's weapons, so it now covers only those left.
+
+Rules: Maps and placeholders (Item ids are saved).
+
+## Coins removed: diamonds are the one currency (2026-11-25)
+
+The owner removed coins: matches and the tutorial pay diamonds, and the prices stay as they were in diamonds.
+
+- **One rate for everything: the crates'.** A crate cost 100 coins or 50 diamonds, so every coin amount became half as
+  many diamonds (rewards, the tutorial's 100, emote prices, loadout slots), halves rounded up. A crate costs as many
+  matches as before.
+- **Saved coins convert once, as the data loads.** Currency's `CONVERSIONS` turns a saved retired balance into the new
+  one (2 coins for 1 diamond, rounded up) and deletes the old entry, so a second load finds nothing to convert. Checked
+  in Studio: 101 planted coins came back as 51 more diamonds, with no Coins entry left.
+- **Keys that are saved keep their old names.** Loadout's `CoinSlots` and the `DoubleCoins` pass id (gifted passes are
+  saved under it) stay as they are; only the names players see changed.
+- **Diamonds are sold for Robux, so a diamond crate is a paid random item.** Where Roblox's policy restricts those,
+  diamond crates were already hidden; with coins gone they are the only crates, and VIP's free daily crate, which sat
+  on the coin row, now shows alone on the diamond row there.
+- **A shared repo needs a word first.** Another session had rewritten Loadout around diamonds the same day; a rename
+  run over its files before asking touched its work. Ask the sessions working in the repo which files they hold
+  before a sweeping rename.
+
+Rules: Maps and placeholders (Diamonds are the one currency), Guis (Diamonds paid fly into the diamonds slot; Crates
+open on the GACHA screen).
+
+## A longer tutorial fight, two slots, and a nudge toward public matches (2026-11-25)
+
+The owner: halve the Bazooka's knockback, give snails 50 more health, start the tutorial with a move step, stop the
+tutorial's rocket winning in one hit, keep two loadout slots free and sell the rest, and after the tutorial tell
+players about public matches without being annoying.
+
+- **A new knockback step instead of a smaller number on the old one.** Arsenal's `KNOCKBACK` steps are shared by
+  several weapons, so halving `Medium` would have halved them all. The Bazooka moved to a new `Light` (22.5).
+- **The tutorial's move ring has to be somewhere a snail can walk.** The ring is cast down onto the arena toward the
+  bot, then away, then closer, and kept only on ground within a step of the snail's feet; with none it's skipped,
+  so a player is never asked to walk somewhere they can't reach. Aiming also counts as done, so a player who skips
+  the walk isn't held up.
+- **A device tip is a second, smaller line, not a longer hint.** The hint stays two or three words in the HUD's big
+  text; how to walk on this device goes under it (the TutorialHint gui's `S_Tip`).
+- **Old players keep what they had.** Cutting the free slots from three to one would have emptied equipped slots, so
+  each profile decides once (`SlotsKept`) whether it was played before (the tutorial match done or any slot filled)
+  and keeps two more slots for free.
+- **Never point an arrow at something that can't be pressed.** The first public matches hint pointed at the PUBLIC
+  MATCHES title, and the owner saw players would press the title. The JOIN buttons themselves now glow, and the line
+  beside the title has no arrow (Spotlight's `"Beside"` placement).
+- **Screen-wide frames count from under the top bar.** A gui's `AbsolutePosition` always starts under
+  `GuiService:GetGuiInset`, even in a gui that ignores the inset, so the intro's cover subtracted the inset only on
+  phones and left the top bar row clear on PC. It now subtracts it everywhere.
+
+Rules: Snails (A new player takes the Bazooka and one weapon; The tutorial is a short fight, then one weapon; After the
+tutorial the lobby shows where to play with others), Guis (Screen-wide effects cover the whole device).
+
+## The drop pin's outlines match its name's (2026-11-25)
+
+The owner, on the drop pin: change the strokes "so they fit to the text size stroke... consistent and polished". The
+name's outline was 0.07 of its 38 px text (about 2.7 px), while the head and point had fixed 4 px strokes and the
+target ring's dark edge showed only about 1.3 px each side.
+
+- **A `ScaledSize` stroke on a frame is a fraction of the frame's smaller side; on text, of the font size.** So each
+  outline's fraction is worked out from its own frame: 2.7 px over the 93 px head is 0.029, over the 40.5 px point
+  0.066, over the 8.8 px dot 0.3. The ring's dark line sits under the coloured one, so it is the coloured line plus
+  2.7 px each side (0.165 of the 63 px ring).
+- **Fractions, not pixels,** so the outlines grow with the billboard as the text's does.
+
+Rules: Guis (Every text outline has one of two weights: a marker's own outlines match its text's).
+
+## The power wedge and the steadier preview dots (2026-11-25)
+
+The owner asked for ShellShock Live's power cone, coloured by the power, and for preview dots that are closer, smaller,
+white and calm when zooming.
+
+- **A triangle from frames needs a gradient cut in pixels.** A `UIGradient` turns in the frame's pixels, not its
+  proportions: at 45° it cuts a long frame at 45°, not along its diagonal (checked in Studio). So the wedge is two
+  halves, top and bottom, and every frame Aim turns each half's gradient to `atan2(length, halfWidth)` so its hard step
+  (transparency 1 up to 0.499, then the fill) runs exactly along the half's diagonal. The two halves meet on the aim's
+  line with no seam.
+- **Space dots in the world, not on the screen.** The first try placed a dot every so many units of screen distance,
+  walked in fixed steps: zooming changed where each dot fell, so they slid and popped. Spacing them in studs along the
+  path, each placed exactly on it (between the step's two points), keeps them on the same spots at any zoom.
+
+Rules: Snails (Aiming is drag, lock, FIRE: the preview and the power wedge).
+
+## Desert's backdrop moves with the camera: parallax layers rendered in Blender (2026-11-25)
+
+The owner, on the new skies: "when we zoom in and out the clouds and skybox stay in the same place… this creates a
+weird illusion".
+
+- **A skybox can't be part of the scene.** It's drawn infinitely far, so it never moves or grows as the match camera
+  pans and zooms (45 to 200 studs from the plane), and anything with a shape painted in it (clouds, mountains) looks
+  stuck to the screen. A plain gradient doesn't, since nothing in it can be seen not moving. So a map's sky keeps
+  its gradient and the shapes stand in the world as flat pictures at their own depths (Atmosphere's `Parallax`): the
+  camera's perspective moves them, with no code each frame. They're built on each client from the map's row, so
+  nothing streams from the server (a far layer 1100 studs back is past `StreamingTargetRadius`).
+- **Flat painted shapes read as clip art.** The first layers, painted in code (flat mesa blocks, rows of round puffs),
+  got "looks like an excel drawing more than an artwork". The second, a lit heightmap in Blender, read as a generic
+  CG render with smeared cliffs. What worked was the maps' own look: stepped brick strata, blocky cacti and voxel
+  clouds, rendered with a sun from the camera's side and soft occlusion in the steps, then hazed and blurred more the
+  farther back the layer stands (the owner: "maybe a slight blur on the further items").
+- **A white cloud needs cool light on its belly.** Lit by the desert's warm bounce, the clouds' underside steps came
+  out brown and looked dirty; rendered under a cool sky light they read as soft blue-grey.
+- **A backdrop takes the map's own colours and stays sparse.** Rolling Plains' first layers, green hills all the way
+  back in a softer green than the map's, got "the grass color might be too off? or maybe too much grass": the
+  ground fill under them read as more lawn. Redone as a few small islands on the sea (the map is itself an island),
+  with the map's grass green over its rock-brown shore, the fill sea blue.
+- **Water is one flat colour behind the layers, not part of them.** Seas rendered into each layer came out in
+  different blues: haze turned the far one a pale grey strip ("this grey part looks weird"), and even lightly hazed
+  the far sea, the near sea's back edge and the near sea made three bands ("the different colors of blue looks
+  weird"). Now the sea planes render as holdouts (they hide what's under the waterline and leave it clear), and
+  both layers' fills are the same sea blue, so the water is a single colour to the horizon.
+- **A far island needs water behind its foot.** The 6° render tilt lifts the far islands' bases 10 to 22 studs over
+  the layer's ground line, so with the sea fill stopping there they "look like floating islands" over the sky. The
+  far fill now reaches up to `sea_top` (24) behind them.
+- **Blur only the farthest layer, and lightly.** Blurring every layer by its depth (far 1.8 px, clouds 1.3, near
+  0.7) was "too much": the clouds and near hills looked smeared next to the sharp map. Now only the far layer is
+  softened (1 px); clouds and near layers stay sharp.
+
+Rules: Snails (Each place has its own mood).
+
+## No aim preview outside the tutorial (2026-11-25)
+
+The owner removed the short dots along the start of an arced shot's path: "the dots are making the game too easy".
+They had been shortened and made fainter twice in two days and still gave the arc away.
+
+- **The tutorial's line is a different thing and stays.** It draws the whole path for a new player's first shot
+  (`_drawPrediction`), and the admin aimbot uses it too; outside those, nothing draws a path.
+
+Rules: Snails (Aiming is drag, lock, FIRE).
+
+## The teleport card is the map's own scene (2026-11-25)
+
+The owner, on the old card (a small map picture on a grey backdrop, its line sometimes in capitals, sometimes not):
+"having that much of grey screen make the game feel sloppy… each map you join is different". A web draft was rated
+first ("the draft concept looks good"), then built.
+
+- **The case flipped because the card left the framework.** The card was handed to Roblox before TextCase had put
+  its line in capitals, and the next server showed that copy until its own client loaded. The card now writes its
+  capitals itself.
+- **A camera that only drifts runs off the art.** Held on the draft, the camera passed the end of the near hills and
+  showed bare ground ("there is like a gap here"). Tiles now repeat end to end, and the camera sways back and forth.
+- **Dropping layers from the top showed their flat ground fills as a block.** The intro whips the scene in from the
+  side instead, the same move as the matchmaking whips.
+- **The held copy must be posed.** Roblox shows a copy as it was when handed over; handed over at the intro's start it
+  would hold an empty frame. Each copy is settled (scene in place, plate up) and handed over again every half second.
+
+Rules: Maps and placeholders (Every teleport between the places shows the card).
+
+## Players pick each weapon's look on a tab beside its card (2026-11-25)
+
+The owner wanted players to switch a weapon between Normal, Shiny and Golden ("a tab that opens up on the left side or
+somewhere… I have no idea how to not confuse players"). Three clickable mock-ups were shown: a look tab beside the
+card, arrows on the card's SHINY / GOLDEN tag, and look gems on the picker's cards. The owner picked the tab.
+
+- **Pictures beat words for a choice of looks.** The tab shows the weapon three times in its real card looks; the
+  arrows and gems were small targets on a phone, and the gems shared a card whose press equips the weapon.
+- **Nothing new was drawn.** The tab's cards are clones of the loadout's slot card and its heading a copy of LOADOUT,
+  so the foil, rim, lock and selected outline are the ones players already know.
+- **A pick remembers the best look it was made under.** Saved as "Look:Best", it holds until a better look opens (a
+  level reward, 100 copies), so a player who wore Normal still sees their new Golden at once.
+- **Only the look follows the pick.** The match card got its own map of worn looks (`ItemLooks`) beside `ShinyItems`,
+  which alone sets the +5% damage, so picking Normal never costs a player anything.
+
+Rules: Snails (Shiny and Golden copies look special everywhere: players pick the look each weapon wears).
+
+## Aiming goes to the pointer: Ring: point (2026-11-25)
+
+A day after the trackpad drag went in, the owner went back to the aim drafts page and picked "Ring: point" instead:
+the crosshair goes where the player presses, and a drag moves it with the pointer. In the same request they asked for
+a thicker power wedge ("too thin at the max power"), the crosshair in the power's colour, a smaller crosshair and a
+bigger power ring.
+
+- **The simplest scheme was the one to explain.** Ring: point needs no per-device drag scale: the press is the aim, so
+  `AIM_DRAG_SHARE` went. The trackpad's selling point (a thumb never covers the snail) mattered less to the owner than
+  aiming where you point.
+- **A bigger ring pays for pointing.** With the crosshair under the finger, the ring's radius is the room a player has
+  to set the power, so it grew (`POWER_LENGTH` 8.5) as the crosshair shrank (2.2).
+- **One colour says how hard.** The crosshair now wears the wedge's power colour instead of the team colour, so the
+  whole aim reads as one piece from yellow to red.
+
+Rules: Snails (Aiming is drag, lock, FIRE).
+
+## Bought diamonds celebrate once the shop closes (2026-11-25)
+
+The owner, on buying diamond packs: "make it satisfying - add like fanfares or something - like maybe a blue gem
+vignette or something - make it feel REALLY good". Everything came from what the game had: the match payout's burst
+and flight, the gift-claim and level-up sounds, and the potion vignette tinted gem blue.
+
+- **The shop has its own diamonds counters.** Holding only the lobby's slot left the shop's plate (and the crates
+  screen's) on the new total while the lobby's stayed on the old one, so the two disagreed when the shop closed.
+  The hold now covers every label whose `Currency_Name` is `Diamonds`.
+- **The hold starts from what the player saw.** The purchase remote and the new total can reach the screen in either
+  order, so the Shop notes the count when Buy is pressed and holds there, instead of working it out from the total.
+- **Every pack already hit the match payout's cap** (one diamond per 5, at most 30), so a 250 pack and a 2,500 pack
+  looked the same. Bought packs throw 1.25 × the square root of the amount, 20 to 64.
+
+Rules: Guis (Diamonds paid fly into the diamonds slot).
+
+## The aim's guide dots come back past the crosshair; screen edges reach a phone's notch (2026-11-25)
+
+After testing on a phone, the owner asked for a smaller readout ("too big on the mobile"), for the assist dots back
+("slight subtle ones… start them from the target icon so they dont overlap the power cone"), and again for the round
+intro's dark edges, which still left a light strip on both sides of the phone.
+
+- **Dots past the crosshair weren't enough.** Six faint dots starting past the crosshair's ring (no wind) were tried
+  that afternoon; the owner found the trajectory "very hard to predict" and asked for the first dots back (next
+  section).
+- **The readout is sized per device by the platform tag.** On a phone a 18 px text is several times larger against the
+  screen than on a PC, so the readout is 15 px, and its box is 11 px tall on Mobile (`Utils_PlatformSize`), where
+  scaled text shrinks to fit.
+- **A cover measured to the screen can still miss it.** The intro was sized to the HUD gui's area, right in Studio,
+  yet a phone showed strips at its sides. The edges and flash now run 8 % of the width past every edge, solid out
+  there, so the visible fade is unchanged and no measurement can leave a gap. The same day every other full-screen gui
+  (the potion vignette, the teleport and transit cards, WidgetManager's dim) got `ClipToDeviceSafeArea` off: Roblox
+  clips a ScreenGui to the safe area by default even with `ScreenInsets` `None`.
+
+Rules: Snails (Aiming is drag, lock, FIRE); Guis (Screen-wide effects cover the whole device).
+
+## The tested aim preview comes back as it was (2026-11-25)
+
+On 24 Nov the testers played with 9 power-coloured dots tracing the first fifth of a full-power flight from the snail,
+and it worked. On 25 Nov they were halved (5 dots), turned into tiny white dots at a fixed spacing, removed ("too
+easy"), then tried as a few faint dots past the crosshair. By evening the owner said the trajectory was "very hard to
+predict" and asked for the first dots back: "it was perfect".
+
+- **The tested version is the reference.** Each change was small and asked for, but together they took away what made
+  the dots readable: their spread grew with the power and they bunched and bent at low power. The code and numbers
+  (`PREVIEW_DOTS` 9, `PREVIEW_SHARE` 0.2, `PREVIEW_DOT_SIZE` 0.75 to 0.45, `PREVIEW_FADE` 0.75, the power's colour)
+  came back unchanged from the session's record of that build.
+- **Only what came after stayed:** the power wedge (the first dots now run under it), the smaller readout, and the
+  homing missile's launch, aimed like an arc since that morning, which shows the dots too.
+- **The tutorial teaches the real aim.** Right after, the owner took the whole path line out of the tutorial: a new
+  player who learned to aim on a line to the landing would lose it in their first real match. The tutorial now shows
+  the same dots; only the admin aimbot keeps the whole path.
+
+Rules: Snails (Aiming is drag, lock, FIRE).
+
+## MapLab's workbench leaves the place (2026-11-25)
+
+The owner asked what `Workspace._Labs` was, since it held a lot of maps. It was MapLab's build area: the nine working
+copies, prop studies, the kit's ModuleScripts and 120 old map versions (`_Iterations`), 136,632 parts of the
+Workspace's 151,260. No game code read it.
+
+- **Hidden isn't gone.** `HideOnPlay` only made it see-through. Streaming kept it off players' devices (it stood 2,400
+  to 7,200 studs east, past `StreamingTargetRadius`), but every lobby and match server loaded all of it, walked its
+  141,000 instances at start to hide them, and the place file carried it to every server.
+- **ServerStorage wouldn't have fixed it:** servers still load what's there. The owner saved `_Labs` to a file, and it
+  was deleted from the place; the Workspace kept 14,628 parts, the maps players play among them.
+
+Rules: Maps and placeholders (The Workspace holds only the game).

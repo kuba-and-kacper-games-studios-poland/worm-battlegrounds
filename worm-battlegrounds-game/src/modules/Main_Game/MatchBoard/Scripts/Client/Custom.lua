@@ -27,6 +27,9 @@ local pickedMode: string = "Deathmatch"
 local pickedSize: number = 4
 local pickedDifficulty: string = "None"
 
+-- Whether the lobby's matches have wind (off until picked: the owner, 2026-11-24)
+local pickedWind: boolean = false
+
 --[[ Room ]]
 
 -- The lobby the player is in, and whether they asked to leave it (so its closing only shows the create step then)
@@ -122,8 +125,14 @@ function Module.Start()
 			Module._refreshChoices()
 		end)
 	end
+	for _index: number, on: boolean in ipairs({ false, true }) do
+		I.Interact.OnPress(Module._getButton(if on then "S_WindOn" else "S_WindOff"), function()
+			pickedWind = on
+			Module._refreshChoices()
+		end)
+	end
 	I.Interact.OnPress(Module._getButton("S_Create"), function()
-		I.Network.Fire("MatchBoard_CreateCustom", pickedMap, pickedMode, pickedSize, pickedDifficulty)
+		I.Network.Fire("MatchBoard_CreateCustom", pickedMap, pickedMode, pickedSize, pickedDifficulty, pickedWind)
 	end)
 	I.Interact.OnPress(Module._getButton("S_Start"), Module._onStart)
 	I.Interact.OnPress(Module._getButton("S_Leave"), function()
@@ -220,7 +229,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Choices
 
 --[[
-	Marks the picked map, mode, player count and bots, and greys out the player counts the picked map isn't made for.
+	Marks the picked map, mode, wind, player count and bots, and greys out the player counts the picked map isn't made
+	for.
 ]]
 function Module._refreshChoices()
 	--[[ Applying ]]
@@ -239,6 +249,8 @@ function Module._refreshChoices()
 	for _index: number, difficulty: string in ipairs(_settings.CUSTOM_DIFFICULTIES) do
 		Module.SetPicked(elems["Create"]:FindFirstChild(`S_Bots{difficulty}`, true), difficulty == pickedDifficulty)
 	end
+	Module.SetPicked(elems["Create"]:FindFirstChild("S_WindOff", true), not pickedWind)
+	Module.SetPicked(elems["Create"]:FindFirstChild("S_WindOn", true), pickedWind)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Fit Size
@@ -351,7 +363,8 @@ function Module._refreshRoom()
 	local owner: boolean = room:GetAttribute("Owner") == I.S.Players.LocalPlayer.UserId
 	local difficulty: string = room:GetAttribute("Difficulty")
 	local bots: string = if difficulty == "None" then "No bots" else `{difficulty} bots`
-	elems["Info"].Text = `{room:GetAttribute("Mode")}  |  {room:GetAttribute("Size")} players  |  {if mapRow then mapRow.Name else ""}  |  {bots}`
+	local wind: string = if room:GetAttribute("Wind") then "  |  Wind" else ""
+	elems["Info"].Text = `{room:GetAttribute("Mode")}  |  {room:GetAttribute("Size")} players  |  {if mapRow then mapRow.Name else ""}  |  {bots}{wind}`
 	Module._getButton("S_Start").Visible = owner
 
 	--[[ Members ]]

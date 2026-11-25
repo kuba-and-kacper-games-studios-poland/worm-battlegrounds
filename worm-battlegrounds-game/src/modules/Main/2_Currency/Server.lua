@@ -265,6 +265,50 @@ function Module._validatePlayerCurrencies(player: Player)
 			currency.HighestOwned = currency.Amount
 		end
 	end
+
+	--[[ Converting ]]
+
+	Module._convertRetired(moduleData["Currencies"])
+end
+
+--%%%%%%%%%%%%%%%%%%%% Convert Retired
+
+--[[
+	Turns a saved balance in a retired currency (CONVERSIONS) into the currency it became, once: Per of the old for one
+	of the new, rounded up, then takes the old entry off the save.
+]]
+--- @param currencies { [string]: Currency_CurrencyData }
+function Module._convertRetired(currencies)
+	--[[ Converting ]]
+
+	--- @param conversion Currency_Conversion
+	for _index: number, conversion in ipairs(_settings.CONVERSIONS) do
+		local old = currencies[conversion.From] --- @type Currency_CurrencyData?
+		local new = currencies[conversion.To] --- @type Currency_CurrencyData?
+
+		-- Check if there's an old balance and a currency to turn it into
+		if type(old) ~= "table" or type(new) ~= "table" then
+			continue
+		end
+
+		-- A saved whole number counts as its integer string; anything else converts to nothing
+		local saved: number? = tonumber(old.Amount)
+		local amount: string = if saved and saved > 0 and saved % 1 == 0 then string.format("%.0f", saved) else "0"
+		local quotientBN = I.BN.new() --- @type BigNum_Instance
+		local remainderBN = I.BN.new() --- @type BigNum_Instance
+		I.BN.Div(I.BN.new(amount), I.BN.new(conversion.Per), quotientBN, remainderBN)
+		if remainderBN > I.BN.new("0") then
+			quotientBN = quotientBN + I.BN.new("1")
+		end
+
+		-- The new currency gains it as earned, and the old entry leaves the save so it never converts twice
+		new.Amount = tostring(I.BN.new(new.Amount) + quotientBN)
+		new.TotalEarned = tostring(I.BN.new(new.TotalEarned) + quotientBN)
+		if I.BN.new(new.Amount) > I.BN.new(new.HighestOwned) then
+			new.HighestOwned = new.Amount
+		end
+		currencies[conversion.From] = nil
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Create Replicator

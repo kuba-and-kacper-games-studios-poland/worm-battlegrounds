@@ -27,6 +27,12 @@ local _settings = {
 	EMOTE_SECONDS = 3,
 
 	--[[
+		The emote shop sends one buy at a time, at most one every this many seconds, so fast presses stay under
+		Cosmetics_BuyEmote's rate limit (2 a second) instead of being refused
+	]]
+	EMOTE_BUY_INTERVAL = 0.55,
+
+	--[[
 		The emote bubble over a lobby party card stands on the avatar's top right, inside the avatar so any layout or
 		scale carries it: its tail's tip CARD_BUBBLE_ANCHOR of the avatar across and down, the bubble CARD_BUBBLE_SIZE of
 		the avatar's height tall

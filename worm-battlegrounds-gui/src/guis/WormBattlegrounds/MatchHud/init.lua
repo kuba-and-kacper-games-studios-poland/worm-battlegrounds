@@ -15,7 +15,12 @@ local _gui = {
 	]]
 	Name = "MatchHud",
 	Theme = "WormBattlegroundsBrawl",
-	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
+	--[[
+		Over the whole screen, not clipped to the safe area, so the HUD hangs from a phone's very edges (the owner,
+		2026-11-25: "we need it to be on the edges"); MatchHud pads its top below Roblox's top bar on phones (U_Inset)
+		and gives consoles their safe area back
+	]]
+	Screen = { DisplayOrder = 0, Enabled = false, ScreenInsets = Enum.ScreenInsets.None, ClipToDeviceSafeArea = false },
 	Devices = { "Desktop", "Mobile", "Console" },
 
 	--[[ Tree ]]
@@ -23,9 +28,11 @@ local _gui = {
 	Root = {
 		Primitive = "Folder",
 		Children = {
+			-- The HUD's top padding: Roblox's top bar's height on phones and tablets (MatchHud sets it), none elsewhere
+			{ Primitive = "UIPadding", Id = "U_Inset" },
 			--[[
 				The aim, under the rest of the HUD: Worms Armageddon's crosshair (a ring with an X, outlined, painted in the
-				aiming snail's colour) and the power cone's circles (PREFAB | PowerDot), which MatchHud's Aim places in
+				aiming snail's colour), the power ring, the readout and the preview's dots (PREFAB | AimDot), which MatchHud's Aim places in
 				pixels over the snail every frame
 			]]
 			{
@@ -39,6 +46,124 @@ local _gui = {
 					ZIndex = 0,
 				},
 				Children = {
+					-- The power ring round the snail on its player's turn: its edge is full power (MatchHud's Aim sizes and places it)
+					{
+						Primitive = "Frame",
+						Id = "S_PowerRing",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Size = UDim2.fromOffset(100, 100),
+							Visible = false,
+							ZIndex = 0,
+						},
+						Children = {
+							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+							{
+								Primitive = "UIStroke",
+								Id = "S_PowerRingStroke",
+								Props = { Color = Color3.fromRGB(255, 255, 255), Thickness = 2, Transparency = 0.75 },
+							},
+						},
+					},
+					--[[
+						The power wedge (2026-11-25, ShellShock Live's way): a soft triangle from the snail to the crosshair, its point
+						at the snail's end. Aim sizes, turns and places it along the aim, colours its halves by the power, and turns each
+						half's gradient so its hard step cuts the half along its diagonal (the halves meet on the aim's line)
+					]]
+					{
+						Primitive = "Frame",
+						Id = "S_PowerWedge",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Size = UDim2.fromOffset(200, 32),
+							Visible = false,
+							ZIndex = 10,
+						},
+						Children = {
+							{
+								Primitive = "Frame",
+								Id = "S_WedgeTop",
+								Props = {
+									BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0, 0),
+									Size = UDim2.fromScale(1, 0.5),
+								},
+								Children = {
+									{
+										Primitive = "UIGradient",
+										Props = {
+											Transparency = NumberSequence.new({
+												NumberSequenceKeypoint.new(0, 1),
+												NumberSequenceKeypoint.new(0.499, 1),
+												NumberSequenceKeypoint.new(0.5, 0.55),
+												NumberSequenceKeypoint.new(1, 0.55),
+											}),
+										},
+									},
+								},
+							},
+							{
+								Primitive = "Frame",
+								Id = "S_WedgeBottom",
+								Props = {
+									BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0, 0.5),
+									Size = UDim2.fromScale(1, 0.5),
+								},
+								Children = {
+									{
+										Primitive = "UIGradient",
+										Props = {
+											Transparency = NumberSequence.new({
+												NumberSequenceKeypoint.new(0, 1),
+												NumberSequenceKeypoint.new(0.499, 1),
+												NumberSequenceKeypoint.new(0.5, 0.55),
+												NumberSequenceKeypoint.new(1, 0.55),
+											}),
+										},
+									},
+								},
+							},
+						},
+					},
+					--[[
+						The aim's power and angle over the crosshair ("62% · 41°"), or what a homing missile wants next: 15 px, and
+						a shorter box on phones and tablets, where the text shrinks to fit it (the owner, 2026-11-25: "too big on
+						the mobile")
+					]]
+					{
+						Primitive = "TextLabel",
+						Id = "S_Readout",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 1),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Size = UDim2.fromOffset(220, 30),
+							Visible = false,
+							ZIndex = 30,
+							Text = "62% · 41°",
+							TextColor3 = Color3.fromRGB(255, 255, 255),
+							TextSize = 15,
+							TextWrapped = true,
+							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+							RichText = true,
+							TextScaled = true,
+						},
+						Tags = { ["TextCase_Upper"] = {}, Utils_PlatformSize = { Utils_MobileSize = UDim2.fromOffset(160, 11) } },
+						Children = {
+							{
+								Primitive = "UIStroke",
+								Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+							},
+							{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 15, MinTextSize = 1 } },
+						},
+					},
 					{
 						Primitive = "Frame",
 						Id = "S_Crosshair",
@@ -155,6 +280,386 @@ local _gui = {
 									ZIndex = 4,
 								},
 								Children = { { Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } } },
+							},
+						},
+					},
+					-- A homing missile's locked target (MatchHud's Aim, 2026-11-25): a red ring over a soft glow with a lit dot in the middle, and four lock-on brackets round it, bigger than the crosshair (TARGET_MARK_SIZE); the brackets turn and close in on the spot as it's placed, where the crosshair spins whole
+					{
+						Primitive = "Frame",
+						Id = "S_TargetMark",
+						Visible = false,
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							Position = UDim2.fromScale(0.5, 0.5),
+							Size = UDim2.fromOffset(62, 62),
+							ZIndex = 99,
+						},
+						Children = {
+							-- A soft red glow behind the ring
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Glow",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundColor3 = Color3.fromRGB(255, 60, 50),
+									BackgroundTransparency = 0.9,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.5, 0.5),
+									Size = UDim2.fromScale(0.5, 0.5),
+									ZIndex = 1,
+								},
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+								},
+							},
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "RingOutline",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									Position = UDim2.fromScale(0.5, 0.5),
+									Size = UDim2.fromScale(0.5, 0.5),
+									ZIndex = 2,
+								},
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+									{
+										Primitive = "UIStroke",
+										Props = {
+											BorderStrokePosition = Enum.BorderStrokePosition.Center,
+											Color = Color3.fromRGB(20, 14, 10),
+											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+											Thickness = 0.2,
+										},
+									},
+								},
+							},
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Ring",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									Position = UDim2.fromScale(0.5, 0.5),
+									Size = UDim2.fromScale(0.5, 0.5),
+									ZIndex = 3,
+								},
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+									{
+										Primitive = "UIStroke",
+										Props = {
+											BorderStrokePosition = Enum.BorderStrokePosition.Center,
+											Color = Color3.fromRGB(255, 255, 255),
+											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+											Thickness = 0.1,
+										},
+										Children = { { Primitive = "UIGradient", Props = { Color = ColorSequence.new(Color3.fromRGB(255, 140, 120), Color3.fromRGB(210, 30, 36)), Rotation = 90 } } },
+									},
+								},
+							},
+							-- The dot in the middle, lit from its top left
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "DotOutline",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.5, 0.5),
+									Size = UDim2.fromScale(0.2, 0.2),
+									ZIndex = 3,
+								},
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+								},
+							},
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Dot",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.5, 0.5),
+									Size = UDim2.fromScale(0.13, 0.13),
+									ZIndex = 4,
+								},
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+									{ Primitive = "UIGradient", Props = { Color = ColorSequence.new(Color3.fromRGB(255, 140, 120), Color3.fromRGB(210, 30, 36)), Rotation = 90 } },
+								},
+							},
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Shine",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundColor3 = Color3.fromRGB(255, 235, 225),
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.475, 0.475),
+									Size = UDim2.fromScale(0.045, 0.045),
+									ZIndex = 5,
+								},
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+								},
+							},
+							-- The lock-on brackets, which Aim turns slowly and closes in on the spot as the target is placed
+							{
+								Primitive = "Frame",
+								Id = "S_TargetBrackets",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									Position = UDim2.fromScale(0.5, 0.5),
+									Size = UDim2.fromScale(1, 1),
+									ZIndex = 5,
+								},
+								Children = {
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "BracketOutline",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.1800, 0.0875),
+											Size = UDim2.fromScale(0.3100, 0.1250),
+											ZIndex = 1,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "BracketOutline",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.0875, 0.1800),
+											Size = UDim2.fromScale(0.1250, 0.3100),
+											ZIndex = 1,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Bracket",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(255, 72, 64),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.1800, 0.0875),
+											Size = UDim2.fromScale(0.2600, 0.0750),
+											ZIndex = 2,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Bracket",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(255, 72, 64),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.0875, 0.1800),
+											Size = UDim2.fromScale(0.0750, 0.2600),
+											ZIndex = 2,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "BracketOutline",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.8200, 0.0875),
+											Size = UDim2.fromScale(0.3100, 0.1250),
+											ZIndex = 1,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "BracketOutline",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.9125, 0.1800),
+											Size = UDim2.fromScale(0.1250, 0.3100),
+											ZIndex = 1,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Bracket",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(255, 72, 64),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.8200, 0.0875),
+											Size = UDim2.fromScale(0.2600, 0.0750),
+											ZIndex = 2,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Bracket",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(255, 72, 64),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.9125, 0.1800),
+											Size = UDim2.fromScale(0.0750, 0.2600),
+											ZIndex = 2,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "BracketOutline",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.8200, 0.9125),
+											Size = UDim2.fromScale(0.3100, 0.1250),
+											ZIndex = 1,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "BracketOutline",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.9125, 0.8200),
+											Size = UDim2.fromScale(0.1250, 0.3100),
+											ZIndex = 1,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Bracket",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(255, 72, 64),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.8200, 0.9125),
+											Size = UDim2.fromScale(0.2600, 0.0750),
+											ZIndex = 2,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Bracket",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(255, 72, 64),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.9125, 0.8200),
+											Size = UDim2.fromScale(0.0750, 0.2600),
+											ZIndex = 2,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "BracketOutline",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.1800, 0.9125),
+											Size = UDim2.fromScale(0.3100, 0.1250),
+											ZIndex = 1,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "BracketOutline",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(20, 14, 10),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.0875, 0.8200),
+											Size = UDim2.fromScale(0.1250, 0.3100),
+											ZIndex = 1,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Bracket",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(255, 72, 64),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.1800, 0.9125),
+											Size = UDim2.fromScale(0.2600, 0.0750),
+											ZIndex = 2,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Bracket",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundColor3 = Color3.fromRGB(255, 72, 64),
+											BorderSizePixel = 0,
+											Position = UDim2.fromScale(0.0875, 0.8200),
+											Size = UDim2.fromScale(0.0750, 0.2600),
+											ZIndex = 2,
+										},
+										Children = {
+											{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+										},
+									},
+								},
 							},
 						},
 					},
@@ -323,7 +828,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -385,7 +890,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -447,7 +952,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -509,7 +1014,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -571,7 +1076,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -633,7 +1138,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -695,7 +1200,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -757,7 +1262,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -776,7 +1281,8 @@ local _gui = {
 					BorderSizePixel = 0,
 					LayoutOrder = 7,
 					Position = UDim2.fromScale(0.024, 0.9685),
-					Size = UDim2.fromScale(0.138, 0.1185),
+					-- 1.3 times the design's (the owner, 2026-11-25, on an iPhone: the walk buttons looked too small)
+					Size = UDim2.fromScale(0.1794, 0.154),
 					ZIndex = 8,
 				},
 				Attributes = {
@@ -848,6 +1354,40 @@ local _gui = {
 												Primitive = "ImageLabel",
 												Props = {
 													Name = "Main",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0369, 0.0391),
+													Size = UDim2.fromScale(0.9598, 0.9219),
+													Image = "rbxassetid://140137165049871",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "954_2__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "MainFill",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0369, 0.0391),
+													Size = UDim2.fromScale(0.9598, 0.9219),
+													Image = "rbxassetid://140137165049871",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "954_2__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "MainFill",
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,
 													LayoutOrder = 0,
@@ -988,6 +1528,40 @@ local _gui = {
 											{
 												Primitive = "ImageLabel",
 												Props = {
+													Name = "MainFill",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0033, 0.0391),
+													Size = UDim2.fromScale(0.9598, 0.9219),
+													Image = "rbxassetid://76273205392565",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "954_8__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "MainFill",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0033, 0.0391),
+													Size = UDim2.fromScale(0.9598, 0.9219),
+													Image = "rbxassetid://76273205392565",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "954_8__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
 													Name = "Stroke2",
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,
@@ -1071,422 +1645,15 @@ local _gui = {
 				Children = {
 					{
 						Primitive = "Frame",
-						Props = {
-							Name = "Shooting",
-							BackgroundTransparency = 1,
-							BorderSizePixel = 0,
-							LayoutOrder = 0,
-							Size = UDim2.fromScale(1, 1),
-						},
-						Children = {
-							{
-								Primitive = "ImageButton",
-								Id = "U_Fire",
-								Props = {
-									AnchorPoint = Vector2.new(0.5, 0.5),
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									LayoutOrder = 0,
-									Position = UDim2.fromScale(0.5, 0.7205),
-									Size = UDim2.fromScale(1, 0.559),
-								},
-								Attributes = {
-									HoverSound_SoundGroup = "UI",
-									ClickSound_PitchMax = 1,
-									Utils_ClickScale = 0.92,
-									Utils_HoverScale = 1.04,
-									HoverSound_PitchMax = 1,
-									ClickSound_TimePosition = 0,
-									Utils_ScaleAnimation = "Bouncy",
-									HoverSound_Name = "Button_Hover",
-									ClickSound_Volume = 1,
-									HoverSound_Volume = 1,
-									HoverSound_TimePosition = 0,
-									ClickSound_PlaybackSpeed = 1,
-									HoverSound_PlaybackSpeed = 1,
-									ClickSound_PitchMin = 1,
-									ClickSound_SoundGroup = "UI",
-									HoverSound_PitchMin = 1,
-									ClickSound_Name = "Button_Click",
-								},
-								Tags = {
-									["Utils_ButtonScale"] = {},
-									["Utils_ButtonSound"] = {},
-								},
-								Children = {
-									{
-										Primitive = "Frame",
-										Props = {
-											Name = "Background",
-											BackgroundTransparency = 1,
-											BorderSizePixel = 0,
-											LayoutOrder = 0,
-											Size = UDim2.fromScale(1, 1),
-										},
-										Children = {
-											{
-												Primitive = "ImageLabel",
-												Props = {
-													Name = "Main",
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													LayoutOrder = 0,
-													Position = UDim2.fromScale(0.006, 0.0157),
-													Size = UDim2.fromScale(0.9879, 0.9688),
-													Image = "rbxassetid://114475358447861",
-												},
-												Attributes = { _ImageName = "928_81__Frame__Main_gray" },
-											},
-											{
-												Primitive = "ImageLabel",
-												Props = {
-													Name = "Stroke2",
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													ClipsDescendants = true,
-													LayoutOrder = 1,
-													Size = UDim2.fromScale(1, 1),
-													ZIndex = 2,
-													Image = "rbxassetid://127432762260680",
-													ImageColor3 = Color3.fromRGB(25, 25, 35),
-													ImageTransparency = 1,
-													ScaleType = Enum.ScaleType.Fit,
-												},
-												Attributes = { _ImageName = "1106_59__Frame__Stroke2_gray" },
-											},
-											{
-												Primitive = "ImageLabel",
-												Props = {
-													Name = "Stroke",
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													ClipsDescendants = true,
-													LayoutOrder = 2,
-													Position = UDim2.fromScale(0.0061, 0.0156),
-													Size = UDim2.fromScale(0.9877, 0.9688),
-													ZIndex = 3,
-													Image = "rbxassetid://133599986883001",
-													ImageColor3 = Color3.fromRGB(255, 183, 0),
-													ImageTransparency = 1,
-													ScaleType = Enum.ScaleType.Fit,
-												},
-												Attributes = { _ImageName = "1106_60__Frame__Stroke_gray" },
-											},
-											{
-												Primitive = "ImageLabel",
-												Props = {
-													Name = "Mask",
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													LayoutOrder = 3,
-													Position = UDim2.fromScale(0.0061, 0.0156),
-													Size = UDim2.fromScale(0.9877, 0.9688),
-													ZIndex = 4,
-													Image = "rbxassetid://88059237690588",
-													ImageTransparency = 1,
-												},
-												Attributes = { _ImageName = "928_93__Frame__Mask_image" },
-											},
-										},
-									},
-									{
-										Primitive = "ImageLabel",
-										Id = "S_Icon",
-										Props = {
-											BackgroundTransparency = 1,
-											BorderSizePixel = 0,
-											ClipsDescendants = true,
-											LayoutOrder = 1,
-											Position = UDim2.fromScale(0.367, 0.125),
-											Size = UDim2.fromScale(0.295, 0.75),
-											ZIndex = 2,
-											Image = "rbxassetid://111720533325900",
-										},
-										Attributes = {
-											_ImageName = "930_2__Frame__Icon_image",
-										},
-									},
-									{
-										Primitive = "TextLabel",
-										Props = {
-											Name = "Name1",
-											BackgroundTransparency = 1,
-											BorderSizePixel = 0,
-											LayoutOrder = 2,
-											Position = UDim2.fromScale(0.3271, 0.2656),
-											Size = UDim2.fromScale(0.3718, 0.4609),
-											ZIndex = 3,
-											Text = "FIRE",
-											TextColor3 = Color3.fromRGB(255, 255, 255),
-											TextSize = 50,
-											TextWrapped = true,
-											FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
-											RichText = true,
-											TextScaled = true,
-										},
-										Children = {
-											{
-												Primitive = "UIStroke",
-												Props = {
-													Thickness = 0.08,
-													StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
-												},
-											},
-										},
-									},
-								},
-							},
-							{
-								Primitive = "Frame",
-								Id = "U_Power",
-								Props = {
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									LayoutOrder = 1,
-									Position = UDim2.fromScale(0.1032, 0),
-									Size = UDim2.fromScale(0.8968, 0.3799),
-									ZIndex = 2,
-								},
-								Children = {
-									{
-										Primitive = "Frame",
-										Props = {
-											Name = "Background",
-											BackgroundTransparency = 1,
-											BorderSizePixel = 0,
-											LayoutOrder = 0,
-											Position = UDim2.fromScale(0, 0.3511),
-											Size = UDim2.fromScale(1, 0.6259),
-										},
-										Children = {
-											{
-												Primitive = "ImageLabel",
-												Props = {
-													Name = "Main",
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													LayoutOrder = 0,
-													Position = UDim2.fromScale(0.0132, 0.0635),
-													Size = UDim2.fromScale(0.9696, 0.8447),
-													Image = "rbxassetid://77473983467863",
-													ImageColor3 = Color3.fromRGB(25, 25, 35),
-													ScaleType = Enum.ScaleType.Fit,
-												},
-												Attributes = {
-													_ImageName = "940_2__Frame__Main_gray",
-												},
-											},
-											{
-												Primitive = "ImageLabel",
-												Props = {
-													Name = "Stroke2",
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													ClipsDescendants = true,
-													LayoutOrder = 1,
-													Size = UDim2.fromScale(1, 1),
-													ZIndex = 2,
-													Image = "rbxassetid://126651430001748",
-													ImageColor3 = Color3.fromRGB(25, 25, 35),
-													ScaleType = Enum.ScaleType.Fit,
-												},
-												Attributes = {
-													_ImageName = "1106_63__Frame__Stroke2_gray",
-												},
-											},
-											{
-												Primitive = "ImageLabel",
-												Props = {
-													Name = "Stroke",
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													ClipsDescendants = true,
-													LayoutOrder = 2,
-													Position = UDim2.fromScale(0.0069, 0.0367),
-													Size = UDim2.fromScale(0.9863, 0.9265),
-													ZIndex = 3,
-													Image = "rbxassetid://84151015109804",
-													ImageColor3 = Color3.fromRGB(130, 130, 130),
-													ScaleType = Enum.ScaleType.Fit,
-												},
-												Attributes = {
-													_ImageName = "1106_64__Frame__Stroke_gray",
-												},
-											},
-										},
-									},
-									{
-										Primitive = "ImageLabel",
-										Id = "S_Bar",
-										Props = {
-											BackgroundTransparency = 1,
-											BorderSizePixel = 0,
-											LayoutOrder = 1,
-											Position = UDim2.fromScale(0.0372, 0.4424),
-											Size = UDim2.fromScale(0.9319, 0.4312),
-											ZIndex = 2,
-											Image = "rbxassetid://94393789837606",
-											ImageColor3 = Color3.fromRGB(255, 202, 123),
-											ScaleType = Enum.ScaleType.Fit,
-										},
-										Attributes = { _ImageName = "940_6__Frame__Bar_gray" },
-										Children = { { Primitive = "UIGradient" } },
-									},
-									-- The bar's texture, cut at the same edge as the bar (the studio's PowerSlider, 2026-11-12)
-									{
-										Primitive = "ImageLabel",
-										Id = "S_BarMask",
-										Props = {
-											BackgroundTransparency = 1,
-											BorderSizePixel = 0,
-											ClipsDescendants = true,
-											LayoutOrder = 2,
-											Position = UDim2.fromScale(0.0372, 0.4424),
-											Size = UDim2.fromScale(0.9319, 0.4312),
-											ZIndex = 3,
-											Image = "rbxassetid://136846436221511",
-										},
-										Attributes = {
-											_ImageName = "952_125__Frame__Mask_image",
-										},
-										Children = { { Primitive = "UIGradient" } },
-									},
-									{
-										Primitive = "ImageButton",
-										Id = "S_Handle",
-										Props = {
-											AnchorPoint = Vector2.new(0.5, 0.5),
-											BackgroundTransparency = 1,
-											BorderSizePixel = 0,
-											LayoutOrder = 3,
-											Position = UDim2.fromScale(0.7362, 0.5),
-											Size = UDim2.fromScale(0.2193, 1),
-											ZIndex = 4,
-											Interactable = false,
-											AutoButtonColor = false,
-										},
-										Children = {
-											{
-												Primitive = "Frame",
-												Props = {
-													Name = "Background",
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													LayoutOrder = 0,
-													Position = UDim2.fromScale(0.4062, 0.3103),
-													Size = UDim2.fromScale(0.1875, 0.6897),
-												},
-												Children = {
-													{
-														Primitive = "ImageLabel",
-														Props = {
-															Name = "Main",
-															BackgroundTransparency = 1,
-															BorderSizePixel = 0,
-															ClipsDescendants = true,
-															LayoutOrder = 0,
-															Position = UDim2.fromScale(0.25, 0.05),
-															Size = UDim2.fromScale(0.5, 0.9),
-															Image = "rbxassetid://79784084284912",
-														},
-														Attributes = {
-															_ImageName = "949_2__Frame__Main_gray",
-														},
-													},
-													{
-														Primitive = "ImageLabel",
-														Props = {
-															Name = "Stroke2",
-															BackgroundTransparency = 1,
-															BorderSizePixel = 0,
-															ClipsDescendants = true,
-															LayoutOrder = 1,
-															Size = UDim2.fromScale(1, 1),
-															ZIndex = 2,
-															Image = "rbxassetid://107477381285187",
-															ImageColor3 = Color3.fromRGB(25, 25, 35),
-															ScaleType = Enum.ScaleType.Fit,
-														},
-														Attributes = {
-															_ImageName = "1106_65__Frame__Stroke2_gray",
-														},
-													},
-												},
-											},
-											{
-												Primitive = "TextLabel",
-												Id = "S_Amount",
-												Props = {
-													AnchorPoint = Vector2.new(0.5, 0.5),
-													BackgroundTransparency = 1,
-													BorderSizePixel = 0,
-													LayoutOrder = 1,
-													Position = UDim2.fromScale(0.5, 0.6552),
-													Size = UDim2.fromScale(1, 0.2759),
-													ZIndex = 2,
-													Text = "75%",
-													TextColor3 = Color3.fromRGB(255, 255, 255),
-													TextSize = 20,
-													TextWrapped = true,
-													FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
-													RichText = true,
-													TextScaled = true,
-												},
-												Children = {
-													{
-														Primitive = "UIStroke",
-														Props = {
-															Thickness = 0.15,
-															StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
-														},
-													},
-												},
-											},
-										},
-									},
-									{
-										Primitive = "TextLabel",
-										Id = "S_Info",
-										Props = {
-											AnchorPoint = Vector2.new(0.5, 0.5),
-											BackgroundTransparency = 1,
-											BorderSizePixel = 0,
-											LayoutOrder = 1,
-											Position = UDim2.fromScale(0.5, 0.17),
-											Size = UDim2.fromScale(1, 0.32),
-											ZIndex = 2,
-											Text = "45°",
-											TextColor3 = Color3.fromRGB(255, 255, 255),
-											TextSize = 20,
-											TextWrapped = true,
-											FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
-											RichText = true,
-											TextScaled = true,
-										},
-										Children = {
-											{
-												Primitive = "UIStroke",
-												Props = {
-													Thickness = 0.15,
-													StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						Primitive = "Frame",
 						Id = "U_TouchJump",
 						Props = {
 							AnchorPoint = Vector2.new(0.5, 1),
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
 							LayoutOrder = 1,
-							Position = UDim2.fromScale(0.5, -0.04),
-							Size = UDim2.fromScale(0.541, 0.559),
+							Position = UDim2.fromScale(0.5, 1),
+							-- 1.3 times the design's, as the walk buttons (2026-11-25)
+							Size = UDim2.fromScale(0.7033, 0.7267),
 						},
 						Attributes = {
 							Utils_MobileVisibility = true,
@@ -1947,6 +2114,40 @@ local _gui = {
 									{
 										Primitive = "ImageLabel",
 										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0083, 0.0472),
+											Size = UDim2.fromScale(0.9833, 0.9057),
+											Image = "rbxassetid://124280522035091",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1095_10__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0083, 0.0472),
+											Size = UDim2.fromScale(0.9833, 0.9057),
+											Image = "rbxassetid://124280522035091",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1095_10__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
 											Name = "Stroke2",
 											BackgroundTransparency = 1,
 											BorderSizePixel = 0,
@@ -2006,7 +2207,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.125,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -2028,6 +2229,9 @@ local _gui = {
 					Size = UDim2.fromScale(0.2105, 0.1361),
 					ZIndex = 4,
 				},
+				-- Smaller on phones and tablets, where MatchHud's Turn also lifts it to the top (TURN_MOBILE_POSITION)
+				Attributes = { Utils_MobileSize = UDim2.fromScale(0.1684, 0.1089) },
+				Tags = { ["Utils_PlatformSize"] = {} },
 				Children = {
 					{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 2.7496 } },
 					{
@@ -2065,6 +2269,40 @@ local _gui = {
 												Primitive = "ImageLabel",
 												Props = {
 													Name = "Main",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.005, 0.049),
+													Size = UDim2.fromScale(0.9899, 0.902),
+													Image = "rbxassetid://135704870689213",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "958_2__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "MainFill",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.005, 0.049),
+													Size = UDim2.fromScale(0.9899, 0.902),
+													Image = "rbxassetid://135704870689213",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "958_2__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "MainFill",
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,
 													LayoutOrder = 0,
@@ -2163,7 +2401,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.1,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -2195,7 +2433,7 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.1,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -2229,6 +2467,40 @@ local _gui = {
 										Primitive = "ImageLabel",
 										Props = {
 											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.014, 0.0862),
+											Size = UDim2.fromScale(0.9721, 0.8276),
+											Image = "rbxassetid://111262150873560",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "961_5__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.014, 0.0862),
+											Size = UDim2.fromScale(0.9721, 0.8276),
+											Image = "rbxassetid://111262150873560",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "961_5__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
 											BackgroundTransparency = 1,
 											BorderSizePixel = 0,
 											LayoutOrder = 0,
@@ -2413,163 +2685,42 @@ local _gui = {
 					},
 				},
 			},
+			--[[
+				The player's health and stamina at the bottom left (the owner, 2026-11-24: "move stamina bar and health bar to
+				the bottom left"): U_Health, a copy of the stamina bar in red, over U_Stamina, each kept to its picture's shape by
+				width; under them, room for the phone's walk buttons (U_Touch) and the pad's hint strip (U_PadControls)
+			]]
 			{
 				Primitive = "Frame",
-				Id = "U_Stamina",
+				Id = "U_Bars",
 				Props = {
-					AnchorPoint = Vector2.new(0.5, 1),
+					AnchorPoint = Vector2.new(0, 1),
 					BackgroundTransparency = 1,
 					BorderSizePixel = 0,
-					LayoutOrder = 1,
-					Position = UDim2.fromScale(0.5, 0.868),
-					Size = UDim2.fromScale(0.152, 0.0805),
+					Position = UDim2.fromScale(0.014, 0.968),
+					Size = UDim2.fromScale(0.152, 0.5),
 					ZIndex = 9,
 				},
 				Children = {
 					{
-						Primitive = "Frame",
+						Primitive = "UIListLayout",
 						Props = {
-							Name = "Background",
-							BackgroundTransparency = 1,
-							BorderSizePixel = 0,
-							LayoutOrder = 0,
-							Position = UDim2.fromScale(0, 0.3511),
-							Size = UDim2.fromScale(1, 0.6259),
-						},
-						Children = {
-							{
-								Primitive = "ImageLabel",
-								Props = {
-									Name = "Main",
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									LayoutOrder = 0,
-									Position = UDim2.fromScale(0.0132, 0.0635),
-									Size = UDim2.fromScale(0.9696, 0.8447),
-									Image = "rbxassetid://77473983467863",
-									ImageColor3 = Color3.fromRGB(25, 25, 35),
-									ScaleType = Enum.ScaleType.Fit,
-								},
-								Attributes = {
-									_ImageName = "940_2__Frame__Main_gray",
-								},
-							},
-							{
-								Primitive = "ImageLabel",
-								Props = {
-									Name = "Stroke2",
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									ClipsDescendants = true,
-									LayoutOrder = 1,
-									Size = UDim2.fromScale(1, 1),
-									ZIndex = 2,
-									Image = "rbxassetid://126651430001748",
-									ImageColor3 = Color3.fromRGB(25, 25, 35),
-									ScaleType = Enum.ScaleType.Fit,
-								},
-								Attributes = {
-									_ImageName = "1106_63__Frame__Stroke2_gray",
-								},
-							},
-							{
-								Primitive = "ImageLabel",
-								Props = {
-									Name = "Stroke",
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									ClipsDescendants = true,
-									LayoutOrder = 2,
-									Position = UDim2.fromScale(0.0069, 0.0367),
-									Size = UDim2.fromScale(0.9863, 0.9265),
-									ZIndex = 3,
-									Image = "rbxassetid://84151015109804",
-									ImageColor3 = Color3.fromRGB(130, 130, 130),
-									ScaleType = Enum.ScaleType.Fit,
-								},
-								Attributes = {
-									_ImageName = "1106_64__Frame__Stroke_gray",
-								},
-							},
+							FillDirection = Enum.FillDirection.Vertical,
+							HorizontalAlignment = Enum.HorizontalAlignment.Left,
+							VerticalAlignment = Enum.VerticalAlignment.Bottom,
+							SortOrder = Enum.SortOrder.LayoutOrder,
 						},
 					},
-					{
-						Primitive = "ImageLabel",
-						Id = "S_Bar",
-						Props = {
-							BackgroundTransparency = 1,
-							BorderSizePixel = 0,
-							LayoutOrder = 1,
-							Position = UDim2.fromScale(0.0372, 0.4424),
-							Size = UDim2.fromScale(0.9319, 0.4312),
-							ZIndex = 2,
-							Image = "rbxassetid://94393789837606",
-							ImageColor3 = Color3.fromRGB(110, 220, 90),
-							ScaleType = Enum.ScaleType.Fit,
-						},
-						Attributes = { _ImageName = "940_6__Frame__Bar_gray" },
-						Children = { { Primitive = "UIGradient" } },
-					},
-					-- The bar's texture, cut at the same edge as the bar (the studio's PowerSlider, 2026-11-12)
-					{
-						Primitive = "ImageLabel",
-						Id = "S_BarMask",
-						Props = {
-							BackgroundTransparency = 1,
-							BorderSizePixel = 0,
-							ClipsDescendants = true,
-							LayoutOrder = 2,
-							Position = UDim2.fromScale(0.0372, 0.4424),
-							Size = UDim2.fromScale(0.9319, 0.4312),
-							ZIndex = 3,
-							Image = "rbxassetid://136846436221511",
-						},
-						Attributes = {
-							_ImageName = "952_125__Frame__Mask_image",
-						},
-						Children = { { Primitive = "UIGradient" } },
-					},
-					{
-						Primitive = "TextLabel",
-						Id = "S_Text",
-						Props = {
-							AnchorPoint = Vector2.new(0.5, 0.5),
-							BackgroundTransparency = 1,
-							BorderSizePixel = 0,
-							LayoutOrder = 1,
-							Position = UDim2.fromScale(0.5, 0.17),
-							Size = UDim2.fromScale(1, 0.32),
-							ZIndex = 2,
-							Text = "Stamina 70%",
-							TextColor3 = Color3.fromRGB(255, 255, 255),
-							TextSize = 20,
-							TextWrapped = true,
-							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
-							RichText = true,
-							TextScaled = true,
-						},
-						Children = {
-							{
-								Primitive = "UIStroke",
-								Props = {
-									Thickness = 0.15,
-									StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
-								},
-							},
-						},
-					},
-					-- The jetpack's fuel, the stamina bar's twin in orange, over it while the snail wears a jetpack (the owner, 2026-11-15)
 					{
 						Primitive = "Frame",
-						Id = "U_Fuel",
+						Id = "U_Health",
 						Props = {
 							AnchorPoint = Vector2.new(0.5, 1),
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
-							LayoutOrder = 3,
-							Position = UDim2.fromScale(0.5, 0),
+							LayoutOrder = 1,
+							Position = UDim2.fromScale(0.5, 0.868),
 							Size = UDim2.fromScale(1, 1),
-							Visible = false,
 							ZIndex = 9,
 						},
 						Children = {
@@ -2588,6 +2739,40 @@ local _gui = {
 										Primitive = "ImageLabel",
 										Props = {
 											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0132, 0.0635),
+											Size = UDim2.fromScale(0.9696, 0.8447),
+											Image = "rbxassetid://77473983467863",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "940_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0132, 0.0635),
+											Size = UDim2.fromScale(0.9696, 0.8447),
+											Image = "rbxassetid://77473983467863",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "940_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
 											BackgroundTransparency = 1,
 											BorderSizePixel = 0,
 											LayoutOrder = 0,
@@ -2651,13 +2836,13 @@ local _gui = {
 									Size = UDim2.fromScale(0.9319, 0.4312),
 									ZIndex = 2,
 									Image = "rbxassetid://94393789837606",
-									ImageColor3 = Color3.fromRGB(255, 150, 40),
+									ImageColor3 = Color3.fromRGB(235, 75, 65),
 									ScaleType = Enum.ScaleType.Fit,
 								},
 								Attributes = { _ImageName = "940_6__Frame__Bar_gray" },
 								Children = { { Primitive = "UIGradient" } },
 							},
-							-- The bar's texture, cut at the same edge as the bar
+							-- The bar's texture, cut at the same edge as the bar (the studio's PowerSlider, 2026-11-12)
 							{
 								Primitive = "ImageLabel",
 								Id = "S_BarMask",
@@ -2684,10 +2869,11 @@ local _gui = {
 									BackgroundTransparency = 1,
 									BorderSizePixel = 0,
 									LayoutOrder = 1,
-									Position = UDim2.fromScale(0.5, 0.17),
+									Position = UDim2.fromScale(0.5, 0.29),
+									Rotation = -5,
 									Size = UDim2.fromScale(1, 0.32),
 									ZIndex = 2,
-									Text = "Jetpack 70%",
+									Text = "Health · 200",
 									TextColor3 = Color3.fromRGB(255, 255, 255),
 									TextSize = 20,
 									TextWrapped = true,
@@ -2699,8 +2885,387 @@ local _gui = {
 									{
 										Primitive = "UIStroke",
 										Props = {
-											Thickness = 0.15,
+											Thickness = 0.07,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+										},
+									},
+								},
+							},
+							-- The jetpack's fuel, the stamina bar's twin in orange, over it while the snail wears a jetpack (the owner, 2026-11-15)
+							{
+								Primitive = "UIAspectRatioConstraint",
+								Props = {
+									AspectRatio = 3.358,
+								},
+							},
+						},
+					},
+					{
+						Primitive = "Frame",
+						Id = "U_Stamina",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 1),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 2,
+							Position = UDim2.fromScale(0.5, 0.868),
+							Size = UDim2.fromScale(1, 1),
+							ZIndex = 9,
+						},
+						Children = {
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Background",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Position = UDim2.fromScale(0, 0.3511),
+									Size = UDim2.fromScale(1, 0.6259),
+								},
+								Children = {
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0132, 0.0635),
+											Size = UDim2.fromScale(0.9696, 0.8447),
+											Image = "rbxassetid://77473983467863",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "940_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0132, 0.0635),
+											Size = UDim2.fromScale(0.9696, 0.8447),
+											Image = "rbxassetid://77473983467863",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "940_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0132, 0.0635),
+											Size = UDim2.fromScale(0.9696, 0.8447),
+											Image = "rbxassetid://77473983467863",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "940_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke2",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 1,
+											Size = UDim2.fromScale(1, 1),
+											ZIndex = 2,
+											Image = "rbxassetid://126651430001748",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_63__Frame__Stroke2_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 2,
+											Position = UDim2.fromScale(0.0069, 0.0367),
+											Size = UDim2.fromScale(0.9863, 0.9265),
+											ZIndex = 3,
+											Image = "rbxassetid://84151015109804",
+											ImageColor3 = Color3.fromRGB(130, 130, 130),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_64__Frame__Stroke_gray",
+										},
+									},
+								},
+							},
+							{
+								Primitive = "ImageLabel",
+								Id = "S_Bar",
+								Props = {
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0.0372, 0.4424),
+									Size = UDim2.fromScale(0.9319, 0.4312),
+									ZIndex = 2,
+									Image = "rbxassetid://94393789837606",
+									ImageColor3 = Color3.fromRGB(110, 220, 90),
+									ScaleType = Enum.ScaleType.Fit,
+								},
+								Attributes = { _ImageName = "940_6__Frame__Bar_gray" },
+								Children = { { Primitive = "UIGradient" } },
+							},
+							-- The bar's texture, cut at the same edge as the bar (the studio's PowerSlider, 2026-11-12)
+							{
+								Primitive = "ImageLabel",
+								Id = "S_BarMask",
+								Props = {
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									ClipsDescendants = true,
+									LayoutOrder = 2,
+									Position = UDim2.fromScale(0.0372, 0.4424),
+									Size = UDim2.fromScale(0.9319, 0.4312),
+									ZIndex = 3,
+									Image = "rbxassetid://136846436221511",
+								},
+								Attributes = {
+									_ImageName = "952_125__Frame__Mask_image",
+								},
+								Children = { { Primitive = "UIGradient" } },
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_Text",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0.5, 0.29),
+									Rotation = -5,
+									Size = UDim2.fromScale(1, 0.32),
+									ZIndex = 2,
+									Text = "Stamina · 70%",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextSize = 20,
+									TextWrapped = true,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{
+										Primitive = "UIStroke",
+										Props = {
+											Thickness = 0.07,
+											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+										},
+									},
+								},
+							},
+							-- The jetpack's fuel, the stamina bar's twin in orange, over it while the snail wears a jetpack (the owner, 2026-11-15)
+							{
+								Primitive = "Frame",
+								Id = "U_Fuel",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 1),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 3,
+									Position = UDim2.fromScale(0.5, -1),
+									Size = UDim2.fromScale(1, 1),
+									Visible = false,
+									ZIndex = 9,
+								},
+								Children = {
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Background",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0, 0.3511),
+											Size = UDim2.fromScale(1, 0.6259),
+										},
+										Children = {
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "Main",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0132, 0.0635),
+													Size = UDim2.fromScale(0.9696, 0.8447),
+													Image = "rbxassetid://77473983467863",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "940_2__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "MainFill",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0132, 0.0635),
+													Size = UDim2.fromScale(0.9696, 0.8447),
+													Image = "rbxassetid://77473983467863",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "940_2__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "MainFill",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0132, 0.0635),
+													Size = UDim2.fromScale(0.9696, 0.8447),
+													Image = "rbxassetid://77473983467863",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "940_2__Frame__Main_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "Stroke2",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													ClipsDescendants = true,
+													LayoutOrder = 1,
+													Size = UDim2.fromScale(1, 1),
+													ZIndex = 2,
+													Image = "rbxassetid://126651430001748",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "1106_63__Frame__Stroke2_gray",
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "Stroke",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													ClipsDescendants = true,
+													LayoutOrder = 2,
+													Position = UDim2.fromScale(0.0069, 0.0367),
+													Size = UDim2.fromScale(0.9863, 0.9265),
+													ZIndex = 3,
+													Image = "rbxassetid://84151015109804",
+													ImageColor3 = Color3.fromRGB(130, 130, 130),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = {
+													_ImageName = "1106_64__Frame__Stroke_gray",
+												},
+											},
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Id = "S_Bar",
+										Props = {
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 1,
+											Position = UDim2.fromScale(0.0372, 0.4424),
+											Size = UDim2.fromScale(0.9319, 0.4312),
+											ZIndex = 2,
+											Image = "rbxassetid://94393789837606",
+											ImageColor3 = Color3.fromRGB(255, 150, 40),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = { _ImageName = "940_6__Frame__Bar_gray" },
+										Children = { { Primitive = "UIGradient" } },
+									},
+									-- The bar's texture, cut at the same edge as the bar
+									{
+										Primitive = "ImageLabel",
+										Id = "S_BarMask",
+										Props = {
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 2,
+											Position = UDim2.fromScale(0.0372, 0.4424),
+											Size = UDim2.fromScale(0.9319, 0.4312),
+											ZIndex = 3,
+											Image = "rbxassetid://136846436221511",
+										},
+										Attributes = {
+											_ImageName = "952_125__Frame__Mask_image",
+										},
+										Children = { { Primitive = "UIGradient" } },
+									},
+									{
+										Primitive = "TextLabel",
+										Id = "S_Text",
+										Props = {
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 1,
+											Position = UDim2.fromScale(0.5, 0.29),
+											Rotation = -5,
+											Size = UDim2.fromScale(1, 0.32),
+											ZIndex = 2,
+											Text = "Jetpack · 70%",
+											TextColor3 = Color3.fromRGB(255, 255, 255),
+											TextSize = 20,
+											TextWrapped = true,
+											FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+											RichText = true,
+											TextScaled = true,
+										},
+										Children = {
+											{
+												Primitive = "UIStroke",
+												Props = {
+													Thickness = 0.07,
+													StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+												},
+											},
+										},
+									},
+									{
+										Primitive = "UIAspectRatioConstraint",
+										Props = {
+											AspectRatio = 3.358,
 										},
 									},
 								},
@@ -2714,9 +3279,431 @@ local _gui = {
 						},
 					},
 					{
+						Primitive = "Frame",
+						Props = {
+							Name = "TouchRoom",
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 3,
+							-- Room for the walk buttons (U_Touch, 0.154 of the screen) and a gap
+							Size = UDim2.fromScale(1, 0.33),
+						},
+						Attributes = {
+							Utils_DesktopVisibility = false,
+							Utils_MobileVisibility = true,
+							Utils_ConsoleVisibility = false,
+							Utils_VRVisibility = false,
+						},
+						Tags = { ["Utils_HideOnPlatform"] = {} },
+					},
+					{
+						Primitive = "Frame",
+						Props = {
+							Name = "PadRoom",
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 4,
+							Size = UDim2.fromScale(1, 0.58),
+						},
+						Attributes = {
+							Utils_DesktopVisibility = false,
+							Utils_MobileVisibility = false,
+							Utils_ConsoleVisibility = true,
+							Utils_VRVisibility = false,
+						},
+						Tags = { ["Utils_HideOnPlatform"] = {} },
+					},
+				},
+			},
+			-- FIRE, over the weapon bar on every device: shown while the player's aim is locked (MatchHud's Aim, 2026-11-24)
+			{
+				Primitive = "ImageButton",
+				Id = "U_Fire",
+				Props = {
+					AnchorPoint = Vector2.new(0.5, 1),
+					BackgroundTransparency = 1,
+					BorderSizePixel = 0,
+					LayoutOrder = 0,
+					Position = UDim2.fromScale(0.5, 0.862),
+					Size = UDim2.fromScale(0.12, 0.0835),
+					Visible = false,
+					ZIndex = 10,
+				},
+				Attributes = {
+					Utils_MobileSize = UDim2.fromScale(0.17, 0.1183),
+					HoverSound_SoundGroup = "UI",
+					ClickSound_PitchMax = 1,
+					Utils_ClickScale = 0.92,
+					Utils_HoverScale = 1.04,
+					HoverSound_PitchMax = 1,
+					ClickSound_TimePosition = 0,
+					Utils_ScaleAnimation = "Bouncy",
+					HoverSound_Name = "Button_Hover",
+					ClickSound_Volume = 1,
+					HoverSound_Volume = 1,
+					HoverSound_TimePosition = 0,
+					ClickSound_PlaybackSpeed = 1,
+					HoverSound_PlaybackSpeed = 1,
+					ClickSound_PitchMin = 1,
+					ClickSound_SoundGroup = "UI",
+					HoverSound_PitchMin = 1,
+					ClickSound_Name = "Button_Click",
+				},
+				Tags = {
+					["Utils_PlatformSize"] = {},
+					["Utils_ButtonScale"] = {},
+					["Utils_ButtonSound"] = {},
+				},
+				Children = {
+					{
+						Primitive = "Frame",
+						Props = {
+							Name = "Background",
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 0,
+							Size = UDim2.fromScale(1, 1),
+						},
+						Children = {
+							{
+								Primitive = "ImageLabel",
+								Props = {
+									Name = "Main",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Position = UDim2.fromScale(0.006, 0.0157),
+									Size = UDim2.fromScale(0.9879, 0.9688),
+									Image = "rbxassetid://114475358447861",
+								},
+								Attributes = { _ImageName = "928_81__Frame__Main_gray" },
+							},
+							{
+								Primitive = "ImageLabel",
+								Props = {
+									Name = "Stroke2",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									ClipsDescendants = true,
+									LayoutOrder = 1,
+									Size = UDim2.fromScale(1, 1),
+									ZIndex = 2,
+									Image = "rbxassetid://127432762260680",
+									ImageColor3 = Color3.fromRGB(25, 25, 35),
+									ImageTransparency = 1,
+									ScaleType = Enum.ScaleType.Fit,
+								},
+								Attributes = { _ImageName = "1106_59__Frame__Stroke2_gray" },
+							},
+							{
+								Primitive = "ImageLabel",
+								Props = {
+									Name = "Stroke",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									ClipsDescendants = true,
+									LayoutOrder = 2,
+									Position = UDim2.fromScale(0.0061, 0.0156),
+									Size = UDim2.fromScale(0.9877, 0.9688),
+									ZIndex = 3,
+									Image = "rbxassetid://133599986883001",
+									ImageColor3 = Color3.fromRGB(255, 183, 0),
+									ImageTransparency = 1,
+									ScaleType = Enum.ScaleType.Fit,
+								},
+								Attributes = { _ImageName = "1106_60__Frame__Stroke_gray" },
+							},
+							{
+								Primitive = "ImageLabel",
+								Props = {
+									Name = "Mask",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 3,
+									Position = UDim2.fromScale(0.0061, 0.0156),
+									Size = UDim2.fromScale(0.9877, 0.9688),
+									ZIndex = 4,
+									Image = "rbxassetid://88059237690588",
+									ImageTransparency = 1,
+								},
+								Attributes = { _ImageName = "928_93__Frame__Mask_image" },
+							},
+						},
+					},
+					{
+						Primitive = "TextLabel",
+						Props = {
+							Name = "Name1",
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 2,
+							Position = UDim2.fromScale(0.3271, 0.2656),
+							Size = UDim2.fromScale(0.3718, 0.4609),
+							ZIndex = 3,
+							Text = "FIRE",
+							TextColor3 = Color3.fromRGB(255, 255, 255),
+							TextSize = 50,
+							TextWrapped = true,
+							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+							RichText = true,
+							TextScaled = true,
+						},
+						Children = {
+							{
+								Primitive = "UIStroke",
+								Props = {
+									Thickness = 0.06,
+									StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+								},
+							},
+						},
+					},
+					--[[
+						NEW TARGET, left of FIRE and sized with it (inside it): lets go of a homing missile's target so the
+						next press places another (MatchHud's Aim, 2026-11-25). A copy of the lobby's blue LOCAL button
+					]]
+					{
+						Primitive = "ImageButton",
+						Id = "U_Retarget",
+						Props = {
+							AnchorPoint = Vector2.new(1, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 3,
+							Position = UDim2.fromScale(-0.06, 0.5),
+							Size = UDim2.fromScale(0.86, 0.86),
+							Visible = false,
+							ZIndex = 10,
+						},
+						Attributes = {
+							ClickSound_Name = "Button_Click",
+							ClickSound_PitchMax = 1,
+							ClickSound_PitchMin = 1,
+							ClickSound_PlaybackSpeed = 1,
+							ClickSound_SoundGroup = "UI",
+							ClickSound_TimePosition = 0,
+							ClickSound_Volume = 1,
+							HoverSound_Name = "Button_Hover",
+							HoverSound_PitchMax = 1,
+							HoverSound_PitchMin = 1,
+							HoverSound_PlaybackSpeed = 1,
+							HoverSound_SoundGroup = "UI",
+							HoverSound_TimePosition = 0,
+							HoverSound_Volume = 1,
+							Utils_ClickScale = 0.92,
+							Utils_HoverScale = 1.04,
+							Utils_ScaleAnimation = "Bouncy",
+						},
+						Tags = { ["Utils_ButtonScale"] = {}, ["Utils_ButtonSound"] = {} },
+						Children = {
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Background",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Size = UDim2.fromScale(1, 1),
+								},
+								Children = {
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Size = UDim2.fromScale(1, 1.0132),
+											Image = "rbxassetid://131039808301910",
+											ImageColor3 = Color3.fromRGB(112, 192, 255),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = { _ImageName = "1316_16__LobbyRework__Main_gray" },
+									},
+									-- The outline: the shape in ink, nudged 3 design pixels each way round it, under the fill (as LOCAL's)
+									{
+										Primitive = "Frame",
+										Props = {
+											Name = "Stroke2",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 1,
+											Size = UDim2.fromScale(1, 1.0132),
+											ZIndex = 0,
+										},
+										Children = {
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0149, 0),
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://131039808301910",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 1,
+													Position = UDim2.fromScale(0.0105, 0.0275),
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://131039808301910",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 2,
+													Position = UDim2.fromScale(0, 0.039),
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://131039808301910",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 3,
+													Position = UDim2.fromScale(-0.0105, 0.0275),
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://131039808301910",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 4,
+													Position = UDim2.fromScale(-0.0149, 0),
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://131039808301910",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 5,
+													Position = UDim2.fromScale(-0.0105, -0.0275),
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://131039808301910",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 6,
+													Position = UDim2.fromScale(0, -0.039),
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://131039808301910",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 7,
+													Position = UDim2.fromScale(0.0105, -0.0275),
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://131039808301910",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+											},
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Mask",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 2,
+											Size = UDim2.fromScale(1, 1),
+											ZIndex = 3,
+											Image = "rbxassetid://116647573905121",
+										},
+										Attributes = { _ImageName = "1316_18__LobbyRework__Mask_image" },
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 3,
+											Size = UDim2.fromScale(1, 1.0132),
+											ZIndex = 4,
+											Image = "rbxassetid://128505522620358",
+											ImageColor3 = Color3.fromRGB(190, 225, 255),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = { _ImageName = "1316_21__LobbyRework__Stroke_gray" },
+									},
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Props = {
+									Name = "Name1",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0.1, 0.27),
+									Size = UDim2.fromScale(0.8, 0.46),
+									ZIndex = 5,
+									Text = "New target",
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextSize = 24,
+									TextScaled = true,
+									TextWrapped = true,
+									RichText = true,
+								},
+								Children = {
+									{
+										Primitive = "UIStroke",
+										Props = {
+											Thickness = 0.07,
+											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+										},
+									},
+								},
+							},
+							{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 2.543 } },
+						},
+					},
+					{
 						Primitive = "UIAspectRatioConstraint",
 						Props = {
-							AspectRatio = 3.358,
+							AspectRatio = 2.543,
 						},
 					},
 				},
@@ -2845,7 +3832,7 @@ local _gui = {
 									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
 									{
 										Primitive = "UIStroke",
-										Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+										Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.06, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 									},
 								},
 							},
@@ -2870,7 +3857,7 @@ local _gui = {
 									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
 									{
 										Primitive = "UIStroke",
-										Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+										Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 									},
 								},
 							},
@@ -2934,6 +3921,40 @@ local _gui = {
 										Primitive = "ImageLabel",
 										Props = {
 											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.005, 0.049),
+											Size = UDim2.fromScale(0.9899, 0.902),
+											Image = "rbxassetid://135704870689213",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "958_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.005, 0.049),
+											Size = UDim2.fromScale(0.9899, 0.902),
+											Image = "rbxassetid://135704870689213",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "958_2__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
 											BackgroundTransparency = 1,
 											BorderSizePixel = 0,
 											LayoutOrder = 0,
@@ -3033,7 +4054,7 @@ local _gui = {
 							{
 								Primitive = "UIStroke",
 								Props = {
-									Thickness = 0.1,
+									Thickness = 0.07,
 									StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 								},
 							},
@@ -3041,129 +4062,360 @@ local _gui = {
 					},
 				},
 			},
-			-- The player's snail is out: watch the rest, or leave keeping their place (the studio's KnockedOut, 2026-11-12)
+			-- The player's snail is out, RoWorld's way: who did it, the place and what it paid, and Play again, Spectate or Lobby
 			{
 				Primitive = "Frame",
 				Id = "U_KnockedOut",
-				Props = {
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					BackgroundTransparency = 1,
-					BorderSizePixel = 0,
-					LayoutOrder = 1,
-					Position = UDim2.fromScale(0.5, 0.4889),
-					Size = UDim2.fromScale(0.3643, 0.2278),
-					ZIndex = 2,
-					Visible = false,
-				},
+				Visible = false,
+				Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromScale(0.86, 0.9) } },
+				Props = { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, BorderSizePixel = 0, Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.4, 0.5), ZIndex = 10 },
 				Children = {
+					{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 1.3 } },
+					{ Primitive = "UIScale", Id = "S_Pop", Props = { Scale = 1 } },
+					-- The panel: the screens' dark fill (25, 25, 35), a dark outer line and the grey line inside it
 					{
 						Primitive = "Frame",
-						Props = { Name = "Background", BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 0, Size = UDim2.fromScale(1, 1) },
+						Props = { Name = "Bg_Bottom", BackgroundColor3 = Color3.fromRGB(25, 25, 35), BorderSizePixel = 0, Size = UDim2.fromScale(1, 1), ZIndex = 10 },
 						Children = {
+							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.06, 0) } },
+							{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { Color = Color3.fromRGB(25, 25, 35), Thickness = 2 } },
 							{
-								Primitive = "ImageLabel",
-								Props = {
-									Name = "Main",
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									LayoutOrder = 0,
-									Position = UDim2.fromScale(0.0006, 0.0203),
-									Size = UDim2.fromScale(0.9987, 0.9593),
-									Image = "rbxassetid://78230659393255",
-									ImageColor3 = Color3.fromRGB(25, 25, 35),
-									ScaleType = Enum.ScaleType.Fit,
-								},
-								Attributes = { _ImageName = "1212_690__KnockedOut__Main_gray" },
-							},
-							{
-								Primitive = "ImageLabel",
-								Props = {
-									Name = "Stroke2",
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									ClipsDescendants = true,
-									LayoutOrder = 1,
-									Size = UDim2.fromScale(1, 1.0041),
-									ZIndex = 2,
-									Image = "rbxassetid://91693107904444",
-									ImageColor3 = Color3.fromRGB(25, 25, 35),
-									ScaleType = Enum.ScaleType.Fit,
-								},
-								Attributes = { _ImageName = "1212_691__KnockedOut__Stroke2_gray" },
-							},
-							{
-								Primitive = "ImageLabel",
-								Props = {
-									Name = "Stroke",
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									ClipsDescendants = true,
-									LayoutOrder = 2,
-									Position = UDim2.fromScale(0.0029, 0.0081),
-									Size = UDim2.fromScale(0.9943, 0.9837),
-									ZIndex = 3,
-									Image = "rbxassetid://119572948242773",
-									ImageColor3 = Color3.fromRGB(130, 130, 130),
-									ScaleType = Enum.ScaleType.Fit,
-								},
-								Attributes = { _ImageName = "1212_692__KnockedOut__Stroke_gray" },
-							},
-							{
-								Primitive = "ImageLabel",
-								Props = {
-									Name = "Mask",
-									BackgroundTransparency = 1,
-									BorderSizePixel = 0,
-									ClipsDescendants = true,
-									LayoutOrder = 3,
-									Position = UDim2.fromScale(0.0006, 0.0203),
-									Size = UDim2.fromScale(0.9987, 0.9593),
-									ZIndex = 4,
-									Image = "rbxassetid://132159382445862",
-								},
-								Attributes = { _ImageName = "1212_693__KnockedOut__Mask_image" },
+								Primitive = "UIStroke",
+								Tags = { Utils_UIStroke = {} },
+								Props = { Name = "UIStroke_Inner", BorderStrokePosition = Enum.BorderStrokePosition.Inner, Color = Color3.fromRGB(130, 130, 130), Thickness = 3 },
 							},
 						},
 					},
 					{
 						Primitive = "TextLabel",
+						Id = "S_Title",
 						Props = {
-							Name = "HeaderText",
+							AnchorPoint = Vector2.new(0.5, 0.5),
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
-							LayoutOrder = 1,
-							Position = UDim2.fromScale(0.1445, 0.1951),
-							Size = UDim2.fromScale(0.7533, 0.1911),
-							ZIndex = 2,
-							Text = "YOU WERE KNOCKED OUT!",
-							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+							Position = UDim2.fromScale(0.5, 0.11),
+							Size = UDim2.fromScale(0.84, 0.13),
+							ZIndex = 12,
+							Text = "KNOCKED OUT!",
 							TextColor3 = Color3.fromRGB(255, 255, 255),
-							TextSize = 40,
-							TextScaled = true,
-							TextWrapped = true,
-							TextXAlignment = Enum.TextXAlignment.Left,
+							TextXAlignment = Enum.TextXAlignment.Center,
+							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 							RichText = true,
+							TextScaled = true,
 						},
-						Tags = { TextCase_Upper = {} },
 						Children = {
+							{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 64 } },
+							{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.06 } },
+							{ Primitive = "UIGradient", Props = { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(255, 236, 230), Color3.fromRGB(255, 96, 86)) } },
+						},
+					},
+					{
+						Primitive = "TextLabel",
+						Id = "S_Cause",
+						Tags = { TextCase_Upper = {} },
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0.215),
+							Size = UDim2.fromScale(0.86, 0.06),
+							ZIndex = 12,
+							Text = "You fell into the water",
+							TextColor3 = Color3.fromRGB(210, 210, 225),
+							TextXAlignment = Enum.TextXAlignment.Center,
+							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+							RichText = true,
+							TextScaled = true,
+						},
+						Children = { { Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 28 } }, { Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } } },
+					},
+					-- Who knocked them out: their picture in their team's colour, their name, and the weapon
+					{
+						Primitive = "Frame",
+						Id = "S_Killer",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundColor3 = Color3.fromRGB(16, 16, 24),
+							BackgroundTransparency = 0.2,
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0.37),
+							Size = UDim2.fromScale(0.74, 0.17),
+							ZIndex = 11,
+						},
+						Children = {
+							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.22, 0) } },
+							{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(60, 62, 78), Thickness = 2 } },
 							{
-								Primitive = "UIStroke",
-								Props = { Thickness = 0.075, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+								Primitive = "ImageLabel",
+								Id = "S_KillerAvatar",
+								Props = {
+									AnchorPoint = Vector2.new(0, 0.5),
+									BackgroundColor3 = Color3.fromRGB(40, 40, 58),
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.03, 0.5),
+									Size = UDim2.fromScale(0.78, 0.78),
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									ZIndex = 12,
+									ScaleType = Enum.ScaleType.Crop,
+								},
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.22, 0) } },
+									{
+										Primitive = "UIStroke",
+										Id = "S_KillerStroke",
+										Props = { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(255, 140, 20), StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.05 },
+									},
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_KillerName",
+								Props = {
+									AnchorPoint = Vector2.new(0, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.2, 0.36),
+									Size = UDim2.fromScale(0.6, 0.42),
+									ZIndex = 12,
+									Text = "Rascal",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextXAlignment = Enum.TextXAlignment.Left,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 36 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_KillerLine",
+								Props = {
+									AnchorPoint = Vector2.new(0, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.2, 0.72),
+									Size = UDim2.fromScale(0.6, 0.26),
+									ZIndex = 12,
+									Text = "KNOCKED YOU OUT",
+									TextColor3 = Color3.fromRGB(190, 190, 205),
+									TextXAlignment = Enum.TextXAlignment.Left,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 20 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
+								},
+							},
+							{
+								Primitive = "ImageLabel",
+								Id = "S_Weapon",
+								Props = {
+									AnchorPoint = Vector2.new(1, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.96, 0.5),
+									Size = UDim2.fromScale(0.86, 0.86),
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									ZIndex = 12,
+									ScaleType = Enum.ScaleType.Fit,
+								},
+							},
+						},
+					},
+					-- The place and what it paid (or, while their team is still in, that it pays at the end)
+					{
+						Primitive = "Frame",
+						Props = {
+							Name = "Result",
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundColor3 = Color3.fromRGB(16, 16, 24),
+							BackgroundTransparency = 0.2,
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0.6),
+							Size = UDim2.fromScale(0.86, 0.22),
+							ZIndex = 11,
+						},
+						Children = {
+							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.22, 0) } },
+							{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(60, 62, 78), Thickness = 2 } },
+							{
+								Primitive = "TextLabel",
+								Id = "S_Place",
+								Tags = { TextCase_Upper = {} },
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.2, 0.42),
+									Size = UDim2.fromScale(0.32, 0.56),
+									ZIndex = 12,
+									Text = "3RD",
+									TextColor3 = Color3.fromRGB(255, 215, 110),
+									TextXAlignment = Enum.TextXAlignment.Center,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 60 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Props = {
+									Name = "PlaceLabel",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.2, 0.8),
+									Size = UDim2.fromScale(0.32, 0.22),
+									ZIndex = 12,
+									Text = "PLACE",
+									TextColor3 = Color3.fromRGB(190, 190, 205),
+									TextXAlignment = Enum.TextXAlignment.Center,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 20 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
+								},
+							},
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Divider",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundColor3 = Color3.fromRGB(60, 62, 78),
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.39, 0.5),
+									Size = UDim2.fromScale(0.004, 0.66),
+									ZIndex = 12,
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_Diamonds",
+								Tags = { TextCase_Upper = {} },
+								Props = {
+									AnchorPoint = Vector2.new(0, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.46, 0.32),
+									Size = UDim2.fromScale(0.5, 0.36),
+									ZIndex = 12,
+									Text = "+25 DIAMONDS",
+									TextColor3 = Color3.fromRGB(255, 215, 110),
+									TextXAlignment = Enum.TextXAlignment.Left,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 34 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_Xp",
+								Tags = { TextCase_Upper = {} },
+								Props = {
+									AnchorPoint = Vector2.new(0, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.46, 0.7),
+									Size = UDim2.fromScale(0.5, 0.36),
+									ZIndex = 12,
+									Text = "+120 XP",
+									TextColor3 = Color3.fromRGB(120, 190, 255),
+									TextXAlignment = Enum.TextXAlignment.Left,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 34 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_Pending",
+								Props = {
+									AnchorPoint = Vector2.new(0, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.46, 0.5),
+									Size = UDim2.fromScale(0.5, 0.7),
+									ZIndex = 12,
+									Text = "Your team is still in! Your reward comes when the match ends",
+									TextColor3 = Color3.fromRGB(210, 210, 225),
+									TextXAlignment = Enum.TextXAlignment.Left,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
+								},
 							},
 						},
 					},
 					{
+						Primitive = "TextLabel",
+						Id = "S_Stats",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0.765),
+							Size = UDim2.fromScale(0.86, 0.05),
+							ZIndex = 12,
+							Text = "Damage 0   ·   Knockouts 0   ·   Best shot 0",
+							TextColor3 = Color3.fromRGB(190, 190, 205),
+							TextXAlignment = Enum.TextXAlignment.Center,
+							FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+							RichText = true,
+							TextScaled = true,
+						},
+						Children = { { Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 22 } }, { Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } } },
+					},
+					-- Play again (straight into another match like this one), Spectate (closes this), Lobby
+					{
 						Primitive = "Frame",
-						Props = { Name = "ButtonList", BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 2, Position = UDim2.fromScale(0.1191, 0.5), Size = UDim2.fromScale(0.7205, 0.2927), ZIndex = 3 },
+						Props = {
+							Name = "ButtonList",
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							Position = UDim2.fromScale(0.5, 0.885),
+							Size = UDim2.fromScale(0.92, 0.13),
+							ZIndex = 12,
+						},
 						Children = {
 							{
 								Primitive = "UIListLayout",
-								Props = { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0.0099, 0) },
+								Props = {
+									FillDirection = Enum.FillDirection.Horizontal,
+									HorizontalAlignment = Enum.HorizontalAlignment.Center,
+									VerticalAlignment = Enum.VerticalAlignment.Center,
+									SortOrder = Enum.SortOrder.LayoutOrder,
+									Padding = UDim.new(0.02, 0),
+								},
 							},
 							{
 								Primitive = "ImageButton",
-								Id = "S_Spectate",
-								Props = { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 0, Size = UDim2.fromScale(0.495, 1), AutoButtonColor = false },
+								Id = "S_PlayAgain",
+								Props = { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 0, Size = UDim2.fromScale(0.32, 1), AutoButtonColor = false },
 								Attributes = {
 									ClickSound_Name = "Button_Click",
 									ClickSound_PitchMax = 1,
@@ -3251,6 +4503,7 @@ local _gui = {
 									},
 									{
 										Primitive = "TextLabel",
+										Tags = { TextCase_Upper = {} },
 										Props = {
 											Name = "Name1",
 											AnchorPoint = Vector2.new(0.5, 0.5),
@@ -3260,7 +4513,7 @@ local _gui = {
 											Position = UDim2.fromScale(0.5, 0.5),
 											Size = UDim2.fromScale(0.88, 0.5),
 											ZIndex = 2,
-											Text = "SPECTATE",
+											Text = "PLAY AGAIN",
 											FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 											TextColor3 = Color3.fromRGB(255, 255, 255),
 											TextSize = 30,
@@ -3271,7 +4524,7 @@ local _gui = {
 										Children = {
 											{
 												Primitive = "UIStroke",
-												Props = { Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+												Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 											},
 										},
 									},
@@ -3297,8 +4550,144 @@ local _gui = {
 							},
 							{
 								Primitive = "ImageButton",
+								Id = "S_Spectate",
+								Props = { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 1, Size = UDim2.fromScale(0.32, 1), AutoButtonColor = false },
+								Attributes = {
+									ClickSound_Name = "Button_Click",
+									ClickSound_PitchMax = 1,
+									ClickSound_PitchMin = 1,
+									ClickSound_PlaybackSpeed = 1,
+									ClickSound_SoundGroup = "UI",
+									ClickSound_TimePosition = 0,
+									ClickSound_Volume = 1,
+									HoverSound_Name = "Button_Hover",
+									HoverSound_PitchMax = 1,
+									HoverSound_PitchMin = 1,
+									HoverSound_PlaybackSpeed = 1,
+									HoverSound_SoundGroup = "UI",
+									HoverSound_TimePosition = 0,
+									HoverSound_Volume = 1,
+									Utils_ClickScale = 0.92,
+									Utils_HoverScale = 1.04,
+									Utils_ScaleAnimation = "Bouncy",
+								},
+								Tags = { Utils_ButtonKey = { Utils_GamepadKey = "ButtonX" }, Utils_ButtonScale = {}, Utils_ButtonSound = {} },
+								Children = {
+									{
+										Primitive = "Frame",
+										Props = { Name = "Background", BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 0, Size = UDim2.fromScale(1, 1) },
+										Children = {
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "Main",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Size = UDim2.fromScale(1, 1),
+													Image = "rbxassetid://103225030513430",
+													ImageColor3 = Color3.fromRGB(72, 80, 104),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = { _ImageName = "1212_699__KnockedOut__Main_gray" },
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "Stroke2",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 1,
+													Size = UDim2.fromScale(1, 1),
+													ZIndex = 2,
+													Image = "rbxassetid://100583045352984",
+													ImageColor3 = Color3.fromRGB(0, 0, 0),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = { _ImageName = "1212_700__KnockedOut__Stroke2_gray" },
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "Mask",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													ClipsDescendants = true,
+													LayoutOrder = 2,
+													Size = UDim2.fromScale(1, 1),
+													ZIndex = 3,
+													Image = "rbxassetid://127081990789300",
+													Visible = false,
+												},
+												Attributes = { _ImageName = "1212_701__KnockedOut__Mask_image" },
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "Stroke",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 3,
+													Size = UDim2.fromScale(1, 1),
+													ZIndex = 4,
+													Image = "rbxassetid://75946274003355",
+													ImageColor3 = Color3.fromRGB(150, 160, 190),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = { _ImageName = "1212_704__KnockedOut__Stroke_gray" },
+											},
+										},
+									},
+									{
+										Primitive = "TextLabel",
+										Props = {
+											Name = "Name1",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 1,
+											Position = UDim2.fromScale(0.5, 0.5),
+											Size = UDim2.fromScale(0.88, 0.5),
+											ZIndex = 2,
+											Text = "SPECTATE",
+											FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+											TextColor3 = Color3.fromRGB(255, 255, 255),
+											TextSize = 30,
+											TextScaled = true,
+											TextWrapped = true,
+											RichText = true,
+										},
+										Children = {
+											{
+												Primitive = "UIStroke",
+												Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+											},
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "PadHint",
+											AnchorPoint = Vector2.new(0.5, 0.5),
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											Image = "rbxassetid://117564937183685",
+											Position = UDim2.fromScale(0.06, 0.2),
+											ScaleType = Enum.ScaleType.Fit,
+											Size = UDim2.fromScale(0.6, 0.6),
+											SizeConstraint = Enum.SizeConstraint.RelativeYY,
+											Visible = false,
+											ZIndex = 8,
+										},
+										Attributes = { Console_Action = "Spectate" },
+										Tags = { Console_Hint = {} },
+									},
+								},
+							},
+							{
+								Primitive = "ImageButton",
 								Id = "S_Leave",
-								Props = { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 1, Size = UDim2.fromScale(0.495, 1), ZIndex = 2, AutoButtonColor = false },
+								Props = { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 2, Size = UDim2.fromScale(0.32, 1), ZIndex = 2, AutoButtonColor = false },
 								Attributes = {
 									ClickSound_Name = "Button_Click",
 									ClickSound_PitchMax = 1,
@@ -3395,7 +4784,7 @@ local _gui = {
 											Position = UDim2.fromScale(0.5, 0.5),
 											Size = UDim2.fromScale(0.88, 0.5),
 											ZIndex = 2,
-											Text = "LEAVE",
+											Text = "LOBBY",
 											FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 											TextColor3 = Color3.fromRGB(255, 255, 255),
 											TextSize = 30,
@@ -3406,7 +4795,7 @@ local _gui = {
 										Children = {
 											{
 												Primitive = "UIStroke",
-												Props = { Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+												Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 											},
 										},
 									},
@@ -3432,10 +4821,6 @@ local _gui = {
 							},
 						},
 					},
-					{
-						Primitive = "UIAspectRatioConstraint",
-						Props = { AspectRatio = 2.8432 },
-					},
 				},
 			},
 			-- Before the match fills
@@ -3460,12 +4845,13 @@ local _gui = {
 				Primitive = "Frame",
 				Id = "U_TurnCallout",
 				Visible = false,
+				Tags = { Utils_PlatformSize = { Utils_MobileSize = UDim2.fromScale(0.72, 0.15) } },
 				Props = {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundTransparency = 1,
 					BorderSizePixel = 0,
-					Position = UDim2.fromScale(0.5, 0.34),
-					Size = UDim2.fromScale(1, 0.14),
+					Position = UDim2.fromScale(0.5, 0.3),
+					Size = UDim2.fromScale(0.62, 0.09),
 					ZIndex = 10,
 				},
 				Children = {
@@ -3475,7 +4861,7 @@ local _gui = {
 						Props = {
 							AnchorPoint = Vector2.new(0.5, 0.5),
 							BackgroundColor3 = Color3.fromRGB(14, 14, 22),
-							BackgroundTransparency = 0.2,
+							BackgroundTransparency = 0.4,
 							BorderSizePixel = 0,
 							Position = UDim2.fromScale(0.5, 0.5),
 							Size = UDim2.fromScale(1, 1),
@@ -3487,8 +4873,8 @@ local _gui = {
 								Props = {
 									Transparency = NumberSequence.new({
 										NumberSequenceKeypoint.new(0, 1),
-										NumberSequenceKeypoint.new(0.22, 0),
-										NumberSequenceKeypoint.new(0.78, 0),
+										NumberSequenceKeypoint.new(0.3, 0),
+										NumberSequenceKeypoint.new(0.7, 0),
 										NumberSequenceKeypoint.new(1, 1),
 									}),
 								},
@@ -3499,9 +4885,10 @@ local _gui = {
 								Props = {
 									AnchorPoint = Vector2.new(0.5, 0),
 									BackgroundColor3 = Color3.fromRGB(255, 140, 20),
+									BackgroundTransparency = 0.25,
 									BorderSizePixel = 0,
 									Position = UDim2.fromScale(0.5, 0),
-									Size = UDim2.fromScale(1, 0.045),
+									Size = UDim2.fromScale(1, 0.03),
 									ZIndex = 11,
 								},
 								Children = {
@@ -3510,8 +4897,8 @@ local _gui = {
 										Props = {
 											Transparency = NumberSequence.new({
 												NumberSequenceKeypoint.new(0, 1),
-												NumberSequenceKeypoint.new(0.3, 0),
-												NumberSequenceKeypoint.new(0.7, 0),
+												NumberSequenceKeypoint.new(0.34, 0),
+												NumberSequenceKeypoint.new(0.66, 0),
 												NumberSequenceKeypoint.new(1, 1),
 											}),
 										},
@@ -3524,9 +4911,10 @@ local _gui = {
 								Props = {
 									AnchorPoint = Vector2.new(0.5, 1),
 									BackgroundColor3 = Color3.fromRGB(255, 140, 20),
+									BackgroundTransparency = 0.25,
 									BorderSizePixel = 0,
 									Position = UDim2.fromScale(0.5, 1),
-									Size = UDim2.fromScale(1, 0.045),
+									Size = UDim2.fromScale(1, 0.03),
 									ZIndex = 11,
 								},
 								Children = {
@@ -3535,8 +4923,8 @@ local _gui = {
 										Props = {
 											Transparency = NumberSequence.new({
 												NumberSequenceKeypoint.new(0, 1),
-												NumberSequenceKeypoint.new(0.3, 0),
-												NumberSequenceKeypoint.new(0.7, 0),
+												NumberSequenceKeypoint.new(0.34, 0),
+												NumberSequenceKeypoint.new(0.66, 0),
 												NumberSequenceKeypoint.new(1, 1),
 											}),
 										},
@@ -3545,6 +4933,7 @@ local _gui = {
 							},
 						},
 					},
+					-- The avatar, then a clear gap, then the title over its line, at 6 times as wide as tall
 					{
 						Primitive = "Frame",
 						Id = "S_Content",
@@ -3553,12 +4942,12 @@ local _gui = {
 							BackgroundTransparency = 1,
 							BorderSizePixel = 0,
 							Position = UDim2.fromScale(0.5, 0.5),
-							Size = UDim2.fromScale(0.9, 0.86),
+							Size = UDim2.fromScale(0.9, 0.76),
 							ZIndex = 12,
 						},
 						Children = {
 							{ Primitive = "UIScale", Id = "S_Pop" },
-							{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 5.0203 } },
+							{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 6 } },
 							{
 								Primitive = "ImageLabel",
 								Id = "S_Avatar",
@@ -3567,7 +4956,7 @@ local _gui = {
 									BackgroundColor3 = Color3.fromRGB(40, 40, 58),
 									BorderSizePixel = 0,
 									Position = UDim2.fromScale(0, 0.5),
-									Size = UDim2.fromScale(0.2, 0.92),
+									Size = UDim2.fromScale(0.2, 0.86),
 									ZIndex = 12,
 									Image = "rbxassetid://119874218679833",
 									ScaleType = Enum.ScaleType.Crop,
@@ -3594,7 +4983,7 @@ local _gui = {
 										Props = {
 											ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 											Color = Color3.fromRGB(255, 140, 20),
-											Thickness = 0.06,
+											Thickness = 0.04,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -3607,8 +4996,8 @@ local _gui = {
 									AnchorPoint = Vector2.new(0, 0),
 									BackgroundTransparency = 1,
 									BorderSizePixel = 0,
-									Position = UDim2.fromScale(0.2, 0.04),
-									Size = UDim2.fromScale(0.8, 0.6),
+									Position = UDim2.fromScale(0.185, 0.06),
+									Size = UDim2.fromScale(0.815, 0.54),
 									ZIndex = 12,
 									Text = "Your turn!",
 									TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -3634,7 +5023,7 @@ local _gui = {
 										Primitive = "UIStroke",
 										Props = {
 											Color = Color3.fromRGB(20, 14, 10),
-											Thickness = 0.08,
+											Thickness = 0.045,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
@@ -3647,11 +5036,11 @@ local _gui = {
 									AnchorPoint = Vector2.new(0, 1),
 									BackgroundTransparency = 1,
 									BorderSizePixel = 0,
-									Position = UDim2.fromScale(0.205, 0.96),
-									Size = UDim2.fromScale(0.8, 0.3),
+									Position = UDim2.fromScale(0.188, 0.94),
+									Size = UDim2.fromScale(0.812, 0.28),
 									ZIndex = 12,
 									Text = "Aim and fire!",
-									TextColor3 = Color3.fromRGB(225, 225, 235),
+									TextColor3 = Color3.fromRGB(210, 210, 225),
 									TextSize = 32,
 									TextXAlignment = Enum.TextXAlignment.Left,
 									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
@@ -3666,10 +5055,316 @@ local _gui = {
 										Primitive = "UIStroke",
 										Props = {
 											Color = Color3.fromRGB(20, 14, 10),
-											Thickness = 0.08,
+											Thickness = 0.05,
 											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 										},
 									},
+								},
+							},
+						},
+					},
+				},
+			},
+			-- The round's intro (BattleIntro, 2026-11-24): the screen's edges darken as the snails drop in and GET READY draws
+			-- in letter-spaced gold over a line; on the landing a white flash, THE BATTLE over a huge gold BEGINS! slamming in
+			-- tilted, then it all zooms out and fades. Its own look, not the turn callout's band
+			{
+				Primitive = "Frame",
+				Id = "U_BattleIntro",
+				Visible = false,
+				Props = {
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					BackgroundTransparency = 1,
+					BorderSizePixel = 0,
+					LayoutOrder = 0,
+					Position = UDim2.fromScale(0.5, 0.5),
+					Size = UDim2.fromScale(1, 1),
+					ZIndex = 40,
+				},
+				Children = {
+					-- The vignette: four black edges fading inwards (their BackgroundTransparency fades the whole of it)
+					{
+						Primitive = "Frame",
+						Id = "S_VignetteTop",
+						Props = {
+							BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 0,
+							Size = UDim2.fromScale(1, 0.34),
+							ZIndex = 40,
+						},
+						Children = {
+							{
+								Primitive = "UIGradient",
+								Props = {
+									Rotation = 90,
+									Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }),
+								},
+							},
+						},
+					},
+					{
+						Primitive = "Frame",
+						Id = "S_VignetteBottom",
+						Props = {
+							AnchorPoint = Vector2.new(0, 1),
+							BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 1,
+							Position = UDim2.fromScale(0, 1),
+							Size = UDim2.fromScale(1, 0.34),
+							ZIndex = 40,
+						},
+						Children = {
+							{
+								Primitive = "UIGradient",
+								Props = {
+									Rotation = -90,
+									Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }),
+								},
+							},
+						},
+					},
+					{
+						Primitive = "Frame",
+						Id = "S_VignetteLeft",
+						Props = {
+							BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 2,
+							Size = UDim2.fromScale(0.26, 1),
+							ZIndex = 40,
+						},
+						Children = {
+							{
+								Primitive = "UIGradient",
+								Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }) },
+							},
+						},
+					},
+					{
+						Primitive = "Frame",
+						Id = "S_VignetteRight",
+						Props = {
+							AnchorPoint = Vector2.new(1, 0),
+							BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 3,
+							Position = UDim2.fromScale(1, 0),
+							Size = UDim2.fromScale(0.26, 1),
+							ZIndex = 40,
+						},
+						Children = {
+							{
+								Primitive = "UIGradient",
+								Props = {
+									Rotation = 180,
+									Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }),
+								},
+							},
+						},
+					},
+					-- The landing's white flash
+					{
+						Primitive = "Frame",
+						Id = "S_Flash",
+						Props = {
+							BackgroundColor3 = Color3.fromRGB(255, 250, 235),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 4,
+							Size = UDim2.fromScale(1, 1),
+							ZIndex = 41,
+						},
+					},
+					-- GET READY, letter-spaced gold over a gold line drawing out from the middle
+					{
+						Primitive = "Frame",
+						Id = "S_Ready",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 5,
+							Position = UDim2.fromScale(0.5, 0.3),
+							Size = UDim2.fromScale(0.6, 0.09),
+							ZIndex = 42,
+						},
+						Children = {
+							{ Primitive = "UIScale", Id = "S_ReadyScale" },
+							{
+								Primitive = "TextLabel",
+								Id = "S_ReadyText",
+								Props = {
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Size = UDim2.fromScale(1, 0.78),
+									ZIndex = 42,
+									Text = "G E T   R E A D Y",
+									TextColor3 = Color3.fromRGB(255, 214, 110),
+									TextTransparency = 1,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+									{
+										Primitive = "UIStroke",
+										Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.06, Transparency = 1 },
+									},
+								},
+							},
+							{
+								Primitive = "Frame",
+								Id = "S_ReadyLine",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 1),
+									BackgroundColor3 = Color3.fromRGB(255, 196, 70),
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0.5, 1),
+									Size = UDim2.fromScale(0, 0.06),
+									ZIndex = 42,
+								},
+								Children = {
+									{
+										Primitive = "UIGradient",
+										Props = {
+											Transparency = NumberSequence.new({
+												NumberSequenceKeypoint.new(0, 1),
+												NumberSequenceKeypoint.new(0.5, 0),
+												NumberSequenceKeypoint.new(1, 1),
+											}),
+										},
+									},
+								},
+							},
+						},
+					},
+					-- THE BATTLE over a huge gold BEGINS!, slammed in tilted (S_SlamScale, its Rotation)
+					{
+						Primitive = "Frame",
+						Id = "S_Slam",
+						Props = {
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 6,
+							Position = UDim2.fromScale(0.5, 0.4),
+							Rotation = -4,
+							Size = UDim2.fromScale(0.62, 0.3),
+							Visible = false,
+							ZIndex = 43,
+						},
+						Children = {
+							{ Primitive = "UIScale", Id = "S_SlamScale" },
+							-- The shockwave: a gold ring bursting out from behind the words (grown and faded by code)
+							{
+								Primitive = "Frame",
+								Id = "S_Shock",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Position = UDim2.fromScale(0.5, 0.55),
+									Size = UDim2.fromScale(0.3, 0.3),
+									SizeConstraint = Enum.SizeConstraint.RelativeXX,
+									ZIndex = 42,
+								},
+								Children = {
+									{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
+									{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(255, 210, 90), Thickness = 10, Transparency = 1 } },
+								},
+							},
+							-- A streak of light across the middle, behind BEGINS! (grown by code)
+							{
+								Primitive = "Frame",
+								Id = "S_Streak",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundColor3 = Color3.fromRGB(255, 225, 140),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 1,
+									Position = UDim2.fromScale(0.5, 0.6),
+									Size = UDim2.fromScale(0, 0.1),
+									ZIndex = 42,
+								},
+								Children = {
+									{
+										Primitive = "UIGradient",
+										Props = {
+											Transparency = NumberSequence.new({
+												NumberSequenceKeypoint.new(0, 1),
+												NumberSequenceKeypoint.new(0.5, 0),
+												NumberSequenceKeypoint.new(1, 1),
+											}),
+										},
+									},
+								},
+							},
+							{
+								Primitive = "TextLabel",
+								Id = "S_SlamTop",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 1),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 2,
+									Position = UDim2.fromScale(0.5, 0.34),
+									Size = UDim2.fromScale(0.5, 0.26),
+									ZIndex = 44,
+									Text = "THE BATTLE",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextYAlignment = Enum.TextYAlignment.Bottom,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.06 } },
+								},
+							},
+							--[[
+								BEGINS!, right under THE BATTLE: 100 px text grown by S_MainScale to INTRO_MAIN_TEXT_SHARE of the screen's height
+								by code, since scaled text stops at 100 px
+							]]
+							{
+								Primitive = "TextLabel",
+								Id = "S_SlamMain",
+								Props = {
+									AnchorPoint = Vector2.new(0.5, 0),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 3,
+									Position = UDim2.fromScale(0.5, 0.3),
+									Size = UDim2.fromOffset(600, 110),
+									ZIndex = 44,
+									Text = "BEGINS!",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextSize = 100,
+									TextYAlignment = Enum.TextYAlignment.Top,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+								},
+								Children = {
+									{ Primitive = "UIScale", Id = "S_MainScale" },
+									{
+										Primitive = "UIGradient",
+										Props = {
+											Color = ColorSequence.new(Color3.fromRGB(255, 240, 150), Color3.fromRGB(255, 150, 30)),
+											Rotation = 90,
+										},
+									},
+									{ Primitive = "UIStroke", Props = { Thickness = 7 } },
 								},
 							},
 						},
@@ -3748,7 +5443,8 @@ local _gui = {
 				HoverSound_PlaybackSpeed = 1,
 				ClickSound_PlaybackSpeed = 1,
 				ClickSound_PitchMin = 1,
-				Look_CooldownIconColor = Color3.fromRGB(90, 90, 90),
+				Look_CooldownIconColor = Color3.fromRGB(150, 150, 160),
+				Look_CooldownIconTransparency = 0.45,
 				ClickSound_SoundGroup = "UI",
 				Look_EmptyStrokeColor = Color3.fromRGB(61, 61, 61),
 				ClickSound_Name = "Button_Click",
@@ -3807,6 +5503,72 @@ local _gui = {
 						{
 							Primitive = "ImageLabel",
 							Props = {
+								Name = "MainFill",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 0,
+								Position = UDim2.fromScale(0.003, 0.0463),
+								Size = UDim2.fromScale(0.9941, 0.9074),
+								Image = "rbxassetid://91511289193689",
+								ImageColor3 = Color3.fromRGB(25, 25, 35),
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = {
+								_ImageName = "924_30__Frame__Main_gray",
+							},
+						},
+						{
+							Primitive = "ImageLabel",
+							Props = {
+								Name = "MainFill",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 0,
+								Position = UDim2.fromScale(0.003, 0.0463),
+								Size = UDim2.fromScale(0.9941, 0.9074),
+								Image = "rbxassetid://91511289193689",
+								ImageColor3 = Color3.fromRGB(25, 25, 35),
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = {
+								_ImageName = "924_30__Frame__Main_gray",
+							},
+						},
+						-- The cooldown's charge: the card's fill picture in blue, cut from the bottom up by LoadoutBar at the share of the cooldown already waited, its top edge brighter (COOLDOWN_CHARGE_*)
+						{
+							Primitive = "ImageLabel",
+							Id = "S_Charge",
+							Props = {
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 0,
+								Position = UDim2.fromScale(0.003, 0.0463),
+								Size = UDim2.fromScale(0.9941, 0.9074),
+								Visible = false,
+								ZIndex = 2,
+								Image = "rbxassetid://91511289193689",
+								ImageColor3 = Color3.fromRGB(110, 175, 255),
+								ImageTransparency = 0.35,
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Children = {
+								{
+									Primitive = "UIGradient",
+									Props = {
+										Rotation = -90,
+										Transparency = NumberSequence.new({
+											NumberSequenceKeypoint.new(0, 0.5),
+											NumberSequenceKeypoint.new(0.6, 0.5),
+											NumberSequenceKeypoint.new(0.601, 1),
+											NumberSequenceKeypoint.new(1, 1),
+										}),
+									},
+								},
+							},
+						},
+						{
+							Primitive = "ImageLabel",
+							Props = {
 								Name = "Stroke2",
 								BackgroundTransparency = 1,
 								BorderSizePixel = 0,
@@ -3840,81 +5602,496 @@ local _gui = {
 								_ImageName = "1106_48__Frame__Stroke_gray",
 							},
 						},
+						-- A Shiny item's holo foil and a Golden one's gold rim, the Loadout panel's slot's (shown by LoadoutBar from the slot's look)
+						{
+							Primitive = "Frame",
+							Id = "S_Foil",
+							Props = {
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 3,
+								Size = UDim2.fromScale(1, 1),
+								Visible = false,
+								ZIndex = 4,
+							},
+							Children = {
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Holo",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										LayoutOrder = 0,
+										Position = UDim2.fromScale(0.003, 0.0463),
+										Size = UDim2.fromScale(0.9941, 0.9074),
+										Image = "rbxassetid://91511289193689",
+										ImageTransparency = 0.55,
+										ScaleType = Enum.ScaleType.Fit,
+									},
+									Children = {
+										{
+											Primitive = "UIGradient",
+											Props = {
+												Color = ColorSequence.new({
+													ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 150, 220)),
+													ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 235, 150)),
+													ColorSequenceKeypoint.new(0.5, Color3.fromRGB(140, 255, 220)),
+													ColorSequenceKeypoint.new(0.75, Color3.fromRGB(140, 190, 255)),
+													ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 150, 255)),
+												}),
+												Rotation = 35,
+											},
+											Tags = { ["Utils_UIGradientMove"] = { Utils_MoveSpeed = 0.25 } },
+										},
+									},
+								},
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Sheen",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										LayoutOrder = 1,
+										Position = UDim2.fromScale(0.003, 0.0463),
+										Size = UDim2.fromScale(0.9941, 0.9074),
+										ZIndex = 2,
+										Image = "rbxassetid://91511289193689",
+										ImageTransparency = 0.25,
+										ScaleType = Enum.ScaleType.Fit,
+									},
+									Children = {
+										{
+											Primitive = "UIGradient",
+											Props = {
+												Rotation = 25,
+												Transparency = NumberSequence.new({
+													NumberSequenceKeypoint.new(0, 1),
+													NumberSequenceKeypoint.new(0.38, 1),
+													NumberSequenceKeypoint.new(0.5, 0.1),
+													NumberSequenceKeypoint.new(0.62, 1),
+													NumberSequenceKeypoint.new(1, 1),
+												}),
+											},
+											Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Sweep", Utils_MotionSpeed = 1 } },
+										},
+									},
+								},
+								{
+									Primitive = "Frame",
+									Props = {
+										Name = "Sparkle",
+										AnchorPoint = Vector2.new(0.5, 0.5),
+										BackgroundTransparency = 1,
+										LayoutOrder = 2,
+										Position = UDim2.fromScale(0.12, 0.56),
+										Size = UDim2.fromScale(0.16, 0.16),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = 3,
+									},
+									Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Twinkle", Utils_MotionSpeed = 1.3 } },
+									Children = {
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Across",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 235, 250),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(1, 0.16),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Down",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 235, 250),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(0.16, 1),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+									},
+								},
+								{
+									Primitive = "Frame",
+									Props = {
+										Name = "Sparkle",
+										AnchorPoint = Vector2.new(0.5, 0.5),
+										BackgroundTransparency = 1,
+										LayoutOrder = 3,
+										Position = UDim2.fromScale(0.88, 0.62),
+										Size = UDim2.fromScale(0.12, 0.12),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = 3,
+									},
+									Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Twinkle", Utils_MotionSpeed = 0.9 } },
+									Children = {
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Across",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(220, 245, 255),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(1, 0.16),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Down",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(220, 245, 255),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(0.16, 1),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							Primitive = "Frame",
+							Id = "S_Gold",
+							Props = {
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 4,
+								Size = UDim2.fromScale(1, 1),
+								Visible = false,
+								ZIndex = 4,
+							},
+							Children = {
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Wash",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										LayoutOrder = 0,
+										Position = UDim2.fromScale(0.003, 0.0463),
+										Size = UDim2.fromScale(0.9941, 0.9074),
+										Image = "rbxassetid://91511289193689",
+										ImageColor3 = Color3.fromRGB(255, 196, 60),
+										ImageTransparency = 0.8,
+										ScaleType = Enum.ScaleType.Fit,
+									},
+								},
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Sheen",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										LayoutOrder = 1,
+										Position = UDim2.fromScale(0.003, 0.0463),
+										Size = UDim2.fromScale(0.9941, 0.9074),
+										ZIndex = 2,
+										Image = "rbxassetid://91511289193689",
+										ImageColor3 = Color3.fromRGB(255, 240, 190),
+										ImageTransparency = 0.35,
+										ScaleType = Enum.ScaleType.Fit,
+									},
+									Children = {
+										{
+											Primitive = "UIGradient",
+											Props = {
+												Rotation = 25,
+												Transparency = NumberSequence.new({
+													NumberSequenceKeypoint.new(0, 1),
+													NumberSequenceKeypoint.new(0.38, 1),
+													NumberSequenceKeypoint.new(0.5, 0.1),
+													NumberSequenceKeypoint.new(0.62, 1),
+													NumberSequenceKeypoint.new(1, 1),
+												}),
+											},
+											Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Sweep", Utils_MotionSpeed = 1 } },
+										},
+									},
+								},
+								{
+									Primitive = "ImageLabel",
+									Props = {
+										Name = "Rim",
+										BackgroundTransparency = 1,
+										BorderSizePixel = 0,
+										ClipsDescendants = true,
+										LayoutOrder = 2,
+										Position = UDim2.fromScale(0.0133, 0.0185),
+										Size = UDim2.fromScale(0.9735, 0.963),
+										ZIndex = 3,
+										Image = "rbxassetid://81979878629232",
+										ScaleType = Enum.ScaleType.Fit,
+									},
+									Children = {
+										{
+											Primitive = "UIGradient",
+											Props = {
+												Color = ColorSequence.new({
+													ColorSequenceKeypoint.new(0, Color3.fromRGB(170, 110, 20)),
+													ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 200, 60)),
+													ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 240, 170)),
+													ColorSequenceKeypoint.new(0.7, Color3.fromRGB(255, 200, 60)),
+													ColorSequenceKeypoint.new(1, Color3.fromRGB(170, 110, 20)),
+												}),
+												Rotation = 45,
+											},
+											Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Glint", Utils_MotionSpeed = 1 } },
+										},
+									},
+								},
+								{
+									Primitive = "Frame",
+									Props = {
+										Name = "Sparkle",
+										AnchorPoint = Vector2.new(0.5, 0.5),
+										BackgroundTransparency = 1,
+										LayoutOrder = 3,
+										Position = UDim2.fromScale(0.12, 0.56),
+										Size = UDim2.fromScale(0.18, 0.18),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = 4,
+									},
+									Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Twinkle", Utils_MotionSpeed = 1.3 } },
+									Children = {
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Across",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 236, 160),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(1, 0.16),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Down",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 236, 160),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(0.16, 1),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+									},
+								},
+								{
+									Primitive = "Frame",
+									Props = {
+										Name = "Sparkle",
+										AnchorPoint = Vector2.new(0.5, 0.5),
+										BackgroundTransparency = 1,
+										LayoutOrder = 4,
+										Position = UDim2.fromScale(0.88, 0.62),
+										Size = UDim2.fromScale(0.14, 0.14),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = 4,
+									},
+									Tags = { ["Utils_Motion"] = { Utils_MotionKind = "Twinkle", Utils_MotionSpeed = 0.9 } },
+									Children = {
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Across",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 250, 220),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(1, 0.16),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+										{
+											Primitive = "Frame",
+											Props = {
+												Name = "Down",
+												AnchorPoint = Vector2.new(0.5, 0.5),
+												BackgroundColor3 = Color3.fromRGB(255, 250, 220),
+												BorderSizePixel = 0,
+												Position = UDim2.fromScale(0.5, 0.5),
+												Size = UDim2.fromScale(0.16, 1),
+											},
+											Children = {
+												{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+												{
+													Primitive = "UIGradient",
+													Props = { Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) },
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 				{
 					Primitive = "ImageLabel",
 					Id = "S_Icon",
 					Props = {
+						AnchorPoint = Vector2.new(0.5, 0.5),
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
 						ClipsDescendants = true,
 						LayoutOrder = 1,
-						Position = UDim2.fromScale(0.2333, 0.0918),
-						Size = UDim2.fromScale(0.5333, 0.8163),
+						Position = UDim2.fromScale(0.5, 0.47),
+						Size = UDim2.fromScale(0.5, 0.54),
 						ZIndex = 2,
 						Image = "rbxassetid://111720533325900",
+						ScaleType = Enum.ScaleType.Fit,
 					},
 					Attributes = {
 						_ImageName = "930_2__Frame__Icon_image",
 					},
 				},
+				-- The slot's key, in the control hints' key cap, as the loadout's cards (the owner, 2026-11-25: every text its own place and style)
 				{
 					Primitive = "TextLabel",
 					Id = "S_Key",
 					Props = {
-						BackgroundTransparency = 1,
+						BackgroundColor3 = Color3.fromRGB(25, 25, 35),
+						BackgroundTransparency = 0.1,
 						BorderSizePixel = 0,
-						LayoutOrder = 2,
-						Position = UDim2.fromScale(0.2067, 0.051),
-						Size = UDim2.fromScale(0.2667, 0.3061),
-						ZIndex = 3,
+						Position = UDim2.fromScale(0.17, 0.08),
+						Size = UDim2.fromScale(0.26, 0.26),
+						SizeConstraint = Enum.SizeConstraint.RelativeYY,
+						ZIndex = 6,
 						Text = "1",
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextSize = 25,
-						TextWrapped = true,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Normal),
 						RichText = true,
 						TextScaled = true,
 					},
+					Children = {
+						{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.25, 0) } },
+						{
+							Primitive = "UIStroke",
+							Tags = { Utils_UIStroke = {} },
+							Props = { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(130, 130, 130), Thickness = 2 },
+						},
+						{
+							Primitive = "UIPadding",
+							Props = {
+								PaddingTop = UDim.new(0.19, 0),
+								PaddingBottom = UDim.new(0.19, 0),
+								PaddingLeft = UDim.new(0.1, 0),
+								PaddingRight = UDim.new(0.1, 0),
+							},
+						},
+						{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+					},
 				},
+				-- Uses left ("3 left", or the jetpack's fuel "70%") in the loadout cards' count pill; hidden while the slot cools down
 				{
 					Primitive = "TextLabel",
 					Id = "S_Uses",
 					Props = {
-						BackgroundTransparency = 1,
+						AnchorPoint = Vector2.new(1, 0),
+						BackgroundColor3 = Color3.fromRGB(13, 13, 20),
+						BackgroundTransparency = 0.35,
 						BorderSizePixel = 0,
-						LayoutOrder = 3,
-						Position = UDim2.fromScale(0.1067, 0.7194),
-						Size = UDim2.fromScale(0.6667, 0.2143),
-						ZIndex = 4,
-						Text = "x5",
-						TextColor3 = Color3.fromRGB(255, 255, 255),
+						Position = UDim2.fromScale(0.88, 0.08),
+						Size = UDim2.fromScale(0.44, 0.24),
+						ZIndex = 6,
+						Text = "5 left",
+						TextColor3 = Color3.fromRGB(220, 220, 228),
 						TextSize = 18,
-						TextWrapped = true,
-						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 						RichText = true,
 						TextScaled = true,
 					},
+					Children = {
+						{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+						{
+							Primitive = "UIPadding",
+							Props = {
+								PaddingTop = UDim.new(0.12, 0),
+								PaddingBottom = UDim.new(0.12, 0),
+								PaddingLeft = UDim.new(0.12, 0),
+								PaddingRight = UDim.new(0.12, 0),
+							},
+						},
+						{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+						{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+					},
 				},
+				-- The item's name, along the card's bottom as on the loadout's cards (it stays while the slot cools down)
 				{
 					Primitive = "TextLabel",
 					Id = "S_Name",
 					Props = {
+						AnchorPoint = Vector2.new(0.5, 1),
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
-						LayoutOrder = 4,
-						Position = UDim2.fromScale(0.18, 0.5255),
-						Size = UDim2.fromScale(0.6, 0.2143),
+						Position = UDim2.fromScale(0.47, 0.94),
+						Size = UDim2.fromScale(0.68, 0.2),
 						ZIndex = 5,
 						Text = "Grenade",
 						TextColor3 = Color3.fromRGB(255, 255, 255),
 						TextSize = 18,
-						TextWrapped = true,
-						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 						RichText = true,
 						TextScaled = true,
+					},
+					Children = {
+						{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+						{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
 					},
 				},
 				{
@@ -3938,25 +6115,83 @@ local _gui = {
 						TextScaled = true,
 					},
 				},
+				-- The cooldown's turns left, big over the darkened icon, with TURNS under it in the name's place (LoadoutBar)
+				-- While it cools down: the turns left in a round badge in the top right corner (the uses pill's place), ringed in the charge's blue, the icon greyed out under it
 				{
 					Primitive = "TextLabel",
 					Id = "S_Turns",
+					Visible = false,
 					Props = {
-						AnchorPoint = Vector2.new(0.5, 0.5),
-						BackgroundTransparency = 1,
+						AnchorPoint = Vector2.new(1, 0),
+						BackgroundColor3 = Color3.fromRGB(25, 25, 35),
+						BackgroundTransparency = 0.15,
 						BorderSizePixel = 0,
-						LayoutOrder = 1,
-						Position = UDim2.fromScale(0.5, 0.5),
-						Size = UDim2.fromScale(0.2, 0.602),
-						Visible = false,
+						Position = UDim2.fromScale(0.88, 0.07),
+						Size = UDim2.fromScale(0.3, 0.3),
+						SizeConstraint = Enum.SizeConstraint.RelativeYY,
 						ZIndex = 6,
 						Text = "2",
 						TextColor3 = Color3.fromRGB(255, 255, 255),
-						TextSize = 50,
-						TextWrapped = true,
-						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.ExtraBold, Enum.FontStyle.Italic),
+						TextSize = 44,
+						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 						RichText = true,
 						TextScaled = true,
+					},
+					Children = {
+						{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+						{
+							Primitive = "UIStroke",
+							Tags = { Utils_UIStroke = {} },
+							Props = { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(110, 175, 255), Thickness = 3 },
+						},
+						{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+						{
+							Primitive = "UIPadding",
+							Props = {
+								PaddingTop = UDim.new(0.17, 0),
+								PaddingBottom = UDim.new(0.17, 0),
+								PaddingLeft = UDim.new(0.2, 0),
+								PaddingRight = UDim.new(0.2, 0),
+							},
+						},
+						{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
+					},
+				},
+				{
+					Primitive = "TextLabel",
+					Id = "S_TurnsLabel",
+					Props = {
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+						LayoutOrder = 4,
+						Position = UDim2.fromScale(0.18, 0.5255),
+						Size = UDim2.fromScale(0.6, 0.2143),
+						Visible = false,
+						ZIndex = 6,
+						Text = "Turns",
+						TextColor3 = Color3.fromRGB(200, 200, 210),
+						TextSize = 18,
+						TextWrapped = true,
+						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
+						RichText = true,
+						TextScaled = true,
+					},
+					Tags = { ["TextCase_Upper"] = {} },
+				},
+				-- A flash of the card's fill picture in white as the cooldown ends (LoadoutBar fades it out)
+				{
+					Primitive = "ImageLabel",
+					Id = "S_ReadyFlash",
+					Props = {
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+						LayoutOrder = 5,
+						Size = UDim2.fromScale(1, 1),
+						ZIndex = 8,
+						Image = "rbxassetid://91511289193689",
+						ImageColor3 = Color3.fromRGB(255, 255, 255),
+						ImageTransparency = 1,
+						ScaleType = Enum.ScaleType.Fit,
 					},
 				},
 				-- The lock over an item used up for the rest of the match (LoadoutBar), the Loadout card's lock picture
@@ -4129,7 +6364,7 @@ local _gui = {
 						{
 							Primitive = "UIStroke",
 							Props = {
-								Thickness = 0.1667,
+								Thickness = 0.07,
 								StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 							},
 						},
@@ -4186,7 +6421,7 @@ local _gui = {
 											Props = {
 												ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
 												Color = Color3.fromRGB(25, 25, 42),
-												Thickness = 0.08,
+												Thickness = 0.07,
 												StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 											},
 										},
@@ -4368,7 +6603,7 @@ local _gui = {
 						{
 							Primitive = "UIStroke",
 							Props = {
-								Thickness = 0.1667,
+								Thickness = 0.07,
 								StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 							},
 						},
@@ -4384,23 +6619,23 @@ local _gui = {
 			Align = "Right",
 			Style = { "Strong", "Outlined" },
 		},
-		-- One circle of the power cone; MatchHud's Aim clones POWER_DOTS of them and sizes, colours and places each
-		["PREFAB | PowerDot"] = {
-			Primitive = "Frame",
+		-- One of the aim preview's dots along the start of the shot's path, no wind (MatchHud's Aim clones PREVIEW_DOTS, places, sizes, colours and fades them)
+		["PREFAB | AimDot"] = {
 			Parent = "U_Aim",
+			Primitive = "Frame",
 			Props = {
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 				BorderSizePixel = 0,
-				Position = UDim2.fromScale(0.5, 0.5),
-				Size = UDim2.fromOffset(20, 20),
+				Size = UDim2.fromOffset(10, 10),
+				Visible = false,
+				ZIndex = 20,
 			},
 			Children = {
 				{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
-				-- The cone's colours along the aim: Aim sets them per circle and turns it each frame
 				{
-					Primitive = "UIGradient",
-					Props = { Color = ColorSequence.new(Color3.fromRGB(255, 226, 92), Color3.fromRGB(255, 148, 38)) },
+					Primitive = "UIStroke",
+					Props = { Color = Color3.fromRGB(12, 12, 20), Thickness = 1.5, Transparency = 0.35 },
 				},
 			},
 		},
@@ -4539,7 +6774,7 @@ local _gui = {
 								{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
 								{
 									Primitive = "UIStroke",
-									Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.14, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+									Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 								},
 							},
 						},

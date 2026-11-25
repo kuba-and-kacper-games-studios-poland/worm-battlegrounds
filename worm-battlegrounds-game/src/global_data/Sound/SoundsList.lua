@@ -167,6 +167,8 @@ local data = {
 	["Turn_Whoosh"] = { 12222200 },
 	["Turn_Next"] = { 108490405748541 },
 	["Match_SuddenDeath"] = { 115349814948977 },
+	["Match_DropIn"] = { 73647977085419 },
+	["Match_BattleBegins"] = { 123694173132397 },
 	["Match_Knockout"] = { 73293630314274 },
 	["Match_WaterRise"] = { 112740376118104 },
 	["Match_Win"] = { 96177429150503 },
@@ -180,6 +182,11 @@ local data = {
 	["Xp_Tick"] = { 93301600404825 },
 	["Level_Up"] = { 86569810342605 },
 	["Frame_Unlock"] = { 94250786007519 },
+
+	--[[ The lobby payout: the diamonds bursting out of the snail, and each one landing in the diamonds slot ]]
+
+	["Diamond_Burst"] = { 93979449268444 },
+	["Diamond_Collect"] = { 128397948588694 },
 
 	--[[ The free crate for joining the group ]]
 

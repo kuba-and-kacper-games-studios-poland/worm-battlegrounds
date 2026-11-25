@@ -1,6 +1,6 @@
 # Currency
 
-Player currencies (the game's Coins and Diamonds), saved as BigNum strings in the profile. Only the server writes: `Add`, `Subtract` and `Set` change the saved amount, mirror it into the player's Replicator folder and publish `Currency_Changed`. The client reads those attributes and publishes the same Topic locally, and `Currency_Slot` labels show the amount, with orbs flying in on gains.
+Player currencies (the game's Diamonds; Coins too until 2026-11-25), saved as BigNum strings in the profile. Only the server writes: `Add`, `Subtract` and `Set` change the saved amount, mirror it into the player's Replicator folder and publish `Currency_Changed`. The client reads those attributes and publishes the same Topic locally, and `Currency_Slot` labels show the amount, with orbs flying in on gains.
 
 | | |
 | --- | --- |
@@ -14,10 +14,10 @@ Player currencies (the game's Coins and Diamonds), saved as BigNum strings in th
 
 | File | What it controls |
 | --- | --- |
-| `Server.lua` | Profile template, currency checks, the Replicator folder, `Add` / `Subtract` / `Set` and the server getters |
+| `Server.lua` | Profile template, currency checks and conversions, the Replicator folder, `Add` / `Subtract` / `Set` and the server getters |
 | `Client.lua` | Reads the Replicator folder, publishes changes as Topics, registers `Currency_Slot` |
 | `Global.lua` | `GetCurrencyIcon` |
-| `Settings.lua` | One entry per currency in `CURRENCIES` |
+| `Settings.lua` | One entry per currency in `CURRENCIES`, and the retired ones' `CONVERSIONS` |
 | `Components/Slot.lua` | `Currency_Slot`, a TextLabel that shows one currency |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `currency` command |
 | `Scripts/AdminPanel/Dashboard/Server.lua` | The Currency sections of every player's page on the admin dashboard |
@@ -91,18 +91,25 @@ Attributes are written only for currencies with `ClientUpdate` on, through `I.Re
 
 On join, a saved field that holds a whole number as a Lua number or a scientific string (`1500`, `"2.5e+12"`) is rewritten as the same integer string. Any other value that isn't an integer string is reset to its default (`DefaultValue`, or `"0"` for `TotalEarned` / `TotalSpent`), with a warn that shows the old value. `Amount` is then kept inside the currency's range.
 
+Then each `CONVERSIONS` row turns a saved balance in its retired currency into the new one, once: `Per` old for 1
+new, rounded up, added to `Amount` and `TotalEarned` (raising `HighestOwned` when passed), and the old entry is removed
+from `Currency.Currencies`, so it never converts twice (`_convertRetired`).
+
 ## Settings
 
 `CURRENCIES[name]` (`Currency_CurrencySettings`):
 
-| Key | Coins / Diamonds | What |
+| Key | Diamonds | What |
 | --- | --- | --- |
 | `DefaultValue` | `"0"` | Amount a new player starts with |
-| `IconId` | the first icon kit's coin and diamond (`rbxassetid://`) | Returned by `GetCurrencyIcon` |
+| `IconId` | the diamond picture (`rbxassetid://98200575516825`) | Returned by `GetCurrencyIcon` |
 | `MinValue`, `RespectMinValue` | `"0"`, `true` | Floor, and whether it's enforced |
 | `MaxValue`, `RespectMaxValue` | `"0"`, `false` | Cap, and whether it's enforced |
 | `ServerUpdate`, `ServerUpdateIndividual` | `true`, `false` | Server Topics (see Network) |
 | `ClientUpdate`, `ClientUpdateIndividual` | `true`, `true` | Replicator attributes and client Topics |
+
+`CONVERSIONS` (`{ Currency_Conversion }`): retired currencies and what they became, `{ From, To, Per }`. Now
+`{ From = "Coins", To = "Diamonds", Per = "2" }` (coins until 2026-11-25).
 
 ## Components
 

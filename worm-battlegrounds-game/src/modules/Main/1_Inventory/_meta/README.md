@@ -148,7 +148,7 @@ The client can't silence Topics: a client's `sendUpdate` argument is accepted by
 | | `Inventory.Unique[uuid]` | `{ Id, Metadata }`; metadata keeps the quantity in `_q` and engine fields `_cts`, `_fo` |
 | | `Inventory.Locked` | Locked item ids |
 | | `Inventory.UniqueAmount` | Unique items counted |
-| `Data/Items/<Item>.lua` | | `Name`, `IconId`, `Rarity`, `Category`, `RemoveByClientRequest`, `UseByClientRequest` (clients may use it), `Use`, `UseRequirements`, `_setupFunction` |
+| `Data/Items/<Item>.lua` | | `Name`, `IconId`, `Rarity`, `Category`, `RemoveByClientRequest`, `UseByClientRequest` (clients may use it), `Disabled` (no crate rolls it and the loadout picker shows it only to players who own it), `Use`, `UseRequirements`, `_setupFunction` |
 
 ## Settings
 

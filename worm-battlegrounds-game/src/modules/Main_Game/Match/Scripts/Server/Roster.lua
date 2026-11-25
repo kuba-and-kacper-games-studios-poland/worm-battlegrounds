@@ -157,6 +157,7 @@ function Module.Build()
 			Loadout = if metadata.Kind == "Tutorial" then table.clone(_settings.TUTORIAL_LOADOUT) else card.Loadout,
 			ShinyItems = card.ShinyItems,
 			GoldenItems = card.GoldenItems,
+			ItemLooks = card.ItemLooks,
 			Skin = card.Skin,
 			Shiny = card.Shiny,
 			Vip = card.Vip,

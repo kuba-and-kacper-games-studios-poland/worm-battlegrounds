@@ -231,8 +231,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Variant
 
 --[[
-	Returns how special a participant's copy of an item looks: "Golden" (Loadout's GOLDEN_COPIES owned), "Shiny"
-	(SHINY_COPIES), or nil. Looks only: a golden copy deals and boosts as a shiny one.
+	Returns how special a participant's copy of an item looks: the look they picked for it (their card's ItemLooks,
+	"Normal" as nil), else "Golden" (Loadout's GOLDEN_COPIES owned), "Shiny" (SHINY_COPIES), or nil. Looks only: a
+	golden copy deals and boosts as a shiny one, and so does a shiny or golden one worn as Normal.
 ]]
 --- @return string?
 function Module.GetVariant(participantId: string?, itemId: string)
@@ -250,6 +251,9 @@ function Module.GetVariant(participantId: string?, itemId: string)
 
 	--[[ Returning ]]
 
+	if participant.ItemLooks and participant.ItemLooks[itemId] then
+		return if participant.ItemLooks[itemId] == "Normal" then nil else participant.ItemLooks[itemId]
+	end
 	if participant.GoldenItems and participant.GoldenItems[itemId] then
 		return "Golden"
 	end

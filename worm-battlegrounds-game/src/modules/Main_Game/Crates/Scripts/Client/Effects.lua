@@ -207,7 +207,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Rarity
 
 --[[
-	A reveal's burst for its rarity, from a puff for a common to rings, coins and sparks for a legendary; strength 1
+	A reveal's burst for its rarity, from a puff for a common to rings, diamonds and sparks for a legendary; strength 1
 	for the big card, less for a pack's cards. An epic at full strength also flashes and shakes the screen.
 ]]
 function Module.Rarity(rarity: string, point: Vector2, color: Color3, strength: number)
@@ -232,7 +232,7 @@ function Module.Rarity(rarity: string, point: Vector2, color: Color3, strength: 
 		Module.Burst("Stars", point, 24 * strength, Color3.fromRGB(242, 212, 255))
 	else
 		Module.Ring(point, color, 120, 1800 * strength, 0.7)
-		Module.Burst("Coins", point, 30 * strength)
+		Module.Burst("Diamonds", point, 30 * strength)
 		Module.Burst("Sparks", point, 70 * strength, color)
 	end
 end
@@ -352,9 +352,9 @@ function Module._getBurstParams(kind, u: number)
 			Drag = 1.6,
 			RotationSpeed = NumberRange.new(-90, 90),
 		}
-	elseif kind == "Coins" then
+	elseif kind == "Diamonds" then
 		return {
-			Texture = textures.Coin,
+			Texture = textures.Diamond,
 			SizeSpace = "Offset",
 			Size = 34 * u,
 			Squash = NumberSequence.new({

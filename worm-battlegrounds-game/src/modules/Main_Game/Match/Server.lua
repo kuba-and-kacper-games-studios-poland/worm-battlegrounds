@@ -111,6 +111,8 @@ function Module.Init()
 		GetPhase = Module.GetPhase,
 		GetWind = Module.GetWind,
 		GetMetadata = Roster.GetMetadata,
+		GetPlacements = Placement.GetPlacements,
+		GetStats = Stats.Get,
 		IsActivePlayer = Module.IsActivePlayer,
 		IsAutopilot = Module.IsAutopilot,
 	}

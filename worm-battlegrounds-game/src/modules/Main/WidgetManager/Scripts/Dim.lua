@@ -1,5 +1,6 @@
 --[[
     Created By:     Nari
+    Edited By:     HungryN00B
 ]]
 
 --- @type Ume
@@ -15,15 +16,8 @@ local TweenService = I.S.TweenService
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
---[[ Elements ]]
-
 local dimGui: ScreenGui
 local dimFrame: Frame
-
---[[ Other ]]
-
---- @type { [boolean]: Tween }
-local dimTweens = {}
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -50,19 +44,18 @@ function Module.Init()
 
 	Module._createDimWidget()
 	Module._createDimFrame()
-	Module._createTweens()
 
 	----------------------------
 	--------- REGISTRY ---------
 	----------------------------
 
 	--- @Topic
-	I.Topic.Subscribe("WidgetManager_Opened", function()
-		Module._tweenDim(true)
+	I.Topic.Subscribe("WidgetManager_Opened", function(widgetName: string)
+		Module._tweenDim(Module._getDimTransparency(widgetName))
 	end)
 
 	I.Topic.Subscribe("WidgetManager_Closed", function()
-		Module._tweenDim(false)
+		Module._tweenDim(1)
 	end)
 end
 
@@ -71,7 +64,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Dim Widget
 
 --[[
-	Creates the dim `ScreenGui`.
+	Creates the dim `ScreenGui`, over the whole screen out to a phone's notch sides.
 ]]
 function Module._createDimWidget()
 	dimGui = Instance.new("ScreenGui")
@@ -80,6 +73,8 @@ function Module._createDimWidget()
 	dimGui.DisplayOrder = _settings.DIM_ORDER
 	dimGui.Enabled = true
 	dimGui.IgnoreGuiInset = true
+	dimGui.ScreenInsets = Enum.ScreenInsets.None
+	dimGui.ClipToDeviceSafeArea = false
 	dimGui.ResetOnSpawn = false
 	dimGui.Name = "_Dim"
 	dimGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
@@ -102,27 +97,40 @@ function Module._createDimFrame()
 	dimFrame.BorderSizePixel = 0
 end
 
---%%%%%%%%%%%%%%%%%%%% Create Tweens
-
---[[
-	Creates Tweens for the Dim.
-]]
-function Module._createTweens()
-	dimTweens[true] = TweenService:Create(dimFrame, _settings.DIM_TWEENINFO, { BackgroundTransparency = _settings.DIM_TRANSPARENCY })
-	dimTweens[false] = TweenService:Create(dimFrame, _settings.DIM_TWEENINFO, { BackgroundTransparency = 1 })
-end
-
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Showing
 
 --%%%%%%%%%%%%%%%%%%%% Tween Dim
 
 --[[
-	Plays Tween for the Dim.
+	Fades the dim to a transparency: a widget's (Get Dim Transparency) as it opens, 1 (gone) as it closes.
 ]]
-function Module._tweenDim(show: boolean)
-	if dimTweens[show] then
-		dimTweens[show]:Play()
-	end
+function Module._tweenDim(transparency: number)
+	--[[ Playing ]]
+
+	local Dim_TweenInfo: TweenInfo = _settings.DIM_TWEENINFO
+	local Dim_TweenGoal = { BackgroundTransparency = transparency }
+	local Dim_Tween: Tween = TweenService:Create(dimFrame, Dim_TweenInfo, Dim_TweenGoal)
+	Dim_Tween:Play()
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Dim Transparency
+
+--[[
+	Returns how see-through the dim is behind a widget: its U_Widget's WidgetManager_Dim attribute (a darker dim for a
+	window the screen makes way for, like the match setups), else DIM_TRANSPARENCY.
+]]
+--- @return number
+function Module._getDimTransparency(widgetName: string)
+	--[[ Data ]]
+
+	local gui: ScreenGui? = I.UserInterface.UI[widgetName]
+	local widget: Instance? = gui and gui:FindFirstChild("U_Widget")
+
+	--[[ Returning ]]
+
+	return if widget and widget:GetAttribute("WidgetManager_Dim") then widget:GetAttribute("WidgetManager_Dim") else _settings.DIM_TRANSPARENCY
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

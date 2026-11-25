@@ -33,7 +33,7 @@ local moduleGui: ScreenGui
 -- The last crate opened, to open it again, and the opener
 local lastCrate: string = ""
 local lastCount: number = 1
-local lastPayWith: string = "Coins"
+local lastPayWith: string = "Diamonds"
 local openCrate: (crateId: string, count: number, payWith: string) -> ()
 
 -- Counts openings, so a newer one (or the widget closing) stops an older one

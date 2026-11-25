@@ -101,14 +101,14 @@ function Module.Dress(model: Model, variant: string?)
 	--[[ Gilding ]]
 
 	if look.Gild then
-		Module._gild(parts, look)
+		I.G_Arsenal.Gild(parts, look.Gild[1], look.Gild[2], look.GildCover or 0, _settings.VARIANT_COVER_GROW)
 	end
 
 	--[[ Sheen ]]
 
 	local sheens = {} --- @type { BasePart }
 	for _index: number, part: BasePart in ipairs(parts) do
-		table.insert(sheens, Module._makeCopy(part, look.Sheen[1], Enum.Material.ForceField, 0, _settings.VARIANT_SHEEN_GROW))
+		table.insert(sheens, I.G_Arsenal.MakeCopy(part, look.Sheen[1], Enum.Material.ForceField, 0, _settings.VARIANT_SHEEN_GROW))
 	end
 
 	--[[ Outline ]]
@@ -346,105 +346,6 @@ function Module._stepDress(model: Model, dress, now: number)
 		dress.NextDust = now + (look.Dust.Every or 0) * random:NextNumber(0.6, 1.4)
 		Module._play(look.Dust, Module._getSpot(model), look.Dust.Scale)
 	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Gild
-
---[[
-	Turns a held weapon's parts gold, keeping their dark details: a SurfaceAppearance, a SpecialMesh's texture or a
-	decal is tinted the bright gold (a tint keeps what's dark dark), a part with a SurfaceAppearance or a textured
-	MeshPart also gets a gold copy over it, GildCover see-through (a tint alone leaves a coloured picture its colour),
-	and a plain part takes the gold between the dark and the bright by its own brightness, in Metal.
-]]
---- @param parts { BasePart }
---- @param look Combat_VariantLook
-function Module._gild(parts, look)
-	--[[ Local Variables ]]
-
-	local dark: Color3 = look.Gild[1]
-	local bright: Color3 = look.Gild[2]
-
-	--[[ Gilding ]]
-
-	for _index: number, part: BasePart in ipairs(parts) do
-		local appearance: SurfaceAppearance? = part:FindFirstChildWhichIsA("SurfaceAppearance")
-		local mesh: SpecialMesh? = part:FindFirstChildWhichIsA("SpecialMesh")
-		if appearance then
-			appearance.Color = bright
-			Module._makeCopy(part, bright, Enum.Material.Metal, look.GildCover or 0, _settings.VARIANT_COVER_GROW)
-		elseif mesh and mesh.TextureId ~= "" then
-			mesh.VertexColor = Vector3.new(bright.R, bright.G, bright.B)
-		elseif part:IsA("MeshPart") and part.TextureID ~= "" then
-			Module._makeCopy(part, bright, Enum.Material.Metal, look.GildCover or 0, _settings.VARIANT_COVER_GROW)
-		else
-			local brightness: number = part.Color.R * 0.299 + part.Color.G * 0.587 + part.Color.B * 0.114
-			part.Color = dark:Lerp(bright, brightness)
-			part.Material = Enum.Material.Metal
-		end
-
-		-- Decals and textures on it are tinted too
-		for _index2: number, decal: Instance in ipairs(part:GetChildren()) do
-			if decal:IsA("Decal") then
-				decal.Color3 = bright
-			end
-		end
-	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Make Copy
-
---[[
-	Makes a copy of a part's shape over it (no texture, no children but its mesh), grown so it sits just outside it, in
-	a colour, a material and a see-through, welded to it in its model so it moves and hides with it. Returns the copy.
-]]
---- @return BasePart
-function Module._makeCopy(part: BasePart, color: Color3, material: Enum.Material, transparency: number, grow: number)
-	--[[ Building ]]
-
-	local copy: BasePart = part:Clone()
-	for _index: number, child: Instance in ipairs(copy:GetChildren()) do
-		if not child:IsA("DataModelMesh") then
-			child:Destroy()
-		end
-	end
-
-	-- A SpecialMesh draws at its own scale, a MeshPart or a plain part at its size
-	local mesh: DataModelMesh? = copy:FindFirstChildWhichIsA("DataModelMesh")
-	if mesh then
-		mesh.Scale *= grow
-	else
-		copy.Size *= grow
-	end
-	if mesh and mesh:IsA("SpecialMesh") then
-		mesh.TextureId = ""
-	end
-	if copy:IsA("MeshPart") then
-		copy.TextureID = ""
-	end
-
-	--[[ Applying ]]
-
-	copy.Name = `{part.Name}_Variant`
-	copy.Color = color
-	copy.Material = material
-	copy.Transparency = transparency
-	copy.CastShadow = false
-	copy.Anchored = false
-	copy.Massless = true
-	copy.CanCollide = false
-	copy.CanQuery = false
-	copy.CanTouch = false
-	copy.CFrame = part.CFrame
-	I.Create("WeldConstraint")({
-		Part0 = part,
-		Part1 = copy,
-		Parent = copy,
-	})
-	copy.Parent = part.Parent
-
-	--[[ Returning ]]
-
-	return copy
 end
 
 --%%%%%%%%%%%%%%%%%%%% Make Trail

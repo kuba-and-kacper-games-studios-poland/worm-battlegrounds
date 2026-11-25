@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -13,6 +14,15 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 local elems = {} --- @type { [string]: Instance }
 local prefabs = {} --- @type { [string]: Instance }
+
+--[[ Bought Diamonds ]]
+
+--[[
+	The diamonds packs bought while the shop is open, played once it closes, and the player's diamonds when the first
+	of them was pressed (the diamonds slot holds there meanwhile)
+]]
+local bought: string = "0"
+local before: string? = nil
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -63,13 +73,15 @@ end
 --%%%%%%%%%%%%%%%%%%%% Create Connections
 
 --[[
-	Draws the shop when it opens (the currency bar's + opens it through its tags), and tags VIP players' chat
-	messages.
+	Draws the shop when it opens (the currency bar's + opens it through its tags), plays the diamonds bought in it once
+	it closes, and tags VIP players' chat messages.
 ]]
 function Module._createConnections()
 	--[[ Connections ]]
 
 	I.Topic.Subscribe("WidgetManager_Opened", Module._onOpened)
+	I.Topic.Subscribe("WidgetManager_Closed", Module._onClosed)
+	I.Network.Fired("Marketplace_ProductPurchaseSucceeded", Module._onPurchased)
 	I.S.TextChatService.OnIncomingMessage = Module._onIncomingMessage
 end
 
@@ -112,6 +124,9 @@ function Module._onOpened(widgetName: string)
 		card.Parent = elems["Packs"]
 		Module._showPrice(card:FindFirstChild("S_Price", true), pack.Product, Enum.InfoType.Product)
 		I.Interact.OnPress(card:FindFirstChild("S_Buy", true), function()
+			if bought == "0" then
+				before = I.Currency.Get("Diamonds")
+			end
 			I.Network.Fire("Marketplace_PromptProductPurchase", pack.Product)
 		end)
 	end
@@ -148,6 +163,56 @@ function Module._onOpened(widgetName: string)
 			end
 		end)
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Closed
+
+--[[
+	Plays the diamonds the packs bought in the shop gave, now that it closed.
+]]
+function Module._onClosed(widgetName: string)
+	--[[ Checks ]]
+
+	-- Check if it's the shop and a pack was bought in it
+	if widgetName ~= _settings.GUI_NAME or bought == "0" then
+		return
+	end
+
+	--[[ Playing ]]
+
+	I.Progression.PlayPurchase(bought)
+	bought = "0"
+	before = nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Purchased
+
+--[[
+	A diamond pack was paid for: the diamonds slot holds at what it showed before, and the pack plays once the shop
+	closes, at once when it isn't open (a purchase Roblox granted late).
+]]
+function Module._onPurchased(productName: string)
+	--[[ Data ]]
+
+	--- @type Shop_Pack?
+	local pack = Module._getPack(productName)
+
+	--[[ Checks ]]
+
+	-- Check if it's a diamond pack
+	if not pack then
+		return
+	end
+
+	--[[ Holding ]]
+
+	local current: ScreenGui? = I.WidgetManager.GetCurrent()
+	if not current or current.Name ~= _settings.GUI_NAME then
+		I.Progression.PlayPurchase(pack.Diamonds)
+		return
+	end
+	I.Progression.HoldPurchase(pack.Diamonds, before)
+	bought = `{I.BN.new(bought) + I.BN.new(pack.Diamonds)}`
 end
 
 --%%%%%%%%%%%%%%%%%%%% Show Price
@@ -190,6 +255,29 @@ function Module._onIncomingMessage(message: TextChatMessage)
 	local properties: TextChatMessageProperties = Instance.new("TextChatMessageProperties")
 	properties.PrefixText = _settings.VIP_CHAT_TAG .. message.PrefixText
 	return properties
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+
+--%%%%%%%%%%%%%%%%%%%% Get Pack
+
+--[[
+	Returns the diamond pack a developer product is, or nil for any other product.
+]]
+--- @return Shop_Pack?
+function Module._getPack(productName: string)
+	--[[ Finding ]]
+
+	--- @param pack Shop_Pack
+	for _index: number, pack in ipairs(_settings.PACKS) do
+		if pack.Product == productName then
+			return pack
+		end
+	end
+
+	--[[ Returning ]]
+
+	return nil
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

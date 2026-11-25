@@ -29,10 +29,10 @@ JOIN as picture tiles), and CLAIM opens it like a bought one (2026-11-17: the ti
 | `Server.lua` | `Open`: checks, paying (a currency, VIP's daily crate or the free group crate), rolling, giving; the `Crates` profile key and Replicator folder (`GroupCrateClaimed`), and reading a new player's group membership while their free crate is unclaimed |
 | `Global.lua` | The crate rows and pack prices; warns at start when a crate's odds don't add up to 100 or name an unknown item |
 | `Client.lua` | Starts the client handlers |
-| `Scripts/Client/Panel.lua` | The Crates widget: tabs (on a pad LB and RB step through them while it's open, the Console module's `TabPrevious` and `TabNext`), the balance chips, a row of buy buttons per currency (coins on top, diamonds under them), the lobby menu's Weapons and Skins buttons and badge, opening |
+| `Scripts/Client/Panel.lua` | The Crates widget: tabs (on a pad LB and RB step through them while it's open, the Console module's `TabPrevious` and `TabNext`), the balance chip, a row of buy buttons per currency in `PAY_CURRENCIES` (diamonds only since 2026-11-25; VIP's free daily x1 shows alone on that row where paid random items are restricted, `_draw`, `_isShown`), the lobby menu's Weapons and Skins buttons and badge, opening |
 | `Scripts/Client/GroupReward.lua` | The free group crate (the `FreeCrate` gui, `GROUP_GUI_NAME`): enabled while the crate is unclaimed (`GroupCrateClaimed` `false`) and the lobby's screens (the `Lobby` gui) or the crates screen show; the badge hides while a crate opens there (`SetOpening`, from Reveal, 2026-11-17: it showed over the opening); the lobby's tile and the crates screen's badge open the dialog, its own WidgetManager widget (`FreeCrateDialog`, `GROUP_DIALOG_GUI_NAME`, since 2026-11-17: so it blurs and dims like every lobby window), with `I.WidgetManager.Open`, drawn on `WidgetManager_Opened`; opened from the badge, it opens the crates screen again when it closes, unless something else takes its place (a message over it hands it back after). The dialog's crate (`S_CrateView`, in a WorldModel) turns while light rays wheel and twinkles rise (`GROUP_*`); LIKE only ticks; JOIN (`I.Group.PromptJoin`) ticks by the player's membership (`I.Group.IsMember`, followed through `I.Group.GetChangedSignal`); CLAIM in its `Look_*` colours, locked until they're in, then gold, pulsing and shining. CLAIM plays `Free_Claim`, shakes the crate, opens the crates screen in the dialog's place and the crate there like a bought one (`Panel.Open(GROUP_CRATE, 1, "GroupReward")`), or says `GROUP_JOIN_FIRST` before they're in; a claimed crate's dialog closes |
 | `Scripts/Client/Odds.lua` | The Crates widget's odds list, by rarity; a snail piece shows a snail wearing it live on its card (`SkinModels`) |
-| `Scripts/Client/SkinModels.lua` | The snail pieces' snails on cards: `Put` shows a snail wearing an item's piece (Cosmetics' `BuildSnail` on its `GetShowcase` outfit), posed in its idle frame (`I.SnailRig.Pose`), in a card's `S_Model` viewport, framed on the piece as the Style screen frames it (Cosmetics' `GetPieceShot`); `Release` takes it off; spare snails wait in a pool by piece; `GetPicture` is a piece's reel picture (`PIECE_PICTURES`). While the widget is open it draws a card's snail again once the card holds still where it's seen (`SKIN_REDRAW_FRAMES`): Roblox doesn't draw a viewport that changed while it moved or was hidden until it changes again where it's seen |
+| `Scripts/Client/SkinModels.lua` | The snail pieces' snails on cards: `Put` shows a snail wearing an item's piece (Cosmetics' `BuildSnail` on its `GetShowcase` outfit), posed in its idle frame (`I.SnailRig.Pose`), in a card's `S_Model` viewport, framed on the piece as the Style screen frames it (Cosmetics' `GetPieceShot`); `Release` takes it off; spare snails wait in a pool by piece; `GetPicture` is a piece's reel picture (`PIECE_PICTURES`). While the widget is open it draws a card's snail again once the card holds still where it's seen (`SKIN_REDRAW_FRAMES`): Roblox doesn't draw a viewport that changed while it moved or was hidden until it changes again where it's seen; `ShowSlot` shows a piece's slot on its card's tab (`S_SlotTab`, `S_Slot`) in its rarity's colour, and hides the tab for any other item |
 | `Scripts/Client/Showcase.lua` | The crate on its pedestal: its 3D model (the row's `Model`) in `U_Crate`'s viewport, dressed in the crate's `Look` (glow, rays, beam, ring, ambient particles, STANDARD or PREMIUM tag, name plate; the premium crate's halo and violet backdrop), turning rays, a bob, a sway and a breathing glow while the widget is open, a pop when the crate changes, and the leap off the pedestal when a crate is bought |
 | `Scripts/Client/Reel.lua` | The reels: builds them from the results (strips of cards with the winner placed by CS2's rules), rolls them on CS2's curve with ticks as cards pass the line, skips, settles onto the card's centre, and builds the golden reel. Makes and fills every card (a card with no name centres its picture; a reel card caps its name's size, `CARD_NAME_TEXT`): a snail piece shows a snail wearing it live (`SkinModels`), except on a reel card, which shows the piece's picture (`PIECE_PICTURES`, preloaded at start) |
 | `Scripts/Client/Effects.lua` | Every gui effect: bursts, rings, confetti, streams (flames, bubbles, rain, vortex, orbit), flashes, tints, shakes and each rarity's reveal burst, drawn with `I.UIEmitter` on the result's back and front layers |
@@ -49,7 +49,7 @@ JOIN as picture tiles), and CLAIM opens it like a bought one (2026-11-17: the ti
 
 | Function | Returns | What it does |
 | --- | --- | --- |
-| `Open(player, crateId: string, count: number, payWith: string)` | `{ Crates_Result }?` | Opens 1, 3 or 10 crates (`COUNTS`) paid in `"Coins"`, `"Diamonds"`, `"VipDaily"` or `"GroupReward"` (one `GROUP_CRATE`, once, while `CanClaimGroupCrate`); nil when it can't |
+| `Open(player, crateId: string, count: number, payWith: string)` | `{ Crates_Result }?` | Opens 1, 3 or 10 crates (`COUNTS`) paid in `"Diamonds"`, `"VipDaily"` or `"GroupReward"` (one `GROUP_CRATE`, once, while `CanClaimGroupCrate`); nil when it can't |
 | `CanClaimGroupCrate(player)` | `boolean` | Whether the player may open their free group crate: not opened yet, and in the group (`GROUP_NAME`) |
 
 ### Client: `I.Crates`
@@ -86,7 +86,7 @@ keeps whether the free group crate was opened:
 | Where | Key | What |
 | --- | --- | --- |
 | Replicator `Shop` | `VipCrateReady` | Makes the Skin crate's x1 free (FREE, paid with `VipDaily`) and the badge FREE |
-| Replicator `Policy` | `ArePaidRandomItemsRestricted` | Hides the diamonds chip while not `false` |
+| Replicator `Policy` | `ArePaidRandomItemsRestricted` | Hides the diamond chip and prices while not `false` (crates with `Fixed` items aside), so only VIP's free x1 shows there |
 | Profile | `Crates.GroupCrateClaimed` | Whether the player opened their free group crate (`false` until then), set by `Open` paid with `"GroupReward"` |
 | Replicator `Crates` | `GroupCrateClaimed` | The same, for their client: the `FreeCrate` gui shows only while it's `false` |
 
@@ -101,11 +101,11 @@ the old tutorial crate uses `Crate_Starter`). The models are `art/crates`' (its 
 
 | Crate | Prices (1, 3, 10) | Odds | Look |
 | --- | --- | --- | --- |
-| `Weapon` | 100, 300, 1,000 coins or 50, 150, 500 diamonds | Uzi, Golf Club, Dynamite, Spartan Spear 14.75 % each; Cluster Bomb, Spider Bomb, Minigun 10 %; Homing Missile, One Punch 5 %; Variety Grenade, Black Hole Grenade 0.5 % | Amber glow, embers |
-| `Premium` | 250, 750, 2,250 diamonds | Cluster, Spider, Minigun 26 % each; Homing, One Punch 10 %; Variety, Black Hole 1 %. Hidden since 2026-11-13 (the testers: one crate, coins or diamonds), kept so its id stays known | Cyan glow, gold accent, glints, premium |
-| `Utility` | 100, 300, 1,000 coins or 50, 150, 500 diamonds | Parachute, Bandage 27.5 %; Jetpack, Speed 15 %; Medkit 10 %; Low Gravity 5 % | Mint glow, bubbles |
-| `Skin` | 100, 300, 1,000 coins or 50, 150, 500 diamonds | Snail pieces, each set sharing what its whole skin had: Frontline, High Seas, Wild West 20 % each (6.67 % a piece); Shadow Clan, Round Table, Big Top 10 %; Inferno 7 %; Circuit 2 %; Crypt 1 % | Pink glow, sparkles |
-| `Tutorial` | 100 coins (one only) | Fixed: Grenade and Shotgun. Hidden: the tutorial gave it once until 2026-11-15, when it began giving the two weapons straight away (the testers: no crate opening in the tutorial); kept so its id stays known | Green glow, sparkles |
+| `Weapon` | 50, 150, 500 diamonds | Uzi, Golf Club 26.82 % each; Cluster Bomb, Spider Bomb 18.18 %; Homing Missile 9.09 %; Variety Grenade 0.91 % (the disabled items left on 2026-11-25, the rest scaled up) | Amber glow, embers |
+| `Premium` | 250, 750, 2,250 diamonds | Cluster, Spider 41.27 % each; Homing 15.87 %; Variety 1.59 %. Hidden since 2026-11-13 (the testers: one crate per kind), kept so its id stays known | Cyan glow, gold accent, glints, premium |
+| `Utility` | 50, 150, 500 diamonds | Bandage 52.38 %; Jetpack 28.57 %; Medkit 19.05 % | Mint glow, bubbles |
+| `Skin` | 50, 150, 500 diamonds | Snail pieces, each set sharing what its whole skin had: Frontline, High Seas, Wild West 20 % each (6.67 % a piece); Shadow Clan, Round Table, Big Top 10 %; Inferno 7 %; Circuit 2 %; Crypt 1 % | Pink glow, sparkles |
+| `Tutorial` | 50 diamonds (each pack) | Fixed: Grenade and Shotgun. Hidden: the tutorial gave it once until 2026-11-15, when it began giving the two weapons straight away (the testers: no crate opening in the tutorial); kept so its id stays known | Green glow, sparkles |
 
 A 3-pack costs three single crates (no discount, unlike the 10-pack's 10 %).
 
@@ -167,7 +167,7 @@ reel. Closing the widget ends an opening at once.
 | `SHINY_FOIL`, `SHINY_FOIL_TRANSPARENCY`, `SHINY_FOIL_SPIN` | a rainbow, `0.55`, `40` | A Shiny card's holo foil: its colours, how see-through, and how fast it turns (degrees a second) |
 | `GOLDEN_RIM`, `GOLDEN_RIM_SPIN` | dark to pale gold, `90` | A Golden card's rim: its colours, and how fast its glint turns |
 | `PAID_CURRENCIES` | `{ "Diamonds" }` | Currencies bought with Robux: rolls with them are paid random items |
-| `VIP_CRATE` | `"Skin"` | VIP's free daily crate (the coins row's x1) |
+| `VIP_CRATE` | `"Skin"` | VIP's free daily crate (the diamonds row's x1) |
 | `GROUP_CRATE`, `GROUP_NAME` | `"Weapon"`, `"SnailStudio"` | The crate a player opens free once for joining the studio's group (its name in the Group module's list, `src/global_data/Group/Groups.lua`: 566704940) and liking the game, which no game can check, so it's only asked |
 | `GROUP_GUI_NAME`, `GROUP_DIALOG_GUI_NAME`, `GROUP_JOIN_FIRST` | `"FreeCrate"`, `"FreeCrateDialog"`, "Join The Snail Studio group first, then claim your free crate!" | The free crate's guis (its lobby tile and badge; the dialog they open, a WidgetManager widget), and what CLAIM says before the player is in the group |
 | `GROUP_RAYS_SPEED`, `GROUP_CRATE_SPIN` | `18`, `40` | Degrees a second the dialog's rays wheel and its crate turns |
@@ -205,7 +205,7 @@ reel. Closing the widget ends an opening at once.
 | `TRIO_CARD_WIDTH`, `TRIO_Y`, `TRIO_SPACING` | `380`, `420`, `450` | The 3-pack's row of cards |
 | `TEN_CARD_WIDTH`, `TEN_ROWS_Y`, `TEN_SPACING` | `228`, `{ 268, 588 }`, `300` | The 10-pack's grid |
 | `TRIO_STEP`, `TEN_STEP`, `PACK_LEGENDARY_HOLD` | `0.42`, `0.11`, `2.2` | Seconds between naming a pack's cards, and a pack legendary's moment |
-| `FX_TEXTURES` | eight image ids | The effects' pictures: spark, star, glow, ring, coin, smiley, bone, bubble |
+| `FX_TEXTURES` | eight image ids | The effects' pictures: spark, star, glow, ring, diamond (`Diamond`: the legendary reveal's `Diamonds` burst), smiley, bone, bubble |
 | `CONFETTI_COLORS`, `VORTEX_COLORS` | seven, three colours | The variety grenade's confetti and the black hole's swirl |
 | `DISK_GRID`, `DISK_FRAME`, `DISK_FPS` | 4 × 8, 256 × 128, `18` | The black hole disk's flipbook |
 | `RAYS_SPIN_SECONDS`, `HALO_SPIN_SECONDS`, `BOB_SECONDS`, `BOB_HEIGHT` | `46`, `26`, `3.2`, `0.012` | The showcase's turning rays and halo, and the crate's bob |
@@ -215,9 +215,12 @@ reel. Closing the widget ends an opening at once.
 | `BACKDROP_PREMIUM_COLOR`, `BACKDROP_PREMIUM_TRANSPARENCY`, `BACKDROP_LIGHT_TRANSPARENCY` | violet, `0.35`, `0.45` | The premium crate's backdrop and light |
 | `BACKDROP_OPEN_COLOR`, `BACKDROP_OPEN_TRANSPARENCY`, `BACKDROP_TWEENINFO` | near black, `0.12`, 0.6 s | The dim while a crate opens |
 | `GUI_NAME` | `"Crates"` | The widget it drives |
-| `PAY_CURRENCIES` | `{ "Coins", "Diamonds" }` | The currencies crates are paid in, top to bottom: a balance chip (`U_Pay<currency>`) and a row of buy buttons (`S_<currency>Row`, `U_<currency>X<count>`) each, shown for the currencies the crate takes |
+| `PAY_CURRENCIES` | `{ "Diamonds" }` | The currencies crates are paid in (coins too until 2026-11-25), top to bottom: a balance chip (`U_Pay<currency>`) and a row of buy buttons (`S_<currency>Row`, `U_<currency>X<count>`) each, shown for the currencies the crate takes |
 | `PRICE_FREE` | `"FREE"` | The x1 price while VIP's daily crate is free |
-| `LOBBY_GUI_NAME`, `BADGE_FREE`, `BADGE_MAX` | `"Lobby"`, `"1"`, `9` | The gui with the corner menu, and the badge on its Weapons button: `BADGE_FREE` while a free crate waits, else how many crates the coins open, `9+` past `BADGE_MAX` |
+| `SHORT_DIAMONDS_MESSAGE`, `OPEN_FAILED_MESSAGE` | "Not enough diamonds!", "Can't open that right now" | What the crates screen's notice says when the server won't open a crate (2026-11-24); the screen stays open |
+| `NOTICE_SECONDS`, `NOTICE_POP_START_SCALE`, `NOTICE_POP_TWEENINFO` | `2`, `0.8`, 0.25 s back out | How long the notice shows and how it pops in |
+| `NOTICE_SHOP_DELAY`, `SHOP_GUI_NAME` | `1`, `"Shop"` | Short of diamonds, the shop opens this many seconds after the notice |
+| `LOBBY_GUI_NAME`, `BADGE_FREE`, `BADGE_MAX` | `"Lobby"`, `"1"`, `9` | The gui with the corner menu, and the badge on its Weapons button: `BADGE_FREE` while a free crate waits, else how many crates the player's diamonds open (`_getCheapestPrice`), `9+` past `BADGE_MAX` |
 
 ## Sounds
 
@@ -232,10 +235,10 @@ group).
 
 ## In the place
 
-Drives the `Crates` widget, which WidgetManager opens. The shop: `U_Tabs` › `PREFAB | CrateTab`, `U_PayCoins` /
+Drives the `Crates` widget, which WidgetManager opens. The shop: `U_Tabs` › `PREFAB | CrateTab`,
 `U_PayDiamonds`, `U_Center` (the showcase: `U_Crate`, a ViewportFrame for the 3D crate, `S_Glow`, `S_Rays`, `S_Beam`, `S_Halo`, `S_Pedestal`,
-`S_PedestalRing`, `S_Particles`, `S_Tier`, `S_Plate`), `U_BottomCenter` › `S_CoinsRow` (`U_CoinsX1`, `U_CoinsX3`,
-`U_CoinsX10`) and `S_DiamondsRow` (`U_DiamondsX1`, `U_DiamondsX3`, `U_DiamondsX10`), `U_Quick`, `U_Odds` ›
+`S_PedestalRing`, `S_Particles`, `S_Tier`, `S_Plate`), `U_BottomCenter` ›
+`S_DiamondsRow` (`U_DiamondsX1`, `U_DiamondsX3`, `U_DiamondsX10`), `U_Quick`, `U_Odds` ›
 `PREFAB | RaritySection` › `PREFAB | OddsItem`, and `U_Backdrop`. The 3D crates: `U_Stage` (`S_Glow`, `S_Rays`,
 `S_Viewport`, `S_Tap` › `S_TapScale`, `S_TapSub`, and the full-screen tap `S_Hit`). The opening: `U_Open` (`S_Swallow`, the UIScale the black hole shrinks it with, `S_Title`, `U_Reels` with
 `PREFAB | Band`, `PREFAB | Column` and `PREFAB | Card`, the letterbox bars, `U_Skip`) and `U_Result` (`S_FxBack`,
@@ -246,7 +249,7 @@ gui's README lists every element, prefab and `Look_*` attribute.
 The `Lobby` gui's corner menu opens it: `U_Menu` › `S_Weapons` and `S_Skins` (each with a `Crates_CrateId` attribute,
 `"Weapon"` and `"Skin"`) select that crate's tab, then `I.WidgetManager.Open("Crates")`. The badge on Weapons
 (`U_Menu` › `S_Badge` › `S_Count`) reads 1 while VIP's daily crate waits (no "FREE" beside the FREE WEAPONS tile), else how many of
-the cheapest coin crate the player's coins open (`9+` past 9, hidden at none), redrawn on `Currency_Changed`. The old
+the cheapest shown crate the player's diamonds open (`9+` past 9, hidden at none), redrawn on `Currency_Changed`. The old
 `CrateOpen` and `CrateOdds` guis are no longer used.
 
 Drives the `FreeCrate` gui over the crates screen (its README): `U_Button` (the badge), and `U_Dialog` with `S_CrateView`

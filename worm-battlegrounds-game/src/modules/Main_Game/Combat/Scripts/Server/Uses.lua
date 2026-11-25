@@ -216,7 +216,8 @@ end
 
 --[[
 	Writes a player's loadout, uses and cooldowns into their Combat replicator folder: Slots (item ids joined by
-	commas), Uses_<ItemId> and Cooldown_<ItemId>. Bots have no folder.
+	commas), Uses_<ItemId>, Cooldown_<ItemId> and Variant_<ItemId> (its look, "Golden", "Shiny" or "", for the bar's
+	cards). Bots have no folder.
 ]]
 --- @param participant Match_Participant?
 function Module._publish(participant)
@@ -233,6 +234,7 @@ function Module._publish(participant)
 	for itemId: string, left: number in pairs(uses[participant.Id]) do
 		I.Replicator.Set(player, _localName, `Uses_{itemId}`, left)
 		I.Replicator.Set(player, _localName, `Cooldown_{itemId}`, cooldowns[participant.Id][itemId])
+		I.Replicator.Set(player, _localName, `Variant_{itemId}`, Module._getVariant(participant, itemId))
 	end
 end
 
@@ -275,6 +277,26 @@ function Module.GetUses(participantId: string, itemId: string)
 	--[[ Returning ]]
 
 	return itemUses[itemId], cooldowns[participantId][itemId]
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Variant
+
+--[[
+	Returns how special a participant's copy of an item looks, as their match card says: the look they picked
+	(ItemLooks, "Normal" as ""), else "Golden", "Shiny" or "".
+]]
+--- @param participant Match_Participant
+--- @return string
+function Module._getVariant(participant, itemId: string)
+	--[[ Returning ]]
+
+	if participant.ItemLooks and participant.ItemLooks[itemId] then
+		return if participant.ItemLooks[itemId] == "Normal" then "" else participant.ItemLooks[itemId]
+	end
+	if participant.GoldenItems and participant.GoldenItems[itemId] then
+		return "Golden"
+	end
+	return if participant.ShinyItems and participant.ShinyItems[itemId] then "Shiny" else ""
 end
 
 return Module

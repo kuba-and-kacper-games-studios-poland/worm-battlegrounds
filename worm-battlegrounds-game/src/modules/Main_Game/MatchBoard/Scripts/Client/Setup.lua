@@ -31,6 +31,9 @@ local shownMaps: string = ""
 local localPlay: boolean = false
 local localPlayers: number = _settings.LOCAL_PLAYERS
 
+-- Whether local play's match has wind (off until picked: the owner, 2026-11-24)
+local wind: boolean = false
+
 -- Called whenever the panel opens or closes, so the board swaps its panels
 local onChanged: () -> ()
 
@@ -68,6 +71,18 @@ function Module.Start(changed: () -> ())
 	elems["MapList"] = elems["Setup"]:FindFirstChild("S_MapList", true) --- @type ScrollingFrame
 	elems["MapPrefab"] = elems["Setup"]:FindFirstChild("PREFAB | SoloMap") --- @type ImageButton
 	elems["PlayersRow"] = elems["Setup"]:FindFirstChild("S_PlayersRow", true) --- @type Frame
+	elems["MapRow"] = elems["Setup"]:FindFirstChild("S_MapRow", true) --- @type Frame
+	elems["BotsRow"] = elems["Setup"]:FindFirstChild("S_BotsRow", true) --- @type Frame
+	elems["DifficultyRow"] = elems["Setup"]:FindFirstChild("S_DifficultyRow", true) --- @type Frame
+	elems["DifficultyList"] = elems["DifficultyRow"]:FindFirstChild("S_DifficultyList") --- @type Frame
+	elems["DifficultyPrefab"] = elems["Setup"]:FindFirstChild("PREFAB | Difficulty") --- @type ImageButton
+	elems["WindBox"] = elems["Setup"]:FindFirstChild("S_WindBox", true) --- @type Frame
+	elems["WindOff"] = elems["WindBox"]:FindFirstChild("S_WindOff", true) --- @type ImageButton
+	elems["WindOn"] = elems["WindBox"]:FindFirstChild("S_WindOn", true) --- @type ImageButton
+
+	--[[ Building ]]
+
+	Module._buildDifficulties()
 
 	--[[ Connections ]]
 
@@ -84,13 +99,62 @@ function Module.Start(changed: () -> ())
 			Module._refresh()
 		end)
 	end
+	I.Interact.OnPress(elems["WindOff"], function()
+		wind = false
+		Module._refresh()
+	end)
+	I.Interact.OnPress(elems["WindOn"], function()
+		wind = true
+		Module._refresh()
+	end)
 	I.Interact.OnPress(elems["Back"], Module.Close)
 	I.Interact.OnPress(elems["Start"], Module._start)
 	I.Topic.Subscribe("WidgetManager_Opened", Module._onOpened)
 	I.Topic.Subscribe("WidgetManager_Closed", Module._onClosed)
 end
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Initialization
+
+--%%%%%%%%%%%%%%%%%%%% Build Difficulties
+
+--[[
+	Makes PLAY SOLO's difficulty cards from the gui's PREFAB | Difficulty, one per SOLO_DIFFICULTIES in order, each with
+	its glyph (DIFFICULTY_ICONS) and name in its colour (DIFFICULTY_COLORS: the wash, the glyph's tint, and the picked
+	outline and name), and a press that picks it.
+]]
+function Module._buildDifficulties()
+	for index: number, difficulty: string in ipairs(_settings.SOLO_DIFFICULTIES) do
+		--[[ Cloning ]]
+
+		local card: ImageButton = elems["DifficultyPrefab"]:Clone()
+		card.Name = difficulty
+		card.LayoutOrder = index
+		card.Visible = true
+
+		--[[ Texts ]]
+
+		card:FindFirstChild("S_Glyph").Image = _settings.DIFFICULTY_ICONS[difficulty]
+		card:FindFirstChild("S_Name").Text = difficulty
+
+		--[[ Colours ]]
+
+		local color: Color3 = _settings.DIFFICULTY_COLORS[difficulty]
+		card:FindFirstChild("S_Tint", true).ImageColor3 = color
+		card:FindFirstChild("S_Glyph").ImageColor3 = Color3.new(1, 1, 1):Lerp(color, _settings.DIFFICULTY_GLYPH_TINT)
+		card:SetAttribute("Look_SelectedStrokeColor", color)
+		card:SetAttribute("Look_SelectedTextColor", color)
+
+		--[[ Saving ]]
+
+		card.Parent = elems["DifficultyList"]
+		I.Interact.OnPress(card, function()
+			picked = difficulty
+			Module._refresh()
+		end)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
 --%%%%%%%%%%%%%%%%%%%% Open
 
@@ -165,9 +229,10 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Writes the title and its mode icon (MODE_ICONS), shows how many share the screen only for local play and No bots only
-	for a party or local play, marks the picked choices as the custom lobby does, says what a win pays (a solo match's
-	coins, or how a party match pays), and lists the maps the match can be played on.
+	Writes the title and its mode icon (MODE_ICONS), shows how many share the screen and the wind only for local play and
+	No bots only for a party or local play, marks the picked choices as the custom lobby does, says what a win pays (a solo match's
+	diamonds, or how a party match pays), and lists the maps the match can be played on. Solo shows only the difficulty
+	cards, its reward and PLAY: no map list (it plays a random map) and no bots row.
 ]]
 function Module._refresh()
 	--[[ Texts ]]
@@ -176,11 +241,23 @@ function Module._refresh()
 	elems["TitleIcon"].Image = _settings.MODE_ICONS[if localPlay then "Local" elseif party then "Party" else "Bots"]
 	elems["RewardText"].Text = _settings.REWARD_TEXT[if localPlay then "Local" elseif not party then "Solo" elseif picked == "None" then "PartyNoBots" else "Party"]
 	elems["RewardAmount"].Visible = not party and not localPlay
-	elems["Reward"].Text = tostring(_settings.SOLO_WIN_COINS[picked] or 0)
+	elems["Reward"].Text = tostring(_settings.SOLO_WIN_DIAMONDS[picked] or 0)
 
 	--[[ Choices ]]
 
+	local solo: boolean = not party and not localPlay
+	elems["DifficultyRow"].Visible = solo
+	elems["MapRow"].Visible = not solo
+	elems["BotsRow"].Visible = not solo
+	for _index: number, card: Instance in ipairs(elems["DifficultyList"]:GetChildren()) do
+		if card:IsA("ImageButton") then
+			Custom.SetPicked(card, card.Name == picked)
+		end
+	end
 	elems["PlayersRow"].Visible = localPlay
+	elems["WindBox"].Visible = localPlay
+	Custom.SetPicked(elems["WindOff"], not wind)
+	Custom.SetPicked(elems["WindOn"], wind)
 	for players: number = 2, _settings.LOCAL_MAX_PLAYERS do
 		Custom.SetPicked(elems["PlayersRow"]:FindFirstChild(`S_Players{players}`, true), players == localPlayers)
 	end
@@ -270,17 +347,18 @@ end
 --%%%%%%%%%%%%%%%%%%%% Start
 
 --[[
-	Starts the solo, party or local match with the picked bots and map, and goes back to the board.
+	Starts the solo, party or local match with the picked bots and map (and local play's wind; solo always on a random
+	map), and goes back to the board.
 ]]
 function Module._start()
 	--[[ Sending ]]
 
 	if localPlay then
-		I.Network.Fire("MatchBoard_PlayLocal", picked, pickedMap, localPlayers)
+		I.Network.Fire("MatchBoard_PlayLocal", picked, pickedMap, localPlayers, wind)
 	elseif party then
 		I.Network.Fire("MatchBoard_PlayParty", picked, pickedMap)
 	else
-		I.Network.Fire("MatchBoard_PlaySolo", picked, pickedMap)
+		I.Network.Fire("MatchBoard_PlaySolo", picked, "Random")
 	end
 
 	--[[ Closing ]]

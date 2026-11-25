@@ -43,7 +43,7 @@ function Module.Init()
 	I.Network.Fired("MatchBoard_PlaySolo", Module.PlaySolo)
 	I.Network.GetEvent("MatchBoard_PlayParty", { "Player", "string", "string" }, { RateLimit = 1 })
 	I.Network.Fired("MatchBoard_PlayParty", Module.PlayParty)
-	I.Network.GetEvent("MatchBoard_PlayLocal", { "Player", "string", "string", "number" }, { RateLimit = 1 })
+	I.Network.GetEvent("MatchBoard_PlayLocal", { "Player", "string", "string", "number", "boolean" }, { RateLimit = 1 })
 	I.Network.Fired("MatchBoard_PlayLocal", Module.PlayLocal)
 end
 
@@ -56,11 +56,11 @@ end
 	Sends players to a new match server: puts them on teams (each party on one team, a party bigger than a team
 	spilling onto the next with room, then the solo players), each with the card the match seats them from until they
 	arrive, builds the match's metadata and sends them. Players who couldn't go are told so. Returns whether the
-	match started.
+	match started. Wind blows only when `wind` is true (a custom lobby that turned it on).
 ]]
 --- @param players { Player }
 --- @return boolean
-function Module.Launch(players, kind: string, mode: string, size: number, mapId: string, difficulty: string, tutorial: boolean?)
+function Module.Launch(players, kind: string, mode: string, size: number, mapId: string, difficulty: string, tutorial: boolean?, wind: boolean?)
 	--[[ Local Variables ]]
 
 	local teamSize: number = if mode == "Teams" then math.max(math.floor(size / 2), 1) else _settings.TEAM_SIZES[mode] or 1
@@ -107,6 +107,7 @@ function Module.Launch(players, kind: string, mode: string, size: number, mapId:
 		Size = size,
 		MapId = mapId,
 		Difficulty = difficulty,
+		Wind = wind == true,
 		Roster = roster,
 	})
 end
@@ -136,7 +137,7 @@ function Module.Send(players, metadata, accessCode: string?)
 
 	--[[ Teleporting ]]
 
-	I.Transition.SetDestination(players, `Heading to {_settings.MAPS[metadata.MapId].Name}…`, _settings.MAPS[metadata.MapId].Thumbnail)
+	I.Transition.SetDestination(players, Module.GetDestination(_settings.DESTINATION_KICKER, metadata.MapId, metadata.Mode, metadata.Size))
 
 	local success: boolean
 	local result: any | string?
@@ -234,10 +235,11 @@ end
 	**SERVER** |
 	Starts a local match: the player and 1 to LOCAL_MAX_PLAYERS − 1 guests on their screen (each guest a snail of its
 	own, played from the host's screen, named LOCAL_GUEST_NAME), with a bot per player at a difficulty or none, on the
-	picked map or a random one. Pays nothing. Refused in a party of 2 or more.
+	picked map or a random one, with wind or without (off unless picked: the owner, 2026-11-24). Pays nothing. Refused in
+	a party of 2 or more.
 ]]
 --- @return boolean
-function Module.PlayLocal(player: Player, difficulty: string, mapId: string, players: number)
+function Module.PlayLocal(player: Player, difficulty: string, mapId: string, players: number, wind: boolean)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return false
@@ -281,6 +283,7 @@ function Module.PlayLocal(player: Player, difficulty: string, mapId: string, pla
 		Size = size,
 		MapId = Module.GetMap(size, mapId),
 		Difficulty = difficulty,
+		Wind = wind,
 		Roster = roster,
 	})
 end
@@ -320,6 +323,33 @@ function Module.GetMap(size: number, askedId: string?)
 		return askedId
 	end
 	return pool[random:NextInteger(1, #pool)]
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Destination
+
+--[[
+	**SERVER** |
+	Returns what the teleport card shows for a match: a line over the map's name, its scene, and the mode with its icon
+	and how many snails play.
+]]
+--- @return Transition_Destination
+function Module.GetDestination(kicker: string, mapId: string, mode: string, size: number)
+	--[[ Returning ]]
+
+	return {
+
+		--[[ General ]]
+
+		Kicker = kicker,
+		Title = _settings.MAPS[mapId].Name,
+		MapId = mapId,
+
+		--[[ Match ]]
+
+		Mode = _settings.MODE_NAMES[mode] or mode,
+		ModeIcon = _settings.MODE_ICONS[mode],
+		Detail = string.format(_settings.DESTINATION_DETAIL, size),
+	}
 end
 
 return Module

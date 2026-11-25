@@ -11,12 +11,41 @@ local _settings = {
 		liquid's colour when Tint is set. Ceiling trickles an effect from the underside of the rock over the map. Music
 		is the SoundsList track that plays there (each carries the place's own ambience), SuddenDeathMusic the one that
 		takes over while a match's sudden death runs. WindColor paints the wind's streaks on a map and WindSound is its
-		wind's loop (the lobby has no wind)
+		wind's loop (the lobby has no wind). Sky gives a map a sky of its own over its preset's (Sky properties: the six
+		faces from art/map_skies, celestial bodies off); a map without one shows its preset's
 	]]
 	--- @type { [string]: Atmosphere_Profile }
 	PROFILES = {
+
+		--[[
+			The lobby's Parallax rows are drawn only on the loading card (Transition's lobby scene): the lobby itself is a
+			3D stage with no backdrop layers
+		]]
 		Lobby = {
 			Preset = "Lobby",
+			Parallax = {
+
+				--[[ Far snowy brick peaks over green foothills ]]
+
+				{ Image = "rbxassetid://138969257928643", Depth = 1100, X = -750, Bottom = -8, Width = 500, Height = 218 },
+				{ Image = "rbxassetid://111750536991328", Depth = 1100, X = -250, Bottom = -8, Width = 500, Height = 218 },
+				{ Image = "rbxassetid://82666766422926", Depth = 1100, X = 250, Bottom = -8, Width = 500, Height = 218 },
+				{ Image = "rbxassetid://82800576469011", Depth = 1100, X = 750, Bottom = -8, Width = 500, Height = 218 },
+				{ Color = Color3.fromRGB(144, 189, 168), Depth = 1100.5, X = 0, Bottom = -345, Width = 2000, Height = 346 },
+
+				--[[ Clouds (Rolling Plains' pictures) ]]
+
+				{ Image = "rbxassetid://129166667994953", Depth = 700, X = -520, Bottom = 116, Width = 257.6, Height = 128.8 },
+				{ Image = "rbxassetid://86974442104926", Depth = 700, X = 120, Bottom = 166, Width = 179.2, Height = 89.6 },
+				{ Image = "rbxassetid://85010433092572", Depth = 700, X = 560, Bottom = 124, Width = 235.2, Height = 117.6 },
+				{ Image = "rbxassetid://120459724898873", Depth = 700, X = -60, Bottom = 221, Width = 134.4, Height = 67.2 },
+
+				--[[ Near brick meadow with oaks and pines ]]
+
+				{ Image = "rbxassetid://103337111307035", Depth = 350, X = -262.5, Bottom = -5, Width = 525, Height = 81 },
+				{ Image = "rbxassetid://117186475164441", Depth = 350, X = 262.5, Bottom = -5, Width = 525, Height = 81 },
+				{ Color = Color3.fromRGB(92, 156, 113), Depth = 350.5, X = 0, Bottom = -145, Width = 1050, Height = 147 },
+			},
 			Music = "BGM",
 			Ambient = {
 				{ Effect = "Ambient_Motes", Bottom = 0, Top = 1, RateScale = 1 },
@@ -25,6 +54,15 @@ local _settings = {
 		},
 		PicnicPlains = {
 			Preset = "Plains",
+			Sky = {
+				SkyboxFt = "rbxassetid://126464635735668",
+				SkyboxBk = "rbxassetid://121337561639918",
+				SkyboxLf = "rbxassetid://117572288895021",
+				SkyboxRt = "rbxassetid://105602696805183",
+				SkyboxUp = "rbxassetid://137807361860350",
+				SkyboxDn = "rbxassetid://74008396460569",
+				CelestialBodiesShown = false,
+			},
 			Music = "Music_PicnicPlains",
 			SuddenDeathMusic = "Music_PicnicPlains_SuddenDeath",
 			WindColor = Color3.fromRGB(255, 255, 255),
@@ -70,9 +108,44 @@ local _settings = {
 			},
 		},
 
-		-- shortcut: Picnic Plains' mood until Rolling Plains gets its own (its own music since 2026-11-16)
+		--[[
+			shortcut: Picnic Plains' mood until Rolling Plains gets its own (its own music since 2026-11-16); its own
+			parallax layers over Picnic Plains' gradient sky since 2026-11-25
+		]]
 		RollingPlains = {
 			Preset = "Plains",
+			Sky = {
+				SkyboxFt = "rbxassetid://99363908139132",
+				SkyboxBk = "rbxassetid://137313082002092",
+				SkyboxLf = "rbxassetid://94095323195070",
+				SkyboxRt = "rbxassetid://130006245012592",
+				SkyboxUp = "rbxassetid://103458071719063",
+				SkyboxDn = "rbxassetid://77273756312382",
+				CelestialBodiesShown = false,
+			},
+			Parallax = {
+
+				--[[ Far hazy islands; both fills are one sea blue ]]
+
+				{ Image = "rbxassetid://90492886631693", Depth = 1100, X = -750, Bottom = -8, Width = 500, Height = 198 },
+				{ Image = "rbxassetid://97779160747848", Depth = 1100, X = -250, Bottom = -8, Width = 500, Height = 198 },
+				{ Image = "rbxassetid://126654422829519", Depth = 1100, X = 250, Bottom = -8, Width = 500, Height = 198 },
+				{ Image = "rbxassetid://118309025375247", Depth = 1100, X = 750, Bottom = -8, Width = 500, Height = 198 },
+				{ Color = Color3.fromRGB(123, 180, 233), Depth = 1100.5, X = 0, Bottom = -345, Width = 2000, Height = 369 },
+
+				--[[ Clouds ]]
+
+				{ Image = "rbxassetid://129166667994953", Depth = 700, X = -520, Bottom = 116, Width = 257.6, Height = 128.8 },
+				{ Image = "rbxassetid://86974442104926", Depth = 700, X = 120, Bottom = 166, Width = 179.2, Height = 89.6 },
+				{ Image = "rbxassetid://85010433092572", Depth = 700, X = 560, Bottom = 124, Width = 235.2, Height = 117.6 },
+				{ Image = "rbxassetid://120459724898873", Depth = 700, X = -60, Bottom = 221, Width = 134.4, Height = 67.2 },
+
+				--[[ Near grassy islands and trees ]]
+
+				{ Image = "rbxassetid://85231310851686", Depth = 350, X = -262.5, Bottom = -5, Width = 525, Height = 81 },
+				{ Image = "rbxassetid://106383223101696", Depth = 350, X = 262.5, Bottom = -5, Width = 525, Height = 81 },
+				{ Color = Color3.fromRGB(123, 180, 233), Depth = 350.5, X = 0, Bottom = -145, Width = 1050, Height = 147 },
+			},
 			Music = "Music_RollingPlains",
 			SuddenDeathMusic = "Music_RollingPlains_SuddenDeath",
 			WindColor = Color3.fromRGB(255, 255, 255),
@@ -87,6 +160,38 @@ local _settings = {
 		},
 		Desert = {
 			Preset = "Desert",
+			Sky = {
+				SkyboxFt = "rbxassetid://71270015180658",
+				SkyboxBk = "rbxassetid://98208496302416",
+				SkyboxLf = "rbxassetid://98114376317689",
+				SkyboxRt = "rbxassetid://126438811843569",
+				SkyboxUp = "rbxassetid://76137748327422",
+				SkyboxDn = "rbxassetid://135538962182732",
+				CelestialBodiesShown = false,
+			},
+			Parallax = {
+
+				--[[ Far mesas ]]
+
+				{ Image = "rbxassetid://130661378778864", Depth = 1100, X = -750, Bottom = 0, Width = 500, Height = 148 },
+				{ Image = "rbxassetid://93069687422859", Depth = 1100, X = -250, Bottom = 0, Width = 500, Height = 148 },
+				{ Image = "rbxassetid://98922529645627", Depth = 1100, X = 250, Bottom = 0, Width = 500, Height = 148 },
+				{ Image = "rbxassetid://110765217904489", Depth = 1100, X = 750, Bottom = 0, Width = 500, Height = 148 },
+				{ Color = Color3.fromRGB(250, 209, 162), Depth = 1100.5, X = 0, Bottom = -345, Width = 2000, Height = 354 },
+
+				--[[ Clouds ]]
+
+				{ Image = "rbxassetid://117350518482573", Depth = 700, X = -460, Bottom = 124, Width = 257.6, Height = 128.8 },
+				{ Image = "rbxassetid://108381771125782", Depth = 700, X = 40, Bottom = 174, Width = 179.2, Height = 89.6 },
+				{ Image = "rbxassetid://139012446744357", Depth = 700, X = 500, Bottom = 136, Width = 235.2, Height = 117.6 },
+				{ Image = "rbxassetid://95169402656903", Depth = 700, X = -120, Bottom = 232, Width = 134.4, Height = 67.2 },
+
+				--[[ Near dunes ]]
+
+				{ Image = "rbxassetid://92808363681888", Depth = 350, X = -262.5, Bottom = 3, Width = 525, Height = 66 },
+				{ Image = "rbxassetid://138039729329328", Depth = 350, X = 262.5, Bottom = 3, Width = 525, Height = 66 },
+				{ Color = Color3.fromRGB(252, 194, 132), Depth = 350.5, X = 0, Bottom = -145, Width = 1050, Height = 155 },
+			},
 			Music = "Music_Desert",
 			SuddenDeathMusic = "Music_Desert_SuddenDeath",
 			WindColor = Color3.fromRGB(255, 240, 214),
@@ -134,6 +239,15 @@ local _settings = {
 		},
 		RockslideRidge = {
 			Preset = "Cave",
+			Sky = {
+				SkyboxFt = "rbxassetid://133999400453106",
+				SkyboxBk = "rbxassetid://103320266335414",
+				SkyboxLf = "rbxassetid://136322873666391",
+				SkyboxRt = "rbxassetid://140357849493459",
+				SkyboxUp = "rbxassetid://110602513746126",
+				SkyboxDn = "rbxassetid://80043436557296",
+				CelestialBodiesShown = false,
+			},
 			Music = "Music_RockslideRidge",
 			SuddenDeathMusic = "Music_RockslideRidge_SuddenDeath",
 			WindColor = Color3.fromRGB(228, 222, 212),
@@ -148,23 +262,67 @@ local _settings = {
 			Ceiling = { Effect = "Grit", Every = { 3, 7 } },
 		},
 
-		-- shortcut: Rockslide Ridge's cave mood until Echo Caverns gets its own (its own music since 2026-11-16)
+		--[[
+			An open snowy mountain since 2026-11-25 (was a cave): its own Mountains sky; shortcut: the meadow's light until it
+			gets a preset of its own (its own music since 2026-11-16, Rockslide Ridge's howling wind, its water's ripples)
+		]]
 		EchoCaverns = {
-			Preset = "Cave",
+			Preset = "Plains",
+			Sky = {
+				SkyboxFt = "rbxassetid://139125511340152",
+				SkyboxBk = "rbxassetid://79523563555922",
+				SkyboxLf = "rbxassetid://131048416551722",
+				SkyboxRt = "rbxassetid://77989498895287",
+				SkyboxUp = "rbxassetid://126242536248773",
+				SkyboxDn = "rbxassetid://137571441310944",
+				CelestialBodiesShown = false,
+			},
+			Parallax = {
+
+				--[[ Far snowy range ]]
+
+				{ Image = "rbxassetid://74510315412100", Depth = 1100, X = -750, Bottom = -6, Width = 500, Height = 218 },
+				{ Image = "rbxassetid://79426272421825", Depth = 1100, X = -250, Bottom = -6, Width = 500, Height = 218 },
+				{ Image = "rbxassetid://114325352282610", Depth = 1100, X = 250, Bottom = -6, Width = 500, Height = 218 },
+				{ Image = "rbxassetid://119966560497602", Depth = 1100, X = 750, Bottom = -6, Width = 500, Height = 218 },
+				{ Color = Color3.fromRGB(188, 203, 221), Depth = 1100.5, X = 0, Bottom = -345, Width = 2000, Height = 348 },
+
+				--[[ Clouds ]]
+
+				-- Higher and a little fainter since 2026-11-25 (the owner: "too low… a bit more subtle", then "a bit higher"; 110 studs lower and solid before)
+				{ Image = "rbxassetid://98672992888178", Depth = 700, X = -430, Bottom = 256, Width = 257.6, Height = 128.8, Transparency = 0.2 },
+				{ Image = "rbxassetid://90974304724232", Depth = 700, X = 260, Bottom = 306, Width = 179.2, Height = 89.6, Transparency = 0.2 },
+				{ Image = "rbxassetid://130289146969975", Depth = 700, X = 600, Bottom = 246, Width = 235.2, Height = 117.6, Transparency = 0.2 },
+				{ Image = "rbxassetid://121409989482134", Depth = 700, X = -720, Bottom = 336, Width = 134.4, Height = 67.2, Transparency = 0.2 },
+
+				--[[ Near snowy hills and pines ]]
+
+				{ Image = "rbxassetid://81484878649333", Depth = 350, X = -262.5, Bottom = -3, Width = 525, Height = 81 },
+				{ Image = "rbxassetid://70830604089110", Depth = 350, X = 262.5, Bottom = -3, Width = 525, Height = 81 },
+				{ Color = Color3.fromRGB(149, 160, 182), Depth = 350.5, X = 0, Bottom = -145, Width = 1050, Height = 149 },
+			},
 			Music = "Music_EchoCaverns",
 			SuddenDeathMusic = "Music_EchoCaverns_SuddenDeath",
-			WindColor = Color3.fromRGB(228, 222, 212),
+			WindColor = Color3.fromRGB(255, 255, 255),
 			WindSound = "Wind_Howl",
 			Ambient = {
-				{ Effect = "Ambient_CaveDust", Bottom = 0, Top = 0.85, RateScale = 1 },
+				{ Effect = "Ambient_Motes", Bottom = 0.1, Top = 1, RateScale = 0.6 },
 			},
 			Surface = {
 				{ Liquid = "Water", Effect = "Ripple", Every = { 1.5, 4 }, Tint = true },
 			},
-			Ceiling = { Effect = "Grit", Every = { 3, 7 } },
 		},
 		VolcanoIsle = {
 			Preset = "Volcano",
+			Sky = {
+				SkyboxFt = "rbxassetid://133568701967211",
+				SkyboxBk = "rbxassetid://90205576169723",
+				SkyboxLf = "rbxassetid://73282958212064",
+				SkyboxRt = "rbxassetid://76596542266781",
+				SkyboxUp = "rbxassetid://102639367163151",
+				SkyboxDn = "rbxassetid://128089118867016",
+				CelestialBodiesShown = false,
+			},
 			Music = "Music_VolcanoIsle",
 			SuddenDeathMusic = "Music_VolcanoIsle_SuddenDeath",
 			WindColor = Color3.fromRGB(235, 214, 200),
@@ -191,6 +349,28 @@ local _settings = {
 
 	-- How the lighting moves from one mood to the next (the first mood after joining is set at once)
 	MOOD_TWEENINFO = TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+
+	-- The lighting layer a map's own Sky goes on, over its preset's (a sky's textures change at once)
+	MAP_SKY_WEIGHT = 2,
+	MAP_SKY_ID = "MapSky",
+
+	--[[
+		The atmosphere a map with its own Sky gets on that layer: an Atmosphere with any density covers everything under
+		the horizon with its own colour, and the match camera looks level, so half its view was fog (the owner,
+		2026-11-25: "the bottom half is too long… the top part where actual skybox is is barely visible"), and its haze
+		and glare tint the sky even with no density. None of them and full offset show the whole painted sky
+	]]
+	--- @type { [string]: number }
+	MAP_SKY_ATMOSPHERE = { Density = 0, Offset = 1, Haze = 0, Glare = 0 },
+
+	--[[
+		A mood's Parallax rows are flat pictures standing far behind the map (a skybox never moves or grows as the camera
+		pans and zooms, so shapes painted in it looked stuck to the screen: the owner, 2026-11-25): each Depth studs
+		behind the play plane, centred X studs along the map from its middle, its bottom edge Bottom studs up from the
+		map's Bounds bottom, Width by Height studs, showing an Image (Transparency see-through, 0 when left out) or a solid
+		Color (the ground under a layer), drawn unlit. Each picture's SurfaceGui canvas is PARALLAX_CANVAS pixels wide
+	]]
+	PARALLAX_CANVAS = 1024,
 
 	-- Seconds one mood's music crossfades into the next's, and into its sudden-death version
 	MUSIC_FADE = 2.5,

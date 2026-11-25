@@ -28,7 +28,7 @@ local boardFolder: Folder
 -- Each public row's card on the board, by row id
 local lines = {} --- @type { [string]: Frame }
 
--- The seconds the cards' timers last showed, so the board redraws once a second
+-- The server second the cards last drew, so the board redraws once a second
 local shownSeconds: number = -1
 
 -- The map each public card shows, by row id, which its Join asks for
@@ -42,6 +42,9 @@ local playHomes = {} --- @type { [GuiObject]: UDim2 }
 
 -- Whether the custom lobby's window shows, which takes the play screen's place like the setup panel
 local customOpen: boolean = false
+
+-- When JOIN was last pressed (os.clock), so a press within JOIN_PRESS_GAP sends nothing
+local joinPressedAt: number = -math.huge
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -68,8 +71,10 @@ function Module.Start()
 	elems["Play"] = moduleGui:FindFirstChild("U_Play") --- @type Frame
 	elems["Solo"] = elems["Play"]:FindFirstChild("S_Solo", true) --- @type ImageButton
 	elems["SoloIcon"] = elems["Play"]:FindFirstChild("S_SoloIcon", true) --- @type ImageLabel
-	elems["Custom"] = elems["Play"]:FindFirstChild("S_Custom", true) --- @type ImageButton
-	elems["Local"] = elems["Play"]:FindFirstChild("S_Local", true) --- @type ImageButton
+	elems["SoloText"] = elems["Solo"]:FindFirstChild("Name1", true) --- @type TextLabel
+	elems["Friends"] = I.UserInterface.UI[_settings.FRIENDS_GUI_NAME] --- @type ScreenGui
+	elems["Custom"] = elems["Friends"]:FindFirstChild("S_Custom", true) --- @type ImageButton
+	elems["Local"] = elems["Friends"]:FindFirstChild("S_Local", true) --- @type ImageButton
 	elems["Rows"] = elems["Play"]:FindFirstChild("U_Rows", true) --- @type ScrollingFrame
 	prefabs["Row"] = elems["Rows"]:FindFirstChild("PREFAB | Row") --- @type Frame
 
@@ -94,6 +99,8 @@ function Module.Start()
 		Module._watchRow(config)
 	end
 	I.Interact.OnPress(elems["Solo"], Module._onPlay)
+	elems["SoloText"]:GetPropertyChangedSignal("TextBounds"):Connect(Module._centreSolo)
+	elems["Solo"]:GetPropertyChangedSignal("AbsoluteSize"):Connect(Module._centreSolo)
 	I.Interact.OnPress(elems["Local"], Module._onLocal)
 	I.Interact.OnPress(elems["Custom"], function()
 		if elems["Custom"]:GetAttribute("Interact_Function") == "" then
@@ -164,6 +171,10 @@ function Module._watchRow(config: Instance)
 				I.WidgetManager.ShowMessage("Your party's leader picks the match.")
 				return
 			end
+			if os.clock() - joinPressedAt < _settings.JOIN_PRESS_GAP then
+				return
+			end
+			joinPressedAt = os.clock()
 			I.Network.Fire("MatchBoard_Join", config.Name, shownMaps[config.Name])
 		end)
 	end
@@ -227,8 +238,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Local
 
 --[[
-	LOCAL opens the setup for a match of friends on this screen; a party plays together instead, so it asks them to leave
-	it first.
+	LOCAL (in PLAY WITH FRIENDS) opens the setup for a match of friends on this screen; a party plays together instead,
+	so it asks them to leave it first.
 ]]
 function Module._onLocal()
 	--[[ Checks ]]
@@ -259,7 +270,7 @@ function Module._tick()
 	end
 
 	-- Check if the timers show another second
-	if math.ceil(Rotation.GetSecondsLeft()) == shownSeconds then
+	if math.floor(I.S.Workspace:GetServerTimeNow()) == shownSeconds then
 		return
 	end
 
@@ -271,18 +282,20 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Draws the board: Solo vs bots (Play with party in a party) with its mode icon, and each public card's mode and its
-	icon (MODE_ICONS), the map it plays now (the
-	rotation's, the same on every server), its picture, how long until the next map, and Join. The setup panel shows
-	in the board's place, which slides away for it. A party member's Join, Play and Custom are greyed out (their leader
-	picks), but Custom opens their leader's lobby once they're in it.
+	Draws the board: Play solo (Play with party in a party) with its mode icon, and each public card's mode and its
+	icon (MODE_ICONS), and the match filling for the mode on every server (the server's LiveMapId, LivePlayers and
+	LiveEndsAt): its map, picture, players seated and how long until it starts; with none filling, the rotation's
+	map (the same on every server), 0 players and how long until the next map. Then Join. The setup panel shows
+	in the board's place, which slides away for it. A party member's Join, Play and PLAY WITH FRIENDS' Custom are greyed
+	out (their leader picks), but Custom opens their leader's lobby once they're in it.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
 
 	local member: boolean = Module._isPartyMember()
 	local mine: Instance? = Module._getMyRow()
-	shownSeconds = math.ceil(Rotation.GetSecondsLeft())
+	local now: number = I.S.Workspace:GetServerTimeNow()
+	shownSeconds = math.floor(now)
 
 	--[[ Lines ]]
 
@@ -291,12 +304,17 @@ function Module._refresh()
 		if not config then
 			continue
 		end
-		shownMaps[rowId] = Rotation.GetMap(config:GetAttribute("Mode"), config:GetAttribute("Size"))
+		-- The match filling for the mode on every server, or the rotation's next map with no one in it yet
+		local liveEndsAt: number = config:GetAttribute("LiveEndsAt") or 0
+		local live: boolean = (config:GetAttribute("LiveId") or "") ~= "" and liveEndsAt > now
+		local seconds: number = if live then math.ceil(liveEndsAt - now) else math.ceil(Rotation.GetSecondsLeft())
+		shownMaps[rowId] = if live then config:GetAttribute("LiveMapId") else Rotation.GetMap(config:GetAttribute("Mode"), config:GetAttribute("Size"))
 		local mapRow = _settings.MAPS[shownMaps[rowId]] --- @type MatchBoard_MapRow
 		line:FindFirstChild("S_Mode", true).Text = _settings.MODE_NAMES[config:GetAttribute("Mode")] or config:GetAttribute("Mode")
 		line:FindFirstChild("S_ModeIcon", true).Image = _settings.MODE_ICONS[config:GetAttribute("Mode")] or ""
 		line:FindFirstChild("S_Map", true).Text = mapRow.Name
-		line:FindFirstChild("S_Timer", true).Text = string.format("%d:%02d", shownSeconds // 60, shownSeconds % 60)
+		line:FindFirstChild("S_Players", true).Text = `{if live then config:GetAttribute("LivePlayers") else 0}/{config:GetAttribute("Size")}`
+		line:FindFirstChild("S_Timer", true).Text = string.format("%d:%02d", seconds // 60, seconds % 60)
 		line:FindFirstChild("S_Join"):FindFirstChild("Name1").Text = if member then "Host picks" else "Join"
 		Module._setLocked(line:FindFirstChild("S_Join"), member)
 
@@ -307,9 +325,10 @@ function Module._refresh()
 	--[[ Play ]]
 
 	local inParty: boolean = I.S.Players.LocalPlayer:GetAttribute("PartyId") ~= nil
-	elems["Solo"]:FindFirstChild("Name1").Text = if member then "Waiting for host" elseif inParty then "Play with party" else "Solo vs bots"
+	elems["SoloText"].Text = if member then "Waiting for host" elseif inParty then "Play with party" else "Play solo"
 	elems["SoloIcon"].Image = _settings.MODE_ICONS[if inParty then "Party" else "Bots"]
 	Module._setLocked(elems["Solo"], member)
+	Module._centreSolo()
 
 	--[[ Custom ]]
 
@@ -323,6 +342,36 @@ function Module._refresh()
 	--[[ Panels ]]
 
 	Module._slidePlay(not Setup.IsOpen() and not customOpen)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Centre Solo
+
+--[[
+	Centres PLAY SOLO's icon and text on the button as one group: the icon, SOLO_ICON_GAP of its width, then the text
+	(its label keeps its size, so its text keeps its size; only the two move).
+]]
+function Module._centreSolo()
+	--[[ Local Variables ]]
+
+	local area: GuiObject = elems["SoloText"].Parent
+	local areaWidth: number = area.AbsoluteSize.X
+	local iconWidth: number = elems["SoloIcon"].AbsoluteSize.X
+	local textWidth: number = elems["SoloText"].TextBounds.X
+
+	--[[ Checks ]]
+
+	-- Check if the button has been laid out
+	if areaWidth <= 0 or textWidth <= 0 then
+		return
+	end
+
+	--[[ Placing ]]
+
+	local gap: number = iconWidth * _settings.SOLO_ICON_GAP
+	local left: number = (areaWidth - (iconWidth + gap + textWidth)) / 2
+	local textCentre: number = left + iconWidth + gap + textWidth / 2
+	elems["SoloIcon"].Position = UDim2.fromScale(left / areaWidth, elems["SoloIcon"].Position.Y.Scale)
+	elems["SoloText"].Position = UDim2.fromScale(textCentre / areaWidth - elems["SoloText"].Size.X.Scale / 2, elems["SoloText"].Position.Y.Scale)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Slide Play

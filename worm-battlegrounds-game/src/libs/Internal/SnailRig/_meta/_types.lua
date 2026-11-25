@@ -30,6 +30,7 @@
 --- @field EmoteUntil number?
 --- @field EmoteBones { [Bone]: SnailRig_EmoteTransform }
 --- @field EmoteTrack AnimationTrack?
+--- @field Muted { SnailRig_MutedTrack }?
 --- @field FaceUntil number?
 --- @field FaceWeight number
 --- @field FaceJoints { [Bone | Motor6D]: SnailRig_EmoteTransform }
@@ -39,6 +40,15 @@
 --- @field WalkJoints { [Bone | Motor6D]: SnailRig_EmoteTransform }
 --- @field WalkWeight number
 local _snailRig_Rig = {}
+
+--- @class SnailRig_MutedTrack
+---
+--- # Track #
+---
+--- @field Track AnimationTrack
+--- @field Time number
+--- @field Speed number
+local _snailRig_MutedTrack = {}
 
 --- @class SnailRig_EmoteTransform
 ---

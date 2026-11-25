@@ -2,9 +2,9 @@
 
 --- @class MatchRewards_Earned
 ---
---- # Coins #
+--- # Diamonds #
 ---
---- @field Coins { [string]: string }
+--- @field Diamonds { [string]: string }
 ---
 --- # XP #
 ---

@@ -81,7 +81,7 @@ local _gui = {
 								},
 								Children = {
 									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.0714 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.06 } },
 								},
 							},
 						},
@@ -103,7 +103,7 @@ local _gui = {
 									Size = UDim2.fromScale(0.84, 0.26),
 									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 									RichText = true,
-									Text = "You can't open that crate right now. Check your coins and diamonds.",
+									Text = "You can't open that crate right now. Check your diamonds.",
 									TextColor3 = Color3.fromRGB(255, 255, 255),
 									TextScaled = true,
 									TextSize = 40,
@@ -111,7 +111,7 @@ local _gui = {
 								},
 								Children = {
 									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 40 } },
-									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.0833 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.06 } },
 								},
 							},
 							-- OK: the crate shop's green button (Gacha 1020_5), centred; it closes the message, and A presses it
@@ -219,7 +219,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-											{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.09 } },
+											{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
 										},
 									},
 									-- A (Cross) on the top right corner, on Console: A presses the button

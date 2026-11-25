@@ -26,6 +26,9 @@ local fullScreenOpen = {} --- @type { [string]: boolean }
 -- The widgets open now that stand in a lobby panel's place (PANEL_WIDGETS)
 local panelOpen = {} --- @type { [string]: boolean }
 
+-- Whether a takeover (the XP replay) holds the screen: only TAKEOVER_GUIS show
+local takeover: boolean = false
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -49,6 +52,10 @@ function Module.Init()
 	----------------------------
 
 	I.Lobby = {
+
+		--[[ Control ]]
+
+		SetTakeover = Module.SetTakeover,
 
 		--[[ Methods ]]
 
@@ -77,12 +84,29 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
+--%%%%%%%%%%%%%%%%%%%% Set Takeover
+
+--[[
+	**CLIENT** |
+	Lets a moment take the whole screen (the XP replay): the lobby's guis but TAKEOVER_GUIS hide, with the stage's
+	nameplates and bubbles, until it lets go.
+]]
+function Module.SetTakeover(on: boolean)
+	--[[ Saving ]]
+
+	takeover = on
+
+	--[[ Applying ]]
+
+	Module._refreshGuis()
+end
+
 --%%%%%%%%%%%%%%%%%%%% Refresh Guis
 
 --[[
 	Shows the lobby's screens, except while the player is in a match (the Studio map plays both on one server) or a
-	full-screen widget covers them, or a panel's own while a widget stands in its place, and closes a lobby window
-	still open (the custom lobby's) when the match starts.
+	full-screen widget or a takeover covers them (the stage's nameplates and bubbles too), or a panel's own while a widget
+	stands in its place, and closes a lobby window still open (the custom lobby's) when the match starts.
 ]]
 function Module._refreshGuis()
 	--[[ Local Variables ]]
@@ -102,8 +126,10 @@ function Module._refreshGuis()
 	--[[ Applying ]]
 
 	for _index: number, guiName: string in ipairs(_settings.LOBBY_GUIS) do
-		I.UserInterface.UI[guiName].Enabled = inLobby and not covered and not replaced[guiName]
+		local taken: boolean = takeover and not table.find(_settings.TAKEOVER_GUIS, guiName)
+		I.UserInterface.UI[guiName].Enabled = inLobby and not covered and not replaced[guiName] and not taken
 	end
+	Stage.SetLabelsShown(not covered and not takeover)
 	if not inLobby then
 		I.WidgetManager.CloseCurrent()
 	end

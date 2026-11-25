@@ -23,6 +23,9 @@ local timerConnection: RBXScriptConnection?
 local turn = nil --- @type Snails_TagTurn?
 local turnConnection: RBXScriptConnection?
 
+-- Each tag's full layout (its overhead's size and its health bar's place), to put back after its player's own turn
+local layouts = {} --- @type { [BillboardGui]: Snails_TagLayout }
+
 -- The snail attributes a tag shows: only these redraw it (a walking snail's Stamina changes all the time)
 local TAG_ATTRIBUTES = { Health = true, MaxHealth = true, Color = true, Active = true, Ghost = true } --- @type { [string]: boolean }
 
@@ -63,8 +66,9 @@ end
 
 --[[
 	Puts a SnailTag over a snail (its player's badges after the name) and an outline around it, both in its team's
-	colour and kept in step with its attributes, and pops a damage number whenever its health drops. Every snail but
-	the player's own gets the small tag: its name and bar at OTHER_TAG_SCALE, no level or badges.
+	colour and kept in step with its attributes, and pops a damage number whenever its health drops. No tag shows a
+	level (the owner, 2026-11-24). Every snail but the player's own gets the small tag: its name and bar at
+	OTHER_TAG_SCALE, no badges; the player's own turns compact on their turn (Refresh Tag).
 ]]
 function Module._addTag(model: Instance)
 	--[[ Local Variables ]]
@@ -78,7 +82,6 @@ function Module._addTag(model: Instance)
 	--[[ Elements ]]
 
 	local nameLabel: TextLabel = tag:FindFirstChild("S_Name", true)
-	local levelLabel: TextLabel = tag:FindFirstChild("S_Level", true)
 	local overhead: Frame = tag:FindFirstChild("Overhead", true)
 
 	--[[ Building ]]
@@ -90,8 +93,11 @@ function Module._addTag(model: Instance)
 	tag.StudsOffset = Vector3.yAxis * _settings.TAG_OFFSET
 	nameLabel.Text = model:GetAttribute("DisplayName")
 	nameLabel.TextColor3 = if model:GetAttribute("Vip") then _settings.VIP_NAME_COLOR else color
-	levelLabel.Text = `Lv {model:GetAttribute("Level")}`
-	levelLabel.Visible = mine and model:GetAttribute("Level") > 0
+	tag:FindFirstChild("S_Level", true).Visible = false
+	layouts[tag] = { Compact = false }
+	tag.Destroying:Connect(function()
+		layouts[tag] = nil
+	end)
 	if mine then
 		I.PlayerBadges.Show(nameLabel, model:GetAttribute("UserId"))
 	else
@@ -173,6 +179,10 @@ function Module._refreshTag(model: Instance, tag: BillboardGui)
 		NumberSequenceKeypoint.new(1, 1),
 	})
 
+	--[[ Own Turn ]]
+
+	Module._setCompact(model, tag, isActive and model == I.Snails.GetMine())
+
 	--[[ Timer ]]
 
 	if timer.Visible and timedTag ~= tag then
@@ -183,6 +193,43 @@ function Module._refreshTag(model: Instance, tag: BillboardGui)
 		timedTag = nil
 		timerConnection:Disconnect()
 		timerConnection = nil
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Compact
+
+--[[
+	Turns the player's own snail's tag compact for their turn, or back to full after it: compact, it's the turn arrow
+	alone (the owner, 2026-11-24: their health shows at the bottom left), close over the snail (OWN_TURN_TAG_OFFSET).
+]]
+function Module._setCompact(model: Instance, tag: BillboardGui, compact: boolean)
+	--[[ Data ]]
+
+	local layout = layouts[tag] --- @type Snails_TagLayout?
+
+	--[[ Checks ]]
+
+	-- Check if the tag changes
+	if not layout or layout.Compact == compact then
+		return
+	end
+
+	--[[ Elements ]]
+
+	local nameLabel: TextLabel = tag:FindFirstChild("S_Name", true)
+	local overhead: Frame = tag:FindFirstChild("Overhead", true)
+
+	--[[ Applying ]]
+
+	layout.Compact = compact
+	overhead.Visible = not compact
+	tag.StudsOffset = Vector3.yAxis * (if compact then _settings.OWN_TURN_TAG_OFFSET else _settings.TAG_OFFSET)
+
+	-- The badges follow the name (PlayerBadges lays them out again when it's back)
+	if compact then
+		tag:FindFirstChild("S_Badges", true).Visible = false
+	else
+		I.PlayerBadges.Show(nameLabel, model:GetAttribute("UserId"))
 	end
 end
 
@@ -251,8 +298,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step Turn
 
 --[[
-	Drops the turn arrow in from above the screen with a bounce, then bobs it; once the snail acts, hides the arrow
-	until the turn ends.
+	Drops the turn arrow in from above the screen with a bounce, then bobs it upward from its slot, never down into the
+	health bar under it (the owner, 2026-11-24); once the snail acts, hides the arrow until the turn ends (not over the
+	player's own snail, whose arrow stays all its turn).
 ]]
 function Module._stepTurn()
 	--[[ Checks ]]
@@ -264,8 +312,8 @@ function Module._stepTurn()
 
 	--[[ Hiding ]]
 
-	-- Once the snail acts, its arrow hides and the step stops
-	if Module._hasActed(turn) then
+	-- Once the snail acts, its arrow hides and the step stops; the player's own keeps it all turn (the owner, 2026-11-24)
+	if turn.Model ~= I.Snails.GetMine() and Module._hasActed(turn) then
 		turn.Arrow.Visible = false
 		turnConnection:Disconnect()
 		turnConnection = nil
@@ -283,7 +331,7 @@ function Module._stepTurn()
 		local fall: number = I.S.TweenService:GetValue(elapsed / _settings.ARROW_DROP_SECONDS, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out)
 		offset = -_settings.ARROW_DROP_FROM * (1 - fall)
 	else
-		offset = math.sin((elapsed - _settings.ARROW_DROP_SECONDS) * _settings.ARROW_BOB_SPEED) * _settings.ARROW_BOB_HEIGHT
+		offset = -(0.5 - 0.5 * math.cos((elapsed - _settings.ARROW_DROP_SECONDS) * _settings.ARROW_BOB_SPEED)) * _settings.ARROW_BOB_HEIGHT
 	end
 
 	--[[ Applying ]]
@@ -319,7 +367,8 @@ end
 
 --[[
 	Returns whether the active snail acted this turn, as Worms Armageddon tells it, so its arrow hides: it moved TAG_HIDE_MOVE
-	studs from where the turn started, aimed TAG_HIDE_AIM from its first aim (or charged a shot), or shot.
+	studs from where the turn started, aimed TAG_HIDE_AIM from its first aim or changed its power by TAG_HIDE_POWER, or
+	shot.
 ]]
 --- @param current Snails_TagTurn
 --- @return boolean
@@ -361,7 +410,11 @@ function Module._hasActed(current)
 		elseif turned > _settings.TAG_HIDE_AIM then
 			return true
 		end
-		if (model:GetAttribute("AimPower") or 0) > 0 then
+		-- A kept aim starts with power: only changing it counts
+		local aimPower: number = model:GetAttribute("AimPower") or 0
+		if cameraMoved or not current.PowerBase then
+			current.PowerBase = aimPower
+		elseif math.abs(aimPower - current.PowerBase) > _settings.TAG_HIDE_POWER then
 			return true
 		end
 	end

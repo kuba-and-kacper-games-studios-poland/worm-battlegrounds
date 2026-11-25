@@ -33,6 +33,9 @@ local selected: string = ""
 -- Whether a crate is opening, so a second press waits
 local busy: boolean = false
 
+-- How many notices have shown, so only the newest hides its plate
+local notices: number = 0
+
 -- Draws a crate's odds in the left list, dresses the showcase, and shows what a crate gave
 local drawOdds: (crateId: string) -> ()
 local drawShowcase: (crateId: string) -> ()
@@ -69,6 +72,9 @@ function Module.Start(oddsDrawer, showcaseDrawer, resultsOpener)
 	elems["Badge"] = elems["Menu"]:FindFirstChild("S_Badge", true) --- @type Frame
 	elems["BadgeCount"] = elems["Badge"]:FindFirstChild("S_Count", true) --- @type TextLabel
 	elems["BottomCenter"] = moduleGui:FindFirstChild("U_BottomCenter", true) --- @type Frame
+	elems["Notice"] = moduleGui:FindFirstChild("S_Notice", true) --- @type Frame
+	elems["NoticeText"] = elems["Notice"]:FindFirstChild("S_NoticeText") --- @type TextLabel
+	elems["NoticePop"] = elems["Notice"]:FindFirstChild("S_NoticePop") --- @type UIScale
 	for _index: number, currency: string in ipairs(_settings.PAY_CURRENCIES) do
 		elems[`Pay{currency}`] = moduleGui:FindFirstChild(`U_Pay{currency}`, true) --- @type Frame
 		elems[`{currency}Row`] = elems["BottomCenter"]:FindFirstChild(`S_{currency}Row`, true) --- @type Frame
@@ -205,10 +211,65 @@ function Module.Open(crateId: string, count: number, payWith: string)
 	--[[ Showing ]]
 
 	if not results then
-		I.WidgetManager.ShowMessage("You can't open that crate right now. Check your coins and diamonds.")
+		Module._onRefused(crateId, count, payWith)
 		return
 	end
 	showResults(crateId, count, payWith, results)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Refused
+
+--[[
+	Says why a crate didn't open on the crates screen, which stays open: short of diamonds, when the shop opens a moment
+	later so the player can get more (the owner, 2026-11-24); anything else generally.
+]]
+function Module._onRefused(crateId: string, count: number, payWith: string)
+	--[[ Local Variables ]]
+
+	local price: string? = I.G_Crates.GetPrice(crateId, payWith, count)
+	local short: boolean = price ~= nil and not I.Currency.HasEnough(payWith, price)
+
+	--[[ Telling ]]
+
+	if short then
+		Module._showNotice(_settings.SHORT_DIAMONDS_MESSAGE)
+		task.delay(_settings.NOTICE_SHOP_DELAY, function()
+			if moduleGui.Enabled then
+				I.WidgetManager.Open(_settings.SHOP_GUI_NAME)
+			end
+		end)
+	else
+		Module._showNotice(_settings.OPEN_FAILED_MESSAGE)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Show Notice
+
+--[[
+	Pops the notice plate over the crate with a text for NOTICE_SECONDS; a newer notice takes over from an older one.
+]]
+function Module._showNotice(text: string)
+	--[[ Local Variables ]]
+
+	notices += 1
+	local shown: number = notices
+
+	--[[ Showing ]]
+
+	elems["NoticeText"].Text = text
+	elems["Notice"].Visible = true
+	elems["NoticePop"].Scale = _settings.NOTICE_POP_START_SCALE
+	local Pop_TweenGoal = { Scale = 1 }
+	local Pop_Tween: Tween = I.S.TweenService:Create(elems["NoticePop"], _settings.NOTICE_POP_TWEENINFO, Pop_TweenGoal)
+	Pop_Tween:Play()
+
+	--[[ Hiding ]]
+
+	task.delay(_settings.NOTICE_SECONDS, function()
+		if notices == shown then
+			elems["Notice"].Visible = false
+		end
+	end)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Opened
@@ -375,16 +436,19 @@ function Module._draw()
 
 	--[[ Buy Buttons ]]
 
-	-- A row per currency the crate takes; VIP's free crate is the first row's x1
-	for _index: number, currency: string in ipairs(currencies) do
-		for count: number, button: ImageButton in pairs(buyButtons[currency]) do
-			local freeOne: boolean = free and count == 1 and currency == _settings.PAY_CURRENCIES[1]
-			button:FindFirstChild("S_Price", true).Text = if freeOne then _settings.PRICE_FREE else I.Format.Text(I.G_Crates.GetPrice(selected, currency, count))
-			button:FindFirstChild("S_Icon", true).Visible = not freeOne
-		end
-	end
+	-- A row per currency the crate takes; VIP's free crate is the first row's x1, shown alone where paid crates aren't
 	for _index: number, currency: string in ipairs(_settings.PAY_CURRENCIES) do
-		elems[`{currency}Row`].Visible = table.find(currencies, currency) ~= nil
+		local takes: boolean = table.find(currencies, currency) ~= nil
+		local freeRow: boolean = free and currency == _settings.PAY_CURRENCIES[1]
+		for count: number, button: ImageButton in pairs(buyButtons[currency]) do
+			local freeOne: boolean = freeRow and count == 1
+			button.Visible = takes or freeOne
+			if button.Visible then
+				button:FindFirstChild("S_Price", true).Text = if freeOne then _settings.PRICE_FREE else I.Format.Text(I.G_Crates.GetPrice(selected, currency, count))
+				button:FindFirstChild("S_Icon", true).Visible = not freeOne
+			end
+		end
+		elems[`{currency}Row`].Visible = takes or freeRow
 	end
 
 	--[[ Odds ]]
@@ -396,15 +460,15 @@ end
 
 --[[
 	Shows the badge on the lobby menu's Weapons button: BADGE_FREE while VIP's free daily crate
-	waits, else how many of the cheapest coin crate the player's coins open (BADGE_MAX+ past BADGE_MAX), hidden at
+	waits, else how many of the cheapest crate the player's diamonds open (BADGE_MAX+ past BADGE_MAX), hidden at
 	none.
 ]]
 function Module._refreshBadge()
 	--[[ Local Variables ]]
 
 	local free: boolean = Module._isFree(_settings.VIP_CRATE)
-	local price: string? = Module._getCheapestCoinPrice()
-	local count = if price then I.BN.DivideWithPrecision(I.Currency.Get("Coins") or "0", price) else I.BN.new(0) --- @type BigNum_Instance
+	local price: string? = Module._getCheapestPrice()
+	local count = if price then I.BN.DivideWithPrecision(I.Currency.Get("Diamonds") or "0", price) else I.BN.new(0) --- @type BigNum_Instance
 	local max = I.BN.new(_settings.BADGE_MAX) --- @type BigNum_Instance
 
 	--[[ Applying ]]
@@ -448,13 +512,13 @@ function Module._getCurrencies(crateId: string)
 	return currencies
 end
 
---%%%%%%%%%%%%%%%%%%%% Get Cheapest Coin Price
+--%%%%%%%%%%%%%%%%%%%% Get Cheapest Price
 
 --[[
-	Returns the lowest price of one crate in coins, among the crates the tabs show (not hidden ones).
+	Returns the lowest price of one crate in diamonds, among the crates the tabs show (not hidden ones).
 ]]
 --- @return string?
-function Module._getCheapestCoinPrice()
+function Module._getCheapestPrice()
 	--[[ Local Variables ]]
 
 	local cheapest: string? = nil
@@ -463,9 +527,9 @@ function Module._getCheapestCoinPrice()
 
 	--- @param row Crates_CrateData
 	for _crateId: string, row in pairs(I.G_Crates.GetAll()) do
-		local coins = row.Prices["Coins"] --- @type Crates_Price?
-		if not row.Hidden and coins and (not cheapest or I.BN.Lt(I.BN.new(coins.One), I.BN.new(cheapest))) then
-			cheapest = coins.One
+		local diamonds = row.Prices["Diamonds"] --- @type Crates_Price?
+		if not row.Hidden and diamonds and (not cheapest or I.BN.Lt(I.BN.new(diamonds.One), I.BN.new(cheapest))) then
+			cheapest = diamonds.One
 		end
 	end
 
@@ -491,7 +555,7 @@ function Module._isShown(crateId: string)
 
 	--[[ Returning ]]
 
-	return not row.Hidden and #Module._getCurrencies(crateId) > 0
+	return not row.Hidden and (#Module._getCurrencies(crateId) > 0 or Module._isFree(crateId))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Free

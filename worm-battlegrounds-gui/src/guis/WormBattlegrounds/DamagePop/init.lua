@@ -52,7 +52,7 @@ local _gui = {
 					{
 						Primitive = "UIStroke",
 						Props = {
-							Thickness = 0.0789,
+							Thickness = 0.06,
 							Transparency = 0.6,
 							StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 						},
@@ -80,7 +80,7 @@ local _gui = {
 					{
 						Primitive = "UIStroke",
 						Props = {
-							Thickness = 0.0789,
+							Thickness = 0.06,
 							StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 						},
 					},

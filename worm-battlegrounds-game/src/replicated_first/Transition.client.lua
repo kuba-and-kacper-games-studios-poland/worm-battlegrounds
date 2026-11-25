@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Services
@@ -7,7 +8,10 @@
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local TeleportService = game:GetService("TeleportService")
-local TweenService = game:GetService("TweenService")
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Scripts
+
+local TransitionMotion = require(ReplicatedFirst:FindFirstChild("TransitionMotion")) --- @type TransitionMotion
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -17,8 +21,8 @@ local LOADING_SCREEN_NAME: string = "LoadingScreen"
 -- The marker ume puts on the player once their client started (place_loader config's `_clientStatusBoolName`)
 local CLIENT_STARTED_NAME: string = "__Ume_ClientStarted"
 
--- How the teleport card slides off the screen once this server is ready
-local WIPE_TWEENINFO: TweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+-- How long the full progress bar shows before the reveal, once this server is ready
+local READY_SECONDS: number = 0.3
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Functions
 
@@ -54,11 +58,15 @@ end
 
 local player: Player = Players.LocalPlayer
 local playerGui: PlayerGui = player:WaitForChild("PlayerGui")
-local backdrop: Frame = card:FindFirstChild("U_Backdrop")
 
-backdrop.Position = UDim2.fromScale(0.5, 0.5)
 card.Parent = playerGui
 ReplicatedFirst:RemoveDefaultLoadingScreen()
+
+-- A card from a server before the map scenes has no scene to move; it only waits and goes
+local moving: boolean = card:FindFirstChild("U_Scene", true) ~= nil
+if moving then
+	TransitionMotion.Play(card)
+end
 
 -- The loading screen's script may already have moved it into PlayerGui
 local loadingAdded: RBXScriptConnection = playerGui.ChildAdded:Connect(dropLoadingScreen)
@@ -76,10 +84,12 @@ repeat
 until player.Character and player:FindFirstChild(CLIENT_STARTED_NAME)
 loadingAdded:Disconnect()
 
---[[ Hiding ]]
+--[[ Revealing ]]
 
-local Wipe_TweenGoal = { Position = UDim2.fromScale(0.5, 1.5) }
-local Wipe_Tween: Tween = TweenService:Create(backdrop, WIPE_TWEENINFO, Wipe_TweenGoal)
-Wipe_Tween:Play()
-Wipe_Tween.Completed:Wait()
+-- The bar fills, then the camera flies through the scene into the map
+if moving then
+	card:SetAttribute("Transition_Ready", true)
+	task.wait(READY_SECONDS)
+	TransitionMotion.Reveal(card)
+end
 card:Destroy()

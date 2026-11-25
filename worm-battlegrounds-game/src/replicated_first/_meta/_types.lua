@@ -1,0 +1,22 @@
+--%%%%%%%%%%%%%%%%%%%% Motion
+
+--- @class TransitionMotion_State
+---
+--- # Clock #
+---
+--- @field Clock number
+--- @field Progress number
+---
+--- # Scenes #
+---
+--- @field Shown string?
+--- @field WhipFrom string?
+--- @field WhipAt number
+--- @field Elements { [Frame]: { GuiObject } }
+---
+--- # Moves #
+---
+--- @field IntroAt number?
+--- @field RevealAt number?
+--- @field Connection RBXScriptConnection?
+local _transitionMotion_State = {}

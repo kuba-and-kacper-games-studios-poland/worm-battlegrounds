@@ -48,6 +48,9 @@
 			"$className": "ReplicatedFirst",
 			"Transition": {
 				"$path": "src/replicated_first/Transition.client.lua"
+			},
+			"TransitionMotion": {
+				"$path": "src/replicated_first/TransitionMotion.lua"
 			}
 		},
 		"StarterPlayer": {

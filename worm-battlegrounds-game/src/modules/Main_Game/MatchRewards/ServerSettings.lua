@@ -1,29 +1,32 @@
 --- @class MatchRewards_Settings
 local _settings = {
 
-	--%%%%%%%%%%%%%%%%%%%% Coins
+	--%%%%%%%%%%%%%%%%%%%% Diamonds
 
-	-- A public deathmatch's coins by its number of players, then by place
+	--[[
+		A public deathmatch's diamonds by its number of players, then by place. Matches pay diamonds since 2026-11-25 (the
+		owner: one currency): every coin reward halved at the crates' rate (100 coins or 50 diamonds), halves rounded up
+	]]
 	--- @type { [number]: { number } }
-	DEATHMATCH_COINS = {
-		[2] = { 50, 15 },
-		[4] = { 100, 50, 25, 15 },
-		[6] = { 125, 75, 50, 30, 20, 15 },
-		[8] = { 150, 100, 70, 50, 35, 25, 20, 15 },
+	DEATHMATCH_DIAMONDS = {
+		[2] = { 25, 8 },
+		[4] = { 50, 25, 13, 8 },
+		[6] = { 63, 38, 25, 15, 10, 8 },
+		[8] = { 75, 50, 35, 25, 18, 13, 10, 8 },
 	},
 
-	-- A public team match's coins by its number of teams, then by place; winning a 2v2 pays TEAM_2V2_WIN instead
+	-- A public team match's diamonds by its number of teams, then by place; winning a 2v2 pays TEAM_2V2_WIN instead
 	--- @type { [number]: { number } }
-	TEAM_COINS = {
-		[2] = { 100, 15 },
-		[3] = { 100, 50, 15 },
-		[4] = { 100, 60, 30, 15 },
+	TEAM_DIAMONDS = {
+		[2] = { 50, 8 },
+		[3] = { 50, 25, 8 },
+		[4] = { 50, 30, 15, 8 },
 	},
-	TEAM_2V2_WIN = 75,
+	TEAM_2V2_WIN = 38,
 
 	-- A solo match pays only a win, by the bot's difficulty
 	--- @type { [string]: number }
-	SOLO_COINS = { Easy = 20, Medium = 35, Hard = 60 },
+	SOLO_DIAMONDS = { Easy = 10, Medium = 18, Hard = 30 },
 
 	-- A party match (friends only) pays like a public deathmatch of its size, times this share when it has no bots
 	PARTY_NO_BOTS_SHARE = 0.5,
@@ -31,8 +34,8 @@ local _settings = {
 	-- The last 2 places are paid only after this many rounds, or when another snail knocked the player out
 	ANTI_FARM_ROUNDS = 2,
 
-	-- The game pass that doubles every coin reward
-	DOUBLE_COINS_PASS = "DoubleCoins",
+	-- The game pass that doubles every diamond reward (its Marketplace id keeps the old name: gifted passes are saved by it)
+	DOUBLE_DIAMONDS_PASS = "DoubleCoins",
 
 	--%%%%%%%%%%%%%%%%%%%% XP
 

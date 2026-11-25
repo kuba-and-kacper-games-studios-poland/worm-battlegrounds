@@ -44,6 +44,10 @@ local before = {} --- @type { [string]: { [Model]: number } }
 local habits = {} --- @type { [string]: Bots_Habit }
 local turnStarts = {} --- @type { [string]: Vector3 }
 
+-- The tutorial bot's turns taken, and whether its last shot was a hit, by the bot
+local tutorialTurns = {} --- @type { [string]: number }
+local tutorialHit = {} --- @type { [string]: boolean }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -184,8 +188,19 @@ function Module.TakeTurn(participantId: string)
 	--[[ Healing ]]
 
 	local difficulty: string = participant.Difficulty or if participant.IsBot then "Easy" else _settings.TAKEOVER_DIFFICULTY
-	local genome = Brains[if difficulty == "Tutorial" then _settings.TUTORIAL_BRAIN else difficulty] or Brains.Hard --- @type Bots_Genome
+
+	-- The tutorial's bot thinks a moment, then shoots near the player, now and then on them
+	if difficulty == "Tutorial" then
+		task.wait(math.max(thinkUntil - os.clock(), 0))
+		if Module._isTurn(participantId) and model:GetAttribute("Alive") then
+			Module._tutorialShot(participantId, model)
+		end
+		return
+	end
+
+	local genome = Brains[difficulty] or Brains.Hard --- @type Bots_Genome
 	local skill = _settings.SKILLS[difficulty] or _settings.SKILLS.Easy --- @type Bots_Skill
+
 	model:SetAttribute("Stamina", I.Settings["SnailControl"].STAMINA_STUDS)
 	local heal: string? = Brain.GetHeal(Module._getView(participantId, model), genome)
 	if heal and I.Combat.UseUtility(participantId, heal) then
@@ -442,6 +457,92 @@ function Module._fireAnyway(participantId: string, model: Model)
 	end
 	if Module._showAim(participantId, "Bazooka", arc.X, arc.Y) then
 		I.Combat.Fire(participantId, "Bazooka", arc.X, arc.Y)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Tutorial Shot
+
+--[[
+	The tutorial bot's turn (the owner, 2026-11-25: "shoots you few times - but most of the times misses - but shoots
+	around you", replacing 2026-11-24's shots away into the water): it fires its Bazooka toward the player, trying
+	TUTORIAL_ANGLES and every TUTORIAL_POWER_STEP of power. From its second turn, with TUTORIAL_HIT_CHANCE, never twice
+	in a row and only while the player has over TUTORIAL_HIT_SAFE health, it takes the shot that lands closest to them
+	(a hit when within TUTORIAL_HIT_SLACK studs); otherwise a near miss landing TUTORIAL_NEAR studs from them, past the
+	blast, and at least TUTORIAL_MISS_CLEAR from itself. With neither it passes its turn at once.
+]]
+function Module._tutorialShot(participantId: string, model: Model)
+	--[[ Local Variables ]]
+
+	local origin: Vector3 = model.PrimaryPart.Position
+	local target: Model? = nil
+	for _index: number, other: Model in ipairs(I.Snails.GetAlive()) do
+		local enemy: boolean = other ~= model and other:GetAttribute("Team") ~= model:GetAttribute("Team")
+		if enemy and (not target or (other.PrimaryPart.Position - origin).Magnitude < (target.PrimaryPart.Position - origin).Magnitude) then
+			target = other
+		end
+	end
+
+	--[[ Checks ]]
+
+	-- Check if anyone is left to shoot at
+	if not target then
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local enemyAt: Vector3 = target.PrimaryPart.Position
+	local wind: number = I.G_Combat.GetWindAcceleration("Bazooka", I.Match.GetWind())
+	local turns: number = (tutorialTurns[participantId] or 0) + 1
+	local tryHit: boolean = turns > 1 and not tutorialHit[participantId] and (target:GetAttribute("Health") or 0) > _settings.TUTORIAL_HIT_SAFE and random:NextNumber() < _settings.TUTORIAL_HIT_CHANCE
+	tutorialTurns[participantId] = turns
+
+	--[[ Searching ]]
+
+	-- Every angle up toward the player and every power: the closest landing to them, and the near misses
+	local closest: { number }? = nil
+	local closestGap: number = math.huge
+	local nearMisses = {} --- @type { { number } }
+	for _index: number, degrees: number in ipairs(_settings.TUTORIAL_ANGLES) do
+		local angle: number = math.rad(if enemyAt.X > origin.X then degrees else 180 - degrees)
+		for step: number = 1, math.floor(1 / _settings.TUTORIAL_POWER_STEP) do
+			local power: number = step * _settings.TUTORIAL_POWER_STEP
+			local contact: Vector3 = Aim.GetContact(origin, angle, power, "Bazooka", wind, model)
+			local gap: number = (contact - enemyAt).Magnitude
+			if (contact - origin).Magnitude >= _settings.TUTORIAL_MISS_CLEAR then
+				if gap < closestGap then
+					closest = { angle, power }
+					closestGap = gap
+				end
+				if gap >= _settings.TUTORIAL_NEAR[1] and gap <= _settings.TUTORIAL_NEAR[2] then
+					table.insert(nearMisses, { angle, power })
+				end
+			end
+		end
+		task.wait()
+	end
+
+	--[[ Picking ]]
+
+	local shot: { number }? = nil
+	if tryHit and closest and closestGap <= _settings.TUTORIAL_HIT_SLACK then
+		shot = closest
+	elseif #nearMisses > 0 then
+		shot = nearMisses[random:NextInteger(1, #nearMisses)]
+	end
+	tutorialHit[participantId] = shot ~= nil and shot == closest and closestGap <= _settings.TUTORIAL_HIT_SLACK
+
+	--[[ Firing ]]
+
+	-- No shot near the player from here: the turn passes rather than running its clock down
+	if not shot or not Module._isTurn(participantId) then
+		if not shot then
+			I.Match.SkipTurn()
+		end
+		return
+	end
+	if Module._showAim(participantId, "Bazooka", shot[1], shot[2]) then
+		I.Combat.Fire(participantId, "Bazooka", shot[1], shot[2])
 	end
 end
 

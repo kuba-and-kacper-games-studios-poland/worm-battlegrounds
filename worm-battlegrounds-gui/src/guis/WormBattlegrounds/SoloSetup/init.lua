@@ -23,20 +23,20 @@ local _gui = {
 		Children = {
 			{
 				Control = "Label",
-				Text = "Pick how well the bot plays. Only a win pays coins.",
+				Text = "Pick how well the bot plays. Only a win pays diamonds.",
 				Align = "Center",
 				Style = "Dim",
 			},
-			-- One slot per difficulty, the bot's picture over it: the picked one is selected, its Subtext the coins a win pays
+			-- One slot per difficulty, the bot's picture over it: the picked one is selected, its Subtext the diamonds a win pays
 			{
 				Control = "Stack",
 				Direction = "Horizontal",
 				Align = "Center",
 				Style = "Loose",
 				Children = {
-					{ Control = "Item", Id = "S_Easy", Text = "Easy", Subtext = "Win: 20 coins", Image = "wb-bot", Style = "Difficulty" },
-					{ Control = "Item", Id = "S_Medium", Text = "Medium", Subtext = "Win: 35 coins", Image = "wb-bot", Style = "Difficulty" },
-					{ Control = "Item", Id = "S_Hard", Text = "Hard", Subtext = "Win: 60 coins", Image = "wb-bot", Style = "Difficulty" },
+					{ Control = "Item", Id = "S_Easy", Text = "Easy", Subtext = "Win: 10 diamonds", Image = "wb-bot", Style = "Difficulty" },
+					{ Control = "Item", Id = "S_Medium", Text = "Medium", Subtext = "Win: 18 diamonds", Image = "wb-bot", Style = "Difficulty" },
+					{ Control = "Item", Id = "S_Hard", Text = "Hard", Subtext = "Win: 30 diamonds", Image = "wb-bot", Style = "Difficulty" },
 				},
 			},
 			{

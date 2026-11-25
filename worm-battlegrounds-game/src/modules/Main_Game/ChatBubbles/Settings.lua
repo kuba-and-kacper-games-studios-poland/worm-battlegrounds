@@ -38,8 +38,11 @@ local _settings = {
 	-- In a match the bubbles stand this many design px over the snail's tag (its name and health bar)
 	TAG_GAP = 6,
 
-	-- On the lobby's stage they stand this many studs over the top of the snail
-	STAGE_GAP = 0.6,
+	--[[
+		On the lobby's stage they stand this many studs over the top of the snail's nameplate (the owner, 2026-11-24: the
+		emote's cloud covered the name), or of the snail with none
+	]]
+	STAGE_GAP = 0.3,
 }
 
 return _settings

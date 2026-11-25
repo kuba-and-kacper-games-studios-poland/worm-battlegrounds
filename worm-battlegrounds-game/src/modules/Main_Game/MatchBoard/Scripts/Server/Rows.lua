@@ -85,6 +85,7 @@ function Module.AddRow(kind: "Public" | "Custom", mode: string, size: number, ma
 		Size = size,
 		MapId = mapId,
 		Difficulty = _settings.PUBLIC_DIFFICULTY,
+		Wind = false,
 		Players = {},
 		Owner = owner,
 	}
@@ -166,7 +167,7 @@ function Module.StartRow(row)
 	--[[ Launching ]]
 
 	if #players > 0 then
-		task.spawn(Launch.Launch, players, row.Kind, row.Mode, row.Size, row.MapId, row.Difficulty)
+		task.spawn(Launch.Launch, players, row.Kind, row.Mode, row.Size, row.MapId, row.Difficulty, false, row.Wind)
 	end
 end
 
@@ -194,7 +195,7 @@ end
 
 --[[
 	Writes a row into its Configuration for every client: Kind, Mode, Size, MapId ("" on a public card, whose map is
-	the rotation's), Difficulty, Players (JSON user ids) and Owner.
+	the rotation's), Difficulty, Wind, Players (JSON user ids) and Owner.
 ]]
 --- @param row MatchBoard_Row
 function Module.Publish(row)
@@ -205,6 +206,7 @@ function Module.Publish(row)
 	row.Config:SetAttribute("Size", row.Size)
 	row.Config:SetAttribute("MapId", row.MapId)
 	row.Config:SetAttribute("Difficulty", row.Difficulty)
+	row.Config:SetAttribute("Wind", row.Wind)
 	row.Config:SetAttribute("Players", I.S.HttpService:JSONEncode(row.Players))
 	row.Config:SetAttribute("Owner", row.Owner or 0)
 end

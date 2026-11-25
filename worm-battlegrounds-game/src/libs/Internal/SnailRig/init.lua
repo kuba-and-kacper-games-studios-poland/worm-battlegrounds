@@ -66,6 +66,18 @@ local MAX_PITCH: number = math.rad(90)
 
 --[[ Emotes ]]
 
+--[[
+	While a snail emotes, every other track playing over its walk (its held weapon's pose, the lobby stage's pose) is
+	stopped, and played again after, so the emote plays whole (the owner, 2026-11-24: the wave played in the bazooka pose)
+]]
+--- @type { [Enum.AnimationPriority]: boolean }
+local MUTED_PRIORITIES = {
+	[Enum.AnimationPriority.Action] = true,
+	[Enum.AnimationPriority.Action2] = true,
+	[Enum.AnimationPriority.Action3] = true,
+	[Enum.AnimationPriority.Action4] = true,
+}
+
 -- Seconds an emote's stand-in motion blends in and out
 local EMOTE_BLEND_IN: number = 0.18
 local EMOTE_BLEND_OUT: number = 0.25
@@ -496,14 +508,20 @@ function SnailRig._step(deltaTime: number)
 		-- The held weapon is put out of sight while the snail emotes, or hides in its shell and comes back out
 		local show: AnimationTrack? = rig.Tracks["Show"]
 		local shelled: boolean = rig.Motion == "Hidden" or (show ~= nil and show.IsPlaying)
-		local stowed: boolean = shelled or (rig.FaceUntil ~= nil and now < rig.FaceUntil)
+		local emoting: boolean = rig.FaceUntil ~= nil and now < rig.FaceUntil
+		local stowed: boolean = shelled or emoting
 		if rig.Weapon and stowed ~= rig.WeaponHidden then
 			SnailRig._hideWeapon(rig, stowed)
 		end
 
+		-- An emote plays whole: the poses over the walk fade out while it plays, and back after
+		if emoting ~= (rig.Muted ~= nil) then
+			SnailRig._mutePoses(rig, emoting)
+		end
+
 		-- Before the aim, which builds on where the walk put the hands and the weapon (in the shell, the hands stay in)
 		SnailRig._walk(rig, now, deltaTime)
-		if rig.Pose and not shelled then
+		if rig.Pose and not shelled and not emoting then
 			SnailRig._aimHands(rig, camera)
 		end
 		if rig.Emote then
@@ -526,6 +544,49 @@ function SnailRig._hideWeapon(rig, hidden: boolean)
 	for _index: number, part: Instance in ipairs(rig.Weapon:GetDescendants()) do
 		if part:IsA("BasePart") or part:IsA("Decal") then
 			part.LocalTransparencyModifier = if hidden then 1 else 0
+		end
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Mute Poses
+
+--[[
+	Stops every track playing over a rig's walk (MUTED_PRIORITIES) but its emote's while it emotes, and plays those
+	again after from where they were, at their speed: its held weapon's pose and any pose its screen plays on it (the
+	lobby stage's). Stopped, not faded to no weight: the Animator drops a track at no weight, and it never comes back.
+]]
+--- @param rig SnailRig_Rig
+function SnailRig._mutePoses(rig, muted: boolean)
+	--[[ Restoring ]]
+
+	if not muted then
+		-- A pose started meanwhile (the stage picked another) takes its old one's place
+		local playing = {} --- @type { [Enum.AnimationPriority]: boolean }
+		for _index: number, track: AnimationTrack in ipairs(rig.Animator:GetPlayingAnimationTracks()) do
+			if track ~= rig.EmoteTrack then
+				playing[track.Priority] = true
+			end
+		end
+		--- @param held SnailRig_MutedTrack
+		for _index: number, held in ipairs(rig.Muted or {}) do
+			if playing[held.Track.Priority] then
+				continue
+			end
+			held.Track:Play(FADE_TIME)
+			held.Track.TimePosition = held.Time
+			held.Track:AdjustSpeed(held.Speed)
+		end
+		rig.Muted = nil
+		return
+	end
+
+	--[[ Muting ]]
+
+	rig.Muted = {}
+	for _index: number, track: AnimationTrack in ipairs(rig.Animator:GetPlayingAnimationTracks()) do
+		if track ~= rig.EmoteTrack and MUTED_PRIORITIES[track.Priority] then
+			table.insert(rig.Muted, { Track = track, Time = track.TimePosition, Speed = track.Speed })
+			track:Stop(FADE_TIME)
 		end
 	end
 end

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -36,11 +37,15 @@ function Module.Init()
 	----------- DATA -----------
 	----------------------------
 
-	-- The match server writes it when a player drops; the lobby reads and clears it
+	--[[
+		The match server writes them (Rejoin when a player drops, PlayAgain when a knocked-out player plays again); the
+		lobby reads and clears them
+	]]
 	--- @type Player_ProfileData
 	local _pt = I.Player.ProfileTemplate
 	_pt["Match"] = {
 		Rejoin = false,
+		PlayAgain = false,
 	}
 
 	----------------------------
@@ -126,6 +131,49 @@ function Module._onPlayerAdded(player: Player)
 		offers[player] = rejoin
 		I.Network.Fire("Lobby_RejoinOffer", player, rejoin.Until - os.time())
 	end
+
+	--[[ Play Again ]]
+
+	Module._playAgain(player)
+
+	-- On the Studio map the match plays on this server: Play again lands here when the player leaves it
+	player:GetAttributeChangedSignal("InMatch"):Connect(function()
+		if not player:GetAttribute("InMatch") then
+			Module._playAgain(player)
+		end
+	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Play Again
+
+--[[
+	Puts a player who pressed Play again on a match's knocked-out screen straight into another match like it (the
+	PlayAgain their match server saved, while still fresh), and clears it.
+]]
+function Module._playAgain(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Match"]
+	local again: any = moduleData["PlayAgain"]
+
+	--[[ Checks ]]
+
+	-- Check if there's a fresh Play again
+	if type(again) ~= "table" or not again.Until or again.Until <= os.time() then
+		return
+	end
+
+	--[[ Joining ]]
+
+	moduleData["PlayAgain"] = false
+	task.spawn(I.MatchBoard.PlayAgain, player, again.Kind, again.Mode, again.Difficulty)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -155,7 +203,7 @@ function Module._onRejoin(player: Player, accept: boolean)
 
 	--[[ Teleporting ]]
 
-	I.Transition.SetDestination({ player }, "Back to your match…", "")
+	I.Transition.SetDestination({ player }, { Kicker = "Back to", Title = "Your match" })
 	I.TeleportToServer({ player }, rejoin.PlaceId, nil, rejoin.AccessCode, _settings.TELEPORT_GUI)
 end
 

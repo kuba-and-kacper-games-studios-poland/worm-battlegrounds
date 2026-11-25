@@ -21,27 +21,21 @@ local _data = {
 
 	--[[ Prices ]]
 
-	-- Coins or diamonds for one crate, a 3-pack and a 10-pack
+	-- Diamonds for one crate, a 3-pack and a 10-pack
 	Prices = {
-		Coins = { One = "100", Three = "300", Ten = "1000" },
 		Diamonds = { One = "50", Three = "150", Ten = "500" },
 	},
 
 	--[[ Odds ]]
 
-	-- Each item's chance in percent, the same whichever currency pays; adds up to 100
+	-- Each item's chance in percent; adds up to 100
 	Odds = {
-		Uzi = 14.75,
-		BaseballBat = 14.75,
-		Dynamite = 14.75,
-		SpartanSpear = 14.75,
-		ClusterBomb = 10,
-		SpiderBomb = 10,
-		Minigun = 10,
-		HomingMissile = 5,
-		OnePunch = 5,
-		VarietyGrenade = 0.5,
-		BlackHoleGrenade = 0.5,
+		Uzi = 26.82,
+		BaseballBat = 26.82,
+		ClusterBomb = 18.18,
+		SpiderBomb = 18.18,
+		HomingMissile = 9.09,
+		VarietyGrenade = 0.91,
 	},
 
 	-- Items always given, instead of a roll

@@ -26,6 +26,8 @@ local TouchControls = require(_scripts:FindFirstChild("Client"):FindFirstChild("
 local Results = require(_scripts:FindFirstChild("Client"):FindFirstChild("Results")) --- @type MatchHud_Client_Results
 local TopBar = require(_scripts:FindFirstChild("Client"):FindFirstChild("TopBar")) --- @type MatchHud_Client_TopBar
 local Hints = require(_scripts:FindFirstChild("Client"):FindFirstChild("Hints")) --- @type MatchHud_Client_Hints
+local BattleIntro = require(_scripts:FindFirstChild("Client"):FindFirstChild("BattleIntro")) --- @type MatchHud_Client_BattleIntro
+local KnockedOut = require(_scripts:FindFirstChild("Client"):FindFirstChild("KnockedOut")) --- @type MatchHud_Client_KnockedOut
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -48,6 +50,21 @@ local moduleGui: ScreenGui
 
 local Module = {}
 
+--%%%%%%%%%%%%%%%%%%%% Init
+
+function Module.Init()
+	----------------------------
+	---- ASSIGN TO INSTANCE ----
+	----------------------------
+
+	I.MatchHud = {
+
+		--[[ Methods ]]
+
+		HasAimedThisTurn = Aim.HasAimedThisTurn,
+	}
+end
+
 --%%%%%%%%%%%%%%%%%%%% Start
 
 function Module.Start()
@@ -59,6 +76,7 @@ function Module.Start()
 	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshShown)
 	Module._refreshShown()
 	I.Topic.Subscribe("Platform_Changed", Module._refreshInsets)
+	I.S.GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(Module._refreshInsets)
 	Module._refreshInsets()
 
 	Turn.Start(moduleGui)
@@ -71,6 +89,8 @@ function Module.Start()
 	Results.Start()
 	TopBar.Start()
 	Hints.Start()
+	BattleIntro.Start(moduleGui)
+	KnockedOut.Start(moduleGui)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -97,13 +117,19 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Insets
 
 --[[
-	Lays the HUD out below Roblox's top bar on phones and tablets, where the bar's buttons covered the team panels and
-	the turn and wind; elsewhere it fills the device's safe area.
+	Lays the HUD over the whole screen, out to a phone's very edges (the owner, 2026-11-25: "we need it to be on the
+	edges"), its top padded below Roblox's top bar on phones and tablets, where the bar's buttons covered the team
+	panels and the turn and wind; consoles keep the TV's safe area.
 ]]
 function Module._refreshInsets()
+	--[[ Local Variables ]]
+
+	local platform: string = I.Platform.Current
+
 	--[[ Applying ]]
 
-	moduleGui.ScreenInsets = if I.Platform.Current == "Mobile" then Enum.ScreenInsets.CoreUISafeInsets else Enum.ScreenInsets.DeviceSafeInsets
+	moduleGui.ScreenInsets = if platform == "Console" then Enum.ScreenInsets.DeviceSafeInsets else Enum.ScreenInsets.None
+	moduleGui:FindFirstChild("U_Inset").PaddingTop = UDim.new(0, if platform == "Mobile" then I.S.GuiService.TopbarInset.Max.Y else 0)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Returning

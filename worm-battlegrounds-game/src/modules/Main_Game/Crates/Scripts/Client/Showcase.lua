@@ -64,8 +64,10 @@ function Module.Start()
 	elems["Glow"] = elems["Center"]:FindFirstChild("S_Glow", true) --- @type ImageLabel
 	elems["Rays"] = elems["Center"]:FindFirstChild("S_Rays", true) --- @type ImageLabel
 	elems["Halo"] = elems["Center"]:FindFirstChild("S_Halo", true) --- @type ImageLabel
-	elems["Pedestal"] = elems["Center"]:FindFirstChild("S_Pedestal", true) --- @type ImageLabel
-	elems["PedestalRing"] = elems["Center"]:FindFirstChild("S_PedestalRing", true) --- @type ImageLabel
+	elems["Pedestal"] = elems["Center"]:FindFirstChild("S_Pedestal", true) --- @type Frame
+	elems["PedestalRing"] = elems["Center"]:FindFirstChild("S_PedestalRing", true) --- @type Frame
+	elems["PedestalRingLine"] = elems["PedestalRing"]:FindFirstChild("Line") --- @type ImageLabel
+	elems["PedestalRingGlow"] = elems["PedestalRing"]:FindFirstChild("Glow") --- @type ImageLabel
 	elems["Particles"] = elems["Center"]:FindFirstChild("S_Particles", true) --- @type Frame
 	elems["Tier"] = elems["Center"]:FindFirstChild("S_Tier", true) --- @type Frame
 	elems["Plate"] = elems["Center"]:FindFirstChild("S_Plate", true) --- @type Frame
@@ -181,7 +183,8 @@ function Module.Draw(crateId: string)
 	elems["Glow"].ImageColor3 = row.Glow
 	elems["Rays"].ImageColor3 = row.Glow
 	elems["Beam"].ImageColor3 = row.Glow
-	elems["PedestalRing"].ImageColor3 = if row.Premium then row.Accent else row.Glow
+	elems["PedestalRingLine"].ImageColor3 = if row.Premium then row.Accent else row.Glow
+	elems["PedestalRingGlow"].ImageColor3 = if row.Premium then row.Accent else row.Glow
 	elems["Halo"].Visible = row.Premium and not opening
 
 	--[[ Texts ]]

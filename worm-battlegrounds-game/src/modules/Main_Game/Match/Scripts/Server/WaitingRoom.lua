@@ -23,7 +23,7 @@ local lobby = nil --- @type Matchmaking_Lobby?
 
 --[[ Players ]]
 
--- Who pressed Ready, and who has been in the room, by user id
+-- Who voted to start, and who has been in the room, by user id
 local ready = {} --- @type { [number]: boolean }
 local seen = {} --- @type { [number]: boolean }
 
@@ -64,9 +64,14 @@ end
 --%%%%%%%%%%%%%%%%%%%% Run
 
 --[[
-	Runs a public match's waiting room: puts the match in Matchmaking's store, where every lobby server seats players
-	and parties in it, until WAITING_SECONDS pass or every player here pressed Ready, then closes it to joins. The
-	roster it closed with is the match's (bots fill the empty seats); anyone here without a seat goes back to the lobby.
+	Runs a public match's waiting room: puts the match in Matchmaking's store (the lobby that opened it put it there
+	pending; the seats lobbies claimed since are kept), where every lobby server seats players and parties in it, until
+	it starts (WAITING_SECONDS from now; when a lobby opened it first, when that lobby said, but no sooner than
+	Matchmaking's MIN_ROOM_SECONDS from now), every player here pressed Ready, or
+	FULL_START_SECONDS after its last seat is taken, or VOTE_START_SECONDS after enough players here voted to start
+	(everyone up to VOTE_ALL_UP_TO players, VOTE_SHARE of them above), then closes it to joins. The room shows why it
+	starts (RoomStarting: "Full" or "Vote") and the votes (RoomVotes, RoomVotesNeeded). The roster it closed with is the
+	match's (bots fill the empty seats); anyone here without a seat goes back to the lobby.
 ]]
 --- @param metadata Match_Metadata
 function Module.Run(metadata)
@@ -92,18 +97,38 @@ function Module.Run(metadata)
 		MapId = metadata.MapId,
 		Roster = metadata.Roster,
 	}
-	I.Matchmaking.Open(lobby)
+	local opened = I.Matchmaking.Open(lobby) --- @type Matchmaking_Lobby?
+	if opened then
+		lobby = opened
+		Roster.SetRoster(opened.Roster)
+	end
 
-	local endsAt: number = I.S.Workspace:GetServerTimeNow() + _settings.WAITING_SECONDS
+	local endsAt: number = I.S.Workspace:GetServerTimeNow() + math.max(lobby.EndsAt - os.time(), 0)
 	matchFolder:SetAttribute("RoomEndsAt", endsAt)
 
 	--[[ Waiting ]]
 
 	local refreshAt: number = 0
-	while I.S.Workspace:GetServerTimeNow() < endsAt and not Module._isEveryoneReady() do
+	local starting: string? = nil
+	while I.S.Workspace:GetServerTimeNow() < endsAt do
 		if os.clock() >= refreshAt then
 			refreshAt = os.clock() + _settings.ROOM_REFRESH_SECONDS
 			Module._refresh()
+		end
+
+		-- Every seat taken, or the vote passed: start soon, not at the timer's end
+		local votes: number
+		local needed: number
+		votes, needed = Module._getVotes()
+		matchFolder:SetAttribute("RoomVotes", votes)
+		matchFolder:SetAttribute("RoomVotesNeeded", needed)
+		local reason: string? = if #lobby.Roster >= lobby.Size then "Full" elseif needed > 0 and votes >= needed then "Vote" else nil
+		local soonAt: number = I.S.Workspace:GetServerTimeNow() + (if reason == "Full" then _settings.FULL_START_SECONDS else _settings.VOTE_START_SECONDS)
+		if reason and not starting and soonAt < endsAt then
+			starting = reason
+			endsAt = soonAt
+			matchFolder:SetAttribute("RoomEndsAt", endsAt)
+			matchFolder:SetAttribute("RoomStarting", reason)
 		end
 		Module._releaseLeavers()
 		Module._publish()
@@ -120,6 +145,9 @@ function Module.Run(metadata)
 	lobby = nil
 	matchFolder:SetAttribute("RoomEndsAt", nil)
 	matchFolder:SetAttribute("Room", nil)
+	matchFolder:SetAttribute("RoomStarting", nil)
+	matchFolder:SetAttribute("RoomVotes", nil)
+	matchFolder:SetAttribute("RoomVotesNeeded", nil)
 
 	--[[ Strangers ]]
 
@@ -257,7 +285,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Ready
 
 --[[
-	A player in the room pressed Ready: once everyone here has, the match starts, bots in the empty seats.
+	A player in the room voted to start: once enough have (Run), the match starts soon, bots in the empty seats.
 ]]
 function Module._onReady(player: Player)
 	-- Check if player is valid | SERVER
@@ -299,30 +327,30 @@ function Module._getHere()
 	return here
 end
 
---%%%%%%%%%%%%%%%%%%%% Is Everyone Ready
+--%%%%%%%%%%%%%%%%%%%% Get Votes
 
 --[[
-	Returns whether every seated player here has pressed Ready, with at least one here. Players still arriving or
-	loading don't hold the match: a bot plays for them until they have.
+	Returns how many seated players here voted to start, and how many votes start it: every one of them up to
+	VOTE_ALL_UP_TO players, VOTE_SHARE of them (rounded up) above. Players still arriving or loading don't count: a bot
+	plays for them until they have.
 ]]
---- @return boolean
-function Module._isEveryoneReady()
-	--[[ Checking ]]
+--- @return number
+--- @return number
+function Module._getVotes()
+	--[[ Counting ]]
 
-	local count: number = 0
+	local here: number = 0
+	local votes: number = 0
 	for userId: number, _player: Player in pairs(Module._getHere()) do
-		if not Module._isSeated(userId) then
-			continue
+		if Module._isSeated(userId) then
+			here += 1
+			votes += if ready[userId] then 1 else 0
 		end
-		if not ready[userId] then
-			return false
-		end
-		count += 1
 	end
 
 	--[[ Returning ]]
 
-	return count > 0
+	return votes, if here <= _settings.VOTE_ALL_UP_TO then here else math.ceil(here * _settings.VOTE_SHARE)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Is Seated

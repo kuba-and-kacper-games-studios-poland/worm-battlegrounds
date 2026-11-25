@@ -19,6 +19,12 @@ local prefabs = {} --- @type { [string]: Instance }
 
 local moduleGui: ScreenGui
 
+--[[ Buying ]]
+
+-- Whether a buy waits for the server's answer, and when the last one was sent
+local buying: boolean = false
+local lastBuyAt: number = -math.huge
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -120,13 +126,13 @@ function Module._draw()
 		local card: ImageButton = prefabs["EmoteCard"]:Clone()
 		local locked: Frame = card:FindFirstChild("S_Locked")
 		card.Name = emoteId
-		card.LayoutOrder = emote.Level * 1000 + (tonumber(emote.Coins) or 0) // 10
+		card.LayoutOrder = emote.Level * 1000 + (tonumber(emote.Diamonds) or 0) // 10
 		card.Visible = true
 		card:FindFirstChild("S_Icon").Image = item.IconId
 		card:FindFirstChild("S_Name").Text = item.Name
 		card:FindFirstChild("S_Rarity").ImageColor3 = if look then look.Base else Color3.new(1, 1, 1)
 		locked.Visible = not owned
-		locked:FindFirstChild("S_Price").Text = if emote.Coins == "0" then "Free" else I.Format.Text(emote.Coins)
+		locked:FindFirstChild("S_Price").Text = if emote.Diamonds == "0" then "Free" else I.Format.Text(emote.Diamonds)
 		locked:FindFirstChild("S_Level").Text = if emote.Level <= 1 then "Any level" else `Level {emote.Level}`
 		card.Parent = elems["Emotes"]
 		I.Interact.OnPress(card, function()
@@ -143,9 +149,17 @@ end
 --%%%%%%%%%%%%%%%%%%%% Buy
 
 --[[
-	Asks the server to buy an emote, and says why when it can't.
+	Asks the server to buy an emote, and says why when it can't. A press while a buy waits for its answer, or within
+	EMOTE_BUY_INTERVAL of the last one, is ignored.
 ]]
 function Module._buy(emoteId: string)
+	--[[ Checks ]]
+
+	-- Check if no buy is waiting and the last one was long enough ago
+	if buying or os.clock() - lastBuyAt < _settings.EMOTE_BUY_INTERVAL then
+		return
+	end
+
 	--[[ Data ]]
 
 	local emote = I.G_Cosmetics.GetEmote(emoteId) --- @type Cosmetics_EmoteData?
@@ -155,8 +169,16 @@ function Module._buy(emoteId: string)
 
 	--[[ Buying ]]
 
-	if not I.Network.Invoke("Cosmetics_BuyEmote", emoteId) then
-		I.WidgetManager.ShowMessage(`You need level {emote.Level} and {emote.Coins} coins for this emote.`)
+	buying = true
+	lastBuyAt = os.clock()
+	local bought: boolean? = I.Network.Invoke("Cosmetics_BuyEmote", emoteId)
+	buying = false
+
+	--[[ Message ]]
+
+	-- An emote owned by now (a press that came twice) needs no message
+	if not bought and not I.Inventory.HasItem(emoteId) then
+		I.WidgetManager.ShowMessage(`You need level {emote.Level} and {emote.Diamonds} diamonds for this emote.`)
 	end
 end
 

@@ -9,17 +9,17 @@ local _localName: string = "ResultsPreview"
 
 --[[ Examples ]]
 
--- Placings: place, name, coins
+-- Placings: place, name, diamonds
 --- @type { { string } }
 local PLACINGS = {
-	{ "1st", "Bax", "+60 coins" },
-	{ "2nd", "Ninja", "+45 coins" },
-	{ "3rd", "Pip", "+30 coins" },
-	{ "4th", "Dot", "+20 coins" },
-	{ "5th", "Rex", "+15 coins" },
-	{ "6th", "Moss", "+10 coins" },
-	{ "7th", "Fig", "+5 coins" },
-	{ "8th", "Bun", "+5 coins" },
+	{ "1st", "Bax", "+30 diamonds" },
+	{ "2nd", "Ninja", "+23 diamonds" },
+	{ "3rd", "Pip", "+15 diamonds" },
+	{ "4th", "Dot", "+10 diamonds" },
+	{ "5th", "Rex", "+8 diamonds" },
+	{ "6th", "Moss", "+5 diamonds" },
+	{ "7th", "Fig", "+3 diamonds" },
+	{ "8th", "Bun", "+3 diamonds" },
 }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,7 +71,7 @@ function Module.Apply(preview)
 		placing:Get("S_Stroke").Instance.ImageColor3 = root:GetAttribute(`Look_{look}StrokeColor`)
 		placing:Get("S_Name").Instance.Text = PLACINGS[index][2]
 		placing:Get("S_Username").Instance.Text = `@{PLACINGS[index][2]}`
-		placing:Get("S_Coins").Instance.Text = PLACINGS[index][3]
+		placing:Get("S_Diamonds").Instance.Text = PLACINGS[index][3]
 	end
 
 	--[[ Earned ]]

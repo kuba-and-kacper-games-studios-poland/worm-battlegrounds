@@ -74,6 +74,36 @@ local _gui = {
 											{
 												Primitive = "ImageLabel",
 												Props = {
+													Name = "MainFill",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0008, 0.0078),
+													Size = UDim2.fromScale(0.9985, 0.9843),
+													Image = "rbxassetid://80102572071586",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = { _ImageName = "1214_270__MatchOver__Main_gray" },
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
+													Name = "MainFill",
+													BackgroundTransparency = 1,
+													BorderSizePixel = 0,
+													LayoutOrder = 0,
+													Position = UDim2.fromScale(0.0008, 0.0078),
+													Size = UDim2.fromScale(0.9985, 0.9843),
+													Image = "rbxassetid://80102572071586",
+													ImageColor3 = Color3.fromRGB(25, 25, 35),
+													ScaleType = Enum.ScaleType.Fit,
+												},
+												Attributes = { _ImageName = "1214_270__MatchOver__Main_gray" },
+											},
+											{
+												Primitive = "ImageLabel",
+												Props = {
 													Name = "Stroke2",
 													BackgroundTransparency = 1,
 													BorderSizePixel = 0,
@@ -144,7 +174,7 @@ local _gui = {
 										Children = {
 											{
 												Primitive = "UIStroke",
-												Props = { Thickness = 0.075, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+												Props = { Thickness = 0.06, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 											},
 										},
 									},
@@ -171,7 +201,7 @@ local _gui = {
 										Children = {
 											{
 												Primitive = "UIStroke",
-												Props = { Thickness = 0.0682, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+												Props = { Thickness = 0.06, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 											},
 										},
 									},
@@ -207,6 +237,36 @@ local _gui = {
 														Primitive = "ImageLabel",
 														Props = {
 															Name = "Main",
+															BackgroundTransparency = 1,
+															BorderSizePixel = 0,
+															LayoutOrder = 0,
+															Position = UDim2.fromScale(0.0041, 0.041),
+															Size = UDim2.fromScale(0.9917, 0.918),
+															Image = "rbxassetid://94216364088706",
+															ImageColor3 = Color3.fromRGB(25, 25, 35),
+															ScaleType = Enum.ScaleType.Fit,
+														},
+														Attributes = { _ImageName = "1214_316__MatchOver__Main_gray" },
+													},
+													{
+														Primitive = "ImageLabel",
+														Props = {
+															Name = "MainFill",
+															BackgroundTransparency = 1,
+															BorderSizePixel = 0,
+															LayoutOrder = 0,
+															Position = UDim2.fromScale(0.0041, 0.041),
+															Size = UDim2.fromScale(0.9917, 0.918),
+															Image = "rbxassetid://94216364088706",
+															ImageColor3 = Color3.fromRGB(25, 25, 35),
+															ScaleType = Enum.ScaleType.Fit,
+														},
+														Attributes = { _ImageName = "1214_316__MatchOver__Main_gray" },
+													},
+													{
+														Primitive = "ImageLabel",
+														Props = {
+															Name = "MainFill",
 															BackgroundTransparency = 1,
 															BorderSizePixel = 0,
 															LayoutOrder = 0,
@@ -295,20 +355,20 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
 													{
 														Primitive = "TextLabel",
-														Id = "S_Coins",
+														Id = "S_Diamonds",
 														Props = {
 															BackgroundTransparency = 1,
 															BorderSizePixel = 0,
 															LayoutOrder = 1,
 															Size = UDim2.fromScale(0.1827, 1),
 															ZIndex = 2,
-															Text = "+15 COINS",
+															Text = "+8 DIAMONDS",
 															FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
 															TextColor3 = Color3.fromRGB(255, 200, 40),
 															TextSize = 24,
@@ -321,7 +381,7 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
@@ -347,7 +407,7 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
@@ -374,14 +434,14 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
 												},
 											},
 											--[[
-												Under the coins line (2026-11-17), the lobby's level plate small: the level in a diamond in
+												Under the diamonds line (2026-11-17), the lobby's level plate small: the level in a diamond in
 												its prestige frame's colours, LEVEL 14, the bar and "60 / 156 XP", which MatchHud's Results
 												fills from the level before the match to after it
 											]]
@@ -406,7 +466,7 @@ local _gui = {
 															BackgroundTransparency = 1,
 															BorderSizePixel = 0,
 															Position = UDim2.fromScale(0, 0.5),
-															Size = UDim2.fromScale(1.25, 1.25),
+															Size = UDim2.fromScale(1.5, 1.5),
 															SizeConstraint = Enum.SizeConstraint.RelativeYY,
 															ZIndex = 5,
 														},
@@ -422,11 +482,11 @@ local _gui = {
 																	BorderSizePixel = 0,
 																	Position = UDim2.fromScale(0.5, 0.5),
 																	Rotation = 45,
-																	Size = UDim2.fromScale(0.7, 0.7),
+																	Size = UDim2.fromScale(0.74, 0.74),
 																	ZIndex = 5,
 																},
 																Children = {
-																	{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.18, 0) } },
+																	{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.16, 0) } },
 																	{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { Color = Color3.fromRGB(25, 25, 35), Thickness = 2 } },
 																	{
 																		Primitive = "UIGradient",
@@ -438,6 +498,7 @@ local _gui = {
 																	},
 																},
 															},
+															-- The level, its box inside the turned square (three digits too)
 															{
 																Primitive = "TextLabel",
 																Id = "S_LevelNum",
@@ -445,9 +506,11 @@ local _gui = {
 																	AnchorPoint = Vector2.new(0.5, 0.5),
 																	BackgroundTransparency = 1,
 																	BorderSizePixel = 0,
-																	Position = UDim2.fromScale(0.5, 0.52),
-																	Size = UDim2.fromScale(0.62, 0.46),
-																	ZIndex = 6,
+
+																	-- A hair left of the middle: the italic digits lean right
+																	Position = UDim2.fromScale(0.49, 0.5),
+																	Size = UDim2.fromScale(0.46, 0.32),
+																	ZIndex = 7,
 																	Text = "14",
 																	TextColor3 = Color3.fromRGB(255, 255, 255),
 																	TextSize = 22,
@@ -457,7 +520,7 @@ local _gui = {
 																},
 																Children = {
 																	{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-																	{ Primitive = "UIStroke", Props = { Thickness = 0.12, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+																	{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 																},
 															},
 														},
@@ -469,8 +532,8 @@ local _gui = {
 															AnchorPoint = Vector2.new(0, 0.5),
 															BackgroundTransparency = 1,
 															BorderSizePixel = 0,
-															Position = UDim2.fromScale(0.075, 0.5),
-															Size = UDim2.fromScale(0.16, 0.82),
+															Position = UDim2.fromScale(0.08, 0.5),
+															Size = UDim2.fromScale(0.155, 0.82),
 															ZIndex = 4,
 															Text = "LEVEL 14",
 															FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
@@ -484,10 +547,10 @@ local _gui = {
 														Tags = { TextCase_Upper = {} },
 														Children = {
 															{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-															{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+															{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 														},
 													},
-													-- The bar: a dark track, the gold fill with its gloss
+													-- The bar, thin and sharp as the lobby replay's: a dark track, the gold fill with a bright leading edge
 													{
 														Primitive = "Frame",
 														Props = {
@@ -496,11 +559,11 @@ local _gui = {
 															BackgroundColor3 = Color3.fromRGB(13, 13, 20),
 															BorderSizePixel = 0,
 															Position = UDim2.fromScale(0.25, 0.5),
-															Size = UDim2.fromScale(0.52, 0.5),
+															Size = UDim2.fromScale(0.52, 0.4),
 															ZIndex = 4,
 														},
 														Children = {
-															{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+															{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.2, 0) } },
 															{ Primitive = "UIStroke", Tags = { Utils_UIStroke = {} }, Props = { Color = Color3.fromRGB(25, 25, 35), Thickness = 2 } },
 															{
 																Primitive = "Frame",
@@ -514,7 +577,7 @@ local _gui = {
 																	ZIndex = 5,
 																},
 																Children = {
-																	{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } },
+																	{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.2, 0) } },
 																	{
 																		Primitive = "UIGradient",
 																		Props = {
@@ -529,16 +592,28 @@ local _gui = {
 																	{
 																		Primitive = "Frame",
 																		Props = {
-																			Name = "Gloss",
-																			AnchorPoint = Vector2.new(0.5, 0),
-																			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-																			BackgroundTransparency = 0.55,
+																			Name = "Shade",
+																			AnchorPoint = Vector2.new(0.5, 1),
+																			BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+																			BackgroundTransparency = 0.78,
 																			BorderSizePixel = 0,
-																			Position = UDim2.fromScale(0.5, 0.12),
-																			Size = UDim2.new(1, -4, 0.3, 0),
+																			Position = UDim2.fromScale(0.5, 1),
+																			Size = UDim2.fromScale(1, 0.45),
 																			ZIndex = 6,
 																		},
-																		Children = { { Primitive = "UICorner", Props = { CornerRadius = UDim.new(1, 0) } } },
+																	},
+																	{
+																		Primitive = "Frame",
+																		Props = {
+																			Name = "Edge",
+																			AnchorPoint = Vector2.new(1, 0.5),
+																			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+																			BackgroundTransparency = 0.1,
+																			BorderSizePixel = 0,
+																			Position = UDim2.fromScale(1, 0.5),
+																			Size = UDim2.new(0, 2, 1, 0),
+																			ZIndex = 6,
+																		},
 																	},
 																},
 															},
@@ -565,7 +640,7 @@ local _gui = {
 														},
 														Children = {
 															{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-															{ Primitive = "UIStroke", Props = { Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+															{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 														},
 													},
 												},
@@ -611,7 +686,7 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.1111, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
@@ -636,7 +711,7 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.1111, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
@@ -661,7 +736,7 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.1111, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
@@ -798,7 +873,7 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.1154, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
@@ -883,6 +958,34 @@ local _gui = {
 															{
 																Primitive = "ImageLabel",
 																Props = {
+																	Name = "MainFill",
+																	BackgroundTransparency = 1,
+																	BorderSizePixel = 0,
+																	LayoutOrder = 0,
+																	Size = UDim2.fromScale(0.9792, 0.8846),
+																	Image = "rbxassetid://122094176292218",
+																	ImageColor3 = Color3.fromRGB(25, 25, 35),
+																	ScaleType = Enum.ScaleType.Fit,
+																},
+																Attributes = { _ImageName = "1214_340__MatchOver__Main_gray" },
+															},
+															{
+																Primitive = "ImageLabel",
+																Props = {
+																	Name = "MainFill",
+																	BackgroundTransparency = 1,
+																	BorderSizePixel = 0,
+																	LayoutOrder = 0,
+																	Size = UDim2.fromScale(0.9792, 0.8846),
+																	Image = "rbxassetid://122094176292218",
+																	ImageColor3 = Color3.fromRGB(25, 25, 35),
+																	ScaleType = Enum.ScaleType.Fit,
+																},
+																Attributes = { _ImageName = "1214_340__MatchOver__Main_gray" },
+															},
+															{
+																Primitive = "ImageLabel",
+																Props = {
 																	Name = "Stroke2",
 																	BackgroundTransparency = 1,
 																	BorderSizePixel = 0,
@@ -937,7 +1040,7 @@ local _gui = {
 														Children = {
 															{
 																Primitive = "UIStroke",
-																Props = { Thickness = 0.1154, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+																Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 															},
 														},
 													},
@@ -983,7 +1086,7 @@ local _gui = {
 	--[[ Prefabs ]]
 
 	Templates = {
-		-- One player's card: their place (1st to 3rd in gold, silver and bronze from Look_<Place>*), avatar, name with badges, username and coins
+		-- One player's card: their place (1st to 3rd in gold, silver and bronze from Look_<Place>*), avatar, name with badges, username and diamonds
 		["PREFAB | Placing"] = {
 			Parent = "U_Placings",
 			Primitive = "Frame",
@@ -1007,6 +1110,36 @@ local _gui = {
 							Primitive = "ImageLabel",
 							Props = {
 								Name = "Main",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 0,
+								Position = UDim2.fromScale(0.0194, 0.0225),
+								Size = UDim2.fromScale(0.9612, 0.955),
+								Image = "rbxassetid://74857940975139",
+								ImageColor3 = Color3.fromRGB(25, 25, 35),
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = { _ImageName = "1214_280__MatchOver__Main_gray" },
+						},
+						{
+							Primitive = "ImageLabel",
+							Props = {
+								Name = "MainFill",
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								LayoutOrder = 0,
+								Position = UDim2.fromScale(0.0194, 0.0225),
+								Size = UDim2.fromScale(0.9612, 0.955),
+								Image = "rbxassetid://74857940975139",
+								ImageColor3 = Color3.fromRGB(25, 25, 35),
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = { _ImageName = "1214_280__MatchOver__Main_gray" },
+						},
+						{
+							Primitive = "ImageLabel",
+							Props = {
+								Name = "MainFill",
 								BackgroundTransparency = 1,
 								BorderSizePixel = 0,
 								LayoutOrder = 0,
@@ -1076,7 +1209,7 @@ local _gui = {
 					Children = {
 						{
 							Primitive = "UIStroke",
-							Props = { Thickness = 0.1, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+							Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 						},
 					},
 				},
@@ -1119,7 +1252,7 @@ local _gui = {
 					Children = {
 						{
 							Primitive = "UIStroke",
-							Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+							Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 						},
 						{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
 					},
@@ -1146,13 +1279,13 @@ local _gui = {
 					Children = {
 						{
 							Primitive = "UIStroke",
-							Props = { Thickness = 0.1538, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+							Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 						},
 					},
 				},
 				{
 					Primitive = "TextLabel",
-					Id = "S_Coins",
+					Id = "S_Diamonds",
 					Props = {
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
@@ -1160,7 +1293,7 @@ local _gui = {
 						Position = UDim2.fromScale(0.1242, 0.8396),
 						Size = UDim2.fromScale(0.6446, 0.1132),
 						ZIndex = 6,
-						Text = "+100 coins",
+						Text = "+50 diamonds",
 						FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
 						TextColor3 = Color3.fromRGB(255, 200, 40),
 						TextSize = 20,
@@ -1173,7 +1306,7 @@ local _gui = {
 					Children = {
 						{
 							Primitive = "UIStroke",
-							Props = { Thickness = 0.15, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
+							Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize },
 						},
 					},
 				},
@@ -1209,7 +1342,7 @@ local _gui = {
 									},
 									Children = {
 										{ Primitive = "UITextSizeConstraint" },
-										{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(25, 25, 42), Thickness = 0.08, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+										{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(25, 25, 42), Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 									},
 								},
 							},

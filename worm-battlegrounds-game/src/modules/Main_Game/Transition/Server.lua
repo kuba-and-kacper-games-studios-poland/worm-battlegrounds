@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -47,6 +48,8 @@ function Module.Init()
 		--[[ Control ]]
 
 		SetDestination = Module.SetDestination,
+		Show = Module.Show,
+		Hide = Module.Hide,
 	}
 end
 
@@ -67,14 +70,66 @@ end
 
 --[[
 	**SERVER** |
-	Tells players where their next teleport takes them, for the teleport card: call it right before the teleport.
+	Tells players where their next teleport takes them, for the teleport card: call it right before the teleport. A
+	destination with a MapId shows that map's scene; one with a Pool and no MapId searches through those maps.
 ]]
 --- @param players { Player }
-function Module.SetDestination(players, text: string, image: string)
+--- @param destination Transition_Destination
+function Module.SetDestination(players, destination)
 	--[[ Sending ]]
 
 	for _index: number, player: Player in ipairs(players) do
-		I.Network.Fire("Transition_Destination", player, text, image)
+		I.Network.Fire("Transition_Destination", player, destination)
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Show
+
+--[[
+	**SERVER** |
+	Puts the teleport card up on players' screens at once, for a teleport that takes a while to set up (a public Join
+	finding its match). The teleport's own card takes its place without playing its intro again; Hide takes it down
+	when no teleport comes.
+]]
+--- @param players { Player }
+--- @param destination Transition_Destination
+function Module.Show(players, destination)
+	--[[ Data ]]
+
+	local template: ScreenGui = I.Dirs.UmeServer:FindFirstChild("UtilityGuis"):FindFirstChild(_settings.GUI_NAME)
+
+	--[[ Showing ]]
+
+	Module.SetDestination(players, destination)
+	for _index: number, player: Player in ipairs(players) do
+		local playerGui: PlayerGui? = player:FindFirstChildOfClass("PlayerGui")
+		if playerGui then
+			template:Clone().Parent = playerGui
+		end
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Hide
+
+--[[
+	**SERVER** |
+	Takes the teleport card off players' screens, when the teleport it showed for isn't coming.
+]]
+--- @param players { Player }
+function Module.Hide(players)
+	--[[ Removing ]]
+
+	for _index: number, player: Player in ipairs(players) do
+		-- The player may have left
+		local playerGui: PlayerGui? = player:FindFirstChildOfClass("PlayerGui")
+		if not playerGui then
+			continue
+		end
+		for _guiIndex: number, gui: Instance in ipairs(playerGui:GetChildren()) do
+			if gui.Name == _settings.GUI_NAME then
+				gui:Destroy()
+			end
+		end
 	end
 end
 
@@ -109,18 +164,13 @@ function Module._onTeleportFailed(player: Player, result: Enum.TeleportResult, m
 	retries[player] = nil
 
 	-- The player may have left while it retried
-	local playerGui: PlayerGui? = player:FindFirstChildOfClass("PlayerGui")
-	if not playerGui then
+	if not player:FindFirstChildOfClass("PlayerGui") then
 		return
 	end
 
 	--[[ Removing ]]
 
-	for _index: number, gui: Instance in ipairs(playerGui:GetChildren()) do
-		if gui.Name == _settings.GUI_NAME then
-			gui:Destroy()
-		end
-	end
+	Module.Hide({ player })
 
 	--[[ Telling ]]
 

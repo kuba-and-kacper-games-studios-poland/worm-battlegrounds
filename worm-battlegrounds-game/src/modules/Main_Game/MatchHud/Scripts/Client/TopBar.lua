@@ -13,6 +13,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 -- The Leave game button, shown only while the player is in the match (the Studio map's lobby shares the server)
 local leaveButton = nil --- @type TopBar_Button
+local matchFolder: Folder
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -43,6 +44,8 @@ function Module.Start()
 
 	--[[ Connections ]]
 
+	matchFolder = I.Match.GetFolder()
+	matchFolder:GetAttributeChangedSignal("Kind"):Connect(Module._refreshShown)
 	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refreshShown)
 	Module._refreshShown()
 end
@@ -52,12 +55,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Shown
 
 --[[
-	Shows Leave game while the player is in the match, and hides it in the Studio map's lobby.
+	Shows Leave game while the player is in the match, and hides it in the Studio map's lobby and in the tutorial match,
+	where the Tutorial module's END TUTORIAL takes its place.
 ]]
 function Module._refreshShown()
 	--[[ Applying ]]
 
-	leaveButton.Instance.Visible = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true
+	leaveButton.Instance.Visible = I.S.Players.LocalPlayer:GetAttribute("InMatch") == true and matchFolder:GetAttribute("Kind") ~= "Tutorial"
 end
 
 --%%%%%%%%%%%%%%%%%%%% Ask Leave

@@ -27,6 +27,9 @@ local boxes = {} --- @type { [string]: ImageButton }
 local selected: string = "Bazooka"
 local bound: boolean = false
 
+-- The boxes cooling down at their last refresh, so the one whose cooldown just ended flashes
+local cooling = {} --- @type { [string]: boolean }
+
 -- The last weapon held, which the snail takes back after using a utility it held
 local lastWeapon: string = "Bazooka"
 
@@ -151,8 +154,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Rebuild
 
 --[[
-	Makes one box per item in the player's loadout (the Bazooka's first) when it changed, and empty boxes (the
-	design's "+") up to one per slot key, then refreshes them all.
+	Makes one box per item in the player's loadout (the Bazooka's first) when it changed, and no empty ones (the owner,
+	2026-11-24: "remove any slots from the bottom bar that are not occupied"), then refreshes them all.
 ]]
 function Module._rebuild()
 	--[[ Data ]]
@@ -182,14 +185,14 @@ function Module._rebuild()
 	end
 	items = newItems
 	boxes = {}
+	cooling = {}
 
 	--[[ Building ]]
 
-	for index: number = 1, math.max(#items, #_settings.SLOT_KEYS) do
+	for index: number, itemId: string in ipairs(items) do
 		--[[ Local Variables ]]
 
-		local itemId: string? = items[index]
-		local row = if itemId then I.G_Arsenal.Get(itemId) else nil --- @type Arsenal_WeaponData?
+		local row = I.G_Arsenal.Get(itemId) --- @type Arsenal_WeaponData?
 
 		--[[ Cloning ]]
 
@@ -201,29 +204,16 @@ function Module._rebuild()
 
 		--[[ Applying ]]
 
-		box.Name = itemId or "Empty"
+		box.Name = itemId
 		box.LayoutOrder = index
 		box.Visible = true
 		box:FindFirstChild("S_Name").Text = if row then row.Name else ""
 		box:FindFirstChild("S_Key").Text = tostring(index)
 		icon.Image = if row then row.Icon else ""
-		if itemId and icon.Image == "" and I.G_Arsenal.HasModel(itemId) then
+		if icon.Image == "" and I.G_Arsenal.HasModel(itemId) then
 			Module._showModel(icon, I.G_Arsenal.GetModel(itemId))
 		end
 		box.Parent = elems["Slots"]
-
-		--[[ Empty ]]
-
-		-- An empty slot shows only the design's "+", in its dim outline
-		if not itemId then
-			box.Interactable = false
-			box:FindFirstChild("S_Plus").Visible = true
-			box:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = box:GetAttribute("Look_EmptyStrokeColor")
-			for _childIndex: number, name: string in ipairs({ "S_Icon", "S_Key", "S_Uses", "S_Name", "S_Turns" }) do
-				box:FindFirstChild(name).Visible = false
-			end
-			continue
-		end
 
 		--[[ Connections ]]
 
@@ -279,7 +269,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Boxes
 
 --[[
-	Shows each box's uses left, its cooldown (the icon darkened under the turns left), a lock over one used up for the
+	Shows each box's uses left, its Shiny foil or Golden rim (Combat's Variant_<ItemId>), its cooldown (Draw Cooldown), a lock over one used up for the
 	rest of the match (darkened the same way; the Jetpack only once its fuel is gone too, its box showing the fuel left
 	meanwhile, and a turn's cooldown while it rests after flying) and whether it's the selected one (the design's white outline, from the box's Look_ attributes; the
 	pad's utility box instead while LB or RB rest there, with its Y hint); the key numbers only on Desktop.
@@ -306,22 +296,80 @@ function Module._refreshBoxes()
 		local uses: number = combatRep:GetAttribute(`Uses_{itemId}`) or 0
 		local fueled: boolean = itemId == "Jetpack" and fuel ~= nil and fuel > 0
 		local cooldown: number = if fueled and resting then 1 else combatRep:GetAttribute(`Cooldown_{itemId}`) or 0
+		local total: number = if fueled and resting then 1 else I.G_Arsenal.Get(itemId).Cooldown or cooldown
 		local locked: boolean = uses == 0 and not fueled
 		local icon: ImageLabel = box:FindFirstChild("S_Icon")
 		local model: ViewportFrame? = icon:FindFirstChild("S_Model")
-		local turns: TextLabel = box:FindFirstChild("S_Turns")
 		local iconColor: Color3 = if cooldown > 0 or locked then box:GetAttribute("Look_CooldownIconColor") else Color3.new(1, 1, 1)
-		box:FindFirstChild("S_Uses").Text = if fueled then `{math.ceil((fuel or 0) / I.Settings["SnailControl"].JETPACK_FUEL * 100)}%` elseif uses < 0 then "" else `x{uses}`
+		local iconFade: number = if cooldown > 0 or locked then box:GetAttribute("Look_CooldownIconTransparency") else 0
+		box:FindFirstChild("S_Uses").Text = if fueled then `{math.ceil((fuel or 0) / I.Settings["SnailControl"].JETPACK_FUEL * 100)}%` elseif uses < 0 then "" else `{uses} left`
 		box:FindFirstChild("S_Key").Visible = I.Platform.Current == "Desktop"
 		box:FindFirstChild("S_Lock").Visible = locked
-		turns.Visible = cooldown > 0 and not locked
-		turns.Text = tostring(cooldown)
+		local variant: string = combatRep:GetAttribute(`Variant_{itemId}`) or ""
+		local background: Frame = box:FindFirstChild("Background")
+		background:FindFirstChild("S_Foil").Visible = variant == "Shiny"
+		background:FindFirstChild("S_Gold").Visible = variant == "Golden"
+		Module._drawCooldown(itemId, box, if locked then 0 else math.min(cooldown, total), total)
 		icon.ImageColor3 = iconColor
+		icon.ImageTransparency = iconFade
 		if model then
 			model.ImageColor3 = iconColor
+			model.ImageTransparency = iconFade
 		end
-		box:FindFirstChild("Background"):FindFirstChild("Stroke").ImageColor3 = box:GetAttribute(if itemId == picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+		background:FindFirstChild("Stroke").ImageColor3 = box:GetAttribute(if itemId == picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
 	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Draw Cooldown
+
+--[[
+	Draws a box's cooldown: the turns left in a round badge in the uses pill's corner (the pill hidden meanwhile, its name kept),
+	and its card filled from the bottom with the share of the total already waited (S_Charge, its top edge brighter); the
+	card flashes white as a cooldown ends. A box at 0 turns left shows none of it.
+]]
+function Module._drawCooldown(itemId: string, box: ImageButton, turnsLeft: number, total: number)
+	--[[ Elements ]]
+
+	local charge: ImageLabel = box:FindFirstChild("Background"):FindFirstChild("S_Charge")
+	local turns: TextLabel = box:FindFirstChild("S_Turns")
+	local label: TextLabel = box:FindFirstChild("S_TurnsLabel")
+	local uses: TextLabel = box:FindFirstChild("S_Uses")
+	local flash: ImageLabel = box:FindFirstChild("S_ReadyFlash")
+
+	--[[ Local Variables ]]
+
+	local isCooling: boolean = turnsLeft > 0
+	local waited: number = if isCooling then 1 - turnsLeft / total else 0
+	local edge: number = math.max(waited - _settings.COOLDOWN_CHARGE_EDGE, 0.001)
+
+	--[[ Applying ]]
+
+	turns.Visible = isCooling
+	turns.Text = tostring(turnsLeft)
+	label.Visible = false
+	uses.Visible = uses.Text ~= "" and not isCooling
+	charge.Visible = waited > 0
+	if waited > 0 then
+		charge.UIGradient.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, _settings.COOLDOWN_CHARGE_BODY),
+			NumberSequenceKeypoint.new(edge, _settings.COOLDOWN_CHARGE_BODY),
+			NumberSequenceKeypoint.new(edge + 0.001, 0),
+			NumberSequenceKeypoint.new(waited, 0),
+			NumberSequenceKeypoint.new(math.min(waited + 0.001, 0.999), 1),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+	end
+
+	--[[ Flashing ]]
+
+	-- The cooldown just ended: the card flashes white and fades
+	if cooling[itemId] and not isCooling then
+		flash.ImageTransparency = _settings.READY_FLASH_TRANSPARENCY
+		local Flash_TweenGoal = { ImageTransparency = 1 }
+		local Flash_Tween: Tween = I.S.TweenService:Create(flash, _settings.READY_FLASH_TWEENINFO, Flash_TweenGoal)
+		Flash_Tween:Play()
+	end
+	cooling[itemId] = isCooling
 end
 
 --%%%%%%%%%%%%%%%%%%%% On My Turn

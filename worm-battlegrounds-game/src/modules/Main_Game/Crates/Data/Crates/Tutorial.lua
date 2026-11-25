@@ -21,14 +21,14 @@ local _data = {
 
 	--[[ Prices ]]
 
-	-- Coins or diamonds for one crate, a 3-pack and a 10-pack
+	-- Diamonds for one crate, a 3-pack and a 10-pack
 	Prices = {
-		Coins = { One = "100", Three = "100", Ten = "100" },
+		Diamonds = { One = "50", Three = "50", Ten = "50" },
 	},
 
 	--[[ Odds ]]
 
-	-- Each item's chance in percent, the same whichever currency pays; adds up to 100
+	-- Each item's chance in percent; adds up to 100
 	Odds = {},
 
 	-- Items always given, instead of a roll

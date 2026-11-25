@@ -9,7 +9,7 @@ local _gui = {
 
 	-- The Snails module tints it and fades it in while the player's snail is under a potion on their own turn
 	Name = "PotionVignette",
-	Screen = { DisplayOrder = -5, Enabled = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None },
+	Screen = { DisplayOrder = -5, Enabled = false, IgnoreGuiInset = true, ScreenInsets = Enum.ScreenInsets.None, ClipToDeviceSafeArea = false },
 
 	--[[ Tree ]]
 

@@ -152,5 +152,5 @@ local _crates_StageCrate = {}
 
 --%%%%%%%%%%%%%%%%%%%% Effects
 
---- @alias Crates_Burst "Sparks" | "Stars" | "Coins" | "Confetti" | "Smileys" | "Bones" | "Flames" | "Bubbles" | "Ring"
+--- @alias Crates_Burst "Sparks" | "Stars" | "Diamonds" | "Confetti" | "Smileys" | "Bones" | "Flames" | "Bubbles" | "Ring"
 local _crates_Burst = {}

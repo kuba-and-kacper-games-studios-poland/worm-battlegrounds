@@ -527,9 +527,12 @@ function Module._getAnchor(who: number | string)
 
 	--[[ Local Variables ]]
 
-	-- The top of its Body (eyestalks included) over its RootPart, where the bubbles' bottom edge goes; the model's box would reach the shell's rest place, high above its back
+	-- The top of its nameplate (Lobby's, studs tall, standing a fixed height over the snail), where the bubbles' bottom edge goes, so they never cover the name
+	local plate: BillboardGui? = model:FindFirstChild(I.Settings["Lobby"].NAMEPLATE_NAME)
+
+	-- Without one, the top of its Body (eyestalks included) over its RootPart; the model's box would reach the shell's rest place, high above its back
 	local body: BasePart = model:FindFirstChild("Body", true)
-	local top: number = body.Position.Y + body.Size.Y / 2 - model.PrimaryPart.Position.Y
+	local top: number = if plate then plate.StudsOffsetWorldSpace.Y + plate.Size.Y.Scale / 2 else body.Position.Y + body.Size.Y / 2 - model.PrimaryPart.Position.Y
 
 	--[[ Returning ]]
 

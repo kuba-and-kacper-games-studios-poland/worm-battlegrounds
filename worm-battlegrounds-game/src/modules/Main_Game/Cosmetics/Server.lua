@@ -279,7 +279,7 @@ end
 
 --[[
 	**SERVER** |
-	Buys an emote with coins when the player's level is high enough.
+	Buys an emote with diamonds when the player's level is high enough.
 ]]
 --- @return boolean
 function Module.BuyEmote(player: Player, emoteId: string)
@@ -305,7 +305,7 @@ function Module.BuyEmote(player: Player, emoteId: string)
 	end
 
 	-- Check if the player can pay
-	if row.Coins ~= "0" and not I.Currency.Subtract(player, "Coins", row.Coins) then
+	if row.Diamonds ~= "0" and not I.Currency.Subtract(player, "Diamonds", row.Diamonds) then
 		return false
 	end
 

@@ -6,7 +6,7 @@ for this player), the client shows it in a bubble over that player's snail: whil
 (the `InMatch` Player attribute) over their snail there (`I.Snails.Get`), standing over its SnailTag's name and
 health bar (the tag's `S_Stack`, followed as the turn marker and level come and go, and kept while the tag
 hides as its snail moves or aims) and never on it; in the lobby
-over their snail on this screen's party stage (`I.Lobby.GetStageSnail`), over the top of its model. A player with no
+over their snail on this screen's party stage (`I.Lobby.GetStageSnail`), over its nameplate (Lobby's `NAMEPLATE_NAME`, 2026-11-24), or the top of its body without one. A player with no
 snail on this screen (or a knocked-out one) gets no bubble. Each speaker has one billboard, the `ChatBubble` gui,
 holding up to `MAX_BUBBLES` bubbles, the newest at the bottom with the tail and older ones above it; a fourth
 message pushes the oldest out. A bubble pops in, stays `BUBBLE_SECONDS` plus `BUBBLE_SECONDS_PER_LETTER` a letter
@@ -60,7 +60,7 @@ No remotes: the messages come through TextChatService, which filters them for ea
 | `POP_FROM`, `POP_TWEENINFO` | `0.6`, 0.2 s back out | A new bubble pops in from 0.6 times its size, from its tail |
 | `FADE_TWEENINFO` | 0.35 s quad in | How a bubble whose time is up fades out |
 | `TAG_GAP` | `6` | In a match, design px between the snail's tag and the lowest bubble |
-| `STAGE_GAP` | `0.6` | On the lobby's stage, studs between the top of the snail's `Body` (its eyestalks) and the lowest bubble |
+| `STAGE_GAP` | `0.3` | On the lobby's stage, studs between the top of the snail's nameplate (or of its `Body`, its eyestalks, without one) and the lowest bubble |
 
 ## In the place
 

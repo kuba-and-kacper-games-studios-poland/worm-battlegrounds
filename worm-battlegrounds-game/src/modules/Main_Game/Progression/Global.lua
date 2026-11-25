@@ -14,6 +14,9 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 -- The frame gradients that shine or spin, by gradient: the tier they show (weak, so a destroyed gui drops out)
 local animated = setmetatable({}, { __mode = "k" }) --- @type { [UIGradient]: Progression_Tier }
 
+-- The gradients that never spin (a long thin bar, where a turning gradient shows one colour with a band wobbling through)
+local still = setmetatable({}, { __mode = "k" }) --- @type { [UIGradient]: boolean }
+
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
 --  /  \     /  |                /  |          /  |
@@ -46,6 +49,8 @@ function Module.Init()
 
 		GetTier = Module.GetTier,
 		GetNextUnlock = Module.GetNextUnlock,
+		GetWeaponVariant = Module.GetWeaponVariant,
+		GetPlayerWeaponVariant = Module.GetPlayerWeaponVariant,
 	}
 end
 
@@ -69,9 +74,9 @@ end
 
 --[[
 	Paints a frame (a UIGradient on a stroke or a fill) in the prestige tier of a level, and keeps a tier that shines
-	or spins moving while it's shown.
+	or spins moving while it's shown; a bar's (holdStill) shines but never spins, its colours staying left to right.
 ]]
-function Module.ApplyFrame(gradient: UIGradient, level: number)
+function Module.ApplyFrame(gradient: UIGradient, level: number, holdStill: boolean?)
 	--[[ Local Variables ]]
 
 	local tier = Module.GetTier(level) --- @type Progression_Tier
@@ -81,6 +86,7 @@ function Module.ApplyFrame(gradient: UIGradient, level: number)
 	gradient.Color = Module._getSequence(tier.Colors, nil)
 	gradient.Offset = Vector2.zero
 	animated[gradient] = if tier.Shine or tier.Spin then tier else nil
+	still[gradient] = if holdStill then true else nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Animate
@@ -106,7 +112,7 @@ function Module._animate(deltaTime: number)
 
 		local sweep: number = (now % cycle) / _settings.FRAME_SHINE_SECONDS
 		gradient.Color = Module._getSequence(tier.Colors, if tier.Shine and sweep <= 1 then sweep else nil)
-		if tier.Spin then
+		if tier.Spin and not still[gradient] then
 			gradient.Rotation = (gradient.Rotation + _settings.FRAME_SPIN_SPEED * deltaTime) % 360
 		end
 	end
@@ -142,8 +148,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Next Unlock
 
 --[[
-	Returns the next thing a level opens after this one, and its level: a frame, an emote to buy, or a level skin
-	(several at one level are joined). Nil at the top.
+	Returns the next thing a level opens after this one, and its level: a frame, an emote to buy, a level skin or a
+	weapon's look (several at one level are joined). Nil at the top.
 ]]
 --- @return string?, number?
 function Module.GetNextUnlock(level: number)
@@ -164,6 +170,10 @@ function Module.GetNextUnlock(level: number)
 	for atLevel: number, itemId: string in pairs(_settings.LEVEL_REWARDS) do
 		Module._addUnlock(unlocks, level, atLevel, `{I.G_Inventory.Items[itemId].Name} skin`)
 	end
+	--- @param reward Progression_WeaponReward
+	for atLevel: number, reward in pairs(_settings.WEAPON_REWARDS) do
+		Module._addUnlock(unlocks, level, atLevel, `{reward.Variant} {reward.Item}`)
+	end
 
 	--[[ Returning ]]
 
@@ -178,6 +188,68 @@ function Module.GetNextUnlock(level: number)
 	end
 	table.sort(unlocks[nextLevel])
 	return table.concat(unlocks[nextLevel], " and "), nextLevel
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Weapon Variant
+
+--[[
+	Returns the best look a level has opened for a weapon (WEAPON_REWARDS): "Golden", "Shiny", or nil.
+]]
+--- @return string?
+function Module.GetWeaponVariant(itemId: string, level: number)
+	--[[ Local Variables ]]
+
+	local best: string? = nil
+
+	--[[ Finding ]]
+
+	--- @param reward Progression_WeaponReward
+	for atLevel: number, reward in pairs(_settings.WEAPON_REWARDS) do
+		if reward.Item == itemId and atLevel <= level and best ~= "Golden" then
+			best = reward.Variant
+		end
+	end
+
+	--[[ Returning ]]
+
+	return best
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Player Weapon Variant
+
+--[[
+	Returns the best look a player has for a weapon or utility apart from its copies: what their level opened
+	(WEAPON_REWARDS) or an admin gave them, "Golden", "Shiny" or nil. The server reads their profile, a client the
+	Player's Level and WeaponVariants attributes.
+]]
+--- @return string?
+function Module.GetPlayerWeaponVariant(player: Player, itemId: string)
+	--[[ Data ]]
+
+	local level: number
+	local given = {} --- @type { [string]: string }
+	if I.Env.IsServer then
+		level = I.Progression.GetLevel(player)
+		given = I.Progression.GetGivenVariants(player)
+	else
+		level = player:GetAttribute("Level") or 1
+		local success: boolean
+		local result: any | string?
+		success, result = pcall(I.S.HttpService.JSONDecode, I.S.HttpService, player:GetAttribute("WeaponVariants") or "{}")
+		given = if success and type(result) == "table" then result else {}
+	end
+
+	--[[ Local Variables ]]
+
+	local fromLevel: string? = Module.GetWeaponVariant(itemId, level)
+	local fromAdmin: string? = given[itemId]
+
+	--[[ Returning ]]
+
+	if fromLevel == "Golden" or fromAdmin == "Golden" then
+		return "Golden"
+	end
+	return fromLevel or fromAdmin
 end
 
 --%%%%%%%%%%%%%%%%%%%% Add Unlock

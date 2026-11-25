@@ -6,7 +6,9 @@ its own widget since 2026-11-17 (`FreeCrateDialog`). The owner asked for it on 2
 2026-11-17.
 
 **Look.** The game's screens (the code folder's `practices.md` → Guis). The tile is the lobby menu's tile pictures
-tinted gold (255, 196, 40) with a pale gold outline. The badge is the crate shop's slanted button. Laid out by
+tinted gold (255, 196, 40) with a pale gold outline, and since 2026-11-24 the gift glyph (`art/ui_glyphs`'
+`freeweapons`, `S_TileIcon`) as the menu tiles carry theirs, 0.54 of the tile at 0.545, 0.39 (centred on the tile's
+slanted body). The badge is the crate shop's slanted button. Laid out by
 fractions of the screen with aspect-ratio constraints: the tile 1.2058, the badge 3.6.
 
 |  |  |
@@ -15,16 +17,16 @@ fractions of the screen with aspect-ratio constraints: the tile 1.2058, the badg
 | Theme | none (Primitive nodes only) |
 | Modes | Night only |
 | Devices | Desktop, Mobile and Console, one layout |
-| Export | A ScreenGui named `FreeCrate`: `Enabled` off, `DisplayOrder` 2 (over the crates screen's 1), `ScreenInsets` `DeviceSafeInsets`. Its root is a Folder: `U_Button` and `U_LobbyButton` go straight into the ScreenGui |
+| Export | A ScreenGui named `FreeCrate`: `Enabled` off, `DisplayOrder` 2 (over the crates screen's 1), `ScreenInsets` `DeviceSafeInsets`. Its root is a Folder: `U_Button` and `MenuRow` (holding `U_LobbyButton`) go straight into the ScreenGui |
 
 ## Elements
 
 | Element | Class | What game code does with it |
 | --- | --- | --- |
 | `U_Button` | ImageButton (at the right edge, 0.975 × 0.42 of the screen) | The crates screen's badge: opens the dialog; hidden while a crate opens there |
-| `U_LobbyButton` | ImageButton, hidden (left of the lobby menu) | The lobby's tile: opens the dialog; shown while the lobby's screens show |
-| `U_LobbyButton` › `S_TileShine` | UIGradient | The light sweeping the tile (its `Offset` moved by code) |
-| `U_LobbyButton` › `S_TileBob` | UIScale | The crate picture's gentle bob |
+| `U_LobbyButton` | ImageButton, hidden (left of the lobby menu) | The lobby's tile: opens the dialog; shown while the lobby's screens show. It sits first in `MenuRow`, a copy of the Lobby gui's `U_Menu` row (its box, shape and right-aligned list, with invisible stand-ins for STYLE, WEAPONS and SKINS), so it lands a menu gap left of STYLE on every screen shape; 2.2 × its height, FREE WEAPONS on one line, its picture the menu tile's own with the ends kept and the middle stretched (`Fill*`, `Shine*`, `Line*` slices) |
+| `U_LobbyButton` › `S_TileShine` | UIGradient | The light sweeping the tile, on its `ShineGroup` CanvasGroup (its `Offset` moved by code) |
+| `U_LobbyButton` › `S_TileBob` | UIScale | The tile's picture's gentle bob |
 
 ## Driven by
 

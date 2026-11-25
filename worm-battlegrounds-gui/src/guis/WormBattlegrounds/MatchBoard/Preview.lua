@@ -9,12 +9,15 @@ local _localName: string = "MatchBoardPreview"
 
 --[[ Examples ]]
 
--- One public card per mode, as the game shows them, each with a map
+-- One public card per mode, as the game shows them, each with a map and the players seated in its filling match
 --- @type { string }
-local MODES = { "Deathmatch", "Duo", "Trio", "Quads" }
+local MODES = { "Deathmatch", "Duo", "Trio" }
 
 --- @type { string }
-local MAPS = { "Picnic Plains", "Rolling Plains", "Echo Caverns", "Volcano Isle" }
+local MAPS = { "Rolling Plains", "Desert", "Echo Caverns" }
+
+--- @type { string }
+local PLAYERS = { "2/4", "1/4", "3/6" }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -55,7 +58,7 @@ function Module.Apply(preview)
 
 	--[[ Play ]]
 
-	preview.View:Get("U_Play", "S_Solo").Instance:FindFirstChild("Name1").Text = if party then "Play with party" else "Solo vs bots"
+	preview.View:Get("U_Play", "S_Solo").Instance:FindFirstChild("Name1").Text = if party then "Play with party" else "Play solo"
 	local rows = preview.Fill("PREFAB | Row", #MODES) --- @type { UmeGui_Subview }
 
 	--- @param row UmeGui_Subview
@@ -63,6 +66,7 @@ function Module.Apply(preview)
 		row.Root.Instance.LayoutOrder = index
 		row:Get("S_Mode").Instance.Text = MODES[index]
 		row:Get("S_Map").Instance.Text = MAPS[index]
+		row:Get("S_Players").Instance.Text = PLAYERS[index]
 		row:Get("S_Join").Instance:FindFirstChild("Name1").Text = "Join"
 	end
 end

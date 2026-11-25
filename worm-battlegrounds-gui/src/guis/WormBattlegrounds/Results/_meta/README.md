@@ -1,7 +1,7 @@
 # Results
 
 The end of a match: MATCH OVER, the player's place, every player's card (place, avatar, name with badges, username,
-coins), what the player earned (coins, XP, level up) with their level bar filling from before the match to after it,
+diamonds), what the player earned (diamonds, XP, level up) with their level bar filling from before the match to after it,
 their match stats, **Rematch** (votes and time left) and
 **Back to lobby**. It has no close button and can't be closed.
 
@@ -9,9 +9,11 @@ their match stats, **Rematch** (votes and time left) and
 font and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive`
 ports"). A dark slanted panel in the middle of the screen, kept in shape by its `UIAspectRatioConstraint`. The first
 three cards wear gold, silver and bronze outlines and place colours; Rematch is yellow, Back to lobby dark. Added on
-2026-11-17 as `Primitive` nodes under the coins line: the lobby's level plate (`LevelPlate`) small, its diamond, title,
-bar and XP count with the same colours, so the earned panel holds three rows (coins and XP, the level bar, the
-stats).
+2026-11-17 as `Primitive` nodes under the diamonds line: the lobby's level plate (`LevelPlate`) small, its diamond, title,
+bar and XP count with the same colours, so the earned panel holds three rows (diamonds and XP, the level bar, the
+stats). Since 2026-11-25 the diamond is 1.5 times the row's height with its level's box inside the turned square, so
+three digits fit, and the bar is thin and sharp (a small corner, a darker lower half and a bright leading edge on the
+gold fill), as the lobby replay's.
 
 |  |  |
 | --- | --- |
@@ -27,7 +29,7 @@ stats).
 | --- | --- | --- |
 | `U_Widget` › `S_Result` | TextLabel (rich, `TextCase_Upper`) | "You placed `<font>`2nd`</font>`!", the place in its colour |
 | `U_Placings` | Frame with a horizontal UIListLayout | Holds one `Placing` per player; four fit across, more share the width (MatchHud's `RESULTS_FIT_PLACINGS`) |
-| `U_Earned` | Frame | `S_Coins`, `S_Xp` (the XP total, counted up line by line), `S_LevelUp` (hidden until a level up) on one line; the level bar (`S_XpRow`) under it; the match stats `S_Damage`, `S_Knockouts`, `S_BestShot` on the last |
+| `U_Earned` | Frame | `S_Diamonds` ("+50 diamonds"), `S_Xp` (the XP total, counted up line by line), `S_LevelUp` (hidden until a level up) on one line; the level bar (`S_XpRow`) under it; the match stats `S_Damage`, `S_Knockouts`, `S_BestShot` on the last |
 | `U_Earned` › `S_XpRow` | Frame (hidden for results with no level before and after the match) | The level bar |
 | `S_XpRow` › `S_LevelPop` | UIScale on the diamond's `Badge` | Pops from 1.4 to 1 when a level is reached |
 | `S_XpRow` › `S_LevelGradient` | UIGradient on the diamond (a square turned 45°) | The level's prestige frame colours (`I.G_Progression.ApplyFrame`) |
@@ -41,7 +43,7 @@ stats).
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| Placing` | `U_Placings` | `S_Place`, `S_Avatar` (cropped, so it keeps its shape and fills its box when the cards narrow), `S_Name` (team colour, with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name), `S_Username`, `S_Coins`, `Background` › `S_Stroke` (the card's outline) |
+| `PREFAB \| Placing` | `U_Placings` | `S_Place`, `S_Avatar` (cropped, so it keeps its shape and fills its box when the cards narrow), `S_Name` (team colour, with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name), `S_Username`, `S_Diamonds` ("+8 diamonds"), `Background` › `S_Stroke` (the card's outline) |
 
 ## Driven by
 

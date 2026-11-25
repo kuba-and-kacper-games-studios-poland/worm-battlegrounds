@@ -177,8 +177,9 @@ game home's map kit), and every map's land has the depth effect: its front is cu
 the camera, up to 1.4 studs, in front of the plane. The current `Desert` and `VolcanoIsle` are MapLab builds made
 outside this place, put in as they were built (2026-11-15); `EchoCaverns`, `PicnicPlains` and `RollingPlains` were too,
 then reshaped in MapLab the same day (their ends made cliffs), their props carried over as built. So their props and
-Picnic Plains' stalactites aren't all on the grid. The templates each map replaced are kept in the place's
-`Workspace._Labs.MapLab._Iterations` (`<MapId>_arena_<n>`); Picnic Plains' greybox in `ServerStorage.!dump`. The
+Picnic Plains' stalactites aren't all on the grid. The templates each map replaced are kept in MapLab's `_Iterations`
+(`<MapId>_arena_<n>`), in the owner's saved copy of `_Labs`, out of the place since 2026-11-25; Picnic Plains' greybox
+in `ServerStorage.!dump`. The
 x below are from the map's middle, where it plays.
 
 `PicnicPlains` (the first map, built by the studio, rebuilt in MapLab, widened 2026-11-15) is three islands at the
@@ -198,7 +199,9 @@ backdrop eases down to its liquid at the ends instead of standing as a straight 
 `Sand`, `DarkSand`, `Sandstone`, `DarkSandstone`, `DarkStone`. Markers: `Lava` (Y −8 to 4, the sea) and `Bounds` (282
 × 114). Its 9 props are cacti in `Decor/Cacti` (`Saguaro`, `OrganPipe`, `Candelabra`, `PricklyPear`,
 `CactusCluster`, parts named `Cactus`, `Spike`, `Flower`), each with `Arena_Hazard` = `Cactus` and `CactusVariant`
-attributes that no code reads yet.
+attributes that no code reads yet. Put in again from the owner's build on 2026-11-25, the same map (the one before is
+in `ServerStorage.!dump.Arenas_before_2026-11-25`); its `Vfx` folder holds Volcano Isle's `fire` sheet 0.5 studs over
+the lava.
 `MirageMesa` (the Desert until 2026-11-15) is two storeys over lava: one main island standing on the lava (`Terrain/Island_1`, x −109 to 112, its
 `DarkStone` bedrock from Y 4 to 8 with `Arena_Indestructible`) with an oasis pool, and two long floating islands
 above it (`Ledge_1`, x −128 to −35, `Ledge_2`, x −6 to 123, every part with `Arena_Floats`); 705 parts named `Sand`,
@@ -251,21 +254,22 @@ flowers, a plant on each floating island, and a water lily on each pad (parts na
 `RollingPlains` (the studio's Studio build, imported into MapLab; 264 studs wide since 2026-11-15, was 406) is one
 island from side to side (`Terrain/Island_1`, x −132 to 123), a long smooth grassy plain on rock with dark strata
 lines, a raised shoulder at each end (tops about Y 34) and a rock arch in the middle; the west shoulder eases down to
-the bedrock, and the east end is a cliff (2026-11-15) leaning back from x 123 at the bottom to x 112 at Y 24. 509 parts named `Grass`, `DarkGrass`,
-`Rock`, `Strata`, `Bedrock` (the bedrock from Y −8 to 0 with `Arena_Indestructible`), and no backdrop. Markers:
+the bedrock, and the east end is a cliff (2026-11-15) leaning back from x 123 at the bottom to x 112 at Y 24. Since
+2026-11-25 it's the owner's newer MapLab build of it, put in as it was built (its stud parts made SmoothPlastic; the
+one before is in `ServerStorage.!dump.Arenas_before_2026-11-25`): 585 parts named `Grass`, `DarkGrass`,
+`Rock`, `Strata`, `Bedrock` (76 with `Arena_Indestructible`), and no backdrop. Its `Vfx` folder holds Picnic Plains'
+`Clouds` and `Sun Rays`, scaled to its width, and falling `Leafs` under each of its four big oaks' canopies. Markers:
 `Sea` (`Water`, Y −8 to −4, inside the rock, so no water shows until sudden death raises it) and `Bounds` (264 × 114
 × 13). Its 47 props are `Arena_Prop` Models in `Decor/Trees`, `Bushes`, `Rocks`, `Flowers` and `Picnic`: 44 MapLab
 ones (big oaks on the shoulders, an acacia, a pine, a log, ferns, grass tufts, flowers, bushes, rocks) and the
 studio's picnic set, rebuilt part for part (`PicnicTable`, `PicnicBlanket`, `Basket`).
-`EchoCaverns` (the studio's Studio build, imported into MapLab; 192 studs wide and taller since 2026-11-15, was 296)
-is a cavern under a snow-capped rock dome over a water sea: six islands standing on its bed (`Terrain/Island_1`–`6`;
-`Island_1` is the west cliff since 2026-11-15, a solid rock wall from x −92 leaning back to x −85, its top at Y 36 to
-41 joining the dome; `Island_3` is the dome and the right wall, x −62 to 96, up to Y 81), stalactites hanging from the
-dome over rock columns and leaning slabs, no ledges. 773 parts named `Rock`, `LightRock`, `DarkRock`, `DarkStone`, `Cap`, `Snow`,
-`Strata`, `Clay`, `Bedrock` (the bedrock from Y −8 to 0 with `Arena_Indestructible`), and 70 `Decor/Backdrop` parts
-(a dark back wall under the dome, so no sky shows through, stopping behind the west cliff). Markers: `Sea` (`Water`, Y −8 to −2, Arena's own colour)
-and `Bounds` (192 × 114 × 11). Its 21 props are the studio's, rebuilt part for part (`GrassTuft` in `Decor/Grass`,
-`RockPile` in `Decor/Rocks`).
+`EchoCaverns` is a snowy mountain since 2026-11-25 (the owner's new MapLab build, put in as it was built with its stud
+parts made SmoothPlastic; the cavern before it is in `ServerStorage.!dump.Arenas_before_2026-11-25`): one island
+(`Terrain/Island_1`), a grey rock mountain with snow on its peaks and ledges, caves cut into it and brown root bands
+across it, its land from Y −8 up to Y 90. 1,963 parts named `Rock`, `LightRock`, `DarkRock`, `DarkStone`, `Cap`,
+`Snow`, `Strata`, `Clay`, `Bedrock` (65 with `Arena_Indestructible`), and 105 `Decor/Backdrop` parts. Markers: `Sea`
+(`Water`, Y −8 to −2) and `Bounds` (192 × 114 × 11). Its 26 props are `GrassTuft` in `Decor/Grass` and `RockPile` in
+`Decor/Rocks`. Its `Vfx` folder holds Picnic Plains' `Clouds` and `Sun Rays`, scaled to its width.
 `FluffyFallout` (2026-11-15, MapLab, from a build of loose cloud parts) is ten block clouds floating in two rows over
 a glowing sea, nothing standing on it: `Terrain/Ledge_1`–`10` (Y 9 to 33 and 35 to 65), every part with
 `Arena_Floats`, no bedrock, so the whole sea is open and its floor is the bounds' depth. 446 parts named `Cloud`,

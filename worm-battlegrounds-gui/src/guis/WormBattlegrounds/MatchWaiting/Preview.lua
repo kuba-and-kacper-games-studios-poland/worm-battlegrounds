@@ -58,8 +58,10 @@ function Module.Apply(preview)
 
 	--[[ Texts ]]
 
-	preview.View:Get("U_WaitingRoom", "S_Info").Instance.Text = `Duo  |  {seated} / 4 players`
-	preview.View:Get("U_WaitingRoom", "S_Ready").Instance:FindFirstChild("S_Text").Text = `Ready {ready}/{seated}`
+	preview.View:Get("U_WaitingRoom", "S_Title").Instance.Text = "Duo · Echo Caverns"
+	preview.View:Get("U_WaitingRoom", "S_Status").Instance.Text = "Starts in 0:23"
+	preview.View:Get("U_WaitingRoom", "S_PlayersHeader").Instance.Text = `Players {seated}/4`
+	preview.View:Get("U_WaitingRoom", "S_Ready").Instance:FindFirstChild("S_Text").Text = `Vote to start {ready}/{seated}`
 end
 
 return Module

@@ -40,17 +40,18 @@ local _settings = {
 	LOADOUTS = {
 		Tutorial = {},
 		Easy = { "Grenade", "Shotgun", "Jetpack" },
-		Medium = { "Grenade", "Shotgun", "Dynamite", "SpiderBomb", "Jetpack", "Bandage" },
-		Hard = { "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "Jetpack", "Medkit" },
-		Nightmare = { "Grenade", "Dynamite", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "BlackHoleGrenade", "SpartanSpear", "OnePunch", "Jetpack", "Medkit" },
+		Medium = { "Grenade", "Shotgun", "SpiderBomb", "Jetpack", "Bandage" },
+		Hard = { "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "Jetpack", "Medkit" },
+		Nightmare = { "Grenade", "ClusterBomb", "Uzi", "HomingMissile", "BaseballBat", "SpiderBomb", "Jetpack", "Medkit" },
 	},
 
 	--[[
 		Every bot (the tutorial's aside) also rolls one of these, at even odds, onto its loadout: none (""), or a potion
-		it drinks only when the spot it wants is past its walk (Speed) or up a ledge its jump can't reach (Low gravity)
+		it drinks only when the spot it wants is past its walk (Speed) or up a ledge its jump can't reach (Low gravity).
+		Only none since the potions were disabled (2026-11-25)
 	]]
 	--- @type { string }
-	POTIONS = { "", "SpeedPotion", "LowGravityPotion" },
+	POTIONS = { "" },
 
 	-- No bot parachutes in within START_GAP studs of a spot taken already, a player's or a bot's (GetStart)
 	START_GAP = 20,
@@ -97,8 +98,8 @@ local _settings = {
 		- Tempo: how much more the enemy whose turn is next counts (0 to 1): as a target, and hurting or knocking it out
 		- Hunt: how much nearer players (not bots) count when it picks its targets, from 0 to 1
 		- StartNoise: how loosely it picks where it parachutes in (GetStart), on top of what its genome likes there
-		Nightmare is secret: it isn't on the board. The tutorial's bot plays Easy's brain (TUTORIAL_BRAIN) with a
-		clumsier hand, so a new player can win their first match while it shoots back.
+		Nightmare is secret: it isn't on the board. The tutorial's bot never plans a shot: on its turns it shoots near
+		the player, now and then on them (TUTORIAL_*, 2026-11-25).
 	]]
 	--- @type { [string]: Bots_Skill }
 	SKILLS = {
@@ -231,15 +232,34 @@ local _settings = {
 	AIM_TIME = 1.2,
 	AIM_STEP = 0.1,
 
-	-- The trained brain the tutorial's bot plays with (its hand is SKILLS.Tutorial)
-	TUTORIAL_BRAIN = "Easy",
-
 	--[[
-		The health a difficulty's bot starts with, where it isn't Snails' MAX_HEALTH: the tutorial's bot has half, so the
-		player's Bazooka, Grenade and windy shot can knock it out in the tutorial's first three turns
+		The health a difficulty's bot starts with, where it isn't Snails' MAX_HEALTH. None now: the tutorial's bot had 10
+		so any hit knocked it out (2026-11-24) until the owner wanted a real fight (2026-11-25: "lets not make so our rocket
+		kills the worm in one hit. lets keep it normal so there is the battle")
 	]]
 	--- @type { [string]: number }
-	HEALTH = { Tutorial = 100 },
+	HEALTH = {},
+
+	--[[
+		On its turn the tutorial's bot fires its Bazooka toward the player (the owner, 2026-11-25: "shoots you few times
+		- but most of the times misses - but shoots around you"), trying each of TUTORIAL_ANGLES (degrees up) at every
+		TUTORIAL_POWER_STEP of power, never landing within TUTORIAL_MISS_CLEAR studs of itself. Mostly a near miss: a
+		landing TUTORIAL_NEAR studs from the player (past the Bazooka's BlastRadius of 6, so it shakes them but doesn't
+		hurt). From its second turn, with TUTORIAL_HIT_CHANCE, never twice in a row and only while the player has over
+		TUTORIAL_HIT_SAFE health, it hits instead (its closest landing, within TUTORIAL_HIT_SLACK studs of them)
+	]]
+	--- @type { number }
+	TUTORIAL_ANGLES = { 30, 40, 50, 60, 70 },
+
+	TUTORIAL_POWER_STEP = 0.05,
+	TUTORIAL_MISS_CLEAR = 10,
+
+	--- @type { number }
+	TUTORIAL_NEAR = { 8, 16 },
+
+	TUTORIAL_HIT_CHANCE = 0.35,
+	TUTORIAL_HIT_SAFE = 100,
+	TUTORIAL_HIT_SLACK = 2,
 
 	--%%%%%%%%%%%%%%%%%%%% Planning
 

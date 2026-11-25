@@ -17,41 +17,39 @@ local LoadoutBar = require(script.Parent:FindFirstChild("LoadoutBar")) --- @type
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
 local elems = {} --- @type { [string]: Instance }
-local prefabs = {} --- @type { [string]: Instance }
 
 --[[ Aim ]]
 
--- The aim's direction (0 is right, counterclockwise) and power
+-- The aim's direction (0 is right, counterclockwise) and power; no aim while `aimed` is false (cleared, or not set yet)
 local angle: number = math.rad(45)
 local power: number = 0
+local aimed: boolean = false
 
--- How the player aims now: "Charge" (a held press fills the power), or nil
-local aiming: string? = nil
+-- Whether the player has aimed on this turn (a drag let go, or the stick), for the tutorial's guide
+local aimedThisTurn: boolean = false
 
--- The press that charges the shot (the mouse button, a finger on FIRE or RT) and when it started: letting it go fires
-local chargeInput: InputObject? = nil
-local chargeStart: number = 0
+-- Each snail's last aim (by participant id), kept into its next turn
+local aims = {} --- @type { [string]: Vector2 }
 
--- Where the mouse or finger last pointed, in screen pixels: the aim points from the snail toward it (nil on a pad)
-local pointer: Vector2? = nil
+-- The press dragging the aim (the mouse button or a finger)
+local dragInput: InputObject? = nil
 
--- The finger pointing the aim on a touch screen, while it's down, and whether a finger last set the pointer
-local pointingTouch: InputObject? = nil
-local pointerByTouch: boolean = false
+-- The finger placing a homing missile's target, while it's down
+local targetTouch: InputObject? = nil
 
 --[[
-	The right stick's lean (the Console module's Aim), its length the frame before, and whether it waits to come back
-	to the middle before it aims again (it moved the camera)
+	The right stick's lean (the Console module's Aim), and whether it waits to come back to the middle before it aims
+	again (it moved the camera)
 ]]
 local stick: Vector2 = Vector2.zero
-local lastLean: number = 0
 local stickLocked: boolean = false
 
 local target: Vector3? = nil
+local targetPlacedAt: number = 0
 local lastSent: number = 0
 local stepConnection: RBXScriptConnection?
 
--- The item the player last fired, so a click while it rolls blows up a black hole grenade
+-- The item the player last fired, so a press while it rolls blows up a black hole grenade
 local firedItem: string? = nil
 
 -- The angle of the shot just sent, while the server hasn't moved the match on: no aim shows, nothing fires again
@@ -69,14 +67,13 @@ local watchConnection: RBXScriptConnection?
 --[[ Look ]]
 
 local crosshairColor: Color3? = nil
-local powerDots = {} --- @type { Frame }
-local powerSizes = {} --- @type { number }
-local powerShares = {} --- @type { number }
-local targetMarker: Part
+
+-- The preview's dots along the start of the path (PREFAB | AimDot), from the snail out
+local previewDots = {} --- @type { Frame }
 
 --[[ Prediction ]]
 
--- The prediction's path dots (the tutorial's, and the aimbot's) and the dot where it lands, the shot raycasts (a shot's own collision group), and the power last fired
+-- The prediction's path dots (the aimbot's) and the dot where it lands, the shot raycasts (a shot's own collision group), and the power last fired
 local predictionDots = {} --- @type { Part }
 local predictionEnd: Part
 local predictionParams: RaycastParams
@@ -87,8 +84,7 @@ local lastPower: number = 0
 --%%%%%%%%%%%%%%%%%%%% Get Power Color
 
 --[[
-	Returns the power cone's colour a share of the way along it (0 at the first circle's middle, 1 at the last's),
-	between the two POWER_COLORS it falls between.
+	Returns the power's colour at a share of full power (0 none, 1 full), between the two POWER_COLORS it falls between.
 ]]
 local function getPowerColor(share: number): Color3
 	--[[ Local Variables ]]
@@ -123,30 +119,37 @@ local Module = {}
 function Module.Start(gui: ScreenGui)
 	--[[ Elements ]]
 
-	elems["Power"] = gui:FindFirstChild("U_Power", true) --- @type Frame
-	elems["PowerBar"] = elems["Power"]:FindFirstChild("S_Bar") --- @type ImageLabel
-	elems["PowerMask"] = elems["Power"]:FindFirstChild("S_BarMask") --- @type ImageLabel
-	elems["Handle"] = elems["Power"]:FindFirstChild("S_Handle") --- @type ImageButton
-	elems["Amount"] = elems["Handle"]:FindFirstChild("S_Amount") --- @type TextLabel
-	elems["Info"] = elems["Power"]:FindFirstChild("S_Info") --- @type TextLabel
 	elems["Fire"] = gui:FindFirstChild("U_Fire", true) --- @type ImageButton
-	elems["FireIcon"] = elems["Fire"]:FindFirstChild("S_Icon") --- @type ImageLabel
+	elems["Retarget"] = elems["Fire"]:FindFirstChild("U_Retarget") --- @type ImageButton
 	elems["Aim"] = gui:FindFirstChild("U_Aim") --- @type Frame
 	elems["Crosshair"] = elems["Aim"]:FindFirstChild("S_Crosshair") --- @type Frame
 	elems["RingLine"] = elems["Crosshair"]:FindFirstChild("S_RingLine", true) --- @type UIStroke
 	elems["ArmA"] = elems["Crosshair"]:FindFirstChild("S_ArmA") --- @type Frame
 	elems["ArmB"] = elems["Crosshair"]:FindFirstChild("S_ArmB") --- @type Frame
-	prefabs["PowerDot"] = elems["Aim"]:FindFirstChild("PREFAB | PowerDot") --- @type Frame
+	elems["PowerRing"] = elems["Aim"]:FindFirstChild("S_PowerRing") --- @type Frame
+	elems["Wedge"] = elems["Aim"]:FindFirstChild("S_PowerWedge") --- @type Frame
+	elems["WedgeTop"] = elems["Wedge"]:FindFirstChild("S_WedgeTop") --- @type Frame
+	elems["WedgeBottom"] = elems["Wedge"]:FindFirstChild("S_WedgeBottom") --- @type Frame
+	elems["Readout"] = elems["Aim"]:FindFirstChild("S_Readout") --- @type TextLabel
+	elems["TargetMark"] = elems["Aim"]:FindFirstChild("S_TargetMark") --- @type Frame
+	elems["TargetBrackets"] = elems["TargetMark"]:FindFirstChild("S_TargetBrackets") --- @type Frame
 
 	--[[ Building ]]
 
 	Module._buildLook(I.Dirs.UmeWorkspace:WaitForChild("Combat"))
-	elems["Power"].Visible = false
 	elems["Fire"].Visible = false
+	local dotPrefab: Frame = elems["Aim"]:FindFirstChild("PREFAB | AimDot")
+	for index: number = 1, _settings.PREVIEW_DOTS do
+		local dot: Frame = dotPrefab:Clone()
+		dot.Name = "AimDot"
+		dot.Parent = elems["Aim"]
+		previewDots[index] = dot
+	end
 
 	--[[ Connections ]]
 
-	elems["Fire"].InputBegan:Connect(Module._onFireBegan)
+	elems["Fire"].Activated:Connect(Module._fire)
+	elems["Retarget"].Activated:Connect(Module._clearTarget)
 	I.S.UserInputService.InputBegan:Connect(Module._onInputBegan)
 	I.S.UserInputService.InputChanged:Connect(Module._onInputChanged)
 	I.S.UserInputService.InputEnded:Connect(Module._onInputEnded)
@@ -165,54 +168,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Build Look
 
 --[[
-	Makes the power cone's circles from the gui's PREFAB | PowerDot (each later one drawn over the one before, its
-	gradient running the cone's colours from its back edge to its front, so they blend into one) and the homing target
-	marker, hidden.
+	Makes the prediction's dots (the aimbot's).
 ]]
 function Module._buildLook(combatFolder: Instance)
-	--[[ Power ]]
-
-	for index: number = 1, _settings.POWER_DOTS do
-		--[[ Local Variables ]]
-
-		local along: number = (index - 1) / math.max(_settings.POWER_DOTS - 1, 1)
-		local size: number = _settings.POWER_DOT_SIZE[1] + (_settings.POWER_DOT_SIZE[2] - _settings.POWER_DOT_SIZE[1]) * along
-
-		-- Its edges' shares of the way along the cone
-		local half: number = size / 2 / _settings.POWER_LENGTH
-
-		--[[ Cloning ]]
-
-		local dot: Frame = prefabs["PowerDot"]:Clone()
-		dot.Name = "PowerDot"
-		dot.UIGradient.Color = ColorSequence.new(getPowerColor(along - half), getPowerColor(along + half))
-		dot.ZIndex = index
-		dot.Visible = false
-		dot.Parent = elems["Aim"]
-
-		--[[ Saving ]]
-
-		powerDots[index] = dot
-		powerSizes[index] = size
-		powerShares[index] = along
-	end
-
-	--[[ Target ]]
-
-	targetMarker = I.Create("Part")({
-		Name = "AimTarget",
-		Shape = Enum.PartType.Ball,
-		Size = Vector3.one * 1.5,
-		Color = _settings.TARGET_COLOR,
-		Material = Enum.Material.Neon,
-		Anchored = true,
-		CanCollide = false,
-		CanQuery = false,
-		CanTouch = false,
-		Transparency = 1,
-		Parent = combatFolder,
-	})
-
 	--[[ Prediction ]]
 
 	for index: number = 1, _settings.PREDICTION_DOTS do
@@ -253,33 +211,40 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Input Began
 
 --[[
-	A press on the player's turn: the mouse button or RT shoots (Start Shot), or uses a utility the snail holds (any
-	press, a finger's too), and a finger on the arena points the aim
-	(a homing missile's first click or tap picks its target instead). Right click, Esc and the pad's CancelAim drop the
-	aim, and a second finger stops pointing (the camera pans).
+	A press on the player's turn: the mouse button or a finger anywhere on the arena starts dragging the aim (a utility
+	the snail holds is used instead, and a homing missile's first press places its target); FIRE_KEYS and the pad's RT
+	fire the locked aim. Esc and the pad's CancelAim clear the aim, and a second finger stops the drag (the camera pans).
 ]]
 function Module._onInputBegan(input: InputObject, processed: boolean)
 	--[[ Local Variables ]]
 
 	local press: boolean = input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch
 
-	--[[ Cancelling ]]
+	--[[ Clearing ]]
 
-	if input.UserInputType == Enum.UserInputType.MouseButton2 or input.KeyCode == Enum.KeyCode.Escape or I.Console.IsAction("CancelAim", input.KeyCode) then
-		Module._cancel()
+	if input.KeyCode == Enum.KeyCode.Escape or I.Console.IsAction("CancelAim", input.KeyCode) then
+		Module._clearAim()
+		return
+	end
+
+	--[[ Firing ]]
+
+	if not processed and (table.find(_settings.FIRE_KEYS, input.KeyCode) or I.Console.IsAction("Fire", input.KeyCode)) then
+		Module._fire()
 		return
 	end
 
 	--[[ Checks ]]
 
-	-- Skip presses the guis took (FIRE charges through its own press)
-	if processed or not (press or I.Console.IsAction("Fire", input.KeyCode)) then
+	-- Skip presses the guis took (FIRE, the weapon bar)
+	if processed or not press then
 		return
 	end
 
-	-- A second finger moves the camera, so the first stops pointing the aim
-	if pointingTouch and input.UserInputType == Enum.UserInputType.Touch then
-		pointingTouch = nil
+	-- A second finger moves the camera, so the first stops dragging the aim
+	if (dragInput or targetTouch) and input.UserInputType == Enum.UserInputType.Touch then
+		Module._endDrag()
+		targetTouch = nil
 		return
 	end
 
@@ -289,62 +254,58 @@ function Module._onInputBegan(input: InputObject, processed: boolean)
 		return
 	end
 
-	-- Check if the player may shoot now, with a weapon that has uses left and isn't cooling down
-	if aiming or firedAngle or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" or not LoadoutBar.IsReady(LoadoutBar.GetSelected()) then
+	-- Check if the player may aim now, with a weapon that has uses left and isn't cooling down
+	if firedAngle or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" or not LoadoutBar.IsReady(LoadoutBar.GetSelected()) then
 		return
 	end
 
 	--[[ Using ]]
 
 	-- A utility in the snail's hands (a Medkit, a potion) is used by any press on the screen, a finger's too
-	if I.G_Arsenal.IsUtility(LoadoutBar.GetSelected()) then
+	local itemId: string = LoadoutBar.GetSelected()
+	if I.G_Arsenal.IsUtility(itemId) then
 		LoadoutBar.UseHeld()
 		return
 	end
 
 	--[[ Target ]]
 
-	-- A homing missile's first click picks its target; on touch a finger places it and drags it until FIRE (Step)
-	local homing: boolean = I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target"
-	if press and homing and not target and input.UserInputType ~= Enum.UserInputType.Touch then
+	-- A homing missile's first press locks its target where it lands (a finger drags it until it lifts); later presses aim its launch
+	local aimKind: string = I.G_Arsenal.Get(itemId).Aim
+	if aimKind == "Target" and not target then
 		Module._setTarget(Module._getPlanePoint(Vector2.new(input.Position.X, input.Position.Y)))
+		targetTouch = if input.UserInputType == Enum.UserInputType.Touch then input else nil
 		return
 	end
 
-	--[[ Pointing ]]
+	--[[ Dragging ]]
 
-	-- A finger points the aim while it's down; on touch only FIRE shoots
-	if input.UserInputType == Enum.UserInputType.Touch then
-		pointingTouch = input
-		pointerByTouch = true
-		pointer = Vector2.new(input.Position.X, input.Position.Y)
-		if homing then
-			Module._setTarget(Module._getPlanePoint(pointer))
-		end
+	-- A weapon placed at the feet has nothing to aim
+	if aimKind == "Feet" then
 		return
 	end
-
-	--[[ Shooting ]]
-
-	Module._startShot(input)
+	Module._startDrag(input)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Input Changed
 
 --[[
-	Follows the mouse (held or not) and the pointing finger, which the aim points at every frame (Step), and the right
-	stick's lean, which turns the aim every frame (Aim With Stick).
+	Moves the aim with the dragging press (the mouse while its button is held, or the finger), a homing missile's target
+	with the finger placing it, and keeps the right stick's lean, which moves the aim every frame (Aim With Stick).
 ]]
 function Module._onInputChanged(input: InputObject, _processed: boolean)
-	--[[ Pointing ]]
+	--[[ Dragging ]]
 
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input == pointingTouch then
-		pointer = Vector2.new(input.Position.X, input.Position.Y)
-		pointerByTouch = input == pointingTouch
-		-- A finger dragging a homing missile's target moves it along
-		if input == pointingTouch and target and I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target" then
-			Module._setTarget(Module._getPlanePoint(pointer))
-		end
+	local moved: boolean = input == dragInput or (dragInput ~= nil and dragInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseMovement)
+	if moved then
+		Module._drag(Vector2.new(input.Position.X, input.Position.Y))
+		return
+	end
+
+	--[[ Target ]]
+
+	if input == targetTouch then
+		Module._setTarget(Module._getPlanePoint(Vector2.new(input.Position.X, input.Position.Y)))
 		return
 	end
 
@@ -358,204 +319,209 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Input Ended
 
 --[[
-	On release: the pointing finger leaves the aim where it pointed, and letting go of the press that charges fires the
-	shot. A turn that ended first dropped the charge.
+	Letting go of the dragging press locks the aim where it is (FIRE then shoots it); a finger placing a homing missile's
+	target leaves it there.
 ]]
 function Module._onInputEnded(input: InputObject, _processed: boolean)
-	--[[ Pointing ]]
+	--[[ Releasing ]]
 
-	if input == pointingTouch then
-		pointingTouch = nil
-		return
+	if input == targetTouch then
+		targetTouch = nil
 	end
-
-	--[[ Firing ]]
-
-	if aiming == "Charge" and Module._isChargeRelease(input) then
-		Module._fire()
+	if dragInput and (input == dragInput or (input.UserInputType == dragInput.UserInputType and input.UserInputType ~= Enum.UserInputType.Touch)) then
+		Module._endDrag()
 	end
 end
 
---%%%%%%%%%%%%%%%%%%%% On Fire Began
+--%%%%%%%%%%%%%%%%%%%% Start Drag
 
 --[[
-	A finger (or the mouse) on the FIRE button, touch screens' way to shoot on the player's turn: a press like the
-	mouse button's (Start Shot), so held it charges and letting go anywhere fires. A homing missile needs its target
-	first.
+	Starts dragging the aim, the crosshair jumping to the press at once (Ring: point).
 ]]
-function Module._onFireBegan(input: InputObject)
+function Module._startDrag(input: InputObject)
+	--[[ Saving ]]
+
+	dragInput = input
+
+	--[[ Aiming ]]
+
+	Module._drag(Vector2.new(input.Position.X, input.Position.Y))
+end
+
+--%%%%%%%%%%%%%%%%%%%% Drag
+
+--[[
+	Puts the crosshair under the press (Ring: point): the aim points from the snail to it, and its distance past the
+	power's start is the power, up to the ring. Within AIM_DEADZONE of no power, there's no aim.
+]]
+function Module._drag(position: Vector2)
+	--[[ Local Variables ]]
+
+	local mine: Model? = I.Snails.GetMine()
+	local scales = Module._getScales(mine) --- @type MatchHud_AimScales?
+
 	--[[ Checks ]]
 
-	-- Only a finger or the mouse presses FIRE
-	if input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+	-- Check if the snail shows on the screen
+	if not scales then
 		return
 	end
 
-	-- Check if the player may shoot now, with a weapon that has uses left and isn't cooling down
-	if aiming or firedAngle or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" or not LoadoutBar.IsReady(LoadoutBar.GetSelected()) then
-		return
-	end
+	--[[ Aiming ]]
 
-	-- Check if a homing missile has its target
-	if I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target" and not target then
-		return
-	end
-
-	--[[ Shooting ]]
-
-	Module._startShot(input)
+	-- The press and the snail's middle, both in the guis' screen space
+	Module._setFromOffset(scales, position - elems["Aim"].AbsolutePosition - scales.Origin)
 end
 
---%%%%%%%%%%%%%%%%%%%% Start Shot
+--%%%%%%%%%%%%%%%%%%%% End Drag
 
 --[[
-	Shoots with a press (the mouse button, RT or a finger on FIRE): a weapon fired at the feet, a gun and a melee weapon
-	go at once; any other starts charging, its power filling while the press is held (Step).
+	Ends a drag: the aim stays locked where it was left, kept for the snail's next turn.
 ]]
-function Module._startShot(input: InputObject)
-	--[[ Firing ]]
+function Module._endDrag()
+	--[[ Saving ]]
 
-	-- Weapons with no power fire on the press
-	local aim: string = I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim
-	if aim == "Feet" or aim == "Straight" or aim == "Melee" then
-		Module._fire()
+	dragInput = nil
+	aimedThisTurn = true
+	Module._remember()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set From Offset
+
+--[[
+	Aims from a crosshair's offset from the snail on the screen, in pixels (x right, y down): its way is the aim's
+	angle and its distance past the power's start the power, up to full; within AIM_DEADZONE of no power the aim clears.
+]]
+--- @param scales MatchHud_AimScales
+function Module._setFromOffset(scales, offset: Vector2)
+	--[[ Checks ]]
+
+	-- Check if the offset points somewhere
+	if offset.Magnitude < 1e-3 then
+		aimed = false
+		power = 0
 		return
 	end
 
-	--[[ Charging ]]
+	--[[ Aiming ]]
 
-	aiming = "Charge"
-	chargeInput = input
-	chargeStart = os.clock()
+	-- The screen's y runs down, the arena's up (the camera looks along -Z, its right +X)
+	angle = math.atan2(-offset.Y, offset.X)
+	power = math.clamp((offset.Magnitude - scales.Base) / scales.Length, 0, 1)
+	aimed = power >= _settings.AIM_DEADZONE
+	if not aimed then
+		power = 0
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Clear Aim
+
+--[[
+	Clears the aim (Esc, the pad's CancelAim): nothing to fire until the player aims again.
+]]
+function Module._clearAim()
+	--[[ Checks ]]
+
+	-- Check if it's the player's turn
+	if not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" then
+		return
+	end
+
+	--[[ Clearing ]]
+
+	dragInput = nil
+	aimed = false
 	power = 0
+	Module._remember()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Remember
+
+--[[
+	Keeps the aim for the snail the player plays now, so its next turn starts aimed the same way.
+]]
+function Module._remember()
+	--[[ Saving ]]
+
+	aims[I.Match.GetMyParticipantId()] = if aimed then Vector2.new(angle, power) else nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Every frame of the player's turn: turns the aim with the right stick, fills a held press's power from none to full
-	over Combat's CHARGE_SECONDS and fires it at full, draws the crosshair and the power circles, shows the power on the
-	slider and the angle over it (with a homing missile, "Click on a target", then "Shoot!" until it charges, its
-	crosshair on the mouse or finger until a click places the target, then on the target), the FIRE button on touch
-	screens with the held weapon's icon, and sends the aim to the other players every AIM_SEND_INTERVAL.
+	Every frame of the player's turn: moves the aim with the right stick, draws the power ring, the crosshair riding the
+	power, the aimbot's whole path line, or else the preview's dots along the start of the path, and
+	the readout over the crosshair,
+	shows FIRE while the aim is locked and ready, and sends the aim to the other players every AIM_SEND_INTERVAL. A
+	homing missile asks for its target first; once it's locked, its launch aims like an arced weapon's, with New target
+	beside FIRE.
 ]]
 function Module._step(deltaTime: number)
 	--[[ Checks ]]
 
-	-- Hide the aim between shots, while a shot sent waits for the server, for weapons fired at the feet and for a utility held
+	-- Hide the aim between shots, while a shot sent waits for the server, and for a utility held
 	local itemId: string = LoadoutBar.GetSelected()
 	local mine: Model? = I.Snails.GetMine()
 	-- A shot the server never took (refused) frees the aim again after FIRE_ANSWER_SECONDS
 	if I.Match.GetPhase() ~= "Turn" or os.clock() - firedAt > _settings.FIRE_ANSWER_SECONDS then
 		firedAngle = nil
 	end
-	if firedAngle or I.Match.GetPhase() ~= "Turn" or not mine or I.G_Arsenal.IsUtility(itemId) or I.G_Arsenal.Get(itemId).Aim == "Feet" then
-		Module._cancel()
+	if firedAngle or I.Match.GetPhase() ~= "Turn" or not mine or I.G_Arsenal.IsUtility(itemId) then
 		Module._hideLook()
-		elems["Power"].Visible = false
 		elems["Fire"].Visible = false
 		return
 	end
 
-	--[[ Pointing ]]
+	--[[ Local Variables ]]
 
-	-- Every frame, as the camera and the snail move under a still mouse too; a stick that aims takes over from the mouse
-	Module._aimWithStick(deltaTime)
-	if pointer then
-		Module._aimAtPointer(mine)
-	end
+	local aimKind: string = I.G_Arsenal.Get(itemId).Aim
+	local ready: boolean = LoadoutBar.IsReady(itemId)
+	local picking: boolean = aimKind == "Target" and target == nil
 
-	--[[ Charging ]]
+	--[[ Aiming ]]
 
-	-- The power fills at one even rate while the press is held, and a full charge fires by itself
-	if aiming == "Charge" then
-		power = math.min((os.clock() - chargeStart) / I.Settings["Combat"].CHARGE_SECONDS, 1)
-		if power >= 1 then
-			Module._fire()
-			return
-		end
+	if not picking then
+		Module._aimWithStick(mine, deltaTime)
 	end
 
 	--[[ Drawing ]]
 
-	-- A homing missile's crosshair is its target: it follows the mouse or finger until a click places it, then stays there
-	local crosshairAt: Vector3? = nil
-	if I.G_Arsenal.Get(itemId).Aim == "Target" then
-		crosshairAt = target or (if pointer then Module._getPlanePoint(pointer) else nil)
+	if aimKind == "Feet" then
+		Module._hideLook()
+	elseif picking then
+		Module._drawTarget(mine)
+	else
+		Module._draw(mine, angle, if aimed then power else 0, nil, true)
+		Module._drawReadout(mine, aimKind)
+		Module._drawPrediction(mine, itemId)
+		Module._drawPreview(mine, aimKind)
 	end
-	Module._draw(mine, angle, power, crosshairAt)
-	Module._drawPrediction(mine, itemId)
+	Module._drawTargetMark(if aimKind == "Target" then mine else nil)
 
-	--[[ Slider ]]
+	--[[ Fire ]]
 
-	-- The bar's and its texture's gradients cut the pictures at the power (the fill is BAR_FILL of their width), so they never squash; the handle rides the edge
-	local bar: ImageLabel = elems["PowerBar"]
-	local edge: number = math.clamp(power, 0.001, 0.998) * _settings.BAR_FILL
-	local cut: NumberSequence = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0),
-		NumberSequenceKeypoint.new(edge, 0),
-		NumberSequenceKeypoint.new(edge + 0.001, 1),
-		NumberSequenceKeypoint.new(1, 1),
-	})
-	bar.UIGradient.Transparency = cut
-	elems["PowerMask"].UIGradient.Transparency = cut
-	elems["Handle"].Position = UDim2.fromScale(bar.Position.X.Scale + bar.Size.X.Scale * _settings.BAR_FILL * power, elems["Handle"].Position.Y.Scale)
-	elems["Amount"].Text = `{math.round(power * 100)}%`
-	elems["Info"].Text = `{math.round(math.deg(math.asin(math.sin(angle))))}°`
-	elems["Power"].Visible = true
-	elems["Fire"].Visible = I.Platform.Current == "Mobile"
-	elems["FireIcon"].Image = I.G_Arsenal.Get(itemId).Icon
-
-	-- A homing missile asks for its target first, then to shoot
-	if I.G_Arsenal.Get(itemId).Aim == "Target" and not aiming then
-		elems["Info"].Text = if target then _settings.TARGET_HINTS.Shoot elseif I.Platform.Current == "Mobile" then _settings.TARGET_HINTS.TouchPick else _settings.TARGET_HINTS.Pick
-	end
+	elems["Fire"].Visible = ready and dragInput == nil and Module._canFire(itemId)
+	elems["Retarget"].Visible = aimKind == "Target" and target ~= nil
 
 	--[[ Sending ]]
 
-	if os.clock() - lastSent >= _settings.AIM_SEND_INTERVAL then
+	if aimKind ~= "Feet" and not picking and os.clock() - lastSent >= _settings.AIM_SEND_INTERVAL then
 		lastSent = os.clock()
-		I.Network.UFire("Combat_Aim", angle, power)
+		I.Network.UFire("Combat_Aim", angle, if aimed then power else 0)
 	end
-end
-
---%%%%%%%%%%%%%%%%%%%% Aim At Pointer
-
---[[
-	Points the aim from the player's snail toward the mouse or finger, through the arena's plane, so the crosshair lies
-	on the line to it.
-]]
-function Module._aimAtPointer(model: Model)
-	--[[ Local Variables ]]
-
-	local toPointer: Vector3 = Module._getPlanePoint(pointer) - model.PrimaryPart.Position
-
-	--[[ Checks ]]
-
-	-- Check if it points away from the snail's middle
-	if Vector2.new(toPointer.X, toPointer.Y).Magnitude < 1e-3 then
-		return
-	end
-
-	--[[ Aiming ]]
-
-	angle = math.atan2(toPointer.Y, toPointer.X)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Aim With Stick
 
 --[[
-	Turns the aim toward where the right stick points: a gentle lean (under STICK_FIRM_LEAN) only nudges it, at
-	STICK_NUDGE_SPEED, and a firm one eases it there quickly (STICK_TURN_SPEED), never in one jump. It holds still while
-	the lean drops faster than STICK_DROP_RATE (the stick springing back as it's let go), while CameraPan's button (LT)
-	moves the camera, and after that until the stick has come back under STICK_DEADZONE.
+	Moves the crosshair with the right stick's lean, like a drag: past STICK_DEADZONE, faster the further it leans (to
+	STICK_AIM_SPEED of the power's length a second), never while CameraPan's button (LT) moves the camera, nor after
+	it until the stick is back in the middle.
 ]]
-function Module._aimWithStick(deltaTime: number)
+function Module._aimWithStick(mine: Model, deltaTime: number)
 	--[[ Local Variables ]]
 
 	local lean: number = math.min(stick.Magnitude, 1)
-	local dropping: boolean = deltaTime > 0 and (lastLean - lean) / deltaTime > _settings.STICK_DROP_RATE
-	lastLean = lean
 
 	-- The stick moved the camera: it aims again once it's back in the middle
 	if I.Console.IsHeld("CameraPan") then
@@ -566,114 +532,205 @@ function Module._aimWithStick(deltaTime: number)
 
 	--[[ Checks ]]
 
-	-- Check if the stick leans past its dead zone, isn't springing back and isn't moving the camera
-	if stickLocked or dropping or lean < _settings.STICK_DEADZONE then
+	-- Check if the stick leans past its dead zone and isn't moving the camera
+	if stickLocked or lean < _settings.STICK_DEADZONE or dragInput then
+		return
+	end
+
+	--[[ Data ]]
+
+	local scales = Module._getScales(mine) --- @type MatchHud_AimScales?
+	if not scales then
 		return
 	end
 
 	--[[ Aiming ]]
 
-	-- The shortest way round to the stick's angle
-	local turn: number = ((math.atan2(stick.Y, stick.X) - angle + math.pi) % (2 * math.pi)) - math.pi
-	pointer = nil
-	if lean < _settings.STICK_FIRM_LEAN then
-		local share: number = (lean - _settings.STICK_DEADZONE) / (_settings.STICK_FIRM_LEAN - _settings.STICK_DEADZONE)
-		local speed: number = math.rad(_settings.STICK_NUDGE_SPEED[1] + (_settings.STICK_NUDGE_SPEED[2] - _settings.STICK_NUDGE_SPEED[1]) * share)
-		angle += math.clamp(turn, -speed * deltaTime, speed * deltaTime)
-	else
-		local share: number = (lean - _settings.STICK_FIRM_LEAN) / (1 - _settings.STICK_FIRM_LEAN)
-		local rate: number = _settings.STICK_TURN_SPEED[1] + (_settings.STICK_TURN_SPEED[2] - _settings.STICK_TURN_SPEED[1]) * share
-		angle += turn * (1 - math.exp(-rate * deltaTime))
-	end
-
-	-- Kept between -180° and 180°, as the mouse's aim is
-	angle = math.atan2(math.sin(angle), math.cos(angle))
+	local speed: number = ((lean - _settings.STICK_DEADZONE) / (1 - _settings.STICK_DEADZONE)) ^ _settings.STICK_CURVE * _settings.STICK_AIM_SPEED * scales.Length
+	local from: Vector2 = Module._getCrosshairOffset(scales, if aimed then power else 0)
+	Module._setFromOffset(scales, from + Vector2.new(stick.X, -stick.Y).Unit * speed * deltaTime)
+	aimedThisTurn = true
+	Module._remember()
 end
 
 --%%%%%%%%%%%%%%%%%%%% Draw
 
 --[[
-	Draws a snail's aim on the HUD's aim layer, in pixels over the snail: the power's cone of circles along the aim from
-	POWER_START (clear of the snail's ball), each growing in as the power fills, then the crosshair past its end,
-	spinning, in the snail's colour, or on `crosshairAt` when given (a homing missile's target). Lengths are units, a
-	stud at the match camera's starting distance, so the aim is the same on the screen at any zoom. The held weapon
-	turns with the aim at once.
+	Draws a snail's aim on the HUD's aim layer, in pixels over the snail: the crosshair along the aim, as far out as
+	the power (from POWER_START, clear of the snail's ball, to POWER_LENGTH further at full), spinning, in the power's
+	colour, or on `crosshairAt` when given (a homing missile's target), and the power wedge from POWER_START to the
+	crosshair's ring in the power's colour; with `ring`, the power ring round the snail (the player's own aim), the crosshair's place at full
+	power. Lengths are units, a stud at the match camera's starting distance, so the aim is the same on the screen at any
+	zoom. The held weapon turns with the aim at once.
 ]]
-function Module._draw(model: Model, aimAngle: number, aimPower: number, crosshairAt: Vector3?)
+function Module._draw(model: Model, aimAngle: number, aimPower: number, crosshairAt: Vector3?, ring: boolean?)
+	--[[ Data ]]
+
+	local scales = Module._getScales(model) --- @type MatchHud_AimScales?
+
 	--[[ Checks ]]
 
 	-- Check if the snail is still in play
-	if not model.PrimaryPart then
+	if not scales then
 		Module._hideLook()
 		return
 	end
 
 	--[[ Local Variables ]]
 
-	local camera: Camera = I.S.Workspace.CurrentCamera
-	local center: Vector3 = model.PrimaryPart.Position
-	local color: Color3 = model:GetAttribute("Color") or Color3.new(1, 1, 1)
-
-	-- The snail's middle and the aim's way on the screen, in the aim layer's pixels
-	local screenCenter: Vector3 = camera:WorldToScreenPoint(center)
-	local screenAhead: Vector3 = camera:WorldToScreenPoint(center + Vector3.new(math.cos(aimAngle), math.sin(aimAngle), 0))
-	local origin: Vector2 = Vector2.new(screenCenter.X, screenCenter.Y) - elems["Aim"].AbsolutePosition
-	local direction: Vector2 = Vector2.new(screenAhead.X - screenCenter.X, screenAhead.Y - screenCenter.Y).Unit
-
-	-- Pixels in a unit, and in a stud at the snail now (more when zoomed in)
-	local tanHalf: number = math.tan(math.rad(camera.FieldOfView) / 2)
-	local unit: number = camera.ViewportSize.Y / (2 * I.Settings["MatchCamera"].DISTANCE * tanHalf)
-	local stud: number = camera.ViewportSize.Y / (2 * (camera.CFrame.Position - center).Magnitude * tanHalf)
-
-	-- Zoomed in, the cone starts past the snail's grown ball; the crosshair sits past the cone's end
-	local first: number = math.max(_settings.POWER_START * unit, (I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP) * stud)
-	local reach: number = first + (_settings.POWER_LENGTH + _settings.POWER_DOT_SIZE[2] / 2 + _settings.POWER_GAP + _settings.CROSSHAIR_SIZE / 2) * unit
-	local crosshair: Vector2 = origin + direction * reach
-	local fill: number = aimPower * #powerDots
+	local crosshair: Vector2 = scales.Origin + Module._getCrosshairOffset(scales, aimPower, aimAngle)
 	if crosshairAt then
-		local screenTarget: Vector3 = camera:WorldToScreenPoint(crosshairAt)
+		local screenTarget: Vector3 = I.S.Workspace.CurrentCamera:WorldToScreenPoint(crosshairAt)
 		crosshair = Vector2.new(screenTarget.X, screenTarget.Y) - elems["Aim"].AbsolutePosition
 	end
-	local gradientRotation: number = math.deg(math.atan2(direction.Y, direction.X))
 
 	--[[ Weapon ]]
 
 	-- The held weapon turns with this screen's aim at once
 	I.Combat.SetAim(aimAngle)
 
+	--[[ Ring ]]
+
+	local reach: number = (scales.Base + scales.Length) * 2
+	elems["PowerRing"].Position = UDim2.fromOffset(scales.Origin.X, scales.Origin.Y)
+	elems["PowerRing"].Size = UDim2.fromOffset(reach, reach)
+	elems["PowerRing"].Visible = ring == true
+
+	--[[ Power Wedge ]]
+
+	-- From where the power starts to the crosshair's ring, widening to POWER_WEDGE_SPREAD of its length at its end
+	local direction: Vector2 = Vector2.new(math.cos(aimAngle), -math.sin(aimAngle))
+	local wedgeFrom: number = scales.Base - (_settings.POWER_GAP + _settings.CROSSHAIR_SIZE / 2) * scales.Unit
+	local wedgeLength: number = scales.Base + scales.Length * aimPower - _settings.CROSSHAIR_SIZE / 4 * scales.Unit - wedgeFrom
+	local wedgeWidth: number = wedgeLength * _settings.POWER_WEDGE_SPREAD
+	local wedgeMiddle: Vector2 = scales.Origin + direction * (wedgeFrom + wedgeLength / 2)
+	elems["Wedge"].Position = UDim2.fromOffset(wedgeMiddle.X, wedgeMiddle.Y)
+	elems["Wedge"].Size = UDim2.fromOffset(wedgeLength, wedgeWidth)
+	elems["Wedge"].Rotation = math.deg(math.atan2(direction.Y, direction.X))
+	elems["Wedge"].Visible = crosshairAt == nil and aimPower > 0
+	elems["WedgeTop"].BackgroundColor3 = getPowerColor(aimPower)
+	elems["WedgeBottom"].BackgroundColor3 = getPowerColor(aimPower)
+
+	-- Each half is cut along its diagonal by its gradient's step, turned to the half's shape in pixels
+	elems["WedgeTop"].UIGradient.Rotation = math.deg(math.atan2(wedgeLength, wedgeWidth / 2))
+	elems["WedgeBottom"].UIGradient.Rotation = math.deg(math.atan2(-wedgeLength, wedgeWidth / 2))
+
 	--[[ Crosshair ]]
 
 	elems["Crosshair"].Position = UDim2.fromOffset(crosshair.X, crosshair.Y)
-	elems["Crosshair"].Size = UDim2.fromOffset(_settings.CROSSHAIR_SIZE * unit, _settings.CROSSHAIR_SIZE * unit)
+	elems["Crosshair"].Size = UDim2.fromOffset(_settings.CROSSHAIR_SIZE * scales.Unit, _settings.CROSSHAIR_SIZE * scales.Unit)
 	elems["Crosshair"].Rotation = os.clock() * _settings.CROSSHAIR_SPIN % 360
-	elems["Crosshair"].Visible = true
+	elems["Crosshair"].Visible = crosshairAt ~= nil or aimPower > 0
 
-	-- The aiming snail's colour: its team's, or its own in a free-for-all
+	-- The power's colour, as the wedge's
+	local color: Color3 = getPowerColor(aimPower)
 	if color ~= crosshairColor then
 		crosshairColor = color
 		elems["RingLine"].Color = color
 		elems["ArmA"].BackgroundColor3 = color
 		elems["ArmB"].BackgroundColor3 = color
 	end
+end
 
-	--[[ Power ]]
+--%%%%%%%%%%%%%%%%%%%% Draw Target
 
-	-- Each circle grows from nothing to its size as the power passes it, so the cone's tip moves every frame
-	for index: number, dot: Frame in ipairs(powerDots) do
-		local grown: number = math.clamp(fill - (index - 1), 0, 1) * powerSizes[index] * unit
-		local at: Vector2 = origin + direction * (first + _settings.POWER_LENGTH * unit * powerShares[index])
-		dot.Position = UDim2.fromOffset(at.X, at.Y)
-		dot.Size = UDim2.fromOffset(grown, grown)
-		dot.UIGradient.Rotation = gradientRotation
-		dot.Visible = grown > 0
+--[[
+	A homing missile in hand with no target yet: no aim drawn, and the readout over the snail asking for a target (a
+	click, or a tap on touch).
+]]
+function Module._drawTarget(mine: Model)
+	--[[ Drawing ]]
+
+	Module._draw(mine, angle, 0)
+	Module._hidePrediction(1)
+	Module._hidePreview(1)
+
+	--[[ Readout ]]
+
+	local scales = Module._getScales(mine) --- @type MatchHud_AimScales?
+	if not scales then
+		return
 	end
+	local over: Vector2 = scales.Origin - Vector2.new(0, (scales.Base + scales.Length) * 0.6)
+	elems["Readout"].Text = if I.Platform.Current == "Mobile" then _settings.TARGET_HINTS.TouchPick else _settings.TARGET_HINTS.Pick
+	elems["Readout"].Position = UDim2.fromOffset(over.X, over.Y)
+	elems["Readout"].Visible = true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Draw Target Mark
+
+--[[
+	A homing missile's locked target: its lock-on mark (S_TargetMark) on its spot, TARGET_MARK_SIZE units across, its
+	brackets turning and closing in as it's placed; hidden with no target, or with nil (another weapon in hand).
+]]
+function Module._drawTargetMark(mine: Model?)
+	--[[ Data ]]
+
+	local scales = Module._getScales(mine) --- @type MatchHud_AimScales?
+
+	--[[ Checks ]]
+
+	-- Check if a target is placed and the snail shows
+	if not target or not scales then
+		elems["TargetMark"].Visible = false
+		return
+	end
+
+	--[[ Applying ]]
+
+	local screen: Vector3 = I.S.Workspace.CurrentCamera:WorldToScreenPoint(target)
+	local size: number = _settings.TARGET_MARK_SIZE * scales.Unit
+
+	-- The brackets close in from TARGET_LOCK_SCALE as the target is placed, then breathe by TARGET_MARK_PULSE
+	local locking: number = math.clamp((os.clock() - targetPlacedAt) / _settings.TARGET_LOCK_SECONDS, 0, 1)
+	local closing: number = 1 + (_settings.TARGET_LOCK_SCALE - 1) * (1 - locking) ^ 3
+	local pulse: number = 1 + _settings.TARGET_MARK_PULSE * math.sin(os.clock() * _settings.TARGET_MARK_PULSE_SPEED * 2 * math.pi)
+
+	--[[ Applying ]]
+
+	elems["TargetMark"].Position = UDim2.fromOffset(screen.X - elems["Aim"].AbsolutePosition.X, screen.Y - elems["Aim"].AbsolutePosition.Y)
+	elems["TargetMark"].Size = UDim2.fromOffset(size, size)
+	elems["TargetMark"].Visible = screen.Z > 0
+	elems["TargetBrackets"].Size = UDim2.fromScale(closing * pulse, closing * pulse)
+	elems["TargetBrackets"].Rotation = os.clock() * _settings.TARGET_BRACKET_SPIN % 90
+end
+
+--%%%%%%%%%%%%%%%%%%%% Draw Readout
+
+--[[
+	Writes the aim over its crosshair: the power and the angle up from level ("62% · 41°", for an arced weapon or a homing
+	missile's launch), only the angle for a gun or a swing, which have no power; none with no aim.
+]]
+function Module._drawReadout(mine: Model, aimKind: string)
+	--[[ Data ]]
+
+	local scales = Module._getScales(mine) --- @type MatchHud_AimScales?
+
+	--[[ Checks ]]
+
+	-- Check if there's an aim to read
+	if not scales or not aimed then
+		elems["Readout"].Visible = false
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local crosshair: Vector2 = scales.Origin + Module._getCrosshairOffset(scales, power)
+	local up: number = math.round(math.deg(math.asin(math.sin(angle))))
+
+	--[[ Applying ]]
+
+	elems["Readout"].Text = if aimKind == "Arc" or aimKind == "Target" then `{math.round(power * 100)}% · {up}°` else `{up}°`
+	elems["Readout"].Position = UDim2.fromOffset(crosshair.X, crosshair.Y - _settings.CROSSHAIR_SIZE * scales.Unit * 0.6)
+	elems["Readout"].Visible = true
 end
 
 --%%%%%%%%%%%%%%%%%%%% Hide Look
 
 --[[
-	Hides the crosshair and the power circles, and hands the held weapon back to the snail's replicated aim (or keeps it
-	on a shot just sent).
+	Hides the crosshair, a homing missile's target mark, the power wedge, the ring, the readout, the prediction and the preview, and hands the held
+	weapon back to the snail's replicated aim (or keeps it on a shot just sent).
 ]]
 function Module._hideLook()
 	--[[ Hiding ]]
@@ -681,38 +738,40 @@ function Module._hideLook()
 	I.Combat.SetAim(firedAngle)
 
 	elems["Crosshair"].Visible = false
-	for _index: number, dot: Frame in ipairs(powerDots) do
-		dot.Visible = false
-	end
+	elems["TargetMark"].Visible = false
+	elems["PowerRing"].Visible = false
+	elems["Wedge"].Visible = false
+	elems["Readout"].Visible = false
 	Module._hidePrediction(1)
+	Module._hidePreview(1)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Draw Prediction
 
 --[[
-	In the tutorial match, and for a player an admin gave the aimbot (the `Aimbot` Player attribute), draws where an
-	arced weapon's shot would fly from the player's snail: the path at the power
-	held while charging, or faded at the power last fired before the press, wind and all, to the first terrain or snail
-	it meets. shortcut: it ignores the shot's slowdown in water and its bounces, so it's exact to the first thing a
-	shot touches out of liquid; follow Combat's Ballistics if a later step needs more.
+	For a player an admin gave the aimbot (the `Aimbot` Player attribute), draws where an arced weapon's shot would fly
+	from the player's snail: the path at the power aimed, or faded at the power last fired with no aim, wind and all, to
+	the first terrain or snail it meets. Everyone else, the tutorial too (the owner, 2026-11-25: "so player is not
+	confused that he has it here and does not have it in the main game"), sees the preview's dots.
+	shortcut: it ignores the shot's slowdown in water and its bounces, so it's exact to the first thing a shot touches
+	out of liquid; follow Combat's Ballistics if a later step needs more.
 ]]
 function Module._drawPrediction(model: Model, itemId: string)
 	--[[ Checks ]]
 
-	-- Check if it's the tutorial or the aimbot, and an arced weapon
-	if (I.Match.GetFolder():GetAttribute("Kind") ~= "Tutorial" and not I.S.Players.LocalPlayer:GetAttribute("Aimbot")) or I.G_Arsenal.Get(itemId).Aim ~= "Arc" or not model.PrimaryPart then
+	-- Check if it's the aimbot, and an arced weapon
+	if not I.S.Players.LocalPlayer:GetAttribute("Aimbot") or I.G_Arsenal.Get(itemId).Aim ~= "Arc" or not model.PrimaryPart then
 		Module._hidePrediction(1)
 		return
 	end
 
 	--[[ Local Variables ]]
 
-	local charging: boolean = aiming == "Charge"
 	local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
 	local position: Vector3 = model.PrimaryPart.Position + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP)
-	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(itemId, angle, if charging then power else lastPower)
+	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(itemId, angle, if aimed then power else lastPower)
 	local acceleration: Vector3 = Vector3.new(I.G_Combat.GetWindAcceleration(itemId, I.Match.GetFolder():GetAttribute("Wind") or 0), -I.S.Workspace.Gravity, 0)
-	local transparency: number = if charging then 0 else _settings.PREDICTION_IDLE_TRANSPARENCY
+	local transparency: number = if aimed then 0 else _settings.PREDICTION_IDLE_TRANSPARENCY
 	local step: number = _settings.PREDICTION_STEP
 	local shown: number = 0
 	local sinceDot: number = _settings.PREDICTION_DOT_GAP
@@ -763,42 +822,124 @@ function Module._hidePrediction(first: number)
 	end
 end
 
+--%%%%%%%%%%%%%%%%%%%% Draw Preview
+
+--[[
+	Draws the start of an arced shot's path (a homing missile's launch too) from the player's snail, as the testers had
+	it on 2026-11-24 (the owner, 2026-11-25: "it was perfect - so lets try to add those dots back"): PREVIEW_DOTS dots
+	over PREVIEW_SHARE of a full-power shot's flight time, so they reach further with more power, without the wind (it
+	helps, it doesn't aim), stopping at the first terrain or snail in the way, shrinking and fading along the way, all in
+	the power's colour, the tutorial too. None for a gun, a swing or no aim, nor where the whole path shows (the aimbot).
+]]
+function Module._drawPreview(model: Model, aimKind: string)
+	--[[ Checks ]]
+
+	-- Check if it's an arced aim, and no whole path shows
+	if not aimed or (aimKind ~= "Arc" and aimKind ~= "Target") or not model.PrimaryPart or I.S.Players.LocalPlayer:GetAttribute("Aimbot") then
+		Module._hidePreview(1)
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local itemId: string = LoadoutBar.GetSelected()
+	local camera: Camera = I.S.Workspace.CurrentCamera
+	local scales = Module._getScales(model) --- @type MatchHud_AimScales
+	local direction: Vector3 = Vector3.new(math.cos(angle), math.sin(angle), 0)
+	local start: Vector3 = model.PrimaryPart.Position + direction * (I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP)
+	local velocity: Vector3 = I.G_Combat.GetLaunchVelocity(itemId, angle, power)
+	local gravity: number = I.S.Workspace.Gravity
+
+	-- A full-power shot's flight at 45°, which the preview shows a share of
+	local fullSpeed: number = I.G_Combat.GetLaunchVelocity(itemId, math.rad(45), 1).Magnitude
+	local shown: number = _settings.PREVIEW_SHARE * 2 * fullSpeed * math.sin(math.rad(45)) / gravity
+	local count: number = #previewDots
+	predictionParams.FilterDescendantsInstances = { model, predictionEnd.Parent }
+
+	--[[ Drawing ]]
+
+	local last: Vector3 = start
+	local drawn: number = 0
+	for index: number = 1, count do
+		local t: number = shown * index / count
+		local at: Vector3 = start + velocity * t + Vector3.new(0, -gravity, 0) * (t * t / 2)
+
+		-- Stop at the first thing in the way
+		if I.S.Workspace:Raycast(last, at - last, predictionParams) then
+			break
+		end
+		last = at
+
+		local screen: Vector3 = camera:WorldToScreenPoint(at)
+		local along: number = index / count
+		local size: number = (_settings.PREVIEW_DOT_SIZE[1] + (_settings.PREVIEW_DOT_SIZE[2] - _settings.PREVIEW_DOT_SIZE[1]) * along) * scales.Unit
+		local dot: Frame = previewDots[index]
+		dot.Position = UDim2.fromOffset(screen.X - elems["Aim"].AbsolutePosition.X, screen.Y - elems["Aim"].AbsolutePosition.Y)
+		dot.Size = UDim2.fromOffset(size, size)
+		dot.BackgroundColor3 = getPowerColor(power)
+		dot.BackgroundTransparency = along * _settings.PREVIEW_FADE
+		dot.UIStroke.Transparency = 0.25 + along * _settings.PREVIEW_FADE * 0.75
+		dot.Visible = screen.Z > 0
+		drawn = index
+	end
+	Module._hidePreview(drawn + 1)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Hide Preview
+
+--[[
+	Hides the preview's dots from `first` on.
+]]
+function Module._hidePreview(first: number)
+	--[[ Hiding ]]
+
+	for index: number = first, #previewDots do
+		previewDots[index].Visible = false
+	end
+end
+
 --%%%%%%%%%%%%%%%%%%%% Fire
 
 --[[
-	Sends the shot (Combat_Fire) with the angle, the power and a homing missile's target, ticks a phone or pad, plays
-	the weapon's sound at once (the server plays it for everyone else), then clears the aim, the held weapon staying on
-	the shot's angle until the shot is away, so nothing swings while the server answers.
+	FIRE, FIRE_KEYS or the pad's RT: sends the locked shot (Combat_Fire) with the angle, the power and a homing
+	missile's target, ticks a phone or pad, plays the weapon's sound at once (the server plays it for everyone else),
+	then hides the aim, the held weapon staying on the shot's angle until the shot is away, so nothing swings while the
+	server answers. The aim stays kept for the snail's next turn.
 ]]
 function Module._fire()
 	--[[ Local Variables ]]
 
 	local itemId: string = LoadoutBar.GetSelected()
 	local mine: Model? = I.Snails.GetMine()
-	local aim: string = I.G_Arsenal.Get(itemId).Aim
+
+	--[[ Checks ]]
+
+	-- Check if the player may shoot now, with a ready weapon aimed (or one placed at the feet, or a homing missile with its target)
+	if firedAngle or dragInput or not mine or not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" or not LoadoutBar.IsReady(itemId) or not Module._canFire(itemId) then
+		return
+	end
+
+	--[[ Shot ]]
+
+	local aimKind: string = I.G_Arsenal.Get(itemId).Aim
 	local shotAngle: number = angle
 	local shotPower: number = power
 
 	-- A weapon fired at the feet goes the way the snail faces; guns and melee weapons need no power
-	if aim == "Feet" then
-		shotAngle = if mine and mine:GetAttribute("Facing") == -1 then math.pi else 0
+	if aimKind == "Feet" then
+		shotAngle = if mine:GetAttribute("Facing") == -1 then math.pi else 0
 		shotPower = 0
-	elseif aim == "Straight" or aim == "Melee" then
+	elseif aimKind == "Straight" or aimKind == "Melee" then
 		shotPower = 1
-	end
-
-	-- A homing missile fired with no target picked (the pad's RT, FIRE on touch) homes on where it was aimed
-	if aim == "Target" and not target and mine and mine.PrimaryPart then
-		target = if pointer then Module._getPlanePoint(pointer) else mine.PrimaryPart.Position + Vector3.new(math.cos(shotAngle), math.sin(shotAngle), 0) * _settings.HOMING_AIM_REACH
 	end
 
 	--[[ Sending ]]
 
-	I.Network.Fire("Combat_Fire", itemId, shotAngle, shotPower, target)
+	I.Network.Fire("Combat_Fire", itemId, shotAngle, shotPower, if aimKind == "Target" then target else nil)
 	lastPower = shotPower
 	I.Haptic.PlayOnce("Combat_Fire")
 	firedItem = itemId
-	if mine and mine.PrimaryPart then
+	if mine.PrimaryPart then
 		I.Sound.Play({
 			Name = `Fire_{itemId}`,
 			Location = mine.PrimaryPart.Position,
@@ -811,7 +952,7 @@ function Module._fire()
 	end
 
 	-- Shooting ends an emote on this screen at once, before the server's word reaches every screen
-	if mine and mine:FindFirstChild("Skin") then
+	if mine:FindFirstChild("Skin") then
 		I.SnailRig.StopEmote(mine:FindFirstChild("Skin"))
 	end
 
@@ -819,63 +960,51 @@ function Module._fire()
 
 	firedAngle = shotAngle
 	firedAt = os.clock()
-	Module._cancel()
+	elems["Fire"].Visible = false
 	Module._hideLook()
 	target = nil
-	targetMarker.Transparency = 1
-end
-
---%%%%%%%%%%%%%%%%%%%% Cancel
-
---[[
-	Stops aiming without firing, and empties the power. A homing missile's target stays picked.
-]]
-function Module._cancel()
-	--[[ Saving ]]
-
-	aiming = nil
-	chargeInput = nil
-	power = 0
 end
 
 --%%%%%%%%%%%%%%%%%%%% Set Target
 
 --[[
-	Places a homing missile's target (its crosshair) on a point of the arena's plane, with its marker.
+	Places a homing missile's target on a point of the arena's plane (Draw Target Mark shows it).
 ]]
 function Module._setTarget(point: Vector3)
 	--[[ Saving ]]
 
 	target = point
+	targetPlacedAt = os.clock()
+end
 
-	--[[ Applying ]]
+--%%%%%%%%%%%%%%%%%%%% Clear Target
 
-	targetMarker.Position = point
-	targetMarker.Transparency = 0.2
+--[[
+	New target (beside FIRE): lets go of a homing missile's target, so the next press places another. The launch's aim
+	stays.
+]]
+function Module._clearTarget()
+	--[[ Clearing ]]
+
+	target = nil
+	targetTouch = nil
 end
 
 --%%%%%%%%%%%%%%%%%%%% On My Turn
 
 --[[
-	Shows the angle marker through the player's turn, starting the way their snail faces, and clears it, a picked
-	target and a finger's last point when the turn starts or ends.
+	Starts the player's turn aimed as their snail last was (AIM_START_POWER toward its nearest enemy on its first turn),
+	and clears the drag, a picked target and FIRE when the turn starts or ends.
 ]]
 function Module._onMyTurn(myTurn: boolean)
 	--[[ Clearing ]]
 
-	Module._cancel()
+	dragInput = nil
+	targetTouch = nil
+	aimedThisTurn = false
 	Module._hideLook()
 	target = nil
-	targetMarker.Transparency = 1
-	elems["Power"].Visible = false
 	elems["Fire"].Visible = false
-
-	-- Where a finger last lifted means nothing next turn (the camera moved): the aim and a homing crosshair start fresh
-	if pointerByTouch then
-		pointer = nil
-		pointingTouch = nil
-		pointerByTouch = false
-	end
 	if stepConnection then
 		stepConnection:Disconnect()
 		stepConnection = nil
@@ -890,8 +1019,16 @@ function Module._onMyTurn(myTurn: boolean)
 
 	--[[ Starting ]]
 
-	local mine: Model? = I.Snails.GetMine()
-	angle = if mine and mine:GetAttribute("Facing") == -1 then math.rad(135) else math.rad(45)
+	local kept: Vector2? = aims[I.Match.GetMyParticipantId()]
+	if kept then
+		angle = kept.X
+		power = kept.Y
+	else
+		angle = math.rad(if Module._getEnemySide() < 0 then 180 - _settings.AIM_START_ANGLE else _settings.AIM_START_ANGLE)
+		power = _settings.AIM_START_POWER
+	end
+	aimed = true
+	Module._remember()
 	firedItem = nil
 	Module._stopWatching()
 	stepConnection = I.S.RunService.RenderStepped:Connect(Module._step)
@@ -942,7 +1079,7 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Step
 
 --[[
-	Draws the watched snail's crosshair and power, eased toward its latest aim, until its aim stops arriving or the
+	Draws the watched snail's crosshair and power wedge, eased toward its latest aim, until its aim stops arriving or the
 	player's own turn starts.
 ]]
 function Module._watchStep(deltaTime: number)
@@ -995,15 +1132,137 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
---%%%%%%%%%%%%%%%%%%%% Is Charge Release
+--%%%%%%%%%%%%%%%%%%%% Has Aimed This Turn
 
 --[[
-	Returns whether a released input lets go of the press that charges the shot: the same finger, or the same mouse
-	button or pad button.
+	**CLIENT** |
+	Returns whether the player has aimed on their turn now (let go of a drag, or moved the stick): the tutorial shows
+	"Drag to aim" until they have, then points at FIRE.
 ]]
 --- @return boolean
-function Module._isChargeRelease(input: InputObject)
-	return input == chargeInput or (chargeInput ~= nil and input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType == chargeInput.UserInputType and input.KeyCode == chargeInput.KeyCode)
+function Module.HasAimedThisTurn()
+	return aimedThisTurn
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Scales
+
+--[[
+	Returns how a snail's aim lies on the screen now: its middle on the aim layer (Origin), pixels in a unit (Unit: it
+	grows and shrinks with the zoom, within AIM_ZOOM_SCALE of its size at the starting zoom), where
+	the crosshair sits at no power (Base: POWER_START out, clear of its ball, further zoomed in) and the power's whole
+	length (Length), in pixels; nil when the snail is out of play.
+]]
+--- @return MatchHud_AimScales?
+function Module._getScales(model: Model?)
+	--[[ Checks ]]
+
+	-- Check if the snail is in play
+	if not model or not model.PrimaryPart then
+		return nil
+	end
+
+	--[[ Local Variables ]]
+
+	local camera: Camera = I.S.Workspace.CurrentCamera
+	local center: Vector3 = model.PrimaryPart.Position
+	local screenCenter: Vector3 = camera:WorldToScreenPoint(center)
+
+	-- Pixels in a stud at the snail now (more when zoomed in), and in a unit: a stud at the starting zoom, following the zoom within AIM_ZOOM_SCALE
+	local tanHalf: number = math.tan(math.rad(camera.FieldOfView) / 2)
+	local startDistance: number = I.Settings["MatchCamera"].DISTANCE
+	local distance: number = (camera.CFrame.Position - center).Magnitude
+	local stud: number = camera.ViewportSize.Y / (2 * distance * tanHalf)
+	local zoomScale: number = math.clamp(startDistance / distance, _settings.AIM_ZOOM_SCALE[1], _settings.AIM_ZOOM_SCALE[2])
+	local unit: number = camera.ViewportSize.Y / (2 * startDistance * tanHalf) * zoomScale
+	local first: number = math.max(_settings.POWER_START * unit, (I.Settings["Snails"].ROOT_SIZE / 2 + I.Settings["Combat"].MUZZLE_GAP) * stud)
+
+	--[[ Returning ]]
+
+	--- @type MatchHud_AimScales
+	local scales = {
+		Origin = Vector2.new(screenCenter.X, screenCenter.Y) - elems["Aim"].AbsolutePosition,
+		Unit = unit,
+		Base = first + (_settings.POWER_GAP + _settings.CROSSHAIR_SIZE / 2) * unit,
+		Length = _settings.POWER_LENGTH * unit,
+	}
+	return scales
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Crosshair Offset
+
+--[[
+	Returns where the crosshair sits from the snail's middle on the screen, in pixels (x right, y down), for a power and
+	an angle (the player's aim's, unless given).
+]]
+--- @param scales MatchHud_AimScales
+--- @return Vector2
+function Module._getCrosshairOffset(scales, aimPower: number, aimAngle: number?)
+	--[[ Local Variables ]]
+
+	local way: number = aimAngle or angle
+
+	--[[ Returning ]]
+
+	return Vector2.new(math.cos(way), -math.sin(way)) * (scales.Base + scales.Length * aimPower)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Can Fire
+
+--[[
+	Returns whether the held weapon has what it needs to fire: an aim locked (and a homing missile's target), or nothing
+	for a weapon placed at the feet.
+]]
+--- @return boolean
+function Module._canFire(itemId: string)
+	--[[ Local Variables ]]
+
+	local aimKind: string = I.G_Arsenal.Get(itemId).Aim
+
+	--[[ Returning ]]
+
+	if aimKind == "Feet" then
+		return true
+	elseif aimKind == "Target" then
+		return target ~= nil and aimed
+	end
+	return aimed
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Enemy Side
+
+--[[
+	Returns which side of the player's snail its nearest enemy still in play is on: 1 to the right, -1 to the left (the
+	way the snail faces when there's none).
+]]
+--- @return number
+function Module._getEnemySide()
+	--[[ Data ]]
+
+	local mine: Model? = I.Snails.GetMine()
+	local me: Configuration? = I.Match.GetParticipantInfo(I.Match.GetMyParticipantId())
+	if not mine or not mine.PrimaryPart or not me then
+		return 1
+	end
+
+	--[[ Searching ]]
+
+	local nearest: number = math.huge
+	local side: number = if mine:GetAttribute("Facing") == -1 then -1 else 1
+	for _index: number, entry: Instance in ipairs(I.Match.GetFolder():FindFirstChild("Participants"):GetChildren()) do
+		local model: Model? = I.Snails.Get(entry.Name)
+		local enemy: boolean = entry:GetAttribute("Team") ~= me:GetAttribute("Team") and not entry:GetAttribute("Out")
+		if enemy and model and model.PrimaryPart then
+			local dx: number = model.PrimaryPart.Position.X - mine.PrimaryPart.Position.X
+			if math.abs(dx) < nearest then
+				nearest = math.abs(dx)
+				side = if dx < 0 then -1 else 1
+			end
+		end
+	end
+
+	--[[ Returning ]]
+
+	return side
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Plane Point

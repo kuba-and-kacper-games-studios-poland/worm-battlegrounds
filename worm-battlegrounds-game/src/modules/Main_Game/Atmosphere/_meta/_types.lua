@@ -5,6 +5,8 @@
 --- # Lighting #
 ---
 --- @field Preset string
+--- @field Sky { [string]: string | boolean }?
+--- @field Parallax { Atmosphere_ParallaxRow }?
 ---
 --- # Music #
 ---
@@ -19,6 +21,23 @@
 --- @field Surface { Atmosphere_SurfaceRow }
 --- @field Ceiling Atmosphere_CeilingRow?
 local _atmosphere_Profile = {}
+
+--- @class Atmosphere_ParallaxRow
+---
+--- # Look #
+---
+--- @field Image string?
+--- @field Color Color3?
+--- @field Transparency number?
+---
+--- # Placement #
+---
+--- @field Depth number
+--- @field X number
+--- @field Bottom number
+--- @field Width number
+--- @field Height number
+local _atmosphere_ParallaxRow = {}
 
 --- @class Atmosphere_AmbientRow
 ---

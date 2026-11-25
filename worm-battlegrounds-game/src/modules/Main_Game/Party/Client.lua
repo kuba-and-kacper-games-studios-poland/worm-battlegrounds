@@ -133,12 +133,12 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Lists the party's members (just the local player when they have none) with their avatar in their prestige frame,
-	name (their badges after it) and level, the crown on the leader and Kick for the leader, then a + card per free
+	Lists the party's members (just the local player when they have none) with their avatar in their prestige frame
+	(their names and levels stand over their snails on the stage), the crown on the leader and Kick for the leader, then a + card per free
 	place for a player who may invite. In a custom lobby it lists the lobby instead: its members, the crown on its
 	owner, and a + card per free place up to its size (opening the lobby's window to invite); while the player picks a
 	size on the lobby's create step, it shows that many places already. More than COLUMN_CARDS cards fill a second
-	column, and every card turns compact (no name).
+	column.
 ]]
 function Module._refresh()
 	--[[ Data ]]
@@ -180,23 +180,12 @@ function Module._refresh()
 			break
 		end
 	end
-	local compact: boolean = math.max(places, #members) > _settings.COLUMN_CARDS
 	local cards = {} --- @type { GuiObject }
 	for _index: number, player: Player in ipairs(members) do
 		local card: Frame = prefabs["Member"]:Clone()
 		local kick: ImageButton = card:FindFirstChild("S_Kick", true)
 		card.Name = tostring(player.UserId)
 		card.Visible = true
-		card:FindFirstChild("S_Name", true).Text = player.DisplayName
-		card:FindFirstChild("S_Username", true).Text = `@{player.Name}`
-		-- Compact cards have no name, so no badges after it (Show lays them out later, which would show them again)
-		if not compact then
-			I.PlayerBadges.Show(card:FindFirstChild("S_Name", true), player.UserId)
-		end
-		card:FindFirstChild("S_Name", true).Visible = not compact
-		card:FindFirstChild("S_Username", true).Visible = not compact
-		card:FindFirstChild("S_Badges", true).Visible = not compact
-		card:FindFirstChild("S_Level", true).Text = `Lv {player:GetAttribute("Level") or 1}`
 		card:FindFirstChild("S_Avatar", true).Image = `rbxthumb://type=AvatarHeadShot&id={player.UserId}&w=150&h=150`
 		card:FindFirstChild("S_Crown", true).Visible = Module._isCrowned(player, room)
 		I.G_Progression.ApplyFrame(card:FindFirstChild("S_Prestige", true), player:GetAttribute("Level") or 1)

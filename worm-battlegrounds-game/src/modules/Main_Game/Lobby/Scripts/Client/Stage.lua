@@ -35,9 +35,25 @@ local snailSkins = {} --- @type { [Player]: string }
 local snailLifts = {} --- @type { [Player]: number }
 local snailPoses = {} --- @type { [Player]: AnimationTrack }
 
+-- The look each member's stage weapon wears ("Shiny", "Golden", or "" for none), from their level
+local snailLooks = {} --- @type { [Player]: string }
+
+-- Where the top middle of each member's snail is from its RootPart, measured before it holds the weapon (its nameplate
+-- stands there)
+local snailTops = {} --- @type { [Player]: Vector3 }
+
 -- The pose each member played last, so a new pick is another one, and the members the poses were picked for
 local lastPoses = {} --- @type { [Player]: string }
 local posedFor: string = ""
+
+--[[ Labels ]]
+
+-- The "+" bubble over each empty pod, by pod, in the player's PlayerGui so it can be pressed
+local inviteBubbles = {} --- @type { [number]: BillboardGui }
+
+-- Whether the nameplates and bubbles show (they hide behind a full-screen window), and which bubbles are wanted
+local labelsShown: boolean = true
+local bubblesWanted = {} --- @type { [number]: boolean }
 
 --[[ Camera ]]
 
@@ -128,24 +144,81 @@ end
 --%%%%%%%%%%%%%%%%%%%% Watch Player
 
 --[[
-	Restands the members when a player joins or leaves a party, or changes their snail's outfit.
+	Restands the members when a player joins or leaves a party, or changes their snail's outfit, and relabels their
+	snail when their level changes (and gives it a new snail when their level or an admin changes its weapon's look).
 ]]
 function Module._watchPlayer(player: Player)
 	--[[ Connections ]]
 
 	player:GetAttributeChangedSignal("PartyId"):Connect(Module._refreshSnails)
 	player:GetAttributeChangedSignal("Outfit"):Connect(Module._refreshSnails)
+	player:GetAttributeChangedSignal("Level"):Connect(function()
+		Module._label(player)
+		Module._rearm(player)
+	end)
+	player:GetAttributeChangedSignal("WeaponVariants"):Connect(function()
+		Module._rearm(player)
+	end)
+	player:GetAttributeChangedSignal("WeaponLooks"):Connect(function()
+		Module._rearm(player)
+	end)
 	Module._refreshSnails()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Set Labels Shown
+
+--[[
+	Shows or hides the stage's nameplates and "+" bubbles: they hide while a full-screen window covers the lobby, so
+	they don't float blurred behind it.
+]]
+function Module.SetLabelsShown(shown: boolean)
+	--[[ Checks ]]
+
+	-- Check if it changes
+	if shown == labelsShown then
+		return
+	end
+
+	--[[ Applying ]]
+
+	labelsShown = shown
+	for player: Player in pairs(snails) do
+		Module._label(player)
+	end
+	for index: number, bubble: BillboardGui in pairs(inviteBubbles) do
+		bubble.Enabled = shown and bubblesWanted[index] == true
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Rearm
+
+--[[
+	Gives a member a new snail when their weapon's look changed (their level, or an admin's gift).
+]]
+function Module._rearm(player: Player)
+	--[[ Checks ]]
+
+	-- Check if they stand on the stage holding another look
+	if not snails[player] or snailLooks[player] == Module._getWeaponLook(player) then
+		return
+	end
+
+	--[[ Refreshing ]]
+
+	-- Forgetting its outfit makes the refresh dress it again and stand it on its pod
+	snailSkins[player] = nil
+	Module._refreshSnails()
+end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Snails
 
 --[[
 	Stands the player on the first pod and the rest of their party, or of their custom lobby on its own eight pods, on
 	the next ones, each in their snail's outfit holding the stage's weapon, and takes away the snails of players who
-	left. Each snail strikes a new pose when the members changed, and the camera frames them.
+	left, with a "+" bubble over each pod still free. Each snail strikes a new pose when the members changed, and the
+	camera frames them.
 ]]
 function Module._refreshSnails()
 	--[[ Checks ]]
@@ -176,6 +249,8 @@ function Module._refreshSnails()
 			snailSkins[player] = nil
 			snailLifts[player] = nil
 			snailPoses[player] = nil
+			snailTops[player] = nil
+			snailLooks[player] = nil
 		end
 	end
 
@@ -191,6 +266,7 @@ function Module._refreshSnails()
 		end
 		table.insert(memberIds, tostring(player.UserId))
 	end
+	Module._refreshInvites(#members, custom)
 
 	--[[ Posing ]]
 
@@ -209,8 +285,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Dress
 
 --[[
-	Gives a member a snail wearing an outfit (the Outfit attribute's text) and holding the stage's weapon, both scaled
-	up for the stage, replacing the one they had.
+	Gives a member a snail wearing an outfit (the Outfit attribute's text) and holding the stage's weapon in the look
+	their level opened for it, both scaled up for the stage, replacing the one they had.
 ]]
 function Module._dress(player: Player, outfit: string)
 	--[[ Data ]]
@@ -249,6 +325,8 @@ function Module._dress(player: Player, outfit: string)
 	model.Name = player.Name
 	model.Parent = worldFolder
 	I.SnailRig.SetMotion(model, "Idle")
+	box, size = model:GetBoundingBox()
+	snailTops[player] = box.Position + Vector3.yAxis * size.Y / 2 - model.PrimaryPart.Position
 
 	--[[ Weapon ]]
 
@@ -256,14 +334,155 @@ function Module._dress(player: Player, outfit: string)
 	weapon:ScaleTo(weapon:GetScale() * _settings.STAGE_SNAIL_SCALE * _settings.STAGE_WEAPON_SCALE)
 	I.SnailRig.Hold(model, _settings.STAGE_WEAPON, weapon)
 	weapon.Parent = model
+	local look: string = Module._getWeaponLook(player)
+	Module._dressWeapon(weapon, look)
 
 	--[[ Saving ]]
 
 	snails[player] = model
 	snailSkins[player] = outfit
+	snailLooks[player] = look
 	snailLifts[player] = underPivot * (_settings.STAGE_SNAIL_SCALE - 1)
 	snailPoses[player] = nil
+	Module._label(player)
 	Module._pose(player)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Dress Weapon
+
+--[[
+	Dresses a stage weapon in a look (STAGE_WEAPON_LOOKS), as Combat dresses a held one: Golden turns it gold (Arsenal's
+	Gild), then a Shiny or Golden one wears a ForceField sheen over each part and an outline. "" leaves it as it is.
+]]
+function Module._dressWeapon(weapon: Model, lookName: string)
+	--[[ Data ]]
+
+	--- @type Lobby_WeaponLook?
+	local look = _settings.STAGE_WEAPON_LOOKS[lookName]
+
+	--[[ Checks ]]
+
+	-- Check if the weapon has a look
+	if not look then
+		return
+	end
+
+	--[[ Parts ]]
+
+	-- The parts it shows (its hidden RootPart aside), taken before the look adds its own
+	local parts = {} --- @type { BasePart }
+	for _index: number, part: Instance in ipairs(weapon:GetDescendants()) do
+		if part:IsA("BasePart") and part.Transparency < 1 then
+			table.insert(parts, part)
+		end
+	end
+
+	--[[ Gilding ]]
+
+	if look.Gild then
+		I.G_Arsenal.Gild(parts, look.Gild[1], look.Gild[2], look.GildCover or 0, _settings.STAGE_COVER_GROW)
+	end
+
+	--[[ Sheen ]]
+
+	for _index: number, part: BasePart in ipairs(parts) do
+		I.G_Arsenal.MakeCopy(part, look.Sheen, Enum.Material.ForceField, 0, _settings.STAGE_SHEEN_GROW)
+	end
+
+	--[[ Outline ]]
+
+	I.Create("Highlight")({
+		Adornee = weapon,
+		DepthMode = Enum.HighlightDepthMode.Occluded,
+		FillTransparency = 1,
+		OutlineColor = look.Outline,
+		OutlineTransparency = look.OutlineTransparency,
+		Parent = weapon,
+	})
+end
+
+--%%%%%%%%%%%%%%%%%%%% Label
+
+--[[
+	Stands the studio's nameplate over the middle of a member's snail (made with the snail, so it goes with it): their level in the
+	rank crest in its tier's colours, their display name over their @username, scaled with the stage's snails (NAMEPLATE_SCALE), and smaller over
+	the rest of the party than over the player's own (NAMEPLATE_OTHER_SCALE).
+]]
+function Module._label(player: Player)
+	--[[ Data ]]
+
+	local model: Model? = snails[player]
+	if not model then
+		return
+	end
+
+	--[[ Building ]]
+
+	local plate: BillboardGui? = model:FindFirstChild(_settings.NAMEPLATE_NAME)
+	if not plate then
+		plate = I.Dirs.Assets:FindFirstChild(_localName):FindFirstChild(_settings.NAMEPLATE_NAME, true):Clone()
+		local scale: number = _settings.NAMEPLATE_SCALE * (if player == I.S.Players.LocalPlayer then 1 else _settings.NAMEPLATE_OTHER_SCALE)
+		plate.Size = UDim2.fromScale(plate.Size.X.Scale * scale, plate.Size.Y.Scale * scale)
+		plate.Adornee = model.PrimaryPart
+		plate.StudsOffsetWorldSpace = snailTops[player] + Vector3.yAxis * _settings.NAMEPLATE_GAP
+		plate.Parent = model
+	end
+
+	--[[ Visibility ]]
+
+	plate.Enabled = labelsShown
+
+	--[[ Texts ]]
+
+	local level: number = player:GetAttribute("Level") or 1
+	plate:FindFirstChild("S_Level", true).Text = tostring(level)
+	plate:FindFirstChild("S_Name", true).Text = player.DisplayName
+	plate:FindFirstChild("S_Username", true).Text = `@{player.Name}`
+
+	--[[ Crest ]]
+
+	-- The level's crest in its prestige tier's colours, as the lobby's level bar
+	I.G_Progression.ApplyFrame(plate:FindFirstChild("S_LevelGradient", true), level)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Refresh Invites
+
+--[[
+	Floats a "+" bubble over each pod past the members, up to the places the stage offers (the party's size, or the
+	custom lobby's), when the player may invite: no party, its leader, or a custom lobby. Pressing one opens the party
+	invite, or the custom lobby's window. None while the player is in a match.
+]]
+function Module._refreshInvites(memberCount: number, custom: boolean)
+	--[[ Local Variables ]]
+
+	local localPlayer: Player = I.S.Players.LocalPlayer
+	local partySettings = I.Settings["Party"] --- @type Party_Settings
+	local room: Instance? = I.MatchBoard.GetCustomRoom()
+	local places: number = if room then room:GetAttribute("Size") or #snailMarkers else partySettings.MAX_PARTY
+	local mayInvite: boolean = custom or not localPlayer:GetAttribute("PartyId") or localPlayer:GetAttribute("PartyLeader") == true
+	local free: number = if mayInvite and not localPlayer:GetAttribute("InMatch") then math.min(places, #snailMarkers) else 0
+	local template: BillboardGui = I.Dirs.Assets:FindFirstChild(_localName):FindFirstChild(_settings.INVITE_NAME, true)
+
+	--[[ Bubbles ]]
+
+	for index: number = 1, #snailMarkers do
+		local bubble: BillboardGui? = inviteBubbles[index]
+		local wanted: boolean = index > memberCount and index <= free
+		if wanted and not bubble then
+			bubble = template:Clone()
+			I.Interact.OnPress(bubble:FindFirstChild("U_Invite"), function()
+				I.WidgetManager.Open(if I.MatchBoard.GetCustomRoom() then partySettings.CUSTOM_GUI_NAME else partySettings.INVITE_GUI_NAME)
+			end)
+			bubble.Parent = localPlayer:FindFirstChildOfClass("PlayerGui")
+			inviteBubbles[index] = bubble
+		end
+		bubblesWanted[index] = wanted
+		if bubble then
+			bubble.Enabled = wanted and labelsShown
+			bubble.Adornee = snailMarkers[index]
+			bubble.StudsOffsetWorldSpace = Vector3.yAxis * _settings.INVITE_HEIGHT
+		end
+	end
 end
 
 --%%%%%%%%%%%%%%%%%%%% Pose All
@@ -333,7 +552,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% On In Match
 
 --[[
-	Hands the camera over while the player is in a match, and has the stage strike new poses when they come back.
+	Hands the camera over while the player is in a match, and has the stage strike new poses when they come back; the
+	"+" bubbles hide while they're away.
 ]]
 function Module._onInMatch()
 	--[[ Camera ]]
@@ -345,6 +565,10 @@ function Module._onInMatch()
 	if not I.S.Players.LocalPlayer:GetAttribute("InMatch") then
 		Module._poseAll()
 	end
+
+	--[[ Labels ]]
+
+	Module._refreshSnails()
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Camera
@@ -413,6 +637,24 @@ end
 --- @return Model?
 function Module.GetSnail(player: Player)
 	return snails[player]
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Weapon Look
+
+--[[
+	Returns the look a member's stage weapon wears: the one they picked on the loadout's look tab, up to what their
+	level opened (Progression's WEAPON_REWARDS) or an admin gave (I.G_Loadout.GetWornLook): "Golden", "Shiny", or ""
+	for none.
+]]
+--- @return string
+function Module._getWeaponLook(player: Player)
+	--[[ Local Variables ]]
+
+	local look: string = I.G_Loadout.GetWornLook(player, _settings.STAGE_WEAPON)
+
+	--[[ Returning ]]
+
+	return if look == "Normal" then "" else look
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Members

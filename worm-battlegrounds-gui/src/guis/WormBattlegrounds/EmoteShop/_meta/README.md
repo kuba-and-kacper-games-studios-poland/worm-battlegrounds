@@ -1,7 +1,7 @@
 # EmoteShop
 
 The **EMOTES** panel, opened from the lobby Loadout's EMOTES button: a card per emote (its rarity badge, icon and
-name), three across. An emote not owned yet wears a locked cover with its price in coins and the level it needs, and
+name), three across. An emote not owned yet wears a locked cover with its price in diamonds and the level it needs, and
 a press buys it; a press on an owned one closes the panel and plays it.
 
 **Look.** Ported 1:1 from the gui maker's `Emotes` design (2026-11-11, built from the studio's Customise cards) as
@@ -9,7 +9,7 @@ a press buys it; a press on an owned one closes the panel and plays it.
 `GUIS`): the panel stands in the Loadout's place on the right, its right edge on the Loadout column's (0.9756 of the
 screen, since 2026-11-15; the Lobby module hides Loadout while it's open, its
 `PANEL_WIDGETS`). Added to the design: the locked cover (the Skins tile's `S_Locked`, with the lock), the price under
-the lock (white Londrina with the coin, as Loadout's locked slot) and the level at its top right in yellow, and a close
+the lock (white Londrina with the diamond, as Loadout's locked slot) and the level at its top right in yellow, and a close
 button (the Party card's red kick button), since the design has none. Before, it was the GUI kit's list window.
 
 |  |  |
@@ -32,7 +32,7 @@ button (the Party card's red kick button), since the design has none. Before, it
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| EmoteCard` | `U_Emotes` | An ImageButton (the design's card): `Background`, `S_Rarity` (the badge, tinted with the rarity's colour), `S_Icon`, `S_Name`, and `S_Locked` (hidden: the dark cover and lock, `S_Price` with its coin icon, `S_Level`) |
+| `PREFAB \| EmoteCard` | `U_Emotes` | An ImageButton (the design's card): `Background`, `S_Rarity` (the badge, tinted with the rarity's colour), `S_Icon`, `S_Name`, and `S_Locked` (hidden: the dark cover and lock, `S_Price` with its diamond icon (`CurrencyIcon`), `S_Level`) |
 
 ## Driven by
 
@@ -68,4 +68,4 @@ opens it: the Loadout gui's `S_Shop` (the EMOTES button) toggles it (its tags). 
 | --- | --- | --- |
 | Hover, press | Cards, `S_Close` | `Utils_ButtonScale` (`Bouncy`, hover ×1.04, press ×0.92) with `Button_Hover` and `Button_Click` |
 | Rarity | `S_Rarity` | `I.Rarity.GetLook(rarity).Base`, white without a rarity |
-| Not owned | `S_Locked` | Shown; `S_Price` the coins (Free at 0), `S_Level` "Level N" ("Any level" up to level 1) |
+| Not owned | `S_Locked` | Shown; `S_Price` the diamonds (Free at 0), `S_Level` "Level N" ("Any level" up to level 1) |

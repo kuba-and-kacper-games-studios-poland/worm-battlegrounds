@@ -65,7 +65,7 @@ local _gui = {
 								},
 								Children = {
 									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.0714 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.06 } },
 								},
 							},
 							{
@@ -176,7 +176,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-											{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.0882 } },
+											{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
 										},
 									},
 									-- On Console B (Circle) closes the window: a white border (gamepad-prompts' WhiteBorder) tinted black, and the white B in front

@@ -14,6 +14,10 @@
 --- @field RemoveByClientRequest boolean?
 --- @field UseByClientRequest boolean?
 ---
+--- # Availability #
+---
+--- @field Disabled boolean?
+---
 --- # Setup #
 ---
 --- @field _setupFunction () -> ()

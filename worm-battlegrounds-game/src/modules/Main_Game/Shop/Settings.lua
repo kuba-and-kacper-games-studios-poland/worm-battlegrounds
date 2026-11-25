@@ -15,7 +15,10 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Game Passes
 
-	-- The game passes the shop sells, in order: the Marketplace entry, its name, its picture and what it gives
+	--[[
+		The game passes the shop sells, in order: the Marketplace entry, its name, its picture and what it gives. The
+		loadout slot passes left on 2026-11-25: slots are sold on the loadout's locked slot (Loadout's SLOT_PRODUCTS)
+	]]
 	--- @type { Shop_Pass }
 	PASSES = {
 		{
@@ -24,9 +27,7 @@ local _settings = {
 			Icon = "rbxassetid://84847875031526",
 			Benefits = "A free skin crate every day, a gold name, a chat tag and the VIP skin",
 		},
-		{ GamePass = "DoubleCoins", Name = "Double Coins", Icon = "rbxassetid://76651166150720", Benefits = "Twice the coins from every match" },
-		{ GamePass = "Slot5", Name = "Loadout slot 5", Icon = "rbxassetid://129986633237298", Benefits = "One more weapon slot in your loadout" },
-		{ GamePass = "Slot6", Name = "Loadout slot 6", Icon = "rbxassetid://90605961046404", Benefits = "One more weapon slot in your loadout" },
+		{ GamePass = "DoubleCoins", Name = "Double Diamonds", Icon = "rbxassetid://122604385822529", Benefits = "Twice the diamonds from every match" },
 	},
 
 	--%%%%%%%%%%%%%%%%%%%% VIP

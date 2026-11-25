@@ -52,6 +52,8 @@ function Module.Start(gui: ScreenGui)
 	elems["Count"] = elems["Waiting"]:FindFirstChild("S_Count", true) --- @type TextLabel
 	elems["Drop"] = gui:FindFirstChild("U_Drop") --- @type Frame
 	elems["DropTimer"] = elems["Drop"]:FindFirstChild("S_Timer", true) --- @type TextLabel
+	elems["DropPlate"] = elems["DropTimer"].Parent --- @type Frame
+	elems["DropTitle"] = elems["Drop"]:FindFirstChild("Title") --- @type TextLabel
 	elems["KnockedOut"] = gui:FindFirstChild("U_KnockedOut") --- @type Frame
 	elems["Spectate"] = elems["KnockedOut"]:FindFirstChild("S_Spectate", true) --- @type ImageButton
 	elems["Leave"] = elems["KnockedOut"]:FindFirstChild("S_Leave", true) --- @type ImageButton
@@ -122,8 +124,11 @@ function Module._refresh()
 
 	elems["Waiting"].Visible = phase == "Waiting" and matchFolder:GetAttribute("RoomEndsAt") == nil
 	elems["Drop"].Visible = phase == "Drop"
+	-- The tutorial's drop has no clock or title: its guide says what to do (the owner, 2026-11-24)
+	elems["DropPlate"].Visible = matchFolder:GetAttribute("Kind") ~= "Tutorial"
+	elems["DropTitle"].Visible = elems["DropPlate"].Visible
 	elems["KnockedOut"].Visible = out and not spectating and phase ~= "Ended"
-	elems["LoadoutBar"].Visible = entry ~= nil and not out and (phase == "Turn" or phase == "Flight" or phase == "Settle" or phase == "Landing")
+	elems["LoadoutBar"].Visible = entry ~= nil and not out and (phase == "Turn" or phase == "Flight" or phase == "Settle" or phase == "Landing" or phase == "Battle")
 	elems["EmoteButton"].Visible = elems["LoadoutBar"].Visible
 
 	--[[ Texts ]]
@@ -164,8 +169,8 @@ function Module._tick()
 
 	--[[ Ticking ]]
 
-	-- Each of the last seconds ticks once, as it starts
-	if warning and seconds ~= tickedSecond then
+	-- Each of the last seconds ticks once, as it starts (in the player's own match only)
+	if warning and seconds ~= tickedSecond and I.S.Players.LocalPlayer:GetAttribute("InMatch") then
 		tickedSecond = seconds
 		I.Sound.Play({ Name = "Turn_Tick", SoundGroup = "SFX" })
 	end

@@ -106,6 +106,20 @@ each snail's `Body` replaced by the cut one and `Hat` and `Neck` added, each a M
 SurfaceAppearance and a Motor6D inside it from the RootPart (C0 the part's place on the root, as `Body` and `Shell`
 had), scaled with the snail (0.45). Every piece wears its own set's texture wherever it's worn.
 
+### Midnight's eyes (2026-11-25)
+
+The Ninja's `Body` (the Midnight body piece) had its eyes and mask weighted to the eyestalk bones by bone heat, so
+every pose that turns the stalks (Idle, the walk's swing, emotes) dragged the eyes off the face, worn with any hat (the
+owner, 2026-11-25: "the eyes are weirdly rigged"). Read in Studio with `EditableMesh` (`GetVertexBones`): 1,442 of its
+vertices more than 0.05 under the stalks' bases followed a stalk, against 24 (the stalks' own bottoms) on every other
+artist body. `fix_eyes.py` moves those vertices' stalk weights onto the head (`Bone.003`):
+
+    blender -b --factory-startup --python fix_eyes.py -- SnailPieces_Ninja.fbx SnailPieces_Ninja_eyes.fbx
+
+It moved 1,499 vertices (Blender's count). The result was uploaded as "Snail Pieces Ninja v2" (Model 75314008032709,
+approved), and the Ninja snail's `Body` took its mesh with `MeshPart:ApplyMesh` (rbxassetid://120785162196984 in place
+of 93275485609327), keeping its SurfaceAppearance and joint; the old snail is `ServerStorage.!dump.Ninja_before_eyes_2026-11-25`.
+
 ### Shell textures (2026-11-15)
 
 The artist's new snails (Studio's `Workspace.New`, now `ServerStorage.!dump.NewSnails_2026-11-15`) brought new shell
@@ -216,6 +230,7 @@ The set snails' pictures above are no longer shown anywhere: the Skin crate roll
 | --- | --- |
 | `rig_skins.py` | Imports the two OBJs, moves them into the rig's space, builds Classic's skeleton, rigs and exports each skin |
 | `split_skins.py` | Cuts each rigged skin's Body into its body, hat and neck piece (Pieces), and checks the result |
+| `fix_eyes.py` | Moves a body piece's face off the eyestalk bones onto the head (Midnight's eyes) |
 | `classic_bones.json` | Classic's skeleton, read from the place |
 | `picture_booth.luau` | The picture booth: the posed snails, framed and lit as the cards' live ones, six to a screen |
 | `piece_booth.luau` | The pieces' picture booth: each piece on the showcase snail, framed as the cards' live ones |

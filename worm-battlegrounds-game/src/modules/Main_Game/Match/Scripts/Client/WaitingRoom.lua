@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -61,8 +62,10 @@ function Module._getElements()
 
 	moduleGui = I.UserInterface.UI[_settings.WAITING_GUI_NAME]
 	elems["Room"] = moduleGui:FindFirstChild("U_WaitingRoom") --- @type Frame
-	elems["Countdown"] = elems["Room"]:FindFirstChild("S_Countdown", true) --- @type TextLabel
-	elems["Info"] = elems["Room"]:FindFirstChild("S_Info", true) --- @type TextLabel
+	elems["Title"] = elems["Room"]:FindFirstChild("S_Title", true) --- @type TextLabel
+	elems["ModeIcon"] = elems["Room"]:FindFirstChild("S_ModeIcon", true) --- @type ImageLabel
+	elems["Status"] = elems["Room"]:FindFirstChild("S_Status", true) --- @type TextLabel
+	elems["PlayersHeader"] = elems["Room"]:FindFirstChild("S_PlayersHeader", true) --- @type TextLabel
 	elems["Players"] = elems["Room"]:FindFirstChild("U_Players", true) --- @type ScrollingFrame
 	elems["Ready"] = elems["Room"]:FindFirstChild("S_Ready", true) --- @type ImageButton
 	elems["Leave"] = elems["Room"]:FindFirstChild("S_Leave", true) --- @type ImageButton
@@ -83,6 +86,8 @@ function Module._createConnections()
 
 	matchFolder:GetAttributeChangedSignal("RoomEndsAt"):Connect(Module._refresh)
 	matchFolder:GetAttributeChangedSignal("Room"):Connect(Module._refresh)
+	matchFolder:GetAttributeChangedSignal("RoomVotes"):Connect(Module._refresh)
+	matchFolder:GetAttributeChangedSignal("RoomVotesNeeded"):Connect(Module._refresh)
 	I.S.Players.LocalPlayer:GetAttributeChangedSignal("InMatch"):Connect(Module._refresh)
 	I.DoEvery.Every(0.25, Module._tick)
 
@@ -101,8 +106,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
-	Shows the room while the player's public match is open to joins: the mode and players, everyone seated (who's
-	still on the way, who's ready), and Ready, which reads how many are.
+	Shows the room while the player's public match is open to joins (RoWorld's, 2026-11-24): the mode's glyph, the mode
+	and the map, the players seated of its size, everyone seated (who's still on the way, who voted), and the vote to
+	start with its votes and the votes it needs (the server's RoomVotes and RoomVotesNeeded).
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -130,17 +136,20 @@ function Module._refresh()
 
 	--[[ Texts ]]
 
-	local readyCount: number = 0
-	local hereCount: number = 0
-	local mineReady: boolean = false
+	local mode: string = matchFolder:GetAttribute("ModeName") or matchFolder:GetAttribute("Mode") or ""
+	local mapName: string = matchFolder:GetAttribute("MapName") or ""
+	local votes: number = matchFolder:GetAttribute("RoomVotes") or 0
+	local needed: number = matchFolder:GetAttribute("RoomVotesNeeded") or 0
+	local voted: boolean = false
 	--- @param seat Match_RoomSeat
 	for _index: number, seat in ipairs(seats) do
-		readyCount += if seat.Ready then 1 else 0
-		hereCount += if seat.Here then 1 else 0
-		mineReady = mineReady or (seat.UserId == I.S.Players.LocalPlayer.UserId and seat.Ready)
+		voted = voted or (seat.UserId == I.S.Players.LocalPlayer.UserId and seat.Ready)
 	end
-	elems["Info"].Text = `{matchFolder:GetAttribute("Mode")}  |  {#seats} / {matchFolder:GetAttribute("Size")} players`
-	elems["Ready"]:FindFirstChild("S_Text").Text = if mineReady then `Waiting {readyCount}/{hereCount}` else `Ready {readyCount}/{hereCount}`
+	elems["Title"].Text = if mapName ~= "" then `{mode} · {mapName}` else mode
+	elems["ModeIcon"].Image = matchFolder:GetAttribute("ModeIcon") or ""
+	elems["PlayersHeader"].Text = `Players {#seats}/{matchFolder:GetAttribute("Size")}`
+	elems["Ready"]:FindFirstChild("S_Text").Text = `{if voted then "Voted" else "Vote to start"} {votes}/{needed}`
+	Module._tick()
 
 	--[[ Players ]]
 
@@ -199,7 +208,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Tick
 
 --[[
-	Counts the room's time down.
+	Counts the room's time down on the gold status line, saying why when it starts early: everyone's in, or the vote
+	passed (the server's RoomStarting).
 ]]
 function Module._tick()
 	--[[ Checks ]]
@@ -213,7 +223,9 @@ function Module._tick()
 
 	-- Clamped before rounding up: math.ceil of the last fraction of a second is -0
 	local left: number = math.ceil(math.max((matchFolder:GetAttribute("RoomEndsAt") or 0) - I.S.Workspace:GetServerTimeNow(), 0))
-	elems["Countdown"].Text = `Match starts in {string.format("%d:%02d", left // 60, left % 60)}`
+	local time: string = string.format("%d:%02d", left // 60, left % 60)
+	local starting: string? = matchFolder:GetAttribute("RoomStarting")
+	elems["Status"].Text = if starting == "Full" then `Everyone's in · starting in {time}` elseif starting == "Vote" then `Vote passed · starting in {time}` else `Starts in {time}`
 end
 
 return Module

@@ -133,6 +133,34 @@ function Module.Release(card: GuiObject)
 	Module.Store(snail.Model)
 end
 
+--%%%%%%%%%%%%%%%%%%%% Show Slot
+
+--[[
+	Shows which slot a snail piece is worn in (Hat, Neck, Body, Shell) on its card's tab, tucked in the top-left corner
+	under its border, in its rarity's colour (the owner, 2026-11-24); hides the tab for any other item.
+]]
+function Module.ShowSlot(card: GuiObject, itemId: string, color: Color3)
+	--[[ Data ]]
+
+	local piece = I.G_Cosmetics.GetPieces()[itemId] --- @type Cosmetics_PieceData?
+
+	--[[ Elements ]]
+
+	local tab: Frame = card:FindFirstChild("S_SlotTab", true)
+	local slot: TextLabel = card:FindFirstChild("S_Slot", true)
+
+	--[[ Applying ]]
+
+	tab.Visible = piece ~= nil
+	slot.Visible = piece ~= nil
+	slot.Text = if piece then piece.Slot else ""
+	for _index: number, fill: Instance in ipairs(tab:GetChildren()) do
+		if fill.Name == "Fill" then
+			fill.ImageColor3 = color
+		end
+	end
+end
+
 --%%%%%%%%%%%%%%%%%%%% Take
 
 --[[

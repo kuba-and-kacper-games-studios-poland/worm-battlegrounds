@@ -35,11 +35,15 @@ function Module.Init()
 	------ INITIALIZATION ------
 	----------------------------
 
-	-- The last matches' XP the lobby hasn't played back yet (a JSON Progression_Replay, "" when there's none)
+	--[[
+		The last matches' XP the lobby hasn't played back yet (a JSON Progression_Replay, "" when there's none), and the
+		weapon looks an admin gave ({ [itemId]: "Shiny" | "Golden" }), worn beside the ones the level opened
+	]]
 	--- @type Player_ProfileData
 	local _pt = I.Player.ProfileTemplate
 	_pt["Progression"] = {
 		Replay = "",
+		Variants = {},
 	}
 
 	I.G_Player.OnPlayerAdded(I.Priority.Replicator, function(player: Player)
@@ -69,12 +73,15 @@ function Module.Init()
 		AddXP = Module.AddXP,
 		AddLevels = Module.AddLevels,
 		SetReplay = Module.SetReplay,
+		AddReplayDiamonds = Module.AddReplayDiamonds,
+		SetWeaponVariant = Module.SetWeaponVariant,
 
 		--[[ Methods ]]
 
 		GetLevel = Module.GetLevel,
 		GetProgress = Module.GetProgress,
 		GetReplay = Module.GetReplay,
+		GetGivenVariants = Module.GetGivenVariants,
 	}
 end
 
@@ -83,8 +90,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Setup Player
 
 --[[
-	Shows a joining player's level: the Level attribute, their Progression folder (with any XP replay still to play)
-	and the player list.
+	Shows a joining player's level: the Level attribute, their Progression folder (with any XP replay still to play),
+	the player list, and the weapon looks an admin gave them (the WeaponVariants attribute).
 ]]
 function Module._setupPlayer(player: Player)
 	-- Check if player is valid | SERVER
@@ -96,6 +103,7 @@ function Module._setupPlayer(player: Player)
 
 	I.Leaderstats.AddValue(player, "Level", Module.GetLevel(player), "IntValue", 2)
 	Module._publish(player)
+	Module._publishVariants(player)
 	I.Replicator.Set(player, _localName, "Replay", I.Player.GetProfile(player).Data["Progression"]["Replay"])
 end
 
@@ -233,6 +241,90 @@ function Module.SetReplay(player: Player, replay)
 	I.Replicator.Set(player, _localName, "Replay", moduleData["Replay"])
 end
 
+--%%%%%%%%%%%%%%%%%%%% Add Replay Diamonds
+
+--[[
+	**SERVER** |
+	Adds diamonds a player earned outside the lobby (a match, the tutorial) to what their lobby plays back, so it shows
+	them flying into the diamonds as they arrive. A replay with no XP lines plays only the diamonds.
+]]
+function Module.AddReplayDiamonds(player: Player, amount: string)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Checks ]]
+
+	-- Check if there are diamonds to show
+	if amount == "0" then
+		return
+	end
+
+	--[[ Data ]]
+
+	local progress = Module.GetProgress(player) --- @type Progression_Progress
+	local replay = Module.GetReplay(player) or { Lines = {}, Before = progress, After = progress, Costs = {} } --- @type Progression_Replay
+
+	--[[ Saving ]]
+
+	replay.Diamonds = tostring(I.BN.new(replay.Diamonds or "0") + I.BN.new(amount))
+	Module.SetReplay(player, replay)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Set Weapon Variant
+
+--[[
+	**SERVER** |
+	Gives a player a weapon's or utility's look by hand (an admin's command), saved beside the looks their level opens:
+	"Shiny", "Golden", or nil to take the given one away (what their level or copies give stays). Returns whether it
+	changed.
+]]
+--- @return boolean
+function Module.SetWeaponVariant(player: Player, itemId: string, variant: string?)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return false
+	end
+
+	--[[ Checks ]]
+
+	-- Check if the item is a weapon or a utility and the look is a known one
+	if not (I.G_Arsenal.IsWeapon(itemId) or I.G_Arsenal.IsUtility(itemId)) or (variant ~= nil and not _settings.UNLOCK_LOOKS[variant]) then
+		return false
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Progression"]
+
+	--[[ Saving ]]
+
+	moduleData["Variants"][itemId] = variant
+
+	--[[ Publishing ]]
+
+	Module._publishVariants(player)
+
+	--[[ Returning ]]
+
+	return true
+end
+
+--%%%%%%%%%%%%%%%%%%%% Publish Variants
+
+--[[
+	Writes the weapon looks an admin gave a player on the Player (WeaponVariants, JSON), where every screen reads them:
+	their loadout, and their snail's weapon on everyone's lobby stage.
+]]
+function Module._publishVariants(player: Player)
+	--[[ Saving ]]
+
+	player:SetAttribute("WeaponVariants", I.S.HttpService:JSONEncode(Module.GetGivenVariants(player)))
+end
+
 --%%%%%%%%%%%%%%%%%%%% Publish
 
 --[[
@@ -305,7 +397,7 @@ end
 
 --[[
 	**SERVER** |
-	Returns the XP replay a player's lobby hasn't played yet, or nil.
+	Returns the XP and diamonds replay a player's lobby hasn't played yet, or nil.
 ]]
 --- @return Progression_Replay?
 function Module.GetReplay(player: Player)
@@ -331,6 +423,24 @@ function Module.GetReplay(player: Player)
 	--[[ Returning ]]
 
 	return if success then result else nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Given Variants
+
+--[[
+	**SERVER** |
+	Returns the weapon looks an admin gave a player, by item id ("Shiny" or "Golden").
+]]
+--- @return { [string]: string }
+function Module.GetGivenVariants(player: Player)
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+
+	--[[ Returning ]]
+
+	return profileData["Progression"]["Variants"]
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get XP

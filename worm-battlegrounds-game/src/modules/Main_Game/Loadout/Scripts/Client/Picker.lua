@@ -15,7 +15,11 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 local elems = {} --- @type { [string]: Instance }
 local prefabs = {} --- @type { [string]: Instance }
 
--- The slot the picker fills
+--[[ General ]]
+
+local moduleGui: ScreenGui
+
+-- The slot the picker fills (0: opened from the Bazooka's card, which no other item replaces)
 local pickingSlot: number = 1
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,7 +43,7 @@ local Module = {}
 function Module.Start()
 	--[[ Elements ]]
 
-	local moduleGui: ScreenGui = I.UserInterface.UI[_settings.PICKER_GUI_NAME]
+	moduleGui = I.UserInterface.UI[_settings.PICKER_GUI_NAME]
 	elems["Items"] = moduleGui:FindFirstChild("U_Items", true) --- @type ScrollingFrame
 	elems["Empty"] = moduleGui:FindFirstChild("S_Empty", true) --- @type ImageButton
 	prefabs["ItemRow"] = elems["Items"]:FindFirstChild("PREFAB | ItemRow") --- @type Frame
@@ -49,6 +53,7 @@ function Module.Start()
 
 	I.Topic.Subscribe("WidgetManager_Opened", Module._onOpened)
 	I.Interact.OnPress(elems["Empty"], Module._empty)
+	I.S.Players.LocalPlayer:GetAttributeChangedSignal("WeaponLooks"):Connect(Module._redraw)
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -56,7 +61,8 @@ end
 --%%%%%%%%%%%%%%%%%%%% Open For
 
 --[[
-	Opens the picker to fill a slot.
+	Opens the picker to fill a slot, or for the Bazooka (slot 0), whose look the loadout's look tab picks beside it;
+	already open, it's drawn again for that slot.
 ]]
 function Module.OpenFor(slot: number)
 	--[[ Saving ]]
@@ -65,15 +71,38 @@ function Module.OpenFor(slot: number)
 
 	--[[ Opening ]]
 
+	if moduleGui.Enabled then
+		Module._redraw()
+		return
+	end
 	I.WidgetManager.Open(_settings.PICKER_GUI_NAME)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Redraw
+
+--[[
+	Draws the open picker again: another slot picked, or a weapon's look changed on the look tab.
+]]
+function Module._redraw()
+	--[[ Checks ]]
+
+	-- Check if the picker is open
+	if not moduleGui.Enabled then
+		return
+	end
+
+	--[[ Drawing ]]
+
+	Module._onOpened(_settings.PICKER_GUI_NAME)
 end
 
 --%%%%%%%%%%%%%%%%%%%% On Opened
 
 --[[
-	Draws the picker when it opens: a card per weapon and utility, owned ones first by rarity with their copies (a
-	Shiny one in its holo foil, a Golden one in its gold rim), the one in this slot selected and those in other slots
-	in the equipped look, then the ones not owned yet, locked.
+	Draws the picker when it opens: a card per weapon and utility, owned ones first by rarity with their copies (each
+	in the look it wears: a Shiny one in its holo foil, a Golden one in its gold rim), the one in this slot selected
+	and those in other slots in the equipped look, then the ones not owned yet, locked. Opened from the Bazooka, the
+	Bazooka is selected, no card replaces it and Empty hides.
 ]]
 function Module._onOpened(widgetName: string)
 	--[[ Checks ]]
@@ -88,6 +117,10 @@ function Module._onOpened(widgetName: string)
 	local standard = I.Inventory.Items and I.Inventory.Items.Standard or {} --- @type { [string]: string }
 	local loadoutRep: Folder? = I.Replicator.GetFolder(_localName)
 
+	--[[ Empty ]]
+
+	elems["Empty"].Visible = pickingSlot ~= 0
+
 	--[[ Clearing ]]
 
 	for _index: number, child: Instance in ipairs(elems["Items"]:GetChildren()) do
@@ -101,11 +134,19 @@ function Module._onOpened(widgetName: string)
 	local itemIds = {} --- @type { string }
 	for itemId: string in pairs(I.G_Inventory.Items) do
 		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData
-		if itemId ~= _settings.BASIC_WEAPON and table.find(_settings.SLOT_CATEGORIES, item.Category) then
+		local shown: boolean = not item.Disabled or standard[itemId] ~= nil
+		if shown and table.find(_settings.SLOT_CATEGORIES, item.Category) then
 			table.insert(itemIds, itemId)
 		end
 	end
+	if not table.find(itemIds, _settings.BASIC_WEAPON) then
+		table.insert(itemIds, _settings.BASIC_WEAPON)
+	end
 	table.sort(itemIds, function(a: string, b: string): boolean
+		-- The Bazooka first: every player holds it, always in the first slot
+		if (a == _settings.BASIC_WEAPON) ~= (b == _settings.BASIC_WEAPON) then
+			return a == _settings.BASIC_WEAPON
+		end
 		local ownedA: boolean = standard[a] ~= nil
 		local ownedB: boolean = standard[b] ~= nil
 		if ownedA ~= ownedB then
@@ -123,11 +164,13 @@ function Module._onOpened(widgetName: string)
 
 	local row: Frame
 	for index: number, itemId: string in ipairs(itemIds) do
-		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData
-		local owned: boolean = standard[itemId] ~= nil
-		local copies: number = tonumber(standard[itemId]) or 0
+		local item = I.G_Inventory.Items[itemId] --- @type Inventory_ItemData?
+		local basic: boolean = itemId == _settings.BASIC_WEAPON
+		local name: string = if item then item.Name else itemId
+		local rarity: string = if item then item.Rarity else _settings.BASIC_WEAPON_RARITY
+		local owned: boolean = basic or standard[itemId] ~= nil
 		local inSlot: number? = Module._getSlotOf(loadoutRep, itemId)
-		local look: string = if inSlot == pickingSlot then "Selected" elseif inSlot then "Equipped" else ""
+		local look: string = if inSlot == pickingSlot or basic and pickingSlot == 0 then "Selected" elseif inSlot or basic then "Equipped" else ""
 
 		-- A new row every ITEMS_PER_ROW cards
 		if (index - 1) % _settings.ITEMS_PER_ROW == 0 then
@@ -144,20 +187,22 @@ function Module._onOpened(widgetName: string)
 		card.Name = itemId
 		card.LayoutOrder = index
 		card.Visible = true
-		card:FindFirstChild("S_Icon").Image = item.IconId
-		card:FindFirstChild("S_Name").Text = item.Name
-		card:FindFirstChild("S_Amount").Text = if owned then `x{standard[itemId]}` else ""
-		card:FindFirstChild("S_Rarity").ImageColor3 = I.Rarity.GetLook(item.Rarity).Base
+		card:FindFirstChild("S_Icon").Image = if item then item.IconId else I.G_Arsenal.Get(itemId).Icon
+		card:FindFirstChild("S_Name").Text = name
+		card:FindFirstChild("S_Amount").Text = if standard[itemId] then `x{standard[itemId]}` else ""
+		card:FindFirstChild("S_Rarity").ImageColor3 = I.Rarity.GetLook(rarity).Base
 		card:FindFirstChild("S_Locked").Visible = not owned
-		background:FindFirstChild("S_Foil").Visible = copies >= _settings.SHINY_COPIES and copies < _settings.GOLDEN_COPIES
-		background:FindFirstChild("S_Gold").Visible = copies >= _settings.GOLDEN_COPIES
+		local worn: string = I.G_Loadout.GetWornLook(I.S.Players.LocalPlayer, itemId)
+		background:FindFirstChild("S_Foil").Visible = worn == "Shiny"
+		background:FindFirstChild("S_Gold").Visible = worn == "Golden"
 		background:FindFirstChild("Stroke2").Image = card:GetAttribute(`Look_{look}Stroke2`)
 		background:FindFirstChild("Stroke").Image = card:GetAttribute(`Look_{look}Stroke`)
 		background:FindFirstChild("Stroke").ImageColor3 = card:GetAttribute(`Look_{look}StrokeColor`)
-		card:SetAttribute("HoverInfo_Title", `{item.Name}: {Module._getInfo(I.G_Arsenal.Get(itemId))}`)
-		card:SetAttribute("HoverInfo_Rarity", item.Rarity)
+		card:SetAttribute("HoverInfo_Title", `{name}: {Module._getInfo(I.G_Arsenal.Get(itemId))}`)
+		card:SetAttribute("HoverInfo_Rarity", rarity)
 		card.Parent = row:FindFirstChild("Content")
-		if owned then
+		-- The Bazooka shows, but stays in its own slot, and nothing replaces it
+		if owned and not basic and pickingSlot ~= 0 then
 			I.Interact.OnPress(card, function()
 				Module._pick(itemId)
 			end)

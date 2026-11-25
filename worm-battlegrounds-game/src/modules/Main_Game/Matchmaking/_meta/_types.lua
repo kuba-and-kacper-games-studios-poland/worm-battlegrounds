@@ -13,6 +13,7 @@
 --- @field Loadout { string }
 --- @field ShinyItems { [string]: boolean }
 --- @field GoldenItems { [string]: boolean }
+--- @field ItemLooks { [string]: string }
 --- @field Skin string
 --- @field Shiny boolean
 local _matchmaking_Card = {}
@@ -34,6 +35,20 @@ local _matchmaking_Card = {}
 --- @field MapId string
 --- @field Roster { Match_RosterEntry }
 local _matchmaking_Lobby = {}
+
+--- @class Matchmaking_Frontier
+---
+--- # General #
+---
+--- @field Id string
+--- @field MapId string
+---
+--- # Seats #
+---
+--- @field Size number
+--- @field Players number
+--- @field EndsAt number
+local _matchmaking_Frontier = {}
 
 --- @class Matchmaking_LocalEntry
 ---

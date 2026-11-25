@@ -1,8 +1,8 @@
 # Shop
 
-The shop: the 5 diamond packs and the 4 game passes, every benefit listed, prices read live from Roblox, with the player's diamonds and coins and **Back** at the top.
+The shop: the 5 diamond packs and the 4 game passes, every benefit listed, prices read live from Roblox, with the player's diamonds and **Back** at the top.
 
-**Look.** The studio's `Shop` design (2026-11-12), ported 1:1 as `Primitive` nodes (its pictures, fonts and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive` ports"). It fills the screen: SHOP top left, the two balances and a red Back top right, a row of diamond pack cards over a row of game pass cards. Every price sits on a green button, Roblox's Robux icon and the number filling it (one line, centred); an owned pass's button turns grey. The balances show the studio's diamond and coin; each pack and pass card shows its own picture (the Shop module's `Icon`), fitted above the pack's name and left of the pass's.
+**Look.** The studio's `Shop` design (2026-11-12), ported 1:1 as `Primitive` nodes (its pictures, fonts and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive` ports"). It fills the screen: SHOP top left, the diamond balance and a red Back top right, a row of diamond pack cards over a row of game pass cards. Every price sits on a green button, Roblox's Robux icon and the number filling it (one line, centred); an owned pass's button turns grey. The balance shows the studio's diamond (in the old coin chip's spot beside Back since 2026-11-25, when the coin chip went); each pack and pass card shows its own picture (the Shop module's `Icon`), fitted above the pack's name and left of the pass's.
 
 |  |  |
 | --- | --- |
@@ -16,7 +16,7 @@ The shop: the 5 diamond packs and the 4 game passes, every benefit listed, price
 
 | Element | Kind | What game code does with it |
 | --- | --- | --- |
-| `U_Widget` › `S_Diamonds`, `S_Coins` | TextLabel (`Currency_Slot`) | ume's Currency writes the balances; each has a UIScale (`S_DiamondsScale`, `S_CoinsScale`) and a `Currency_UIScale` ObjectValue |
+| `U_Widget` › `S_Diamonds` | TextLabel (`Currency_Slot`, in the `DiamondsBalance` chip) | ume's Currency writes the balance; it has a UIScale (`S_DiamondsScale`) and a `Currency_UIScale` ObjectValue |
 | `U_Widget` › `S_Close` | ImageButton | Back: closes the shop (its tags) |
 | `U_Packs` | Frame with a horizontal UIListLayout | Holds one `Pack` per diamond pack |
 | `U_Passes` | Frame with a UIGridLayout | Holds one `Pass` per game pass |
@@ -40,7 +40,7 @@ The game's `Shop` module draws it on `WidgetManager_Opened` with `Shop`. The Lob
 
 ### Setup
 
-Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Shop`, `Enabled` off. Then point each `Currency_UIScale` ObjectValue at the UIScale beside it (`S_Diamonds` › `Currency_UIScale` → `S_DiamondsScale`, `S_Coins` › `Currency_UIScale` → `S_CoinsScale`): a gui table can't hold an ObjectValue's target. WidgetManager opens it (a button's `Interact_Button` with `Interact_Function = "Toggle"`, `Interact_Arg1 = "Shop"`, or `I.WidgetManager.Open("Shop")`). A restyled copy keeps its `Name`, Ids and prefab names. Prices come from `GetProductInfoAsync`, never hard-coded.
+Export it with the Gui tool (**Export to StarterGui**): a ScreenGui named `Shop`, `Enabled` off. Then point the `Currency_UIScale` ObjectValue at the UIScale beside it (`S_Diamonds` › `Currency_UIScale` → `S_DiamondsScale`): a gui table can't hold an ObjectValue's target. WidgetManager opens it (a button's `Interact_Button` with `Interact_Function = "Toggle"`, `Interact_Arg1 = "Shop"`, or `I.WidgetManager.Open("Shop")`). A restyled copy keeps its `Name`, Ids and prefab names. Prices come from `GetProductInfoAsync`, never hard-coded.
 
 ### Input
 

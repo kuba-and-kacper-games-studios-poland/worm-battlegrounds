@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -97,6 +98,11 @@ function Module._mainLoop()
 		matchFolder:SetAttribute("Mode", metadata.Mode)
 		matchFolder:SetAttribute("MapId", metadata.MapId)
 		matchFolder:SetAttribute("Size", metadata.Size)
+
+		-- What the waiting room shows: the lobby names them, since this place has no MatchBoard
+		matchFolder:SetAttribute("ModeName", metadata.ModeName)
+		matchFolder:SetAttribute("ModeIcon", metadata.ModeIcon)
+		matchFolder:SetAttribute("MapName", metadata.MapName)
 		Module.SetPhase("Waiting")
 
 		-- The map shows while everyone arrives: a party's last member can take a while, and an empty arena looks broken
@@ -160,7 +166,8 @@ end
 --[[
 	**SERVER** |
 	Plays one match on this server: loads the map (unless `loaded` says it's fresh), seats the participants, runs the
-	drop and the landing, then turns until one team is left, and ends it. Returns false when the map didn't load.
+	drop and the landing, the battle's intro, then turns until one team is left, and ends it. Returns false when the map
+	didn't load.
 ]]
 --- @return boolean
 function Module.Play(loaded: boolean?)
@@ -169,6 +176,8 @@ function Module.Play(loaded: boolean?)
 	--- @type Match_Metadata
 	local metadata = Roster.GetMetadata()
 	matchFolder:SetAttribute("MapId", metadata.MapId)
+	-- Wind blows only where a custom lobby or local play turned it on (the owner, 2026-11-24); the HUD hides it otherwise
+	matchFolder:SetAttribute("WindOn", metadata.Wind == true)
 	if not loaded then
 		I.Snails.Clear()
 		if not I.Arena.Load(metadata.MapId) then
@@ -192,6 +201,10 @@ function Module.Play(loaded: boolean?)
 
 	Module._drop()
 	Module._land()
+
+	-- The battle begins: every screen plays its intro (MatchHud) before the first turn
+	Module.SetPhase("Battle")
+	task.wait(_settings.BATTLE_INTRO_SECONDS)
 	while not Placement.IsOver() do
 		-- The Studio map drops a match every player left, so its lobby can start another
 		if Connection.IsStudioMap() and #Connection.GetPlayersInMatch() == 0 then
@@ -326,7 +339,8 @@ end
 
 --[[
 	The drop phase: everyone gets a spread-out random spot in the sky over land, and players have DROP_SECONDS to place
-	theirs anywhere in the play area, and to move it, all of that time; the tutorial ends once its player placed.
+	theirs anywhere in the play area, and to move it, all of that time (SOLO_DROP_SECONDS in a solo match, with only
+	bots to wait for); the tutorial ends once its player placed.
 ]]
 function Module._drop()
 	--[[ Data ]]
@@ -335,7 +349,8 @@ function Module._drop()
 	local participants = Roster.GetParticipants() --- @type { Match_Participant }
 	local tutorial: boolean = Roster.GetMetadata().Kind == "Tutorial"
 	local spots = I.Arena.GetLandSpots(if tutorial then _settings.TUTORIAL_SPOT_COUNT else #participants * _settings.DROP_SPOT_CHOICES, I.Settings["Snails"].ROOT_SIZE / 2) --- @type { Vector3 }
-	local dropSeconds: number = if tutorial then _settings.TUTORIAL_DROP_SECONDS else _settings.DROP_SECONDS
+	local kind: string = Roster.GetMetadata().Kind
+	local dropSeconds: number = if tutorial then _settings.TUTORIAL_DROP_SECONDS elseif kind == "Solo" then _settings.SOLO_DROP_SECONDS else _settings.DROP_SECONDS
 
 	--[[ Checks ]]
 

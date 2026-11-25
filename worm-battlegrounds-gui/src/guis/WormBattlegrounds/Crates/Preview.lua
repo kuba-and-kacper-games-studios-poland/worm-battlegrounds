@@ -27,11 +27,9 @@ local ODDS = {
 	{ "Common", { { "Uzi", "14.75%" }, { "Baseball Bat", "14.75%" } } },
 }
 
--- The weapon crate's prices in coins, by pack size
---- @type { [number]: string }
+-- The weapon crate's prices in diamonds, by pack size
 --- @type { [string]: { [number]: string } }
 local PRICES = {
-	Coins = { [1] = "100", [3] = "300", [10] = "1,000" },
 	Diamonds = { [1] = "50", [3] = "150", [10] = "500" },
 }
 
@@ -72,7 +70,7 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the widget as the Crates module does: the tabs (the first selected), both rows of buy buttons' prices, the
+	Fills the widget as the Crates module does: the tabs (the first selected), its row of buy buttons' prices, the
 	weapon crate's odds by rarity and its 3D model on the pedestal (when the place has it).
 ]]
 --- @param preview UmeGui_Preview
@@ -95,12 +93,12 @@ function Module.Apply(preview)
 
 	--[[ Buy Buttons ]]
 
-	-- VIP's free crate is the coins row's x1
+	-- VIP's free crate is the diamonds row's x1
 	--- @param prices { [number]: string }
 	for currency: string, prices in pairs(PRICES) do
 		for count: number, price: string in pairs(prices) do
 			local button: ImageButton = preview.View:Get(`U_{currency}X{count}`).Instance
-			local freeOne: boolean = preview.Values.S_Free and count == 1 and currency == "Coins"
+			local freeOne: boolean = preview.Values.S_Free and count == 1 and currency == "Diamonds"
 			button:FindFirstChild("S_Price", true).Text = if freeOne then "FREE" else price
 			button:FindFirstChild("S_Icon", true).Visible = not freeOne
 		end

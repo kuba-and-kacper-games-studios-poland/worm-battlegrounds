@@ -41,6 +41,9 @@ local titleOffset: Vector2
 -- The wind shown last, so a change flashes
 local shownWind: number? = nil
 
+-- The turn panel's place from the gui, put back when the device isn't a phone or tablet
+local turnPosition: UDim2
+
 --[[ Feel ]]
 
 -- The last tick played (seconds left), the tension band's pulse so far, and how many callouts have popped
@@ -77,9 +80,15 @@ function Module.Start(gui: ScreenGui)
 	elems["Banner"] = elems["Turn"]:FindFirstChild("S_Banner", true) --- @type TextLabel
 	elems["Wait"] = elems["Turn"]:FindFirstChild("S_Wait", true) --- @type TextLabel
 	elems["Timer"] = elems["Turn"]:FindFirstChild("S_Timer", true) --- @type TextLabel
+	elems["TimerPlate"] = elems["Timer"].Parent --- @type Frame
 	elems["WindArrow"] = elems["Turn"]:FindFirstChild("S_WindArrow", true) --- @type TextLabel
 	elems["Wind"] = elems["Turn"]:FindFirstChild("S_Wind", true) --- @type TextLabel
-	elems["Stamina"] = gui:FindFirstChild("U_Stamina") --- @type Frame
+	elems["WindPlate"] = elems["Wind"].Parent --- @type Frame
+	elems["Health"] = gui:FindFirstChild("U_Health", true) --- @type Frame
+	elems["HealthBar"] = elems["Health"]:FindFirstChild("S_Bar") --- @type ImageLabel
+	elems["HealthMask"] = elems["Health"]:FindFirstChild("S_BarMask") --- @type ImageLabel
+	elems["HealthText"] = elems["Health"]:FindFirstChild("S_Text") --- @type TextLabel
+	elems["Stamina"] = gui:FindFirstChild("U_Stamina", true) --- @type Frame
 	elems["StaminaBar"] = elems["Stamina"]:FindFirstChild("S_Bar") --- @type ImageLabel
 	elems["StaminaMask"] = elems["Stamina"]:FindFirstChild("S_BarMask") --- @type ImageLabel
 	elems["StaminaText"] = elems["Stamina"]:FindFirstChild("S_Text") --- @type TextLabel
@@ -100,19 +109,23 @@ function Module.Start(gui: ScreenGui)
 	elems["CalloutTitle"] = elems["CalloutContent"]:FindFirstChild("S_Title") --- @type TextLabel
 	elems["CalloutTitleGradient"] = elems["CalloutTitle"]:FindFirstChild("S_TitleGradient") --- @type UIGradient
 	elems["CalloutSub"] = elems["CalloutContent"]:FindFirstChild("S_Sub") --- @type TextLabel
+	elems["KnockedOut"] = gui:FindFirstChild("U_KnockedOut") --- @type Frame
 	elems["Tension"] = gui:FindFirstChild("U_Tension") --- @type Frame
 	elems["TensionGlow"] = elems["Tension"]:FindFirstChild("S_Glow") --- @type UIStroke
+	elems["Inset"] = gui:FindFirstChild("U_Inset") --- @type UIPadding
 	bannerColor = elems["Banner"].TextColor3
 	timerColor = elems["Timer"].TextColor3
 	waitColor = elems["Wait"].TextColor3
 	windColor = elems["Wind"].TextColor3
 	titleRotation = elems["CalloutTitleGradient"].Rotation
 	titleOffset = elems["CalloutTitleGradient"].Offset
+	turnPosition = elems["Turn"].Position
 
 	--[[ Connections ]]
 
 	matchFolder = I.Match.GetFolder()
 	matchFolder:GetAttributeChangedSignal("Wind"):Connect(Module._refreshWind)
+	matchFolder:GetAttributeChangedSignal("WindOn"):Connect(Module._refreshWind)
 	matchFolder:GetAttributeChangedSignal("TurnOrder"):Connect(Module._refresh)
 	matchFolder:GetAttributeChangedSignal("SuddenDeath"):Connect(Module._onSuddenDeath)
 	matchFolder:GetAttributeChangedSignal("HandOff"):Connect(Module._refresh)
@@ -121,17 +134,33 @@ function Module.Start(gui: ScreenGui)
 	I.Topic.Subscribe("Match_TurnStarted", Module._refresh)
 	I.Topic.Subscribe("Match_TurnStarted", Module._onTurnStarted)
 	I.Topic.Subscribe("Match_MyTurn", Module._refresh)
-	Module._refresh()
+	I.Topic.Subscribe("Platform_Changed", Module._refreshLayout)
+	Module._refreshLayout()
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Refresh Layout
+
+--[[
+	Lifts the turn panel to the top of the HUD on phones and tablets (TURN_MOBILE_POSITION; its smaller size is the
+	gui's Utils_MobileSize), clear of the aim, and puts it back elsewhere; then refreshes what it shows.
+]]
+function Module._refreshLayout()
+	--[[ Applying ]]
+
+	elems["Turn"].Position = if I.Platform.Current == "Mobile" then _settings.TURN_MOBILE_POSITION else turnPosition
+	Module._refresh()
+end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
 	Shows the turn panel (once a local turn's player has the controller) and the turn list while turns run, the stamina
-	bar on the player's own turn (and after a throw while they still move), and whose turn it is: "Your turn!", or
-	another snail's name in its team colour with how many turns until the player's own; ticks only while it shows.
+	bar on the player's own turn (and after a throw while they still move), and whose turn it is: "Your turn!" (not on
+	phones and tablets, where the callout and the turn arrow say it and the line sat in the aim), or another snail's
+	name in its team colour with how many turns until the player's own; ticks only while it shows. The tutorial has no
+	clock and no turn count (the owner, 2026-11-24).
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -142,13 +171,15 @@ function Module._refresh()
 	local turnsLeft: number? = if myTurn then nil else Module._getTurnsLeft()
 	local activeId: string? = I.Match.GetActive()
 	local active: Model? = if activeId and not myTurn then I.Snails.Get(activeId) else nil
+	local tutorial: boolean = matchFolder:GetAttribute("Kind") == "Tutorial"
 
 	--[[ Banner ]]
 
-	elems["Banner"].Visible = myTurn or active ~= nil
+	elems["Banner"].Visible = active ~= nil or (myTurn and I.Platform.Current ~= "Mobile")
 	elems["Banner"].Text = if active then `{active:GetAttribute("DisplayName")}'s turn` else "Your turn!"
 	elems["Banner"].TextColor3 = if active then active:GetAttribute("Color") else bannerColor
-	elems["Wait"].Visible = turnsLeft ~= nil
+	elems["Wait"].Visible = turnsLeft ~= nil and not tutorial
+	elems["TimerPlate"].Visible = not tutorial
 	elems["Wait"].Text = if turnsLeft == 1 then "You're next!" elseif turnsLeft then `You play in {turnsLeft} turns` else ""
 
 	--[[ Visibility ]]
@@ -159,6 +190,8 @@ function Module._refresh()
 	-- After a throw the player runs on with what's left until it bursts (SnailControl's CanMove)
 	local mine: Model? = I.Snails.GetMine()
 	elems["Stamina"].Visible = myTurn and (phase == "Turn" or phase == "Flight" and mine ~= nil and mine:GetAttribute("CanMove") == true)
+	-- The player's own health at the bottom left through the turns, while their snail is in play (the owner, 2026-11-24)
+	elems["Health"].Visible = inTurns and mine ~= nil and mine:GetAttribute("Alive") == true
 
 	--[[ Turn List ]]
 
@@ -246,8 +279,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Refresh Wind
 
 --[[
-	Points the wind's arrow the way the wind blows and writes its strength with the side it blows to ("+3" right,
-	"-3" left); no arrow in still air. A change of wind flashes the strength in NEXT_FLASH_COLOR.
+	Shows the wind plate only in a match with wind (WindOn), points the wind's arrow the way the wind blows and writes its
+	strength with the side it blows to ("+3" right, "-3" left); no arrow in still air. A change of wind flashes the
+	strength in NEXT_FLASH_COLOR.
 ]]
 function Module._refreshWind()
 	--[[ Local Variables ]]
@@ -256,6 +290,8 @@ function Module._refreshWind()
 
 	--[[ Applying ]]
 
+	-- No wind plate in a match without wind (the owner, 2026-11-24: off unless a custom lobby or local play turns it on)
+	elems["WindPlate"].Visible = matchFolder:GetAttribute("WindOn") == true
 	elems["WindArrow"].Visible = wind ~= 0
 	elems["WindArrow"].Text = if wind < 0 then "&lt;" else "&gt;"
 	elems["Wind"].Text = if wind == 0 then "0" else string.format("%+d", wind)
@@ -283,6 +319,13 @@ end
 	names the snail whose turn it is, in its colour, and holds while its player takes the controller (On Hand Off).
 ]]
 function Module._onTurnStarted(activeId: string)
+	--[[ Checks ]]
+
+	-- Check if the player is in the match (on the Studio map a match goes on beside the lobby)
+	if not I.S.Players.LocalPlayer:GetAttribute("InMatch") then
+		return
+	end
+
 	--[[ Local Variables ]]
 
 	local myTurn: boolean = I.Match.IsMyTurn()
@@ -388,9 +431,16 @@ end
 
 --[[
 	Plays the callout banner at a scale (Open Callout), holds CALLOUT_HOLD seconds (or the hold given), then closes it
-	(Close Callout).
+	(Close Callout). None while the knocked-out screen shows: it would cross it.
 ]]
 function Module._popCallout(scale: number, hold: number?)
+	--[[ Checks ]]
+
+	-- Check if the knocked-out screen is up
+	if elems["KnockedOut"].Visible then
+		return
+	end
+
 	--[[ Playing ]]
 
 	Module._closeCallout(Module._openCallout(scale), _settings.CALLOUT_IN_TWEENINFO.Time + (hold or _settings.CALLOUT_HOLD))
@@ -475,8 +525,8 @@ function Module._onSuddenDeath()
 
 	--[[ Checks ]]
 
-	-- Check if sudden death just started
-	if not liquid then
+	-- Check if sudden death just started, in the player's match
+	if not liquid or not I.S.Players.LocalPlayer:GetAttribute("InMatch") then
 		return
 	end
 
@@ -513,8 +563,8 @@ end
 
 --[[
 	Counts the turn down on the timer ("0:30"), held dimmed on the time left while a shot flies and settles (the owner,
-	2026-11-15), blank between turns, and fills the stamina bar from the
-	player's snail, and the jetpack's fuel bar over it while the snail wears one. The player's own last seconds tighten: the timer turns orange, then red as it ticks aloud (faster
+	2026-11-15), blank between turns, and fills the health and stamina bars at the bottom left from the
+	player's snail, and the jetpack's fuel bar over them while the snail wears one. The player's own last seconds tighten: the timer turns orange, then red as it ticks aloud (faster
 	and higher at the very end), a band pulses along the screen's sides, and Turn_TimeUp sounds when it runs out.
 ]]
 function Module._tick(deltaTime: number?)
@@ -568,11 +618,24 @@ function Module._tick(deltaTime: number?)
 	if ticking then
 		tensionPhase += (deltaTime or 0) * _settings.TENSION_PULSE_RATE * (2 - left / _settings.TICK_SOUND_FROM)
 		elems["TensionGlow"].Transparency = 0.35 + 0.3 * (1 + math.cos(tensionPhase * 2 * math.pi))
+
+		-- Along the whole screen's edges, up past the phone's top padding (U_Inset) to the screen's top, as on a PC (the owner, 2026-11-25: "make sure its streched too")
+		local padding: number = elems["Inset"].PaddingTop.Offset
+		elems["Tension"].Position = UDim2.new(0.5, 0, 0.5, -padding / 2)
+		elems["Tension"].Size = UDim2.new(_settings.TENSION_SIZE.X, 0, _settings.TENSION_SIZE.Y, _settings.TENSION_SIZE.Y * padding)
+	end
+
+	--[[ Health ]]
+
+	local mine: Model? = I.Snails.GetMine()
+	if elems["Health"].Visible and mine then
+		local health: number = mine:GetAttribute("Health") or 0
+		Module._cutBar(elems["HealthBar"], elems["HealthMask"], math.clamp(health / (mine:GetAttribute("MaxHealth") or 1), 0, 1))
+		elems["HealthText"].Text = string.format(_settings.HEALTH_FORMAT, health)
 	end
 
 	--[[ Stamina ]]
 
-	local mine: Model? = I.Snails.GetMine()
 	if not elems["Stamina"].Visible or not mine then
 		return
 	end

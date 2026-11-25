@@ -11,7 +11,9 @@ local _gui = {
 	--[[
 		A template: Match clones it over each snail's landing spot in the drop phase (the player's own follows their
 		pointer until placed), a map pin in its colour with its picture and name (Primitive nodes in the SnailTag's look,
-		2026-11-17), its tip on a small target: the aim crosshair's ring and a dot on the spot
+		2026-11-17), its tip on a small target: the aim crosshair's ring and a dot on the spot. Every dark outline is as
+		thick as the name's (0.07 of its 38 px text, about 2.7 px at design size: the owner, 2026-11-25), scaled to its
+		frame so it grows with the billboard
 	]]
 	Name = "DropMarker",
 	Kind = "Billboard",
@@ -64,7 +66,7 @@ local _gui = {
 									BorderStrokePosition = Enum.BorderStrokePosition.Center,
 									Color = Color3.fromRGB(20, 14, 10),
 									StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
-									Thickness = 0.12,
+									Thickness = 0.165,
 								},
 							},
 						},
@@ -106,7 +108,10 @@ local _gui = {
 						},
 						Children = {
 							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
-							{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 2 } },
+							{
+								Primitive = "UIStroke",
+								Props = { Color = Color3.fromRGB(20, 14, 10), StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.3 },
+							},
 						},
 					},
 				},
@@ -144,7 +149,7 @@ local _gui = {
 						},
 						Children = {
 							{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-							{ Primitive = "UIStroke", Props = { Thickness = 0.15, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+							{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 						},
 					},
 					-- The pin's point: a square turned 45°, its top half under the head
@@ -162,7 +167,10 @@ local _gui = {
 							ZIndex = 2,
 						},
 						Children = {
-							{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 4 } },
+							{
+								Primitive = "UIStroke",
+								Props = { Color = Color3.fromRGB(20, 14, 10), StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.066 },
+							},
 						},
 					},
 					-- The pin's head in the player's colour, their picture in it
@@ -180,7 +188,10 @@ local _gui = {
 						},
 						Children = {
 							{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0.5, 0) } },
-							{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(20, 14, 10), Thickness = 4 } },
+							{
+								Primitive = "UIStroke",
+								Props = { Color = Color3.fromRGB(20, 14, 10), StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.029 },
+							},
 							{
 								Primitive = "ImageLabel",
 								Id = "S_Avatar",

@@ -24,6 +24,8 @@ local data = {
         },
     ]]
 
+	--[[ Diamonds ]]
+
 	["Diamonds_Handful"] = {
 		Id = 3730916908,
 
@@ -86,6 +88,73 @@ local data = {
 				return false
 			end
 			return "Diamonds: 2500"
+		end,
+	},
+
+	--[[ Loadout Slots ]]
+
+	-- Each opens its loadout slot for Robux, offered only while it's the player's next slot to open (Loadout's SLOT_PRODUCTS)
+	["LoadoutSlot3"] = {
+		Id = 3736173219,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		Requirements = function(player: Player): boolean
+			return I.Loadout.GetUnlocked(player) + 1 == 3
+		end,
+
+		Reward = function(player: Player)
+			if not I.Loadout.AddBoughtSlot(player, 3) then
+				return false
+			end
+			return "Loadout slot: 3"
+		end,
+	},
+
+	["LoadoutSlot4"] = {
+		Id = 3736173750,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		Requirements = function(player: Player): boolean
+			return I.Loadout.GetUnlocked(player) + 1 == 4
+		end,
+
+		Reward = function(player: Player)
+			if not I.Loadout.AddBoughtSlot(player, 4) then
+				return false
+			end
+			return "Loadout slot: 4"
+		end,
+	},
+
+	["LoadoutSlot5"] = {
+		Id = 3736173966,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		Requirements = function(player: Player): boolean
+			return I.Loadout.GetUnlocked(player) + 1 == 5
+		end,
+
+		Reward = function(player: Player)
+			if not I.Loadout.AddBoughtSlot(player, 5) then
+				return false
+			end
+			return "Loadout slot: 5"
+		end,
+	},
+
+	["LoadoutSlot6"] = {
+		Id = 3736174180,
+
+		PurchasePlaces = { `{I.Config.PlaceLoader.PlaceId}` },
+		Requirements = function(player: Player): boolean
+			return I.Loadout.GetUnlocked(player) + 1 == 6
+		end,
+
+		Reward = function(player: Player)
+			if not I.Loadout.AddBoughtSlot(player, 6) then
+				return false
+			end
+			return "Loadout slot: 6"
 		end,
 	},
 }

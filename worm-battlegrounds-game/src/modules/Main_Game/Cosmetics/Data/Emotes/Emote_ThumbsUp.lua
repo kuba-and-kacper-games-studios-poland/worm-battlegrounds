@@ -4,7 +4,7 @@ local _data = {
 	--[[ Unlock ]]
 
 	Level = 0,
-	Coins = "100",
+	Diamonds = "50",
 
 	--[[ Look ]]
 

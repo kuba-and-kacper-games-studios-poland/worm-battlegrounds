@@ -48,6 +48,8 @@ function Module.Init(folder: Folder)
 
 	I.Network.GetEvent("Match_Leave", { "Player" }, { RateLimit = 1 })
 	I.Network.Fired("Match_Leave", Module._onLeave)
+	I.Network.GetEvent("Match_PlayAgain", { "Player" }, { RateLimit = 1 })
+	I.Network.Fired("Match_PlayAgain", Module._onPlayAgain)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Start
@@ -111,7 +113,7 @@ function Module.SendToLobby(players)
 
 	--[[ Teleporting ]]
 
-	I.Transition.SetDestination(going, "Back to the lobby…", "")
+	I.Transition.SetDestination(going, { Kicker = "Back to", Title = "The lobby" })
 	if I.TeleportExternal(going, I.Config.PlaceLoader.DefaultPlaceId, "TeleportGui") then
 		return
 	end
@@ -177,6 +179,54 @@ function Module._onLeave(player: Player)
 	--[[ Leaving ]]
 
 	Module._knockOutLeaver(Roster.GetParticipantOf(player))
+	Module.SendToLobby({ player })
+end
+
+--%%%%%%%%%%%%%%%%%%%% On Play Again
+
+--[[
+	A player whose snail is out pressed Play again: their profile remembers this match's kind and mode for
+	PLAY_AGAIN_SECONDS, which the lobby reads to put them straight into another one (a public match of the same mode, or
+	a solo match at the same difficulty), and they go back to the lobby. Only public and solo matches play again.
+]]
+function Module._onPlayAgain(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Data ]]
+
+	local participant = Roster.GetParticipantOf(player) --- @type Match_Participant?
+	local metadata = Roster.GetMetadata() --- @type Match_Metadata
+	local profile = I.Player.GetProfile(player) --- @type any
+
+	--[[ Checks ]]
+
+	-- Check if the player's snail is out
+	if not participant or not participant.Out then
+		return
+	end
+
+	-- Check if the match is one that plays again
+	if metadata.Kind ~= "Public" and metadata.Kind ~= "Solo" then
+		return
+	end
+
+	--[[ Saving ]]
+
+	profile.Data["Match"]["PlayAgain"] = {
+
+		--[[ General ]]
+
+		Kind = metadata.Kind,
+		Mode = metadata.Mode,
+		Difficulty = metadata.Difficulty,
+		Until = os.time() + _settings.PLAY_AGAIN_SECONDS,
+	}
+
+	--[[ Leaving ]]
+
 	Module.SendToLobby({ player })
 end
 

@@ -167,6 +167,47 @@ def Match_SuddenDeath():
     return score(build, 4.0)
 
 
+@sound("SCORED", -17)
+def Match_DropIn():
+    """The round starts and the snails drop in (GET READY): a military snare roll on the classic kit, sparse and soft
+    into a fast loud roll, bass drum beats closing in, over low strings and a low choir swelling on D and the classic
+    falling wind, faint (the owner, 2026-11-24: the numpy build sounded "too much AI... pixelated")."""
+    total = 2.4
+    notes = []
+    at, gap = 0.0, 0.2
+    while at < total - 0.1:
+        prog = at / total
+        notes.append(("snare", at, 0, 0, int(40 + 70 * prog ** 1.3)))
+        at += gap
+        gap = max(0.045, gap * 0.9)
+    notes += [("bassdrum", t, 0, 0, v) for t, v in ((0, 70), (0.8, 76), (1.4, 84), (1.8, 92), (2.05, 100), (2.25, 110))]
+    notes += [("strings", 0, total, 38, 70), ("strings2", 0.6, total - 0.6, 45, 64), ("lowchoir", 0, total, 26, 74)]
+    notes += [("horn", 1.2, 1.2, 50, 72), ("horn", 1.2, 1.2, 57, 66)]
+    wind = speed(load("action_falling"), 0.9)[: N(total)]
+    wind = wind * np.linspace(0.2, 1, len(wind)) ** 2
+    x = stack((sampled(notes, total + 0.6, wet=0.3), 0, 1), (wind, 0, 0.18))
+    return x * np.concatenate([np.linspace(0.55, 1, N(total)), np.ones(len(x) - N(total))])
+
+
+@sound("SCORED", -12)
+def Match_BattleBegins():
+    """THE BATTLE BEGINS, as the snails land: a 'da-da-DAAA' fanfare on the Great Strategy bright horn (two stabs, then
+    the held D major chord landing with the words' slam, 0.24 s in), with a snare flam on the stabs, and the crash,
+    the bass drum, the big hit and the font's orchestra hit on the chord, a low horn under it."""
+    hit = 0.24
+    notes = [("snare", 0, 0, 0, 84), ("snare", 0.12, 0, 0, 92)]
+    for at in (0, 0.12):
+        notes += [("brass", at, 0.09, 62, 100), ("brass", at, 0.09, 69, 96)]
+    notes += [("brass", hit, 1.4, p, v) for p, v in ((62, 108), (66, 100), (69, 104), (74, 110))]
+    notes += [("horn", hit, 1.5, 38, 96), ("horn2", hit, 1.5, 50, 84)]
+    notes += [("crash", hit, 0, 0, 112), ("bassdrum", hit, 0, 0, 120), ("kick", hit, 0, 0, 110), ("hit", hit, 0, 0, 104)]
+
+    def build(s):
+        setup(s, {0: 55})
+        s.note(0, hit * 140 / 60, 2, 62, 124, jitter=0, vjit=0)
+    return stack((sampled(notes, 2.6, wet=0.3), 0, 1), (score(build, 2.6), 0, 0.7))
+
+
 @sound("BUILT", -17)
 def Match_Knockout():
     """A knockout: a bright 'ding-ding' from the classic ping."""
@@ -803,7 +844,55 @@ def Variant_Golden():
 
 UPDATE_2026_11_17 = ["Xp_Line", "Xp_Tick", "Level_Up", "Frame_Unlock", "Free_Claim", "Drop_Place", "Emote_WheelOpen",
                      "Emote_WheelHover", "Variant_Shiny", "Variant_Golden"]
-UPDATES = {"update": UPDATE_2026_11_16, "update17": UPDATE_2026_11_17}
+
+
+# --- 2026-11-25: the diamonds payout (coins became diamonds): the burst out of the snail and each diamond landing in
+# the top bar's diamonds slot. The clink is crisp new synthesis on a finger-chime body, as the 17 Nov ticks are; the
+# burst is the classic swoosh and flashbulb with the finger chimes. Each reseeds so it builds the same every time.
+
+def gem(f, ring):
+    """A cut gem ringing: a glassy strike, its partials spread wide and inharmonic (as Variant_Shiny's glass), the
+    upper ones dying fast so it rings clean, never metal."""
+    return L.modal([f, f * 2.32, f * 4.25, f * 6.63], [ring, ring * 0.5, ring * 0.25, ring * 0.12],
+                   [1, 0.4, 0.18, 0.07], ring * 5)
+
+
+@sound("BUILT", -21)
+def Diamond_Collect():
+    """A diamond landing in the diamonds slot, once per icon of the payout's burst (up to 30, the game raising its
+    pitch from 1.0 to 1.6 across them): a crisp glassy 'clink', a gem dropping onto a pile (a bright glass strike on G7
+    over a softer one an octave down, a smaller one settling on them 22 ms later on C8, a finger-chime body on G6, a soft
+    tip), 0.2 s with no tail."""
+    L.reseed(101)
+    s = 0.2
+    body = sampled([("chimes", 0, 0.04, 91, 84)], 0.24, wet=0.08)
+    tip = L.spec(L.click(0.0015, 3500), hi=11000)
+    x = L.mix(s, (gem(3136, 0.045), 0, 0.5), (gem(1568, 0.05), 0, 0.4), (gem(4186, 0.03), 0.022, 0.25),
+              (body, 0, 0.7), (tip, 0, 0.15))
+    return fade(L.spec(x, lo=700, hi=12000), 0.0003, 0.09)
+
+
+@sound("BUILT", -19)
+def Diamond_Burst():
+    """The diamonds bursting out of the snail before they fly to the slot: a short sparkly shimmer (the classic swoosh,
+    quick and airy, and a soft flashbulb pop, over bright air rising), a finger-chime run up G major and a few glassy
+    gem 'tings' and glints scattering, all over 1.5 kHz so the '+amount' chime under it stays clear, 0.75 s."""
+    L.reseed(102)
+    s = 0.75
+    whoosh = L.spec(speed(load("swoosh"), 1.35), lo=1500)
+    air = L.bandsweep(L.noise(N(0.5)), 2000, 7500, q=1.4) * L.swell(0.5, 0.3, 1.6)
+    run = sampled([("chimes", 0.005 + i * 0.035, 0.12, p, 62 - i * 2) for i, p in enumerate((91, 95, 98, 103, 107))],
+                  s, wet=0.25)
+    tings = stack(*[(gem(f, 0.09), at, g) for f, at, g in ((3520, 0.01, 0.3), (4699, 0.09, 0.22), (3951, 0.18, 0.2),
+                                                           (5274, 0.27, 0.14))])
+    fizz = L.grains(0.6, 26, 6000, 11000, (0.002, 0.005), 1.4)
+    x = stack((whoosh, 0, 0.45), (L.spec(load("flashbulb"), lo=1500), 0, 0.25), (air, 0, 0.12), (run, 0, 0.85),
+              (tings, 0, 1), (twinkles(10, 0.45, 3500, 8000, 0.09, 0.06), 0.03, 1), (fizz, 0, 0.18))[: N(s)]
+    return fade(L.spec(x, lo=1500), 0.0005, 0.25)
+
+
+UPDATE_2026_11_25 = ["Diamond_Collect", "Diamond_Burst"]
+UPDATES = {"update": UPDATE_2026_11_16, "update17": UPDATE_2026_11_17, "update25": UPDATE_2026_11_25}
 
 
 # --- build -----------------------------------------------------------------------------------------------------------
@@ -813,7 +902,7 @@ def main():
     os.makedirs(out, exist_ok=True)
     meta = {}
     # Name some to build only them (python -I make_classic.py <out> Fire_Grenade ...); "update" builds the 2026-11-16
-    # set, "update17" the 2026-11-17 one
+    # set, "update17" the 2026-11-17 one, "update25" the 2026-11-25 one
     names = sys.argv[2:] or list(SOUNDS)
     if len(names) == 1 and names[0] in UPDATES:
         names = UPDATES[names[0]]

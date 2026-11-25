@@ -20,9 +20,16 @@ local moduleGui: ScreenGui
 
 --[[ State ]]
 
--- What the ring sits over: a gui element, a part (followed as it moves) or a spot in the world; nil shows only the hint
+-- What the arrow points at: a gui element, a part (followed as it moves) or a spot in the world
 local target: (GuiObject | BasePart | Vector3)? = nil
-local shownText: string = ""
+
+--[[
+	Where the hint goes: nil points the arrow from above (from below near the screen's top), "Below" points it up from
+	under the target (a button with a title over it), "Left" points it right from beside the target with the hint left
+	of it (a card in a column of cards), "Alone" shows the hint by itself under the target with no arrow or ring (the
+	first drag, under the player's snail)
+]]
+local placing: ("Below" | "Left" | "Right" | "Beside" | "Alone")? = nil
 local stepConnection: RBXScriptConnection?
 
 -- The funnel steps already reported to the server this session (the Roblox onboarding funnel counts each once)
@@ -55,6 +62,9 @@ function Module.Start()
 	elems["Arrow"] = moduleGui:FindFirstChild("U_Arrow", true) --- @type Frame
 	elems["Hint"] = moduleGui:FindFirstChild("U_Hint", true) --- @type Frame
 	elems["Text"] = elems["Hint"]:FindFirstChild("S_Text") --- @type TextLabel
+	elems["Tip"] = elems["Hint"]:FindFirstChild("S_Tip") --- @type TextLabel
+	elems["Swipe"] = moduleGui:FindFirstChild("U_Swipe", true) --- @type Frame
+	elems["SwipeGlow"] = elems["Swipe"]:FindFirstChild("S_SwipeGlow") --- @type UIStroke
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
@@ -62,34 +72,32 @@ end
 --%%%%%%%%%%%%%%%%%%%% Show
 
 --[[
-	Shows a hint, and rings what to press with a red arrow pointing at it: a gui element, a part or a world spot (nil:
-	the hint alone). Nothing else is darkened or blocked. A step (a name in FUNNEL_STEPS) is reported to the server the
-	first time it shows, for the tutorial's funnel.
+	Points the red arrow at a target (a gui element, a part or a world spot, the last with a soft ring round it) with a
+	short hint beside it ("" for the arrow alone), from under it with "Below", from its left with "Left", from its right
+	with "Right" (the tip alone on one line there, when the hint is ""), "Beside" as "Right" with no arrow, or with
+	"Alone" the hint by itself under the target. A tip, when given, shows in smaller text under the hint (how to do it on
+	the player's device). Nothing else is darkened or blocked. A step (a name in FUNNEL_STEPS) is reported to the server
+	the first time it shows.
 ]]
-function Module.Show(text: string, newTarget: (GuiObject | BasePart | Vector3)?, step: string?)
+function Module.Show(text: string, newTarget: GuiObject | BasePart | Vector3, step: string, place: ("Below" | "Left" | "Right" | "Beside" | "Alone")?, tip: string?)
 	--[[ Saving ]]
 
 	target = newTarget
+	placing = place
 
 	--[[ Reporting ]]
 
-	if step and not reported[step] and table.find(_settings.FUNNEL_STEPS, step) then
+	if not reported[step] and table.find(_settings.FUNNEL_STEPS, step) then
 		reported[step] = true
 		I.Network.Fire("Tutorial_Step", step)
 	end
 
-	--[[ Text ]]
-
-	if text ~= shownText then
-		shownText = text
-		elems["Text"].Text = text
-		task.spawn(Module._fitText, text)
-	end
-
 	--[[ Applying ]]
 
+	elems["Text"].Text = text
+	elems["Tip"].Text = tip or ""
+	elems["Tip"].Visible = tip ~= nil
 	moduleGui.Enabled = true
-	elems["Hint"].Visible = true
 	if not stepConnection then
 		stepConnection = I.S.RunService.RenderStepped:Connect(Module._step)
 	end
@@ -114,37 +122,88 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Every frame while it shows: fits the ring over the target and pulses it, points the arrow at it from above (from
-	under it when the ring is near the screen's top) bobbing toward it, and places the hint beside them (under the ring
-	in the screen's top half, over it in the bottom half, past the arrow on its side).
+	Every frame while it shows: rings a world spot and pulses the ring, points the arrow at the target from above (from
+	under it when it's near the screen's top, or asked to) bobbing toward it, and places the hint past the arrow (over it in the
+	screen's bottom half, under it in the top half), or under the target when the hint shows alone. Nothing shows while
+	the target is off the screen.
 ]]
 function Module._step()
 	--[[ Local Variables ]]
 
 	local screen: Vector2 = moduleGui.AbsoluteSize
 	local hintSize: Vector2 = elems["Hint"].AbsoluteSize
+	local world: boolean = typeof(target) == "Vector3" or (typeof(target) == "Instance" and target:IsA("BasePart"))
 	local corner: Vector2?
 	local size: Vector2?
-	corner, size = Module._getHole()
+	corner, size = Module._getHole(world)
+
+	--[[ Visibility ]]
+
+	elems["Spotlight"].Visible = corner ~= nil and world and placing ~= "Alone"
+	elems["Arrow"].Visible = corner ~= nil and placing ~= "Alone" and placing ~= "Beside"
+	elems["Hint"].Visible = corner ~= nil and (elems["Text"].Text ~= "" or elems["Tip"].Visible)
+	elems["Swipe"].Visible = corner ~= nil and placing == "Alone"
+	if not corner or not size then
+		return
+	end
 
 	--[[ Ring ]]
 
-	elems["Spotlight"].Visible = corner ~= nil
-	elems["Arrow"].Visible = corner ~= nil
-	if not corner or not size then
-		elems["Hint"].Position = UDim2.fromOffset(screen.X / 2, screen.Y * _settings.HINT_TOP)
-		return
-	end
 	elems["Spotlight"].Position = UDim2.fromOffset(corner.X, corner.Y)
 	elems["Spotlight"].Size = UDim2.fromOffset(size.X, size.Y)
-	elems["Ring"].UIStroke.Transparency = 0.2 + 0.5 * (0.5 + 0.5 * math.sin(os.clock() * _settings.RING_PULSE_RATE))
+	elems["Ring"].UIStroke.Transparency = 0.15 + 0.45 * (0.5 + 0.5 * math.sin(os.clock() * _settings.RING_PULSE_RATE))
 
-	--[[ Arrow ]]
+	--[[ Alone ]]
 
 	local bottom: number = corner.Y + size.Y
 	local centerX: number = corner.X + size.X / 2
-	local flip: boolean = corner.Y + size.Y / 2 < screen.Y * _settings.ARROW_FLIP_SHARE
+	local x: number = math.clamp(centerX, hintSize.X / 2 + _settings.HINT_EDGE, math.max(screen.X - hintSize.X / 2 - _settings.HINT_EDGE, hintSize.X / 2))
+	if placing == "Alone" then
+		local hintY: number = math.min(bottom + _settings.HINT_GAP, screen.Y - hintSize.Y - _settings.HINT_EDGE)
+		elems["Hint"].Position = UDim2.fromOffset(x, hintY)
+		Module._swipe(x, hintY + hintSize.Y)
+		return
+	end
+
+	--[[ Left ]]
+
 	local bob: number = _settings.ARROW_BOB * (0.5 + 0.5 * math.sin(os.clock() * _settings.ARROW_BOB_RATE))
+	if placing == "Left" then
+		-- Turned a quarter, the arrow points right; the hint ends just left of it
+		local arrowLength: number = elems["Arrow"].AbsoluteSize.Y
+		local arrowX: number = corner.X - _settings.ARROW_GAP - bob - arrowLength / 2
+		local centerY: number = corner.Y + size.Y / 2
+		elems["Arrow"].AnchorPoint = Vector2.new(0.5, 0.5)
+		elems["Arrow"].Rotation = -90
+		elems["Arrow"].Position = UDim2.fromOffset(arrowX, centerY)
+		local textWidth: number = elems["Text"].TextBounds.X
+		elems["Hint"].Position = UDim2.fromOffset(math.max(arrowX - arrowLength / 2 - _settings.HINT_GAP - textWidth / 2, hintSize.X / 2 + _settings.HINT_EDGE), centerY - hintSize.Y / 2)
+		return
+	end
+
+	--[[ Right ]]
+
+	if placing == "Right" or placing == "Beside" then
+		-- Turned the other way, the arrow points left at the target; the line starts just right of it (of the target itself, Beside)
+		local arrowLength: number = elems["Arrow"].AbsoluteSize.Y
+		local arrowX: number = corner.X + size.X + _settings.ARROW_GAP + bob + arrowLength / 2
+		local centerY: number = corner.Y + size.Y / 2
+		elems["Arrow"].AnchorPoint = Vector2.new(0.5, 0.5)
+		elems["Arrow"].Rotation = 90
+		elems["Arrow"].Position = UDim2.fromOffset(arrowX, centerY)
+		-- With no hint the tip is the line: the hint's frame sits so the tip under it centres on the target
+		local tipOnly: boolean = elems["Text"].Text == ""
+		local lineWidth: number = if tipOnly then elems["Tip"].TextBounds.X else elems["Text"].TextBounds.X
+		local tipGap: number = elems["Tip"].AbsolutePosition.Y - (elems["Hint"].AbsolutePosition.Y + hintSize.Y)
+		local hintY: number = if tipOnly then centerY - hintSize.Y - tipGap - elems["Tip"].AbsoluteSize.Y / 2 else centerY - hintSize.Y / 2
+		local lineLeft: number = if placing == "Beside" then corner.X + size.X + _settings.ARROW_GAP * 2 else arrowX + arrowLength / 2 + _settings.HINT_GAP
+		elems["Hint"].Position = UDim2.fromOffset(lineLeft + lineWidth / 2, hintY)
+		return
+	end
+
+	--[[ Arrow ]]
+
+	local flip: boolean = placing == "Below" or corner.Y + size.Y / 2 < screen.Y * _settings.ARROW_FLIP_SHARE
 	local arrowReach: number = _settings.ARROW_GAP + _settings.ARROW_BOB + elems["Arrow"].AbsoluteSize.Y
 
 	-- Turned over, it hangs from its top edge, so its tip (rotated to the top) still sits at the anchor
@@ -154,43 +213,31 @@ function Module._step()
 
 	--[[ Hint ]]
 
-	local below: boolean = corner.Y + size.Y / 2 < screen.Y / 2
-	local x: number = math.clamp(centerX, hintSize.X / 2 + _settings.HINT_EDGE, math.max(screen.X - hintSize.X / 2 - _settings.HINT_EDGE, hintSize.X / 2))
-	local y: number = if below then bottom + _settings.HINT_GAP + (if flip then arrowReach else 0) else corner.Y - _settings.HINT_GAP - hintSize.Y - (if flip then 0 else arrowReach)
-	elems["Hint"].Position = UDim2.fromOffset(x, math.clamp(y, _settings.HINT_EDGE, math.max(screen.Y - hintSize.Y - _settings.HINT_EDGE, 0)))
+	-- A tip under the hint needs its room on the screen too
+	local tipRoom: number = if elems["Tip"].Visible then elems["Tip"].AbsoluteSize.Y + _settings.HINT_GAP else 0
+	local y: number = if flip then bottom + arrowReach + _settings.HINT_GAP else corner.Y - arrowReach - _settings.HINT_GAP - hintSize.Y - tipRoom
+	elems["Hint"].Position = UDim2.fromOffset(x, math.clamp(y, _settings.HINT_EDGE, math.max(screen.Y - hintSize.Y - tipRoom - _settings.HINT_EDGE, 0)))
 end
 
---%%%%%%%%%%%%%%%%%%%% Fit Text
+--%%%%%%%%%%%%%%%%%%%% Swipe
 
 --[[
-	Sizes the hint's text box to its lines at their design size, and the panel to the text, since scaled text can't
-	size itself under the panel's screen scale.
+	Slides the touch point under the hint (its middle x, its bottom y): it fades in, sweeps SWIPE_DISTANCE right and
+	SWIPE_RISE up as a drag would, and fades out, every SWIPE_SECONDS; lengths are design pixels, scaled as the hint is.
 ]]
-function Module._fitText(text: string)
+function Module._swipe(x: number, hintBottom: number)
 	--[[ Local Variables ]]
 
-	local label: TextLabel = elems["Text"]
-	local params: GetTextBoundsParams = Instance.new("GetTextBoundsParams")
-	params.Text = text
-	params.Font = label.FontFace
-	params.Size = _settings.HINT_TEXT_SIZE
-	params.Width = elems["Hint"].Size.X.Offset + label.Size.X.Offset
-	params.RichText = true
-
-	--[[ Measuring ]]
-
-	local success: boolean
-	local result: any | string?
-	success, result = pcall(I.S.TextService.GetTextBoundsAsync, I.S.TextService, params)
-	if not success or text ~= shownText then
-		return
-	end
+	local scale: number = elems["Hint"].AbsoluteSize.Y / elems["Hint"].Size.Y.Offset
+	local cycle: number = (os.clock() % _settings.SWIPE_SECONDS) / _settings.SWIPE_SECONDS
+	local along: number = 1 - (1 - math.clamp(cycle / 0.7, 0, 1)) ^ 2
+	local fade: number = if cycle < 0.15 then 1 - cycle / 0.15 elseif cycle > 0.7 then (cycle - 0.7) / 0.3 else 0
 
 	--[[ Applying ]]
 
-	local height: number = math.ceil(result.Y)
-	label.Size = UDim2.new(label.Size.X.Scale, label.Size.X.Offset, 0, height)
-	elems["Hint"].Size = UDim2.fromOffset(elems["Hint"].Size.X.Offset, label.Position.Y.Offset + height + _settings.HINT_BOTTOM_PADDING)
+	elems["Swipe"].Position = UDim2.fromOffset(x + (along - 0.5) * _settings.SWIPE_DISTANCE * scale, hintBottom + (_settings.SWIPE_GAP - along * _settings.SWIPE_RISE) * scale)
+	elems["Swipe"].BackgroundTransparency = 0.2 + 0.8 * fade
+	elems["SwipeGlow"].Transparency = 0.7 + 0.3 * fade
 end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
@@ -198,12 +245,13 @@ end
 --%%%%%%%%%%%%%%%%%%%% Get Hole
 
 --[[
-	Returns the ring's top-left corner and size on this gui, padded by HOLE_PADDING and at least HOLE_MIN wide and
-	tall, or nil while there's no target or it isn't on the screen (a hidden gui element, a spot behind the camera).
+	Returns the target's top-left corner and size on this gui: a gui element's box HOLE_PADDING pixels bigger on each
+	side, or a world spot's WORLD_HOLE_RADIUS studs round it and at least HOLE_MIN pixels across; nil while there's no
+	target or it isn't on the screen (a hidden gui element, a spot behind the camera).
 ]]
 --- @return Vector2?
 --- @return Vector2?
-function Module._getHole()
+function Module._getHole(world: boolean)
 	--[[ Local Variables ]]
 
 	local center: Vector2
@@ -219,7 +267,12 @@ function Module._getHole()
 		-- Every gui's AbsolutePosition counts from under the top bar, as this gui's own does
 		center = target.AbsolutePosition + target.AbsoluteSize / 2 - moduleGui.AbsolutePosition
 		extent = target.AbsoluteSize
-	elseif target ~= nil then
+		-- A left-aligned title is pointed at where its words end, not its box's
+		if target:IsA("TextLabel") and target.TextXAlignment == Enum.TextXAlignment.Left then
+			center = Vector2.new(target.AbsolutePosition.X + target.TextBounds.X / 2 - moduleGui.AbsolutePosition.X, center.Y)
+			extent = Vector2.new(target.TextBounds.X, extent.Y)
+		end
+	elseif world and target ~= nil then
 		local camera: Camera = I.S.Workspace.CurrentCamera
 		local position: Vector3 = if typeof(target) == "Vector3" then target else target.Position
 		local point: Vector3
@@ -233,14 +286,14 @@ function Module._getHole()
 		local edge: Vector3 = camera:WorldToScreenPoint(position + camera.CFrame.RightVector * _settings.WORLD_HOLE_RADIUS)
 		local radius: number = (Vector2.new(edge.X, edge.Y) - Vector2.new(point.X, point.Y)).Magnitude
 		center = Vector2.new(point.X, point.Y) - moduleGui.AbsolutePosition
-		extent = Vector2.new(radius * 2, radius * 2)
+		extent = Vector2.new(radius * 2, radius * 2):Max(Vector2.one * _settings.HOLE_MIN)
 	else
 		return nil, nil
 	end
 
 	--[[ Returning ]]
 
-	local size: Vector2 = (extent + Vector2.one * _settings.HOLE_PADDING * 2):Max(Vector2.one * _settings.HOLE_MIN)
+	local size: Vector2 = if world then extent else extent + Vector2.one * _settings.HOLE_PADDING * 2
 	return center - size / 2, size
 end
 

@@ -29,6 +29,8 @@ speeds and each kind's own fields), and the weapons' and utilities' models, cach
 | `GetAll()` | `{ [string]: row }` | Every row |
 | `GetDamage(itemId: string, distance: number, isShiny: boolean?)` | `number` | Damage at a distance from the blast's centre, from `DamageMax` to `DamageEdge`; shiny items ×`SHINY_DAMAGE_MULTIPLIER` |
 | `GetKnockback(class: string)` | `number` | Knockback speed for a class name |
+| `Gild(parts: { BasePart }, dark: Color3, bright: Color3, cover: number, grow: number)` | | Turns a weapon's parts gold, keeping their dark details: a `SurfaceAppearance`, a SpecialMesh's texture or a decal tinted `bright`, a part with a `SurfaceAppearance` or a textured MeshPart also covered by a Metal copy (`MakeCopy`, `cover` see-through, `grow` times its size), a plain part recoloured between `dark` and `bright` by its brightness in Metal. Combat's Golden weapons, Progression's level unlock card and the lobby stage's Bazooka all use it (2026-11-24, moved here from Combat's `Variants` so the lobby, where Combat doesn't run, gilds the same) |
+| `MakeCopy(part: BasePart, color: Color3, material: Enum.Material, transparency: number, grow: number)` | `BasePart` | A copy of a part's shape over it (no texture, no children but its mesh), grown by `grow`, in a colour, material and see-through, welded to it in its model; for gold covers and ForceField sheens |
 | `GetModel(itemId: string)` | `Model?` | The weapon's or utility's model (clone it), from `Assets/Arsenal/Models`; warns and returns nil when it has none |
 | `HasModel(itemId: string)` | `boolean` | Whether the weapon or utility has a model, without a warning (the loadout bar shows the model when there's no icon) |
 | `GetProjectileModel(shotId: string)` | `Model?` | What a shot flies as: its model in `Assets/Arsenal/Projectiles` (a weapon's, or a burst's shot like `Worm`), else `GetModel` |
@@ -54,7 +56,7 @@ wiki's Arsenal page.
 | Key | Default | What |
 | --- | --- | --- |
 | `SHINY_DAMAGE_MULTIPLIER` | `1.05` | Extra damage from a shiny weapon |
-| `KNOCKBACK` | None 0, Small 20, Medium 45, High 70, VeryHigh 95, Extreme 130 | Knockback speed by class (None: the blast doesn't throw, the black hole's) |
+| `KNOCKBACK` | None 0, Small 20, Light 22.5 (the bazooka's, half of Medium, 2026-11-25), Medium 45, High 70, VeryHigh 95, Extreme 130 | Knockback speed by class (None: the blast doesn't throw, the black hole's) |
 | `BURST_SHOTS` | `{ "Worm" }` | Shots a weapon's burst sends out (by projectile part name) that may have a model in `Projectiles` |
 
 ## In the place

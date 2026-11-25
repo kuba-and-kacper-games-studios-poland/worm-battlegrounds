@@ -19,7 +19,7 @@
 --- @field DamageMax number
 --- @field DamageEdge number
 --- @field BlastRadius number
---- @field Knockback "None" | "Small" | "Medium" | "High" | "VeryHigh" | "Extreme"
+--- @field Knockback "None" | "Small" | "Light" | "Medium" | "High" | "VeryHigh" | "Extreme"
 ---
 --- # Limits #
 ---

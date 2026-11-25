@@ -12,6 +12,9 @@ local _settings = {
 	-- How long an open match stays in the store without its server refreshing it, so a server that stopped drops out
 	OPEN_SECONDS = 30,
 
+	-- The least time a match's waiting room stays open once its server is up, so players still on their way get in
+	MIN_ROOM_SECONDS = 8,
+
 	-- How long a started match stays in the store, closed, so a join that comes late sees it closed
 	CLOSED_SECONDS = 30,
 

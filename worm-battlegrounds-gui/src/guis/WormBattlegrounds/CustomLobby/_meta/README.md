@@ -1,9 +1,9 @@
 # CustomLobby
 
-A private lobby to play friends (pays no coins). First the player creates it (map, mode, players, bots), then the room shows who's in, who can be invited, **Invite friends**, **Start** (owner) and **Leave**.
+A private lobby to play friends (pays no diamonds). First the player creates it (map, mode, wind, players, bots), then the room shows who's in, who can be invited, **Invite friends**, **Start** (owner) and **Leave**.
 
-**Look.** The studio's `CustomLobby` (the create step) and `CustomLobbyPlayers` (the room) designs (2026-11-12), ported 1:1 as `Primitive` nodes (their pictures, fonts and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive` ports"). Dark slanted panels with the custom mode's icon (`ModeIcon`, `art/modes`) before the title and a red ✕ in their headers, both centred under the lobby's top bar (0.564 down, each with its
-aspect ratio kept, since 2026-11-17: at the middle the FREE WEAPONS tile covered the ✕). The picked map, mode, player count and bots wear a white outline and white text, the rest grey; Create lobby and Start are yellow, Leave dark.
+**Look.** The studio's `CustomLobby` (the create step) and `CustomLobbyPlayers` (the room) designs (2026-11-12), ported 1:1 as `Primitive` nodes (their pictures, fonts and screen-fraction layout, the code folder's `practices.md` → "The studio's screens are 1:1 `Primitive` ports"). Dark slanted panels with the custom mode's icon (`ModeIcon`, the `art/ui_glyphs` Custom glyph since 2026-11-24, as the board's CUSTOM button) before the title and a red ✕ in their headers, both in the middle of the screen (0.5, each with its
+aspect ratio kept; 0.564 down from 2026-11-17, when the FREE WEAPONS tile covered the ✕, until 2026-11-25, when the lobby's guis started hiding behind it), over a darker dim (`U_Widget`'s `WidgetManager_Dim` 0.3: the owner, 2026-11-25, "hide other uis, center it and make the background darker"). The picked map, mode, wind, player count and bots wear a white outline and white text, the rest grey; Create lobby and Start are yellow, Leave dark.
 
 |  |  |
 | --- | --- |
@@ -11,7 +11,7 @@ aspect ratio kept, since 2026-11-17: at the middle the FREE WEAPONS tile covered
 | Theme | none: every node is a `Primitive` |
 | Modes | Night only |
 | Devices | One layout for every device: screen fractions and aspect-ratio constraints, no `S_ScreenScale` |
-| Export | A ScreenGui named `CustomLobby`: `Enabled` off, `DisplayOrder` 1, `ScreenInsets` `DeviceSafeInsets`. Root `U_Widget` (full screen, WidgetManager's shape: `Content` holding both panels) and `MouseLockFix` |
+| Export | A ScreenGui named `CustomLobby`: `Enabled` off, `DisplayOrder` 1, `ScreenInsets` `DeviceSafeInsets`. Root `U_Widget` (full screen, WidgetManager's shape: `Content` holding both panels; `WidgetManager_Dim` 0.3) and `MouseLockFix` |
 
 ## Elements
 
@@ -21,11 +21,12 @@ aspect ratio kept, since 2026-11-17: at the middle the FREE WEAPONS tile covered
 | `U_Create` › `S_Close`, `U_Room` › `S_Close` | ImageButton | Close the window (their tags) |
 | `U_Maps` | ScrollingFrame with a UIListLayout | Holds one `MapChoice` per map; MatchBoard marks the picked one |
 | `U_Create` › `S_Deathmatch`, `S_Teams` | ImageButton | The mode; the picked one is marked |
+| `U_Create` › `S_WindOff`, `S_WindOn` | ImageButton, in `WindList` under a WIND header beside MODE | Whether the lobby's match has wind (2026-11-24): OFF until picked; the picked one is marked and sent with Create lobby |
 | `U_Create` › `S_Players2`, `S_Players4`, `S_Players6`, `S_Players8` | ImageButton | The player count; the picked one is marked |
 | `U_Create` › `S_BotsNone`, `S_BotsEasy`, `S_BotsMedium`, `S_BotsHard`, `S_BotsNightmare` | ImageButton | The bots that fill the empty places (None is none); the picked one is marked. Nightmare is offered only here |
 | `U_Create` › `S_Create` | ImageButton | Creates the lobby and shows `U_Room` |
 | `U_Room` | Frame | The room, hidden until created |
-| `U_Room` › `S_Info` | TextLabel | "Teams  \|  4 players  \|  Desert  \|  Hard bots" |
+| `U_Room` › `S_Info` | TextLabel | "Teams  \|  4 players  \|  Desert  \|  Hard bots", ending in "  \|  Wind" when the lobby has wind |
 | `U_Members` | ScrollingFrame with a UIListLayout | Holds one `Member` per player in the lobby, then an open slot per free place up to its size (a `Member` named `Open<n>`: "Open slot" faded, no avatar or username; MatchBoard's `CUSTOM_OPEN_SLOT_*`) |
 | `U_Invitable` | ScrollingFrame with a UIListLayout | Holds one `Invitable` per player in this server |
 | `U_Room` › `S_InviteFriends`, `S_Start`, `S_Leave` | ImageButton | Friend invite prompt; start (shown to the owner only); leave |
@@ -73,4 +74,4 @@ Close, Create lobby and Start show their pad button in a `PadHint` badge on Cons
 | State | Element | Value |
 | --- | --- | --- |
 | Hover, press | Buttons and map choices | `Utils_ButtonScale`: hover ×1.04, press ×0.92 (`Bouncy`), with `Button_Hover` and `Button_Click` sounds |
-| Picked | Mode, player count, bots and `MapChoice` › `Background.Stroke`, the label | `Look_SelectedStrokeColor` and `Look_SelectedTextColor` (white) when picked, else `Look_StrokeColor` (130, 130, 130) and `Look_TextColor`. Buttons with `Look_Stroke` also swap their `Stroke` and `Stroke2` pictures (`Look_SelectedStroke`, `Look_SelectedStroke2`). MatchBoard's `Custom` |
+| Picked | Mode, wind, player count, bots and `MapChoice` › `Background.Stroke`, the label | `Look_SelectedStrokeColor` and `Look_SelectedTextColor` (white) when picked, else `Look_StrokeColor` (130, 130, 130) and `Look_TextColor`. Buttons with `Look_Stroke` also swap their `Stroke` and `Stroke2` pictures (`Look_SelectedStroke`, `Look_SelectedStroke2`). MatchBoard's `Custom` |

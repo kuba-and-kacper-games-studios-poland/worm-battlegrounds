@@ -15,8 +15,11 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 -- Studio keeps its own store on the server (the Studio map's lobby and match share it), so a test never reaches the live one
 local useStore: boolean = true
 
--- The Studio store: each mode's matches by id
+-- The Studio store: each mode's matches by id, and each mode's frontier under FRONTIER_MAP
 local localStore = {} --- @type { [string]: { [string]: Matchmaking_LocalEntry } }
+
+-- The store's map (after STORE_NAME) that holds every mode's frontier, keyed by mode
+local FRONTIER_MAP: string = "Frontier"
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -55,9 +58,13 @@ function Module.Init()
 		Open = Module.Open,
 		Refresh = Module.Refresh,
 		Close = Module.Close,
+		TakeFrontier = Module.TakeFrontier,
+		TouchFrontier = Module.TouchFrontier,
 
 		--[[ Methods ]]
 
+		Get = Module.Get,
+		GetFrontier = Module.GetFrontier,
 		GetOpen = Module.GetOpen,
 		GetCard = Module.GetCard,
 		GetFit = Module.GetFit,
@@ -107,17 +114,31 @@ end
 
 --[[
 	**SERVER** |
-	Puts a match server's public match in the store, open to joins from every lobby server. Returns whether it's in.
+	Puts a public match in the store, open to joins from every lobby server: a lobby opens it pending (no server or
+	AccessCode yet, kept `seconds` while the server boots), and its server opens it again once it's up. When it's there
+	already, the seats lobbies claimed meanwhile are kept, and it starts no sooner than it said, nor sooner than
+	MIN_ROOM_SECONDS from now. Returns the match as stored, or nil when the store can't be reached.
 ]]
 --- @param lobby Matchmaking_Lobby
---- @return boolean
-function Module.Open(lobby)
+--- @return Matchmaking_Lobby?
+function Module.Open(lobby, seconds: number?)
 	--[[ Opening ]]
 
-	--- @param _old Matchmaking_Lobby?
-	return Module._update(lobby.Mode, lobby.Id, function(_old)
-		return lobby
-	end, _settings.OPEN_SECONDS) ~= nil
+	--- @param old Matchmaking_Lobby?
+	return Module._update(lobby.Mode, lobby.Id, function(old)
+		local opened = table.clone(lobby) --- @type Matchmaking_Lobby
+		if old then
+			opened.Roster = old.Roster
+			--- @param entry Match_RosterEntry
+			for _index: number, entry in ipairs(lobby.Roster) do
+				if not Module._isSeated(opened.Roster, entry.UserId) then
+					table.insert(opened.Roster, entry)
+				end
+			end
+			opened.EndsAt = math.max(old.EndsAt, os.time() + _settings.MIN_ROOM_SECONDS)
+		end
+		return opened
+	end, seconds or _settings.OPEN_SECONDS)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh
@@ -133,9 +154,19 @@ function Module.Refresh(lobby)
 	--[[ Refreshing ]]
 
 	--- @param current Matchmaking_Lobby?
-	return Module._update(lobby.Mode, lobby.Id, function(current)
+	local stored = Module._update(lobby.Mode, lobby.Id, function(current)
 		return current or lobby
-	end, _settings.OPEN_SECONDS)
+	end, _settings.OPEN_SECONDS) --- @type Matchmaking_Lobby?
+
+	--[[ Frontier ]]
+
+	if stored then
+		Module.TouchFrontier(stored)
+	end
+
+	--[[ Returning ]]
+
+	return stored
 end
 
 --%%%%%%%%%%%%%%%%%%%% Close
@@ -151,11 +182,64 @@ function Module.Close(lobby)
 	--[[ Closing ]]
 
 	--- @param current Matchmaking_Lobby?
-	return Module._update(lobby.Mode, lobby.Id, function(current)
-		local closed = current or lobby --- @type Matchmaking_Lobby
-		closed.Open = false
-		return closed
-	end, _settings.CLOSED_SECONDS)
+	local closed = Module._update(lobby.Mode, lobby.Id, function(current)
+		local closing = current or lobby --- @type Matchmaking_Lobby
+		closing.Open = false
+		return closing
+	end, _settings.CLOSED_SECONDS) --- @type Matchmaking_Lobby?
+
+	--[[ Frontier ]]
+
+	-- A started match is no card's any more: the next Join opens a new one
+	Module.TouchFrontier(closed or lobby, true)
+
+	--[[ Returning ]]
+
+	return closed
+end
+
+--%%%%%%%%%%%%%%%%%%%% Take Frontier
+
+--[[
+	**SERVER** |
+	Makes a match its mode's frontier, the one match every lobby's card for the mode shows and Join seats players in,
+	in one step no other server can come between: only while the frontier is still `staleId` (the full, closed or
+	missing match the caller found there) or holds nothing live. The match must be in the store already (Open), so a
+	lobby that reads the frontier can always claim in it. Returns whether it took it: false means another lobby just
+	opened one, which the caller joins instead.
+]]
+--- @param lobby Matchmaking_Lobby
+--- @return boolean
+function Module.TakeFrontier(lobby, staleId: string?)
+	--[[ Taking ]]
+
+	--- @param current Matchmaking_Frontier?
+	return Module._update(FRONTIER_MAP, lobby.Mode, function(current)
+		if current and current.Id ~= staleId and current.Id ~= lobby.Id and Module._isLive(current) then
+			return nil
+		end
+		return Module._getFrontierOf(lobby, false)
+	end, Module._getFrontierSeconds(lobby)) ~= nil
+end
+
+--%%%%%%%%%%%%%%%%%%%% Touch Frontier
+
+--[[
+	**SERVER** |
+	Brings a mode's frontier up to date with its match (its seats taken, when it starts), or marks it over once the
+	match closed. Leaves it alone when the frontier is another match by now.
+]]
+--- @param lobby Matchmaking_Lobby
+function Module.TouchFrontier(lobby, closed: boolean?)
+	--[[ Touching ]]
+
+	--- @param current Matchmaking_Frontier?
+	Module._update(FRONTIER_MAP, lobby.Mode, function(current)
+		if not current or current.Id ~= lobby.Id then
+			return nil
+		end
+		return Module._getFrontierOf(lobby, closed == true or not lobby.Open)
+	end, Module._getFrontierSeconds(lobby))
 end
 
 --%%%%%%%%%%%%%%%%%%%% Take Seats
@@ -308,6 +392,47 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
+--%%%%%%%%%%%%%%%%%%%% Get
+
+--[[
+	**SERVER** |
+	Returns one match as the store has it, or nil when it has none (or can't be reached).
+]]
+--- @return Matchmaking_Lobby?
+function Module.Get(mode: string, lobbyId: string)
+	return Module._get(mode, lobbyId)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Frontier
+
+--[[
+	**SERVER** |
+	Returns a mode's frontier (the match its cards show and Join fills) while it's live: seats left and not starting
+	within MIN_SECONDS_LEFT. Nil when there's none or the store can't be reached; then the second value is the id of
+	one that isn't live any more, for TakeFrontier.
+]]
+--- @return Matchmaking_Frontier?
+--- @return string?
+function Module.GetFrontier(mode: string)
+	--[[ Data ]]
+
+	local frontier = Module._get(FRONTIER_MAP, mode) --- @type Matchmaking_Frontier?
+
+	--[[ Checks ]]
+
+	-- Check if there's one, and if it's live
+	if not frontier then
+		return nil, nil
+	end
+	if not Module._isLive(frontier) then
+		return nil, frontier.Id
+	end
+
+	--[[ Returning ]]
+
+	return frontier, nil
+end
+
 --%%%%%%%%%%%%%%%%%%%% Get Open
 
 --[[
@@ -350,9 +475,10 @@ function Module.GetCard(player: Player)
 	local items = {} --- @type { string }
 	local shinyItems = {} --- @type { [string]: boolean }
 	local goldenItems = {} --- @type { [string]: boolean }
+	local itemLooks = {} --- @type { [string]: string }
 	local outfit = {} --- @type Cosmetics_Outfit
 	local skinShiny: boolean
-	items, shinyItems, goldenItems = I.Loadout.GetMatchLoadout(player)
+	items, shinyItems, goldenItems, itemLooks = I.Loadout.GetMatchLoadout(player)
 	outfit, skinShiny = I.Cosmetics.GetOutfit(player)
 
 	--[[ Returning ]]
@@ -370,6 +496,7 @@ function Module.GetCard(player: Player)
 		Loadout = items,
 		ShinyItems = shinyItems,
 		GoldenItems = goldenItems,
+		ItemLooks = itemLooks,
 		Skin = I.G_Cosmetics.GetOutfitText(outfit),
 		Shiny = skinShiny,
 	}
@@ -441,6 +568,79 @@ function Module.Seat(roster, group, teamSize: number, size: number)
 	--[[ Returning ]]
 
 	return seated
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Value
+
+--[[
+	Returns one value from one of the store's maps (a mode's matches, or FRONTIER_MAP), or nil when it holds none or
+	can't be reached.
+]]
+--- @return any
+function Module._get(mapName: string, key: string)
+	--[[ Studio ]]
+
+	if not useStore then
+		local entry = (localStore[mapName] or {})[key] --- @type Matchmaking_LocalEntry?
+		return if entry and entry.ExpiresAt > os.clock() then I.S.HttpService:JSONDecode(entry.Value) else nil
+	end
+
+	--[[ Reading ]]
+
+	local success: boolean
+	local result: any | string?
+	success, result = pcall(function()
+		return I.S.MemoryStoreService:GetSortedMap(_settings.STORE_NAME .. mapName):GetAsync(key)
+	end)
+	if not success then
+		warn(`[{_localName}::{script.Name}]: Couldn't read ({mapName}/{key})! - ({result})`)
+		return nil
+	end
+
+	--[[ Returning ]]
+
+	return result
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Frontier Of
+
+--[[
+	Returns what a mode's frontier keeps of its match: what the cards show and Join needs. A closed match keeps it with
+	no room left, so it isn't live.
+]]
+--- @param lobby Matchmaking_Lobby
+--- @return Matchmaking_Frontier
+function Module._getFrontierOf(lobby, closed: boolean)
+	return {
+		Id = lobby.Id,
+		MapId = lobby.MapId,
+		Size = lobby.Size,
+		Players = if closed then lobby.Size else #lobby.Roster,
+		EndsAt = lobby.EndsAt,
+	}
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Frontier Seconds
+
+--[[
+	Returns how long a frontier stays in the store: until its match starts, and CLOSED_SECONDS after, so a late reader
+	sees it full rather than nothing.
+]]
+--- @param lobby Matchmaking_Lobby
+--- @return number
+function Module._getFrontierSeconds(lobby)
+	return math.max(lobby.EndsAt - os.time(), 1) + _settings.CLOSED_SECONDS
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Live
+
+--[[
+	Returns whether a frontier's match still takes joins: seats left, and not starting within MIN_SECONDS_LEFT.
+]]
+--- @param frontier Matchmaking_Frontier
+--- @return boolean
+function Module._isLive(frontier)
+	return frontier.Players < frontier.Size and os.time() <= frontier.EndsAt - _settings.MIN_SECONDS_LEFT
 end
 
 --%%%%%%%%%%%%%%%%%%%% List

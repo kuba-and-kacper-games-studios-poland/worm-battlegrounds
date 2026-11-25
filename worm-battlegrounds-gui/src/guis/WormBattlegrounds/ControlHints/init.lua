@@ -58,7 +58,7 @@ local _gui = {
 						},
 						Children = {
 							{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 22 } },
-							{ Primitive = "UIStroke", Props = { Thickness = 0.12, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+							{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 						},
 					},
 					-- Keyboard and mouse: key caps and a mouse drawn from frames in the HUD's dark slot look
@@ -219,7 +219,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -320,7 +320,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -446,7 +446,7 @@ local _gui = {
 											Position = UDim2.fromScale(0.41, 0.5),
 											Size = UDim2.fromScale(0.59, 0.8),
 											ZIndex = 3,
-											Text = "Shoot",
+											Text = "Aim",
 											TextColor3 = Color3.fromRGB(255, 255, 255),
 											TextSize = 26,
 											TextXAlignment = Enum.TextXAlignment.Left,
@@ -456,7 +456,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -592,7 +592,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -777,7 +777,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -913,7 +913,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1078,7 +1078,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1179,7 +1179,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1275,7 +1275,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1366,7 +1366,7 @@ local _gui = {
 											Position = UDim2.fromScale(0.41, 0.5),
 											Size = UDim2.fromScale(0.59, 0.8),
 											ZIndex = 3,
-											Text = "Shoot",
+											Text = "Fire",
 											TextColor3 = Color3.fromRGB(255, 255, 255),
 											TextSize = 26,
 											TextXAlignment = Enum.TextXAlignment.Left,
@@ -1376,7 +1376,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1488,7 +1488,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1584,7 +1584,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1658,7 +1658,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1732,7 +1732,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1796,7 +1796,7 @@ local _gui = {
 											Position = UDim2.fromScale(0.41, 0.5),
 											Size = UDim2.fromScale(0.59, 0.8),
 											ZIndex = 3,
-											Text = "Shoot",
+											Text = "Fire",
 											TextColor3 = Color3.fromRGB(255, 255, 255),
 											TextSize = 26,
 											TextXAlignment = Enum.TextXAlignment.Left,
@@ -1806,7 +1806,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1895,7 +1895,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},
@@ -1984,7 +1984,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 26 } },
-											{ Primitive = "UIStroke", Props = { Thickness = 0.125, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+											{ Primitive = "UIStroke", Props = { Thickness = 0.07, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 										},
 									},
 								},

@@ -29,7 +29,7 @@ local _cosmetics_PieceData = {}
 --- # Unlock #
 ---
 --- @field Level number
---- @field Coins string
+--- @field Diamonds string
 ---
 --- # Look #
 ---

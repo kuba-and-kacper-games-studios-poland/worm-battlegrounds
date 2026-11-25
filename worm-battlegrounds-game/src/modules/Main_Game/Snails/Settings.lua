@@ -3,8 +3,8 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Health
 
-	-- Every snail starts with this much health, which healing never goes above
-	MAX_HEALTH = 200,
+	-- Every snail starts with this much health, which healing never goes above (250 since 2026-11-25, was 200)
+	MAX_HEALTH = 250,
 
 	-- A fall costs 1 health per stud above SAFE_FALL_HEIGHT, MAX_FALL_DAMAGE at most
 	SAFE_FALL_HEIGHT = 10,
@@ -56,6 +56,13 @@ local _settings = {
 	-- How far above a snail's center its tag's bottom edge sits, in studs
 	TAG_OFFSET = 2.4,
 
+	--[[
+		On the player's own turn, over their own snail, the tag is the turn arrow alone, its bottom OWN_TURN_TAG_OFFSET
+		studs over the snail's center (the owner, 2026-11-24: no name, and no health bar, which shows at the bottom left).
+		Every other time the full tag shows
+	]]
+	OWN_TURN_TAG_OFFSET = 1.9,
+
 	-- The name colour of a VIP player's snail
 	VIP_NAME_COLOR = Color3.fromRGB(255, 206, 46),
 
@@ -68,8 +75,8 @@ local _settings = {
 
 	--[[
 		As a turn starts, the red turn arrow drops onto the active snail's tag from ARROW_DROP_FROM design px above
-		(off the top of the screen), bouncing in over ARROW_DROP_SECONDS, then bobs ARROW_BOB_HEIGHT px up and down
-		ARROW_BOB_SPEED radians a second
+		(off the top of the screen), bouncing in over ARROW_DROP_SECONDS, then bobs ARROW_BOB_HEIGHT px up from its slot and
+		back, ARROW_BOB_SPEED radians a second, never down into the health bar (2026-11-24)
 	]]
 	ARROW_DROP_FROM = 700,
 	ARROW_DROP_SECONDS = 0.7,
@@ -78,13 +85,14 @@ local _settings = {
 
 	--[[
 		Worms Armageddon's way: once the active snail moves (TAG_HIDE_MOVE studs from where its turn started), aims
-		(TAG_HIDE_AIM radians, or charges a shot) or shoots, its turn arrow hides until the turn ends (its tag and health
-		stay: the owner, 2026-11-15). The aim follows
-		the pointer, so it counts only while this screen's camera is still (moving less than TAG_HIDE_CAMERA_STILL studs a
-		frame): the camera flying to the snail as the turn starts drifts it
+		(TAG_HIDE_AIM radians, or its power changes by TAG_HIDE_POWER) or shoots, its turn arrow hides until the turn ends
+		(its tag and health stay: the owner, 2026-11-15), on every screen but its own player's. The aim counts only while
+		this screen's camera is still (moving less than TAG_HIDE_CAMERA_STILL studs a frame): the camera flying to the
+		snail as the turn starts drifts it
 	]]
 	TAG_HIDE_MOVE = 0.75,
 	TAG_HIDE_AIM = math.rad(4),
+	TAG_HIDE_POWER = 0.05,
 	TAG_HIDE_CAMERA_STILL = 0.02,
 
 	-- A damage number rises POP_RISE studs while it fades

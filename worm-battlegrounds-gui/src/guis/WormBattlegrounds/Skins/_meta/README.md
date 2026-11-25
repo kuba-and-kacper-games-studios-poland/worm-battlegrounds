@@ -2,7 +2,7 @@
 
 The **STYLE** screen, where the player dresses their snail piece by piece: a hat, a neck piece, a body and a shell.
 Since 2026-11-14 it's laid out as card decks (the owner's pick, draft A): a deck per slot on the left, the snail in
-the middle on a pedestal of light with the player's name under it (drag to spin it), and the open slot's pieces on the
+the middle in a soft light, the room darkened round it (`Shade`, `Backlight`), with the player's name under it (drag to spin it), and the open slot's pieces on the
 right over a detail bar. The snail colour row is gone. NEW tags mark pieces the player hasn't seen.
 
 **Look.** The studio's `Customise` gui (2026-11-09), as `Primitive` nodes: its slanted dark cards, pictures and fonts,

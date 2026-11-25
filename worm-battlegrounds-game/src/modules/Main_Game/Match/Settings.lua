@@ -12,11 +12,26 @@ local _settings = {
 	--[[
 		A public match's waiting room: it takes joins from every lobby server for WAITING_SECONDS, or until every
 		player in it pressed Ready, then starts with bots in the empty seats. It reads the seats lobbies claimed every
-		ROOM_REFRESH_SECONDS, and sends a player who arrived with no seat back after STRANGER_SECONDS
+		ROOM_REFRESH_SECONDS, and sends a player who arrived with no seat back after STRANGER_SECONDS. 30 so more real
+		players find it before bots fill it (the owner, 2026-11-24); MatchBoard keeps a copy: change both together
 	]]
-	WAITING_SECONDS = 15,
+	WAITING_SECONDS = 30,
 	ROOM_REFRESH_SECONDS = 2,
 	STRANGER_SECONDS = 6,
+
+	-- Seconds between the landing and the first turn, while every screen slams THE BATTLE BEGINS (MatchHud's BattleIntro)
+	BATTLE_INTRO_SECONDS = 1.8,
+
+	-- Seconds a full waiting room waits before its match starts (its last players may still be on their way)
+	FULL_START_SECONDS = 4,
+
+	--[[
+		The vote to start (RoWorld's, the owner, 2026-11-24): it passes when every seated player here voted, up to
+		VOTE_ALL_UP_TO of them, or VOTE_SHARE of them above; the match then starts VOTE_START_SECONDS later
+	]]
+	VOTE_ALL_UP_TO = 3,
+	VOTE_SHARE = 2 / 3,
+	VOTE_START_SECONDS = 3,
 
 	-- The waiting room's gui, at the bottom middle
 	WAITING_GUI_NAME = "MatchWaiting",
@@ -27,6 +42,9 @@ local _settings = {
 	]]
 	DROP_SECONDS = 15,
 	MAX_LANDING = 12,
+
+	-- A solo match's drop, shorter: only bots play with the player, so no one needs the time (the owner, 2026-11-25: "more dynamic")
+	SOLO_DROP_SECONDS = 7,
 
 	-- How fast the left stick moves the drop spot at full lean, in studs per second
 	DROP_STICK_SPEED = 40,
@@ -71,25 +89,20 @@ local _settings = {
 		The tutorial's drop: the player and the bot start on land about TUTORIAL_GAP studs apart near the map's middle
 		(chosen from TUTORIAL_SPOT_COUNT land spots), lit TUTORIAL_DROP_HEIGHT studs over it, the player has
 		TUTORIAL_DROP_SECONDS to place theirs, and any press within TUTORIAL_PICK_RADIUS studs of the lit spot counts
-		(the guide's ring is at least HOLE_MIN pixels, wider than a few studs when the camera is far out)
+		(the guide's ring is at least HOLE_MIN pixels, wider than a few studs when the camera is far out). The tutorial
+		has no timers (the owner, 2026-11-24): the drop and the player's turns last TUTORIAL_DROP_SECONDS and
+		TUTORIAL_TURN_SECONDS, long enough never to run out, and the HUD hides their clocks
 	]]
 	TUTORIAL_GAP = 30,
 	TUTORIAL_SPOT_COUNT = 16,
 	TUTORIAL_DROP_HEIGHT = 8,
-	TUTORIAL_DROP_SECONDS = 40,
+	TUTORIAL_DROP_SECONDS = 900,
+	TUTORIAL_TURN_SECONDS = 900,
 	TUTORIAL_PICK_RADIUS = 10,
 
-	--[[
-		The tutorial's wind, one for each WIND_ROUNDS rounds, before the usual rolls (the testers, 2026-11-15: "after 2
-		rounds change the wind and showcase how extreme wind can sway shot"): calm while the player learns to shoot and
-		throw, then a strong wind against them (they start left of the bot)
-	]]
-	--- @type { number }
-	TUTORIAL_WINDS = { 0, -16 },
-
-	-- What the player takes into the tutorial match beside the Bazooka, whatever their loadout: the Grenade it teaches
+	-- What the player takes into the tutorial match beside the Bazooka, whatever their loadout: nothing, the Bazooka alone (2026-11-24)
 	--- @type { string }
-	TUTORIAL_LOADOUT = { "Grenade" },
+	TUTORIAL_LOADOUT = {},
 
 	--%%%%%%%%%%%%%%%%%%%% Turns
 
@@ -144,6 +157,9 @@ local _settings = {
 		snail's turns, and a player dropping mid-turn leaves the bot at least TAKEOVER_SECONDS of it
 	]]
 	REJOIN_SECONDS = 900,
+
+	-- How long a knocked-out player's Play again waits for them in the lobby, in seconds (the trip there takes a few)
+	PLAY_AGAIN_SECONDS = 90,
 	TAKEOVER_SECONDS = 12,
 
 	-- How long the rematch vote stays open after the results, in seconds
@@ -211,7 +227,7 @@ local _settings = {
 		Kind = "Public",
 		Mode = "Deathmatch",
 		Size = 4,
-		MapId = "PicnicPlains",
+		MapId = "RollingPlains",
 		Difficulty = "Medium",
 		Roster = {},
 	},

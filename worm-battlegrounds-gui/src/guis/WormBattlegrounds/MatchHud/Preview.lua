@@ -146,7 +146,7 @@ function Module.Apply(preview)
 
 	--[[ Bars ]]
 
-	view:Get("U_Stamina", "S_Text").Instance.Text = "Stamina 70%"
+	view:Get("U_Stamina", "S_Text").Instance.Text = "Stamina · 70%"
 	Module._cutBar(view:Get("U_Stamina", "S_Bar").Instance, 0.7)
 	view:Get("U_Fuel").Instance.Visible = preview.Values.S_Fuel > 0
 	view:Get("U_Fuel", "S_Text").Instance.Text = `Jetpack {math.round(preview.Values.S_Fuel * 100)}%`
@@ -192,15 +192,32 @@ function Module.Apply(preview)
 		slot:Get("S_Plus").Instance.Visible = not filled
 		slot:Get("S_Icon").Instance.Visible = filled
 		slot:Get("S_Key").Instance.Visible = filled and preview.Device == "Desktop"
-		slot:Get("S_Uses").Instance.Visible = filled
+		slot:Get("S_Uses").Instance.Visible = filled and index > 2
 		slot:Get("S_Name").Instance.Visible = filled
 		slot:Get("S_Icon").Instance.Image = item[2]
 		slot:Get("S_Icon").Instance.ImageColor3 = if index == 2 then root:GetAttribute("Look_CooldownIconColor") else Color3.new(1, 1, 1)
+
+		-- The second slot cools down, a third of its 3 turns waited, as LoadoutBar draws Combat's Cooldown_<ItemId>
+		local charge: ImageLabel = root:FindFirstChild("Background"):FindFirstChild("S_Charge")
+		charge.Visible = filled and index == 2
+		charge.UIGradient.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(0.28, 0.5),
+			NumberSequenceKeypoint.new(0.283, 0),
+			NumberSequenceKeypoint.new(0.333, 0),
+			NumberSequenceKeypoint.new(0.334, 1),
+			NumberSequenceKeypoint.new(1, 1),
+		})
 		slot:Get("S_Turns").Instance.Visible = filled and index == 2
+		slot:Get("S_TurnsLabel").Instance.Visible = false
 		slot:Get("S_Key").Instance.Text = tostring(index)
 		slot:Get("S_Name").Instance.Text = item[1]
-		slot:Get("S_Uses").Instance.Text = if index == 1 then "" else "x2"
+		slot:Get("S_Uses").Instance.Text = if index == 1 then "" else "2 left"
 		stroke.ImageColor3 = root:GetAttribute(if not filled then "Look_EmptyStrokeColor" elseif index == 1 then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+
+		-- A Golden Bazooka and a Shiny Grenade, as LoadoutBar shows Combat's Variant_<ItemId>
+		root:FindFirstChild("Background"):FindFirstChild("S_Gold").Visible = filled and index == 1
+		root:FindFirstChild("Background"):FindFirstChild("S_Foil").Visible = filled and index == 2
 	end
 
 	--[[ Kill Feed ]]

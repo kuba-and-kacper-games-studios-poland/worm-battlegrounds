@@ -1,10 +1,11 @@
 """Builds preview.html: every effect (make_classic.py's classic.json) and piece of music with a player, what it replaces
 and where it plays, for review before anything is uploaded.
 python -I make_preview.py <folder with make_classic.py's WB_*.wav> <folder with WB_Music_*.wav> [<update folder>
-    [<17 Nov folder>]]
+    [<17 Nov folder> [<25 Nov folder>]]]
 The update folder (out/update_2026-11-16: make_levels.py's new maps and make_classic.py's "update" set) adds the
 "Update 16 Nov" section at the top; the 17 Nov folder (out/update_2026-11-17: make_classic.py's "update17" set) adds
-the "Update 17 Nov" section above it."""
+the "Update 17 Nov" section above it, and the 25 Nov folder (out/update_2026-11-25: make_classic.py's "update25" set)
+the "Update 25 Nov" section above both."""
 
 import base64
 import html
@@ -12,6 +13,9 @@ import os
 import subprocess
 import sys
 import tempfile
+import wave
+
+import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import json  # noqa: E402
@@ -310,6 +314,71 @@ def update17_section(folder):
     return "".join(rows)
 
 
+# --- Update 25 Nov (2026-11-25): the diamonds payout, from out/update_2026-11-25 ---------------------------------------
+# name -> (where it plays, what it takes over). The "what" is make_classic.py's.
+UPDATE_25_FX = [
+    ("Diamonds payout", [
+        ("Diamond_Burst", "In the lobby after a match or the tutorial: the moment the diamonds burst out of your snail, "
+                          "after the \"+amount\" pops up over it", "NEW"),
+        ("Diamond_Collect", "Each diamond landing in the diamonds slot at the top right, up to 30 in quick "
+                            "succession, each a little higher (pitch 1.0 to 1.6 across the burst)",
+         "the stand-in, Crate_Tick (Snail Crate Tick)"),
+    ]),
+]
+
+
+def update25_section(folder):
+    """The "Update 25 Nov" section: the diamonds payout's two sounds, each with what it is, where it plays and what it
+    takes over, from the update's own folder, and the landing clink played as the game plays it."""
+    with open(os.path.join(folder, "classic.json"), encoding="utf-8") as f:
+        meta = json.load(f)
+    rows = ["<h2>Update 25 Nov</h2><p class='lead'>New since your last listen (2026-11-25), a draft, not uploaded: "
+            "the diamonds payout's sounds, for the lobby's burst of diamonds into the top-right slot. A short sparkly "
+            "shimmer as they burst out of the snail, and a crisp glassy clink for each one landing, short and soft so "
+            "a run of 30 climbing in pitch stays pleasant. Both are crisp new synthesis on the Great Strategy's finger "
+            "chimes, the burst with the classic swoosh and flashbulb; they keep under 1 kHz and 1.5 kHz empty, so the "
+            "\"+amount\" chime and the lobby music stay clear. The last card plays a whole payout as the game would "
+            "(the burst, then 24 clinks rising).</p>"]
+    for title, items in UPDATE_25_FX:
+        rows.append(f"<h3>{html.escape(title)}</h3><div class='grid'>")
+        for name, where, replaces in items:
+            row = meta[name]
+            audio = player(os.path.join(folder, f"WB_{name}.wav"), row["loop"])
+            rows.append(card(name, row["what"], where, replaces, audio, row["kind"]))
+        with tempfile.TemporaryDirectory() as tmp:
+            demo = os.path.join(tmp, "payout.wav")
+            payout_demo(folder, demo)
+            rows.append(card("Whole payout", "Diamond_Burst, then 24 Diamond_Collect clinks landing over about a "
+                             "second at volume 0.6, each a step higher from pitch 1.0 to 1.6, as Payout plays them",
+                             "A listen only, not a sound of its own", "NEW", player(demo)))
+        rows.append("</div>")
+    return "".join(rows)
+
+
+def payout_demo(folder, out):
+    """Writes a whole payout as the lobby plays it: the burst, then the landing clinks streaming in over about a
+    second (the icons' flight times spread), each read faster as PlaybackSpeed would, from 1.0 up to 1.6."""
+    def read(name):
+        with wave.open(os.path.join(folder, f"WB_{name}.wav")) as w:
+            return np.frombuffer(w.readframes(w.getnframes()), "<i2").astype(np.float64) / 32768
+
+    sr, count = 44100, 24
+    burst, clink = read("Diamond_Burst"), read("Diamond_Collect")
+    buf = np.zeros(int(sr * 2.6))
+    buf[: len(burst)] += burst
+    lands = 0.75 + np.sort(np.random.default_rng(25).uniform(0, 1.1, count)) ** 1.3
+    for i, at in enumerate(lands):
+        pitch = 1 + (i + 1) / count * 0.6
+        y = np.interp(np.arange(int(len(clink) / pitch)) * pitch, np.arange(len(clink)), clink) * 0.6
+        j = int(at * sr)
+        buf[j: j + len(y)] += y[: len(buf) - j]
+    with wave.open(out, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes((np.clip(buf, -1, 1) * 32767).astype("<i2").tobytes())
+
+
 # Sounds remade since the last preview (the owner's notes, 2026-11-10)
 REMADE = {"Turn_Yours", "Turn_Start", "Lobby", "Battle_PicnicPlains", "Battle_PicnicPlains_SuddenDeath",
           "Battle_Desert", "Battle_Desert_SuddenDeath"}
@@ -333,8 +402,10 @@ def main():
     music = sys.argv[2] if len(sys.argv) > 2 else None
     update = sys.argv[3] if len(sys.argv) > 3 else None
     update17 = sys.argv[4] if len(sys.argv) > 4 else None
+    update25 = sys.argv[5] if len(sys.argv) > 5 else None
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "preview.html")
-    rows = [update17_section(update17)] if update17 else []
+    rows = [update25_section(update25)] if update25 else []
+    rows += [update17_section(update17)] if update17 else []
     rows += [update_section(update)] if update else []
     with open(os.path.join(folder, "classic.json"), encoding="utf-8") as f:
         meta = json.load(f)

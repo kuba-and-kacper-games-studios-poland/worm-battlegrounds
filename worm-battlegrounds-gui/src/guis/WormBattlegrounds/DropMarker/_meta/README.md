@@ -6,9 +6,11 @@ a dot (2026-11-17, the owner: "add some kind of circle or target… but make it 
 pointer until they place it.
 
 **Look.** `Primitive` nodes in SnailTag's look (2026-11-17, the polish pass; before, the GUI kit's label and chevron):
-the name in the heavy Bold Italic font (`rbxassetid://12187365977`) with a dark `ScaledSize` outline, a round head
-(`UICorner` 0.5, a dark (20, 14, 10) 4 px `UIStroke`) over a square turned 45° for the point, both in the player's
-colour, over the target. 150 × 222 at design scale, scaled with the screen like the hud. No pictures but the design's player icon in
+the name in the heavy Bold Italic font (`rbxassetid://12187365977`) with a dark `ScaledSize` outline (0.07), a round
+head (`UICorner` 0.5, a dark (20, 14, 10) `ScaledSize` `UIStroke`, 0.029) over a square turned 45° for the point
+(0.066), both in the player's colour, over the target. Every dark outline is as thick as the name's, about 2.7 px at
+design size (0.07 of its 38 px text: the owner, 2026-11-25, "fit to the text size stroke"), each a fraction of its own
+frame so it grows with the billboard. 150 × 222 at design scale, scaled with the screen like the hud. No pictures but the design's player icon in
 the gui (code puts the player's headshot there).
 
 |  |  |
@@ -25,7 +27,7 @@ the gui (code puts the player's headshot there).
 | Element | Kind | What game code does with it |
 | --- | --- | --- |
 | `U_Marker` | Frame | 150 × 222, the billboard's design size: the pin in the top 190, its tip at 190 down, the target centred there. Has `S_ScreenScale` (set with the billboard's size, below) |
-| `U_Marker` › `S_Target` | Frame, 0.42 of the width, square, centred on the tip (0.5, 0.8559), under the pin | The landing target: `RingOutline` (a dark `ScaledSize` line, 0.12) under `Ring` › `S_RingLine` (0.08, set to the snail's colour) and `S_Dot` (the snail's colour, a dark 2 px outline) on the spot; `S_TargetScale` (UIScale) pops it in when placed |
+| `U_Marker` › `S_Target` | Frame, 0.42 of the width, square, centred on the tip (0.5, 0.8559), under the pin | The landing target: `RingOutline` (a dark `ScaledSize` line, 0.165, showing about 2.7 px each side) under `Ring` › `S_RingLine` (0.08, set to the snail's colour) and `S_Dot` (the snail's colour, a dark `ScaledSize` outline, 0.3) on the spot; `S_TargetScale` (UIScale) pops it in when placed |
 | `U_Marker` › `S_Drop` | Frame, the pin (the top 190 of the 222), anchored at its bottom middle (the pin's tip) | Dropped onto its spot: its `Position` tweened from Match's `DROP_PIN_FALL` of its height above to (0.5, 0.8559) when a spot is placed or moved |
 | `S_Drop` › `S_Name` | TextLabel | The player's name, in their colour |
 | `S_Drop` › `S_Head`, `S_Point` | Frame | `BackgroundColor3` = the player's colour |

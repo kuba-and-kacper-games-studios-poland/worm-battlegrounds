@@ -668,8 +668,8 @@ function Module._getWheelEmotes()
 		table.insert(order, emoteId)
 	end
 	table.sort(order, function(a: string, b: string): boolean
-		local keyA: number = emotes[a].Level * 1e6 + (tonumber(emotes[a].Coins) or 0)
-		local keyB: number = emotes[b].Level * 1e6 + (tonumber(emotes[b].Coins) or 0)
+		local keyA: number = emotes[a].Level * 1e6 + (tonumber(emotes[a].Diamonds) or 0)
+		local keyB: number = emotes[b].Level * 1e6 + (tonumber(emotes[b].Diamonds) or 0)
 		return if keyA == keyB then a < b else keyA < keyB
 	end)
 

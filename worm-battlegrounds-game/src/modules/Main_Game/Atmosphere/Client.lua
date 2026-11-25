@@ -18,6 +18,7 @@ local _scripts = script:FindFirstAncestor(_localName):FindFirstChild("Scripts")
 local Liquids = require(_scripts:FindFirstChild("Client"):FindFirstChild("Liquids")) --- @type Atmosphere_Client_Liquids
 local Ambient = require(_scripts:FindFirstChild("Client"):FindFirstChild("Ambient")) --- @type Atmosphere_Client_Ambient
 local Wind = require(_scripts:FindFirstChild("Client"):FindFirstChild("Wind")) --- @type Atmosphere_Client_Wind
+local Parallax = require(_scripts:FindFirstChild("Client"):FindFirstChild("Parallax")) --- @type Atmosphere_Client_Parallax
 local Mood = require(_scripts:FindFirstChild("Client"):FindFirstChild("Mood")) --- @type Atmosphere_Client_Mood
 local Reactions = require(_scripts:FindFirstChild("Client"):FindFirstChild("Reactions")) --- @type Atmosphere_Client_Reactions
 
@@ -56,6 +57,7 @@ function Module.Start()
 	Liquids.Start(arenaFolder)
 	Ambient.Start(worldFolder, arenaFolder, lobbyFolder)
 	Wind.Start(worldFolder)
+	Parallax.Start(worldFolder)
 	Mood.Start(matchFolder, arenaFolder)
 	if hasMatches then
 		Reactions.Start(arenaFolder, matchFolder, I.Dirs.UmeWorkspace:WaitForChild("Combat"), I.Dirs.UmeWorkspace:WaitForChild("Snails"))

@@ -1,5 +1,6 @@
 --[[
 	Created By: 	Nari
+	Edited By: 	HungryN00B
 ]]
 
 --- @type Ume
@@ -59,6 +60,11 @@ function Module.Init()
 	----------------------------
 
 	I.G_Arsenal = {
+
+		--[[ Control ]]
+
+		Gild = Module.Gild,
+		MakeCopy = Module.MakeCopy,
 
 		--[[ Methods ]]
 
@@ -130,7 +136,109 @@ function Module._cacheModels(folderName: string, cache)
 	end
 end
 
---%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
+
+--%%%%%%%%%%%%%%%%%%%% Gild
+
+--[[
+	Turns a weapon's parts gold, keeping their dark details: a SurfaceAppearance, a SpecialMesh's texture or a decal is
+	tinted the bright gold (a tint keeps what's dark dark), a part with a SurfaceAppearance or a textured MeshPart also
+	gets a metal gold copy over it, `cover` see-through and `grow` times its size (a tint alone leaves a coloured picture
+	its colour), and a plain part takes the gold between dark and bright by its own brightness, in Metal. Combat's
+	Golden weapons, the level unlock's card and the lobby stage's Bazooka all gild with it.
+]]
+--- @param parts { BasePart }
+function Module.Gild(parts, dark: Color3, bright: Color3, cover: number, grow: number)
+	--[[ Gilding ]]
+
+	for _index: number, part: BasePart in ipairs(parts) do
+		local appearance: SurfaceAppearance? = part:FindFirstChildWhichIsA("SurfaceAppearance")
+		local mesh: SpecialMesh? = part:FindFirstChildWhichIsA("SpecialMesh")
+		if appearance then
+			appearance.Color = bright
+			Module.MakeCopy(part, bright, Enum.Material.Metal, cover, grow)
+		elseif mesh and mesh.TextureId ~= "" then
+			mesh.VertexColor = Vector3.new(bright.R, bright.G, bright.B)
+		elseif part:IsA("MeshPart") and part.TextureID ~= "" then
+			Module.MakeCopy(part, bright, Enum.Material.Metal, cover, grow)
+		else
+			local brightness: number = part.Color.R * 0.299 + part.Color.G * 0.587 + part.Color.B * 0.114
+			part.Color = dark:Lerp(bright, brightness)
+			part.Material = Enum.Material.Metal
+		end
+
+		-- Decals and textures on it are tinted too
+		for _index2: number, decal: Instance in ipairs(part:GetChildren()) do
+			if decal:IsA("Decal") then
+				decal.Color3 = bright
+			end
+		end
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Make Copy
+
+--[[
+	Makes a copy of a part's shape over it (no texture, no children but its mesh), grown so it sits just outside it, in
+	a colour, a material and a see-through, welded to it (a Weld, so it stays on the part whenever the model enters the
+	world) in its model so it moves and hides with it. Returns the copy.
+]]
+--- @return BasePart
+function Module.MakeCopy(part: BasePart, color: Color3, material: Enum.Material, transparency: number, grow: number)
+	--[[ Building ]]
+
+	local copy: BasePart = part:Clone()
+	for _index: number, child: Instance in ipairs(copy:GetChildren()) do
+		if not child:IsA("DataModelMesh") then
+			child:Destroy()
+		end
+	end
+
+	-- A SpecialMesh draws at its own scale, a MeshPart or a plain part at its size
+	local mesh: DataModelMesh? = copy:FindFirstChildWhichIsA("DataModelMesh")
+	if mesh then
+		mesh.Scale *= grow
+	else
+		copy.Size *= grow
+	end
+	if mesh and mesh:IsA("SpecialMesh") then
+		mesh.TextureId = ""
+	end
+	if copy:IsA("MeshPart") then
+		copy.TextureID = ""
+	end
+
+	--[[ Applying ]]
+
+	copy.Name = `{part.Name}_Variant`
+	copy.Color = color
+	copy.Material = material
+	copy.Transparency = transparency
+	copy.CastShadow = false
+	copy.Anchored = false
+	copy.Massless = true
+	copy.CanCollide = false
+	copy.CanQuery = false
+	copy.CanTouch = false
+	copy.CFrame = part.CFrame
+
+	-- A Weld with no offset, not a WeldConstraint: a constraint made before the model is in the world (a match dresses
+	-- its held weapon before it parents it) keeps the copy where it was made, far from the weapon
+	I.Create("Weld")({
+		Part0 = part,
+		Part1 = copy,
+		C0 = CFrame.identity,
+		C1 = CFrame.identity,
+		Parent = copy,
+	})
+	copy.Parent = part.Parent
+
+	--[[ Returning ]]
+
+	return copy
+end
+
+--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Methods
 
 --%%%%%%%%%%%%%%%%%%%% Get
 

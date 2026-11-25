@@ -10,7 +10,7 @@ local _gui = {
 	-- ume's transit lobby moves it from ServerStorage.Ume.UtilityGuis to ReplicatedFirst, shown during the hop
 	Name = "LobbyGui",
 	Theme = "WormBattlegroundsBrawl",
-	Screen = { DisplayOrder = 100, Enabled = true, ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.None },
+	Screen = { DisplayOrder = 100, Enabled = true, ResetOnSpawn = false, ScreenInsets = Enum.ScreenInsets.None, ClipToDeviceSafeArea = false },
 
 	--[[ Tree ]]
 

@@ -334,14 +334,14 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Effects
 
-	-- The pictures the effects draw with: art/crates' own, and the game's earlier glow, sparkle, coin and smiley
+	-- The pictures the effects draw with: art/crates' own, and the game's earlier glow, sparkle, diamond and smiley
 	--- @type { [string]: string }
 	FX_TEXTURES = {
 		Spark = "rbxassetid://97296507263981",
 		Star = "rbxassetid://95186884093199",
 		Glow = "rbxassetid://124537809204603",
 		Ring = "rbxassetid://134479561564722",
-		Coin = "rbxassetid://123804836570291",
+		Diamond = "rbxassetid://98200575516825",
 		Smiley = "rbxassetid://75798902746408",
 		Bone = "rbxassetid://108730143339514",
 		Bubble = "rbxassetid://138788798394435",
@@ -402,17 +402,30 @@ local _settings = {
 
 	--[[
 		The currencies crates are paid in, top to bottom: a balance chip each (U_Pay<currency>) and a row of buy buttons
-		(U_<currency>X<count>)
+		(U_<currency>X<count>). Diamonds alone since coins went (2026-11-25)
 	]]
 	--- @type { string }
-	PAY_CURRENCIES = { "Coins", "Diamonds" },
+	PAY_CURRENCIES = { "Diamonds" },
 
-	-- The first row's x1 price while the crate is free (VIP's daily crate)
+	-- The first row's x1 price while the crate is free (VIP's daily crate), shown alone where paid crates are restricted
 	PRICE_FREE = "FREE",
 
 	--[[
+		A crate the server won't open says why on the crates screen, which stays open (the owner, 2026-11-24): the
+		S_Notice plate pops over the crate (NOTICE_POP_*) for NOTICE_SECONDS. Short of diamonds, the shop opens
+		NOTICE_SHOP_DELAY seconds later, to get more (SHOP_GUI_NAME)
+	]]
+	SHORT_DIAMONDS_MESSAGE = "Not enough diamonds!",
+	OPEN_FAILED_MESSAGE = "Can't open that right now",
+	NOTICE_SECONDS = 2,
+	NOTICE_SHOP_DELAY = 1,
+	NOTICE_POP_START_SCALE = 0.8,
+	NOTICE_POP_TWEENINFO = TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+	SHOP_GUI_NAME = "Shop",
+
+	--[[
 		The lobby gui with the corner menu (U_Menu: S_Weapons and S_Skins open a crate's tab), and the badge on its
-		Weapons button: this text while a free crate waits, else how many crates the player's coins open, shown as
+		Weapons button: this text while a free crate waits, else how many crates the player's diamonds open, shown as
 		BADGE_MAX+ past BADGE_MAX
 	]]
 	LOBBY_GUI_NAME = "Lobby",

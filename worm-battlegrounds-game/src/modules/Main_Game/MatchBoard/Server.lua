@@ -53,6 +53,7 @@ function Module.Init()
 		--[[ Control ]]
 
 		Launch = Launch.Launch,
+		PlayAgain = Public.PlayAgain,
 
 		--[[ Methods ]]
 

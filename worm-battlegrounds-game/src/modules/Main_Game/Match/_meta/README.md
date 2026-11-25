@@ -5,9 +5,13 @@ Studio map, handed over through `I.Match.Host`; on the Match map alone in Studio
 that got none, such as a public server someone joined directly, plays nothing and sends everyone to the lobby), loads the map
 so it shows while everyone arrives, waits for the players, seats them and fills the rest with bots (unless the match
 has none: a party's or a custom lobby's without bots), then plays. A **public** match runs its waiting room first
-(`WaitingRoom`, the `MatchWaiting` gui at the bottom middle): for `WAITING_SECONDS` lobby servers everywhere keep
-seating players and parties in it through Matchmaking's store; it starts when the time is up or as soon as every
-player here pressed Ready, bots in the empty seats, and anyone here without a seat goes back to the lobby. Other
+(`WaitingRoom`, the `MatchWaiting` gui at the bottom middle): lobby servers everywhere keep seating players and
+parties in it through Matchmaking's store, where the lobby that opened it put it before this server booted (pending,
+its first group seated: the server opens it again, keeping every seat claimed meanwhile). It starts when its time is
+up (`WAITING_SECONDS` from now for a match nobody put in the store first; otherwise the time its lobby promised, but
+never sooner than Matchmaking's `MIN_ROOM_SECONDS` from now), `FULL_START_SECONDS` after its last seat is taken
+(2026-11-24), or as soon as every player here pressed Ready, bots in the empty seats, and anyone here without a seat
+goes back to the lobby. Other
 matches wait for their roster (each player's data loaded) up to `WAIT_FOR_PLAYERS`. A **local** match (`Kind = "Local"`, 2026-11-17) seats the host and their guests, the roster's seats with a `Guest` number: each guest is a snail of the host's (`P_<userId>_<n>`, the host's `UserId`, named "Player n"), played from the host's screen, one controller passed round; it pays nothing and counts toward no statistic. **A player seated but not here
 yet** (still teleporting, or loading on a slow device) is seated all the same, from the card their lobby made, and a
 bot plays their snail until their data has loaded here: every match starts with all its snails, and nobody is out for
@@ -17,14 +21,17 @@ pin follows the pointer, faded where a snail doesn't fit), and may move it again
 2026-11-15; only the tutorial's ends once its player placed), the landing (every snail parachutes
 in: a placed one from its spot, bots and players who didn't place from up to `DROP_HEIGHT` over a spot of land from
 `I.Arena.GetLandSpots`, which each bot but the tutorial's picks with `I.Bots.GetStart`; it waits until every snail is
-down, on ground or in a liquid, `MAX_LANDING` at most, then closes any parachute still open), then turns (`TURN_SECONDS` each, with wind) until one team is left, with
+down, on ground or in a liquid, `MAX_LANDING` at most, then closes any parachute still open), then turns (`TURN_SECONDS` each; wind only when the metadata's `Wind` is on, which only a custom lobby or local play that turned it on sends: the owner, 2026-11-24) until one team is left, with
 sudden death from `SUDDEN_DEATH_ROUND`, after 10 rounds (the liquid rises every turn). Then it ends the match (MatchRewards pays and shows Results), runs the rematch
 vote and sends everyone who didn't vote to the lobby. A snail knocked out at a turn's end turns into its ghost
 (Snails' `GHOST_TIME`) before the next turn starts. A player who drops out keeps their snail, and a bot plays its
 turns (`I.Bots.TakeTurn`, the `Autopilot` attribute) until they come back from the lobby, which offers it for
 `REJOIN_SECONDS`; one who drops during their turn hands the rest of it to the bot, with at least `TAKEOVER_SECONDS`
 left. Back, they play from their snail's next turn, as the bot left it (its moves, shots and uses stay), on their team
-again. A player who leaves (the Leave button) is knocked out. A match that can't play (its map doesn't load, or
+again. A player who leaves (the Leave button) is knocked out. **Play again** (2026-11-24): a knocked-out player in a
+public or solo match may press PLAY AGAIN on MatchHud's knockout screen; the server saves the match's kind, mode and
+difficulty in their profile (`Match.PlayAgain`, good for `PLAY_AGAIN_SECONDS`) and sends them to the lobby, which
+puts them straight into another match like it (Lobby's `PlayAgain`). A match that can't play (its map doesn't load, or
 an error stops it) sends everyone to the lobby instead of leaving them waiting.
 
 Match servers are reserved servers of the match place, which boots the `Match` map; the lobby place sends each one its
@@ -41,7 +48,7 @@ player left stops at the next turn. One match plays at a time.
 | Runs on | Server, Client · Match map, Studio map |
 | Exposes | `I.Match` (server, client) |
 | Uses | `I.Snails`, `I.Combat`, `I.Bots`, `I.Arena`, `I.Matchmaking`, `I.Team`, `I.Player`, `I.Config.Metadata`, `I.TeleportExternal`, `I.Tutorial`, `I.Console` (client), `I.AdminPanel_CommandBar` |
-| Saves | `Profile.Match` (writes `Rejoin` when a player drops) |
+| Saves | `Profile.Match` (writes `Rejoin` when a player drops, `PlayAgain` on Play again) |
 
 ## Files
 
@@ -49,9 +56,9 @@ player left stops at the next turn. One match plays at a time.
 | --- | --- |
 | `Server.lua` | The match folders, remotes, Topics, the `I` table; starts the handlers |
 | `Scripts/Server/Phases.lua` | The main loop: waiting, drop, landing, turns, the end, rematches |
-| `Scripts/Server/WaitingRoom.lua` | A public match's waiting room: its entry in Matchmaking's store (open, refreshed every `ROOM_REFRESH_SECONDS`, closed at the start), the seats lobbies claim, Ready, giving back a leaver's seat, sending back players with no seat, the `Room` attribute |
+| `Scripts/Server/WaitingRoom.lua` | A public match's waiting room: its entry in Matchmaking's store (opened again over the lobby's pending one, taking its seats and start, refreshed every `ROOM_REFRESH_SECONDS`, closed at the start), the seats lobbies claim, the start brought forward to `FULL_START_SECONDS` away once every seat is taken, Ready, giving back a leaver's seat, sending back players with no seat, the `Room` attribute |
 | `Scripts/Server/Roster.lua` | Metadata, participants (players and bots), teams, the participant entries. Every roster seat is seated: a player here with their data loaded from their own card (`I.Matchmaking.GetCard`), one not here or not loaded yet from the card their lobby sent, `Connected` false so a bot plays for them. `AssignTeam(participant)` puts a player on their Roblox team in a team match, making the team only when `Teams` has none of that name, at the start and when they come back. In the tutorial a player takes `TUTORIAL_LOADOUT`, whatever their loadout |
-| `Scripts/Server/Turns.lua` | Turn order; in local play each local snail's turn first waits for its player to take the controller (the `HandOff` attribute, set before `ActiveId` so screens hold the turn's callout for it, then a press from the host's screen, `LOCAL_HANDOFF_SECONDS` at most) before its timer starts; the timer (a turn ends with its shot or its timer only: getting hurt no longer ends it, the owner, 2026-11-15), wind (rolled again on the first turn of every `WIND_ROUNDS`-th round, so every snail plays two turns on it, never the same twice in a row (the owner, 2026-11-15), its strength weighted by `WIND_WEIGHTS` so −5 to 5 is about 65% of rolls), rounds, sudden death; a bot plays a dropped player's turns (`Autopilot`); at every turn's end each snail with its head under a pond's liquid loses `UNDERWATER_DAMAGE`, never below 1; the settle (below); after the knockouts at a turn's end it waits Snails' `GHOST_TIME` when any snail went out |
+| `Scripts/Server/Turns.lua` | Turn order; in local play each local snail's turn first waits for its player to take the controller (the `HandOff` attribute, set before `ActiveId` so screens hold the turn's callout for it, then a press from the host's screen, `LOCAL_HANDOFF_SECONDS` at most) before its timer starts; the timer (a turn ends with its shot or its timer only: getting hurt no longer ends it, the owner, 2026-11-15; the tutorial's player gets `TUTORIAL_TURN_SECONDS`, its bot `TURN_SECONDS`), wind (0 all match unless the metadata's `Wind` is on; then rolled again on the first turn of every `WIND_ROUNDS`-th round, so every snail plays two turns on it, never the same twice in a row (the owner, 2026-11-15), its strength weighted by `WIND_WEIGHTS` so −5 to 5 is about 65% of rolls), rounds, sudden death; a bot plays a dropped player's turns (`Autopilot`); at every turn's end each snail with its head under a pond's liquid loses `UNDERWATER_DAMAGE`, never below 1; the settle (below); after the knockouts at a turn's end it waits Snails' `GHOST_TIME` when any snail went out |
 | `Scripts/Server/Placement.lua` | Knockout order and the final places |
 | `Scripts/Server/Stats.lua` | Damage, knockouts, rounds and best shot per participant |
 | `Scripts/Server/Connection.lua` | Leaving, dropping out, rejoining (control from the snail's next turn, its team and `ReplicationFocus` back), sending players to the lobby, the `InMatch` attribute |
@@ -62,7 +69,7 @@ player left stops at the next turn. One match plays at a time.
 | `Scripts/Client/DropPicker.lua` | Picking the drop point, as before the 17 Nov polish (the owner, 2026-11-17: "the old one was good - i just wanted to change it visually", after a ring on the land under the pointer confused them): the point on the arena's plane under the mouse, a finger's tap, or moved by the left stick (`DROP_STICK_SPEED`) is the spot. A click, a tap or the gamepad's A places it there with `Drop_Place` (the pad's buttons are the Console module's `Move` and `PlaceDrop`, read through `I.Console.IsAction`); a press where a snail doesn't fit does nothing (touching terrain, in a liquid or outside the play area, `_isFree`; the tutorial still sends any press). Every participant's spot shows their DropMarker pin, its tip and its small target (the aim crosshair's ring in their colour and a dot) on the spot (`SizeOffset` from the pin's `S_Drop` position, kept as the part's `Tip`), in their colour with their headshot (MatchHud's `BOT_AVATAR` for a bot) and name: the player's own follows their pick until they place it, faded `DROP_PIN_FADE` where a snail doesn't fit; others' are faded until they place theirs. A placed pin drops in (`DROP_PIN_FALL`, `DROP_PIN_TWEENINFO`) and its target pops in (`DROP_TARGET_POP`, `DROP_TARGET_TWEENINFO`), again when it's moved. Each DropMarker is sized with the screen by `I.ScreenScale.AddBillboard` |
 | `Scripts/AdminPanel/CommandBar/Server.lua` | The `match` command, and the `Match_Snails` dictionary (each snail's name, spaces as underscores, set again on every phase change) that the commands taking a snail suggest from |
 | `Settings.lua` | `Match_Settings` |
-| `_meta/_types.lua` | `Match_Metadata`, `Match_RosterEntry`, `Match_Participant`, `Match_Placement`, `Match_Stats`, … |
+| `_meta/_types.lua` | `Match_Metadata` (its `Wind`: true only when a custom lobby or local play turned the wind on), `Match_RosterEntry`, `Match_Participant`, `Match_Placement`, `Match_Stats`, … |
 
 ## API
 
@@ -74,10 +81,12 @@ player left stops at the next turn. One match plays at a time.
 | `Host(players, metadata)` | `boolean` | Studio map only: plays a match the lobby hands over, with these players; players seated in the public match waiting here (the same `LobbyId`) join it instead. `false` while another plays |
 | `SkipTurn()` | | Ends the turn playing now as if its timer ran out; a shot in flight still lands. For testing |
 | `SetTurnSeconds(seconds: number?)` | | How long every turn lasts from now on, the one playing now too, until the server closes; nil is `TURN_SECONDS` again. For testing |
-| `SetWind(wind: number)` | | The wind, kept within ±`WIND_MAX`, until it's rolled again (`WIND_ROUNDS`). For testing |
+| `SetWind(wind: number)` | | The wind, kept within ±`WIND_MAX`, until it's rolled again (`WIND_ROUNDS`; the next turn in a match without wind). For testing |
 | `SetRound(round: number)` | | The round the match is on; from `SUDDEN_DEATH_ROUND` the next turn starts sudden death. For testing |
 | `GetParticipant(participantId)`, `GetParticipantOf(player)` | `Match_Participant?` | A participant by id, or a player's |
 | `GetParticipants()` | `{ Match_Participant }` | Everyone in the match, in roster order |
+| `GetPlacements()` | `{ Match_Placement }` | Every team's place so far: teams still in share the top, teams out rank by when they went out (MatchRewards' early pay) |
+| `GetStats()` | `{ [string]: Match_Stats }` | Each participant's damage, knockouts and best shot so far |
 | `FindParticipant(query: string)` | `Match_Participant?` | The participant a typed name means, for admin commands: its id, its snail's name or its player's username, ignoring case, spaces and underscores; else the only one whose name starts with it |
 | `GetMetadata()` | `Match_Metadata` | The match this server plays |
 | `GetActive()` | `string?` | The active participant's id |
@@ -116,6 +125,7 @@ player left stops at the next turn. One match plays at a time.
 - `Match_Ready @ (player: Player)`: in a public match's waiting room, a seated player is ready. Rate limit 2 per second.
 - `Match_Leave @ (player: Player)`: knocks out the player's snail, then sends them to the lobby (from the waiting room, their seat is given back). Rate limit 1 per second.
 - `Match_Rematch @ (player: Player)`: a rematch vote. Rate limit 2 per second.
+- `Match_PlayAgain @ (player: Player)`: a knocked-out player in a public or solo match asks for another like it; saves `Match.PlayAgain` and sends them to the lobby. Rate limit 1 per second.
 
 **Send: RemoteEvents**
 
@@ -132,7 +142,8 @@ player left stops at the next turn. One match plays at a time.
 | Where | Key | What |
 | --- | --- | --- |
 | Profile | `Match.Rejoin` | `{ PlaceId, AccessCode, Until }` written when a player drops (the lobby reads it) |
-| `Workspace.Ume.Match` | `Kind`, `Mode`, `Size`, `MapId`, `RoomEndsAt` (server time a public match's waiting room ends; set only while it's open), `Room` (JSON `Match_RoomSeat`s: `UserId`, `Name`, `Ready`, `Here`), `Phase`, `ActiveId`, `Autopilot` (a bot plays the active snail for its player, who dropped), `TurnOrder` (the snails that can play, comma-separated, in the order their next turn comes after the active one; set at each turn's start), `TurnEndsAt`, `Wind`, `Round`, `SuddenDeath`, `SeaKind` (the rising liquid, `"Water"` or `"Lava"`: Arena's `GetLiquidKind`, set as each sudden-death turn starts, before `SuddenDeath`, for MatchHud's callout), `Arrived`, `Expected`, `DropMinX`, `DropMaxX`, `DropMinY`, `DropMaxY` (the play area a spot may be placed in: the bounds, minus Arena's `START_TOP_GAP` at the top), `DropEndsAt` (set to now when the tutorial's player placed early), `RematchVotes`, `RematchEndsAt` | The match's state for every client |
+| Profile | `Match.PlayAgain` | `{ Kind, Mode, Difficulty, Until }` written by `Match_PlayAgain` (the lobby reads and clears it) |
+| `Workspace.Ume.Match` | `Kind`, `Mode`, `Size`, `MapId`, `ModeName`, `ModeIcon`, `MapName` (the waiting room's title and icon, from the metadata the lobby sent: this place has no MatchBoard), `RoomEndsAt` (server time a public match's waiting room ends, brought forward once every seat is taken; set only while it's open), `Room` (JSON `Match_RoomSeat`s: `UserId`, `Name`, `Ready`, `Here`), `Phase`, `ActiveId`, `Autopilot` (a bot plays the active snail for its player, who dropped), `TurnOrder` (the snails that can play, comma-separated, in the order their next turn comes after the active one; set at each turn's start), `TurnEndsAt`, `Wind`, `WindOn` (whether the match has wind: the metadata's `Wind`, set as it plays; MatchHud hides the wind plate without it), `Round`, `SuddenDeath`, `SeaKind` (the rising liquid, `"Water"` or `"Lava"`: Arena's `GetLiquidKind`, set as each sudden-death turn starts, before `SuddenDeath`, for MatchHud's callout), `Arrived`, `Expected`, `DropMinX`, `DropMaxX`, `DropMinY`, `DropMaxY` (the play area a spot may be placed in: the bounds, minus Arena's `START_TOP_GAP` at the top), `DropEndsAt` (set to now when the tutorial's player placed early), `RematchVotes`, `RematchEndsAt` | The match's state for every client |
 | `…Match.Participants.<id>` | `DisplayName`, `UserId`, `Team`, `Color`, `IsBot`, `Connected` (false while a player dropped, or isn't here or loaded yet: a bot plays them), `Out`, `DropX`, `DropY` (the landing spot), `Placed` (whether it was placed; bots always are) | One `Configuration` per participant |
 | `Player` attribute | `InMatch` | `true` while the player is in the match: everyone on a match server, those `Host` brought on the Studio map. Lobby and match screens follow it |
 
@@ -142,15 +153,17 @@ player left stops at the next turn. One match plays at a time.
 | --- | --- | --- |
 | `LOCAL_HANDOFF_SECONDS` | `30` | Local play: the longest a local turn waits for its player to take the controller |
 | `WAIT_FOR_PLAYERS` | `20` | Seconds a solo, party, custom or tutorial match waits for its roster (each player in the server with their data loaded) before starting; a bot plays for anyone not there yet |
-| `WAITING_SECONDS`, `ROOM_REFRESH_SECONDS`, `STRANGER_SECONDS` | `15`, `2`, `6` | A public match's waiting room: how long it takes joins, how often it reads the seats lobbies claimed, and how long a player here with no seat waits before being sent back |
+| `WAITING_SECONDS`, `ROOM_REFRESH_SECONDS`, `STRANGER_SECONDS` | `30`, `2`, `6` | A public match's waiting room: how long it takes joins (MatchBoard keeps a copy, its own `WAITING_SECONDS`, which the lobby adds to `SERVER_BOOT_SECONDS` for the start it promises a match it opens: change both together), how often it reads the seats lobbies claimed, and how long a player here with no seat waits before being sent back |
+| `FULL_START_SECONDS` | `4` | Once every seat is taken, the match starts this many seconds later (its last players may still be on their way), unless it starts sooner anyway |
 | `WAITING_GUI_NAME` | `"MatchWaiting"` | The waiting room's gui |
 | `DROP_SECONDS`, `MAX_LANDING`, `DROP_STICK_SPEED`, `DROP_HEIGHT` | `15`, `12`, `40`, `20` | The drop phase (always its whole time but in the tutorial), and how high over its land a snail nobody placed starts its parachute |
+| `SOLO_DROP_SECONDS` | `7` | A solo match's drop in place of `DROP_SECONDS`: only bots play with the player (2026-11-25) |
 | `DROP_SPOT_CHOICES` | `6` | Random land spots the drop draws for each snail: bots pick theirs from them (`I.Bots.GetStart`, never near a spot taken), and a player who doesn't place starts on the first one at least Arena's `LAND_SPOT_GAP` from everyone's |
 | `DROP_PIN_FADE`, `DROP_PIN_FALL`, `DROP_PIN_TWEENINFO` | `0.6`, `0.35`, 0.4 s bounce out | The drop markers: how see-through a pin (and its target) is where a snail doesn't fit or its spot isn't placed; a placed pin drops onto its spot from this share of its height above it |
 | `DROP_TARGET_POP`, `DROP_TARGET_TWEENINFO` | `1.6`, 0.35 s back out | A placed spot's target pops in from this many times its size |
-| `TUTORIAL_GAP`, `TUTORIAL_SPOT_COUNT`, `TUTORIAL_DROP_HEIGHT`, `TUTORIAL_DROP_SECONDS`, `TUTORIAL_PICK_RADIUS` | `30`, `16`, `8`, `40`, `10` | The tutorial's drop: the player and the bot start on land about `TUTORIAL_GAP` studs apart near the map's middle (from `TUTORIAL_SPOT_COUNT` land spots), lit `TUTORIAL_DROP_HEIGHT` studs over it (lower than `DROP_HEIGHT`, the owner, 2026-11-15), the player has `TUTORIAL_DROP_SECONDS`, and any press within `TUTORIAL_PICK_RADIUS` studs of the lit spot counts, over land or not (the guide's ring is at least `HOLE_MIN` pixels, wider than a few studs when the camera is far out); the snail keeps the lit spot |
-| `TUTORIAL_WINDS` | `{ 0, -16 }` | The tutorial's wind, one for each `WIND_ROUNDS` rounds before the usual rolls: calm, then a strong wind against the player, who starts left of the bot |
-| `TUTORIAL_LOADOUT` | `{ "Grenade" }` | What the player takes into the tutorial beside the Bazooka |
+| `TUTORIAL_GAP`, `TUTORIAL_SPOT_COUNT`, `TUTORIAL_DROP_HEIGHT`, `TUTORIAL_DROP_SECONDS`, `TUTORIAL_PICK_RADIUS` | `30`, `16`, `8`, `900`, `10` | The tutorial's drop: the player and the bot start on land about `TUTORIAL_GAP` studs apart near the map's middle (from `TUTORIAL_SPOT_COUNT` land spots), lit `TUTORIAL_DROP_HEIGHT` studs over it (lower than `DROP_HEIGHT`, the owner, 2026-11-15), the player has `TUTORIAL_DROP_SECONDS` (long enough never to run out: the tutorial has no timers, the owner, 2026-11-24), and any press within `TUTORIAL_PICK_RADIUS` studs of the lit spot counts, over land or not (the guide's ring is at least `HOLE_MIN` pixels, wider than a few studs when the camera is far out); the snail keeps the lit spot |
+| `TUTORIAL_TURN_SECONDS` | `900` | The tutorial player's turns, long enough never to run out (its bot's turns keep `TURN_SECONDS`); MatchHud hides their timer |
+| `TUTORIAL_LOADOUT` | `{}` | What the player takes into the tutorial beside the Bazooka: nothing, the Bazooka alone (2026-11-24) |
 | `TURN_SECONDS`, `MAX_FLIGHT` | `25`, `20` | A turn's seconds, and the longest a shot flies |
 | `SETTLE_HOLD`, `HIT_HOLD`, `STALL_SECONDS`, `MAX_SETTLE` | `0.3`, `3`, `5`, `20` | The settle after a turn: the next turn waits until every snail is at rest on the ground (or in a liquid), no debris falls, no shot flies and no health changes, for `SETTLE_HOLD` seconds, or `HIT_HOLD` after a shot or a hit; nothing moving or getting hurt for `STALL_SECONDS` moves on anyway (a snail stuck off the ground), and `MAX_SETTLE` seconds of settling always does |
 | `UNDERWATER_DAMAGE`, `UNDERWATER_HEAD_HEIGHT` | `5`, `1.6` | At the end of every turn, damage to each snail whose head is under a liquid that doesn't knock it out (a pond, Mirage Mesa's oasis), never taking it below 1 health, like Worms Armageddon's poison; the head's top is this many studs over the ball's centre (where Classic's eyestalks start), so a snail with only its body under is fine |
@@ -159,6 +172,7 @@ player left stops at the next turn. One match plays at a time.
 | `SUDDEN_DEATH_ROUND`, `SUDDEN_DEATH_RISE` | `11`, `4` | The round sudden death starts at (after 10 rounds), and how many half-stud rows the liquid rises at the start of every turn from then |
 | `REJOIN_SECONDS`, `TAKEOVER_SECONDS` | `900`, `12` | How long the lobby offers a dropped player to go back to their match (a bot plays their snail meanwhile); the least time a bot gets of a turn its player dropped during |
 | `REMATCH_SECONDS` | `20` | The rematch vote |
+| `PLAY_AGAIN_SECONDS` | `90` | How long a Play again request waits in the profile for the lobby to act on it |
 | `LOBBY_RESEND_SECONDS`, `LOBBY_FAILED_MESSAGE` | `15`, "Couldn't get you to the lobby. Try again!" | A player on the way to the lobby isn't sent again for this long; a teleport that can't start says so, and Lobby works again at once |
 | `TEAM_SIZES`, `TEAMS`, `FFA_COLORS` | | Teams by mode, team names and colours, deathmatch colours |
 | `DRAW_CLOCK_EASE`, `DRAW_CLOCK_SNAP` | `1`, `0.5` | `GetDrawTime`'s easing toward the server's clock, in seconds, and how far off it jumps instead |
@@ -169,8 +183,8 @@ player left stops at the next turn. One match plays at a time.
 
 Drives the `MatchWaiting` gui (`U_WaitingRoom`: `S_Countdown`, `S_Info`, `U_Players` › `PREFAB | PlayerName` with
 `S_Avatar`, `S_Name`, `S_Username`, `S_ReadyTag`; `S_Ready` with its `S_Text`; `S_Leave`), and hides MatchHud's own
-waiting dialog while the room is open. Creates `Workspace.Ume.Match`. The DropMarker billboard's holder is `Assets.Match` › `PREFAB | DropMarker` (authored in `Workspace.Ume.ReplicatedStorage_Assets/Match/`: a 1 × 1 × 1 invisible `RootPart`, its `Attachment`, the BillboardGui `U_DropMarker`); clients clone only the billboard and name the copy `DropMarker`, on an invisible part `Drop_<participantId>` on the land under the spot, in `Workspace.Ume.Match` with its ring (and the player's own light beam); the target and the slam are two more such parts, `DropTarget` and `DropSlam`, there while the drop runs. The tutorial match (`Kind = "Tutorial"`) starts the player and the bot close together, gives the player its own loadout and blows its own wind first (the `TUTORIAL_*` settings), keeps the roster's turn order so the player plays first, and skips the
-rematch: everyone goes back to the lobby after the results. It counts as played (`I.Tutorial.CompleteMatch`, saved at
+waiting dialog while the room is open. Creates `Workspace.Ume.Match`. The DropMarker billboard's holder is `Assets.Match` › `PREFAB | DropMarker` (authored in `Workspace.Ume.ReplicatedStorage_Assets/Match/`: a 1 × 1 × 1 invisible `RootPart`, its `Attachment`, the BillboardGui `U_DropMarker`); clients clone only the billboard and name the copy `DropMarker`, on an invisible part `Drop_<participantId>` on the land under the spot, in `Workspace.Ume.Match` with its ring (and the player's own light beam); the target and the slam are two more such parts, `DropTarget` and `DropSlam`, there while the drop runs. The tutorial match (`Kind = "Tutorial"`) starts the player and the bot close together, gives the player the Bazooka alone and no clock on their drop and turns (the `TUTORIAL_*` settings), has no wind, keeps the roster's turn order so the player plays first, and skips the
+rematch: everyone goes back to the lobby once the vote's time is up (the Tutorial module's win card sends its player sooner, through `Match_Leave`). It counts as played (`I.Tutorial.CompleteMatch`, saved at
 once) when it ends, and when a player leaves it early (Leave game, or a match that can't play), so the lobby doesn't
 send the player straight back.
 

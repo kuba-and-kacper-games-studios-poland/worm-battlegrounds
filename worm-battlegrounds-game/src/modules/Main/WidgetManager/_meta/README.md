@@ -20,7 +20,7 @@ One menu at a time. Every full-screen widget (a `ScreenGui` from `I.UserInterfac
 | `Scripts/MessageWidget.lua` | The `WidgetManager_Message` widget |
 | `Scripts/ConfirmationWidget.lua` | The `WidgetManager_Confirmation` widget |
 | `Scripts/UtilityQueue.lua` | The first-in, first-out queue of messages and confirmations waiting for the one on screen |
-| `Scripts/Dim.lua` | The background dim |
+| `Scripts/Dim.lua` | The background dim: a widget's own `WidgetManager_Dim`, else `DIM_TRANSPARENCY`, on a ScreenGui over the whole screen (`ScreenInsets` `None`, `ClipToDeviceSafeArea` off), out to a phone's notch sides |
 | `Components/TogglePart.lua` | Opens a widget while the player stands in a part |
 | `Scripts/AdminPanel/CommandBar/Server.lua`, `Client.lua` | The `widget_manager` command and its dictionaries |
 | `_meta/_types.lua` | Tween presets, confirmation callback, the handlers' context |
@@ -105,6 +105,7 @@ I.WidgetManager.Open(player, "Shop")
 | --- | --- | --- |
 | `Data/TweenPresets.lua` | `[tweenName]` | `Info` (TweenInfo), `PreTranslate(widget)`, `PostTranslate` (goal). `Default`: 0.15 s Sine Out from 0.5, 0.47. `Rise`: 0.45 s Back Out from 0.5, 0.58, so the widget overshoots and settles |
 | `U_Widget` | `WidgetManager_Tween` (string attribute) | The tween the widget opens with when the caller names none |
+| `U_Widget` | `WidgetManager_Dim` (number attribute) | How see-through the dim is behind this widget (darker than `DIM_TRANSPARENCY` for the lobby's match setups: 0.3) |
 
 ## Settings
 

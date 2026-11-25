@@ -343,7 +343,9 @@ end
 --[[
 	Returns where a camera stands to show a piece on a posed snail (PIECE_SHOTS): looking at the piece where the pose
 	put it (its part's middle carried by the bone it rides, PIECE_BONES), or at the whole snail for a body, always at a
-	share of the whole snail's size away, so the camera never ends up inside the head; turned round for a shell.
+	share of the whole snail's size away, so the camera never ends up inside the head; turned round for a shell. Then
+	slid sideways and up or down, its angle and distance kept, until the posed snail (its bones where the pose put them)
+	is in the middle of the view (the owner, 2026-11-24: the shell's and body's snails sat off-centre).
 ]]
 --- @return CFrame
 function Module.GetPieceShot(model: Model, pieceId: string)
@@ -364,10 +366,36 @@ function Module.GetPieceShot(model: Model, pieceId: string)
 	-- A little from above: a fifth of a stud up for each stud back
 	local distance: number = size.Magnitude * shot.Distance
 	local offset: Vector3 = CFrame.Angles(0, math.rad(shot.Turn), 0) * Vector3.new(0, distance * 0.2, -distance)
+	local camera: CFrame = CFrame.lookAt(target + offset, target)
+
+	--[[ Centring ]]
+
+	-- Where the posed bones fall in the view (x and y over depth), and how deep they are on average
+	local left: number = math.huge
+	local right: number = -math.huge
+	local bottom: number = math.huge
+	local top: number = -math.huge
+	local depth: number = 0
+	local count: number = 0
+	for _index: number, joint: Instance in ipairs(model:GetDescendants()) do
+		if joint:IsA("Bone") then
+			local seen: Vector3 = camera:PointToObjectSpace(joint.TransformedWorldCFrame.Position)
+			left = math.min(left, seen.X / -seen.Z)
+			right = math.max(right, seen.X / -seen.Z)
+			bottom = math.min(bottom, seen.Y / -seen.Z)
+			top = math.max(top, seen.Y / -seen.Z)
+			depth += -seen.Z
+			count += 1
+		end
+	end
 
 	--[[ Returning ]]
 
-	return CFrame.lookAt(target + offset, target)
+	if count == 0 then
+		return camera
+	end
+	depth /= count
+	return camera * CFrame.new((left + right) / 2 * depth, (bottom + top) / 2 * depth, 0)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Emote

@@ -41,7 +41,7 @@ local Module = {}
 function Module.Init()
 	--[[ Network ]]
 
-	I.Network.GetEvent("MatchBoard_CreateCustom", { "Player", "string", "string", { Type = "number", Min = 2, Max = 8 }, "string" }, { RateLimit = 1 })
+	I.Network.GetEvent("MatchBoard_CreateCustom", { "Player", "string", "string", { Type = "number", Min = 2, Max = 8 }, "string", "boolean" }, { RateLimit = 1 })
 	I.Network.Fired("MatchBoard_CreateCustom", Module.Create)
 	I.Network.GetEvent("MatchBoard_InviteCustom", { "Player", "Player" }, { RateLimit = 2 })
 	I.Network.Fired("MatchBoard_InviteCustom", Module.Invite)
@@ -61,11 +61,12 @@ end
 --[[
 	**SERVER** |
 	Makes a custom lobby the player owns, on a map from CUSTOM_MAP_POOL, in Deathmatch or Teams, for 2, 4, 6 or 8 snails
-	the map is made for, its empty places filled with bots of a CUSTOM_DIFFICULTIES difficulty, or with none. Only a party's leader makes one, and
-	their party is in it at once (their windows stay closed until they open CUSTOM).
+	the map is made for, its empty places filled with bots of a CUSTOM_DIFFICULTIES difficulty, or with none, with wind
+	or without (off unless picked: the owner, 2026-11-24). Only a party's leader makes one, and their party is in it at
+	once (their windows stay closed until they open CUSTOM).
 ]]
 --- @return boolean
-function Module.Create(player: Player, mapId: string, mode: string, size: number, difficulty: string)
+function Module.Create(player: Player, mapId: string, mode: string, size: number, difficulty: string, wind: boolean)
 	-- Check if player is valid | SERVER
 	if not I.Player.Valid(player) then
 		return false
@@ -107,6 +108,7 @@ function Module.Create(player: Player, mapId: string, mode: string, size: number
 	Rows.Leave(player)
 	local row = Rows.AddRow("Custom", mode, size, mapId, player.UserId) --- @type MatchBoard_Row
 	row.Difficulty = difficulty
+	row.Wind = wind
 	table.insert(row.Players, player.UserId)
 
 	-- The party joins with its leader, who stays first

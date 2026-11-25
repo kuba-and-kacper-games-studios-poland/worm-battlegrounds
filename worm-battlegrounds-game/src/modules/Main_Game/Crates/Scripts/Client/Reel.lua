@@ -338,6 +338,7 @@ function Module.FillCard(card: Frame, itemId: string, gold: boolean, showName: b
 	local color: Color3 = Module.GetRarityColor(if gold then "Legendary" else item.Rarity)
 	card:FindFirstChild("S_Stroke", true).ImageColor3 = color
 	card:FindFirstChild("S_Glow", true).ImageColor3 = color
+	SkinModels.ShowSlot(card, if gold then "" else itemId, color)
 	icon.Image = picture or item.IconId
 	icon.Visible = not gold and not live
 	model.Visible = live

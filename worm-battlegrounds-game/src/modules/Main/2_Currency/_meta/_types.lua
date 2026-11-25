@@ -22,6 +22,18 @@
 --- @field ClientUpdateIndividual boolean
 local _currency_CurrencySettings = {}
 
+--- @class Currency_Conversion
+---
+--- # Currencies #
+---
+--- @field From string
+--- @field To string
+---
+--- # Rate #
+---
+--- @field Per string
+local _currency_Conversion = {}
+
 --%%%%%%%%%%%%%%%%%%%% Server
 
 --- @class Currency_CurrencyData

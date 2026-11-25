@@ -31,7 +31,8 @@ network.
 | `Server.lua` | Creates `Workspace.Ume.Atmosphere`, where clients put their ambient particles |
 | `Client.lua` | The client entry: finds the world, Arena, Match, Lobby, Combat and Snails folders this map has, and starts the handlers |
 | `Settings.lua` | `Atmosphere_Settings`: the moods (`PROFILES`), sudden death, ambient, reactions and effects numbers |
-| `Scripts/Client/Mood.lua` | Picks the mood for where the player is, sets its lighting preset, music, particles, wind and the sudden-death layer; a map's particles and wind wait for its `Bounds` marker when it arrives after the markers |
+| `Scripts/Client/Mood.lua` | Picks the mood for where the player is, sets its lighting preset, its own sky (a layer over the preset's, taken off on a mood without one), music, particles, wind and the sudden-death layer; a map's particles and wind wait for its `Bounds` marker when it arrives after the markers |
+| `Scripts/Client/Parallax.lua` | A mood's parallax layers (its `Parallax` rows): flat unlit pictures standing far behind the map at their depths, built on each client in `Workspace.Ume.Atmosphere.Parallax` once the map's bounds are here, so the camera's own perspective moves them as it pans and zooms; none in the lobby |
 | `Scripts/Client/Wind.lua` | The wind's streaks: one `WIND_EFFECT` copy kept over the camera's view each frame (after MatchCamera, at the `Camera` render priority + 2), turned, sped up and thickened by the wind, breathing in gusts; and its sound: the map's `WindSound` loop eased to the wind's volume, and a `WIND_GUST_SOUND` whoosh at strong gusts' peaks; a change of wind bursts streaks across the view with the whoosh |
 | `Scripts/Client/Ambient.lua` | The ambient areas (a mood's `Ambient_` prefabs streaming over the map's bounds, or in front of the lobby stage camera), their wind, the liquid surface effects and ceiling grit on spots in view, and the lobby stage's drifting clouds |
 | `Scripts/Client/Reactions.lua` | The arena's reactions: prop bursts on `Arena_Carve` (only from the props near it: the Decor parts that burst are kept by prop as they come and go, each prop's box read again after it changes; parts a screen's cut hid are left out), splashes where watched things drop through a liquid's surface (chips Combat keeps see-through between blasts aren't watched; a prop's pieces from when Arena throws or drops them, `Arena_PropThrown`), splashes and landing dust for `Arena_Fall` groups, steam and the hiss from new obsidian in the map's terrain |
@@ -49,10 +50,13 @@ No remotes: each client draws from what replicates (the `Match` folder's `MapId`
 
 | Key | Default | What |
 | --- | --- | --- |
-| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow`, `LakesideShowdown`, `RollingPlains` and `FluffyFallout` (Picnic Plains' row; Fluffy Fallout's pollen only), `Desert` and `MirageMesa` (the Desert's row), `RockslideRidge` (lava bubbles and embers since its lava sea, 2026-11-14), `EchoCaverns` (Rockslide Ridge's cave row, with water ripples), `VolcanoIsle` | Each mood, by MapId (below). Since 2026-11-16 `LakesideShowdown`, `RollingPlains`, `FluffyFallout`, `MirageMesa` and `EchoCaverns` keep their borrowed rows' looks but play their own `Music_<MapId>` and `…_SuddenDeath` |
+| `PROFILES` | `Lobby`, `PicnicPlains`, `TutorialMeadow`, `LakesideShowdown`, `RollingPlains` and `FluffyFallout` (Picnic Plains' row; Fluffy Fallout's pollen only), `Desert` and `MirageMesa` (the Desert's row), `RockslideRidge` (lava bubbles and embers since its lava sea, 2026-11-14), `EchoCaverns` (since 2026-11-25 an open snowy mountain: `Plains`, its own Mountains sky, slow `Ambient_Motes`, Rockslide Ridge's howling wind, water ripples, no ceiling grit), `VolcanoIsle` | Each mood, by MapId (below); `RollingPlains` also wears Picnic Plains' sky. Since 2026-11-16 `LakesideShowdown`, `RollingPlains`, `FluffyFallout`, `MirageMesa` and `EchoCaverns` keep their borrowed rows' looks but play their own `Music_<MapId>` and `…_SuddenDeath` |
 | `LOBBY_PROFILE` | `"Lobby"` | The mood outside matches |
 | `LOBBY_MAP`, `MATCH_MAP` | `"Lobby"`, `"Match"` | The place loader's maps with no matches and with only a match; the Studio map has both and follows `InMatch` |
 | `MOOD_TWEENINFO` | 2 s Sine InOut | How the lighting moves from one mood to the next |
+| `MAP_SKY_WEIGHT`, `MAP_SKY_ID` | `2`, `"MapSky"` | The lighting layer a mood's own `Sky` goes on, over its preset's Sky (its textures change at once) |
+| `PARALLAX_CANVAS` | `1024` | Each parallax picture's SurfaceGui canvas width, in pixels |
+| `MAP_SKY_ATMOSPHERE` | `{ Density = 0, Offset = 1, Haze = 0, Glare = 0 }` | The Atmosphere a mood with its own `Sky` gets on that layer: any density paints everything under the horizon in the Atmosphere's colour, and haze and glare tint the sky even without density, so the whole painted sky shows only without them; sudden death adds no density where it's 0 |
 | `MUSIC_FADE` | `2.5` | Seconds one mood's music crossfades into the next's, and into its sudden-death version |
 | `SUDDEN_DEATH_BRIGHTNESS` | `0.88` | Sudden death multiplies the brightness by this |
 | `SUDDEN_DEATH_CONTRAST`, `SUDDEN_DEATH_DENSITY` | `0.06`, `0.05` | Added to the colour correction's contrast and the atmosphere's density |
@@ -97,12 +101,16 @@ A `PROFILES` row:
 | Key | Lobby | PicnicPlains | Desert | RockslideRidge | VolcanoIsle |
 | --- | --- | --- | --- | --- | --- |
 | `Preset` | `Lobby` | `Plains` | `Desert` | `Cave` | `Volcano` |
+| `Sky` (Sky properties) | none (the preset's) | Its own: spring morning | Its own: a gradient only (its shapes are parallax layers) | Its own: dusty highland | Its own: ember dusk |
 | `Music`, `SuddenDeathMusic` | `BGM`, none | `Music_PicnicPlains`, `…_SuddenDeath` | `Music_Desert`, `…_SuddenDeath` | `Music_RockslideRidge`, `…_SuddenDeath` | `Music_VolcanoIsle`, `…_SuddenDeath` |
 | `WindColor` | none (no wind) | `255, 255, 255` | `255, 240, 214` | `228, 222, 212` | `235, 214, 200` |
 | `WindSound` | none | `Wind_OpenAir` | `Wind_Desert` | `Wind_Howl` | `Wind_OpenAir` |
 | `Ambient` (`Effect`, `Bottom`–`Top`, `RateScale`) | `Ambient_Motes` 0–1 | `Ambient_Pollen` 0.1–1, `Ambient_Leaf` 0.3–1 | `Ambient_Sand` 0.05–0.6 | `Ambient_CaveDust` 0–0.85 | `Ambient_CaveDust` 0.2–1, rate 0.6 (ash) |
-| `Surface` (`Liquid`, `Effect`, `Every`, `Tint`) | none | Water `Glint` 0.15–0.4 s | Lava `Lava_Bubble` 0.6–1.6 s, Lava `Ember` 0.25–0.7 s, Water `Glint` 0.8–2 s | Lava `Lava_Bubble` 0.4–1.2 s, Lava `Ember` 0.2–0.6 s (Echo Caverns: Water `Ripple` 1.5–4 s, tinted) | Lava `Lava_Bubble` 0.4–1.2 s, Lava `Ember` 0.2–0.6 s |
+| `Surface` (`Liquid`, `Effect`, `Every`, `Tint`) | none | Water `Glint` 0.15–0.4 s | Lava `Lava_Bubble` 0.6–1.6 s, Lava `Ember` 0.25–0.7 s, Water `Glint` 0.8–2 s | Lava `Lava_Bubble` 0.4–1.2 s, Lava `Ember` 0.2–0.6 s | Lava `Lava_Bubble` 0.4–1.2 s, Lava `Ember` 0.2–0.6 s |
 | `Ceiling` (`Effect`, `Every`) | none | none | none | `Grit` 3–7 s | none |
+| `Parallax` (`Image` or `Color`, `Transparency` for an image, `Depth`, `X`, `Bottom`, `Width`, `Height`) | none | none | Brick mesas 1100 behind (4 tiles and their ground), voxel clouds 700, brick dunes and cacti 350 (2 tiles and their ground) | none | none |
+
+Rolling Plains and Echo Caverns have `Parallax` rows too (2026-11-25), over gradient-only skies: grassy brick islands on the sea with oaks and pines; a snowy brick range, snowy hills and pines. The Lobby row has `Parallax` rows as well (a brick meadow under snowy peaks), but only Transition's loading card draws them: in the lobby Mood shows no layers. Echo Caverns' four clouds stand 110 studs higher and 20 % see-through since that evening (the owner: "too low… a bit more subtle"); the loading card draws them the same.
 
 A map with no row warns once and keeps the mood showing.
 
@@ -110,11 +118,11 @@ A map with no row warns once and keeps the mood showing.
 
 | Instance | What |
 | --- | --- |
-| `Workspace.Ume.Atmosphere` | Created by the server; each client's ambient areas (named after their prefab) and surface effects. Reactions play in Combat's folder instead, so a big hit's stop freezes them with the rest |
+| `Workspace.Ume.Atmosphere` | Created by the server; each client's ambient areas (named after their prefab), surface effects and a map's `Parallax` folder (one invisible part per layer row, its picture on an unlit SurfaceGui on the face toward the camera). Reactions play in Combat's folder instead, so a big hit's stop freezes them with the rest |
 | `Lighting` | The Lighting Manager's active preset, `Lobby` (`Lighting.__config`'s `Lighting_Id`): a high soft sun behind the stage camera (`GeographicLatitude` −12, `ClockTime` 13.4), neutral fill, colour correction saturation 0.25 |
 | `Lighting.Presets.Plains` | Late morning: warm key light from the camera's side (latitude 70, 10.4), teal and lavender fill, soft blue haze, saturation 0.35 |
 | `Lighting.Presets.Desert` | Late afternoon: low golden sun (latitude 70, 15.7), warm sand bounce, warm hazy horizon (density 0.32, haze 1.4, glare 0.3), saturation 0.3 |
-| `Lighting.Presets.Cave` | Rockslide Ridge and Echo Caverns: dimmer light (brightness 2.3) with little sky fill (`EnvironmentDiffuseScale` 0.25, so the blue sky doesn't tint the rock), a dark warm-grey haze that closes in the sky (haze 2.4), no sun rays, bloom from 1.2 |
+| `Lighting.Presets.Cave` | Rockslide Ridge (and Echo Caverns until it became a mountain, 2026-11-25): dimmer light (brightness 2.3) with little sky fill (`EnvironmentDiffuseScale` 0.25, so the blue sky doesn't tint the rock), a dark warm-grey haze that closes in the sky (haze 2.4), no sun rays, bloom from 1.2 |
 | `Lighting.Presets.Volcano` | Volcano Isle: the Desert's, later and through smoke: warm sun from the camera's side (latitude 70, 16.4, brightness 2.7), reddish fill and sky shift, a thicker ember-tinted haze (density 0.36, haze 1.9, decay 140, 69, 51), saturation 0.28 |
 | `ReplicatedStorage_Assets/Vfx/PREFAB \| …` | The prefabs this module plays, made from the studio's existing emitters (their textures and flipbooks): `Leaves`, `Dust`, `Lava_Bubble`, `Ember`, `Steam`, `Glint`, `Ripple`, `Grit`, and the streams `Ambient_Motes`, `Ambient_Pollen`, `Ambient_Leaf`, `Ambient_Sand`, `Ambient_CaveDust` and `Wind_Streak` (no `EmitCount`; code sizes the part to the area and turns them on). It also plays `Splash_Water` and `Splash_Lava` |
 | `Workspace.Ume.Arena.Liquid` parts | Read for their `Arena_Liquid` attribute (`"Water"` or `"Lava"`), which Arena's liquid sets |

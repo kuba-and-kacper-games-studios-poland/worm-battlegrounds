@@ -123,6 +123,7 @@ function Module._addItem(itemId: string, chanceText: string, order: number)
 	--[[ Rarity Look ]]
 
 	card:FindFirstChild("S_Stroke", true).ImageColor3 = section:FindFirstChild("S_TitleStroke", true).ImageColor3
+	SkinModels.ShowSlot(card, itemId, section:FindFirstChild("S_TitleStroke", true).ImageColor3)
 
 	--[[ Saving ]]
 

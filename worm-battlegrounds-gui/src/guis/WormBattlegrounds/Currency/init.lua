@@ -8,7 +8,7 @@ local _gui = {
 
 	--[[ General ]]
 
-	-- System's Currency, with the game's coin and diamond bar: ume's Currency slots find it as I.UserInterface.UI["Currency"]
+	-- System's Currency, with the game's diamond bar: ume's Currency slots find it as I.UserInterface.UI["Currency"]
 	Name = "Currency",
 	-- Built disabled; the UserInterface server enables it at start (PreventHiding)
 	Screen = { DisplayOrder = -999, Enabled = false, ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets },
@@ -31,8 +31,9 @@ local _gui = {
 				},
 			},
 			--[[
-				Top right, the gui maker's bar (2026-11-11, in the Gacha design's pictures): a coin chip and a diamond chip
-				(Currency_Slot counts ume's Currency writes, each pulsing its own UIScale), and + that opens the Shop
+				Top right, the gui maker's bar (2026-11-11, in the Gacha design's pictures): the diamond chip (Currency_Slot
+				counts ume's Currency writes, pulsing its own UIScale), and + that opens the Shop. Its coin chip went with the
+				coins (2026-11-25)
 			]]
 			{
 				Primitive = "Frame",
@@ -58,121 +59,6 @@ local _gui = {
 											VerticalAlignment = Enum.VerticalAlignment.Center,
 											SortOrder = Enum.SortOrder.LayoutOrder,
 											Padding = UDim.new(0.0169, 0),
-										},
-									},
-									{
-										Primitive = "Frame",
-										Props = { AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, LayoutOrder = 1, Size = UDim2.fromScale(0.4148, 1) },
-										Children = {
-											{
-												Primitive = "Frame",
-												Props = { Name = "Stack", BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 1, Size = UDim2.fromScale(1, 1), ZIndex = 2 },
-												Children = {
-													{ Primitive = "UIPadding" },
-													{
-														Primitive = "ImageLabel",
-														Id = "S_CoinIcon",
-														Props = {
-															AnchorPoint = Vector2.new(0.5, 0.5),
-															BackgroundColor3 = Color3.fromRGB(143, 211, 255),
-															BackgroundTransparency = 1,
-															BorderSizePixel = 0,
-															LayoutOrder = 1,
-															Position = UDim2.fromScale(0.176, 0.5),
-															Size = UDim2.fromScale(0.2159, 0.78),
-															ZIndex = 2,
-															Image = "rbxassetid://123804836570291",
-															ScaleType = Enum.ScaleType.Fit,
-														},
-														Children = {
-															{ Primitive = "UICorner", Props = { CornerRadius = UDim.new(0, 18) } },
-															{ Primitive = "UIStroke", Props = { Color = Color3.fromRGB(11, 16, 32), Thickness = 0, ApplyStrokeMode = Enum.ApplyStrokeMode.Border } },
-														},
-													},
-													{
-														Primitive = "TextLabel",
-														Id = "S_Coins",
-														Props = {
-															BackgroundTransparency = 1,
-															BorderSizePixel = 0,
-															LayoutOrder = 2,
-															Position = UDim2.fromScale(0.3, 0.2683),
-															Size = UDim2.fromScale(0.6, 0.4634),
-															ZIndex = 3,
-															Text = "0",
-															FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
-															TextColor3 = Color3.fromRGB(255, 255, 255),
-															TextSize = 48,
-															TextScaled = true,
-															TextWrapped = true,
-															RichText = true,
-															TextXAlignment = Enum.TextXAlignment.Left,
-														},
-														Attributes = { Currency_CustomFormat = "", Currency_Name = "Coins", Currency_ShortFrom = 10000, Currency_SpawnOrbs = false },
-														Tags = { ["Currency_Slot"] = {}, ["TextCase_Upper"] = {} },
-														Children = {
-															{ Primitive = "UIStroke", Props = { Thickness = 0.0938, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
-															{ Primitive = "UIPadding", Props = { PaddingRight = UDim.new(0.03, 0) } },
-														},
-													},
-												},
-											},
-											{ Primitive = "UIScale", Id = "S_CoinsScale" },
-											{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 3.6134 } },
-											{
-												Primitive = "Frame",
-												Props = { Name = "Background", BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = 0, Size = UDim2.fromScale(1, 1) },
-												Children = {
-													{
-														Primitive = "ImageLabel",
-														Props = {
-															Name = "Main",
-															BackgroundTransparency = 1,
-															BorderSizePixel = 0,
-															LayoutOrder = 0,
-															Position = UDim2.fromScale(0.0034, 0.061),
-															Size = UDim2.fromScale(0.9931, 0.878),
-															Image = "rbxassetid://132693594544527",
-															ImageColor3 = Color3.fromRGB(25, 25, 35),
-															ScaleType = Enum.ScaleType.Fit,
-														},
-														Attributes = { _ImageName = "1018_489__Gacha__Main_gray" },
-													},
-													{
-														Primitive = "ImageLabel",
-														Props = {
-															Name = "Stroke2",
-															BackgroundTransparency = 1,
-															BorderSizePixel = 0,
-															ClipsDescendants = true,
-															LayoutOrder = 1,
-															Size = UDim2.fromScale(1, 1),
-															ZIndex = 2,
-															Image = "rbxassetid://110464716728942",
-															ImageColor3 = Color3.fromRGB(25, 25, 35),
-															ScaleType = Enum.ScaleType.Fit,
-														},
-														Attributes = { _ImageName = "1126_52__Gacha__Stroke2_gray" },
-													},
-													{
-														Primitive = "ImageLabel",
-														Props = {
-															Name = "Stroke",
-															BackgroundTransparency = 1,
-															BorderSizePixel = 0,
-															ClipsDescendants = true,
-															LayoutOrder = 2,
-															Position = UDim2.fromScale(0.0068, 0.0244),
-															Size = UDim2.fromScale(0.9865, 0.9512),
-															ZIndex = 3,
-															Image = "rbxassetid://129410270943519",
-															ImageColor3 = Color3.fromRGB(130, 130, 130),
-															ScaleType = Enum.ScaleType.Fit,
-														},
-														Attributes = { _ImageName = "1126_53__Gacha__Stroke_gray" },
-													},
-												},
-											},
 										},
 									},
 									{
@@ -226,7 +112,7 @@ local _gui = {
 														Attributes = { Currency_CustomFormat = "", Currency_Name = "Diamonds", Currency_ShortFrom = 10000, Currency_SpawnOrbs = false },
 														Tags = { ["Currency_Slot"] = {}, ["TextCase_Upper"] = {} },
 														Children = {
-															{ Primitive = "UIStroke", Props = { Thickness = 0.0938, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
+															{ Primitive = "UIStroke", Props = { Thickness = 0.06, StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize } },
 															{ Primitive = "UIPadding", Props = { PaddingRight = UDim.new(0.03, 0) } },
 														},
 													},

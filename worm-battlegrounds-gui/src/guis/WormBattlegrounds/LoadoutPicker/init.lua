@@ -274,7 +274,7 @@ local _gui = {
 															{
 																Primitive = "UIStroke",
 																Props = {
-																	Thickness = 0.075,
+																	Thickness = 0.06,
 																	StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 																},
 															},
@@ -445,7 +445,7 @@ local _gui = {
 																	{
 																		Primitive = "UIStroke",
 																		Props = {
-																			Thickness = 0.0882,
+																			Thickness = 0.07,
 																			StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 																		},
 																	},
@@ -525,6 +525,40 @@ local _gui = {
 																	{
 																		Primitive = "ImageLabel",
 																		Props = {
+																			Name = "MainFill",
+																			BackgroundTransparency = 1,
+																			BorderSizePixel = 0,
+																			LayoutOrder = 0,
+																			Position = UDim2.fromScale(0.0185, 0.0862),
+																			Size = UDim2.fromScale(0.9629, 0.8276),
+																			Image = "rbxassetid://81690686596045",
+																			ImageColor3 = Color3.fromRGB(25, 25, 35),
+																			ScaleType = Enum.ScaleType.Fit,
+																		},
+																		Attributes = {
+																			_ImageName = "1050_53__LobbyInventory__Main_gray",
+																		},
+																	},
+																	{
+																		Primitive = "ImageLabel",
+																		Props = {
+																			Name = "MainFill",
+																			BackgroundTransparency = 1,
+																			BorderSizePixel = 0,
+																			LayoutOrder = 0,
+																			Position = UDim2.fromScale(0.0185, 0.0862),
+																			Size = UDim2.fromScale(0.9629, 0.8276),
+																			Image = "rbxassetid://81690686596045",
+																			ImageColor3 = Color3.fromRGB(25, 25, 35),
+																			ScaleType = Enum.ScaleType.Fit,
+																		},
+																		Attributes = {
+																			_ImageName = "1050_53__LobbyInventory__Main_gray",
+																		},
+																	},
+																	{
+																		Primitive = "ImageLabel",
+																		Props = {
 																			Name = "Stroke2",
 																			BackgroundTransparency = 1,
 																			BorderSizePixel = 0,
@@ -584,7 +618,7 @@ local _gui = {
 																	{
 																		Primitive = "UIStroke",
 																		Props = {
-																			Thickness = 0.1364,
+																			Thickness = 0.07,
 																			StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
 																		},
 																	},
@@ -726,6 +760,40 @@ local _gui = {
 											Primitive = "ImageLabel",
 											Props = {
 												Name = "Main",
+												BackgroundTransparency = 1,
+												BorderSizePixel = 0,
+												LayoutOrder = 0,
+												Position = UDim2.fromScale(0.0025, 0.0333),
+												Size = UDim2.fromScale(0.9951, 0.9333),
+												Image = "rbxassetid://131402009453053",
+												ImageColor3 = Color3.fromRGB(25, 25, 35),
+												ScaleType = Enum.ScaleType.Fit,
+											},
+											Attributes = {
+												_ImageName = "1055_6__LobbyInventory__Main_gray",
+											},
+										},
+										{
+											Primitive = "ImageLabel",
+											Props = {
+												Name = "MainFill",
+												BackgroundTransparency = 1,
+												BorderSizePixel = 0,
+												LayoutOrder = 0,
+												Position = UDim2.fromScale(0.0025, 0.0333),
+												Size = UDim2.fromScale(0.9951, 0.9333),
+												Image = "rbxassetid://131402009453053",
+												ImageColor3 = Color3.fromRGB(25, 25, 35),
+												ScaleType = Enum.ScaleType.Fit,
+											},
+											Attributes = {
+												_ImageName = "1055_6__LobbyInventory__Main_gray",
+											},
+										},
+										{
+											Primitive = "ImageLabel",
+											Props = {
+												Name = "MainFill",
 												BackgroundTransparency = 1,
 												BorderSizePixel = 0,
 												LayoutOrder = 0,

@@ -15,14 +15,14 @@ for the few sounds no classic one covers (the falling whistle, the fuse, the lav
 | --- | --- |
 | `snaillib.py` | The shared DSP: FFT filters and filter sweeps, oscillators and glides, modal mallets (marimba, glockenspiel, xylophone, woodblock, bell), thumps, debris grains, bubbles, snail babble, a small outdoor tail, seamless loops, levelling, WAV and OGG writing |
 | `make_sfx.py` | Every effect, one function per SoundsList name (its docstring says what it is) |
-| `make_classic.py` | The effects in the classic soundscape: CLASSIC (a Roblox 2009 sound played by its id), BUILT (made from them) and SCORED (on the Great Strategy font), with `classic.json` for the preview; its `UPDATE_2026_11_16` list is the 16 Nov set and `UPDATE_2026_11_17` the 17 Nov draft (below) |
+| `make_classic.py` | The effects in the classic soundscape: CLASSIC (a Roblox 2009 sound played by its id), BUILT (made from them) and SCORED (on the Great Strategy font), with `classic.json` for the preview; its `UPDATE_2026_11_16` list is the 16 Nov set, `UPDATE_2026_11_17` the 17 Nov one and `UPDATE_2026_11_25` the 25 Nov draft (below) |
 | `tracker.py` | A tracker-style sampler: plays the classic Roblox sample pack's long single-note samples re-pitched per note, lays them on a seamless loop, adds a wrapping hall |
 | `make_levels.py` | The level music (the owner's pick, 2026-11-10, after Worms Armageddon's streams): each map's track is its ambience and a light song that sounds like the level, mixed as one, mostly one instrument at a time playing a bit of the tune, with a faster, driving sudden-death version (Rockslide Ridge stays epic all through, the owner's pick); and the lobby, the game's signature tune barely there over a meadow. On the classic samples, with hand drums and shakers in numpy. Since 2026-11-16 also the six new maps (below), each playing the snail tune (`snail()`: the lobby's call and answer as scale degrees) in its own mode |
 | `ambience.py` | The levels' ambience, built at a loop's length so it wraps with the music: wind (from Roblox's own falling-wind recording), mountain whistle, sand hiss, lava rumble and bubbles, embers, birds, crickets, leaves, rockfalls, a hawk, water drips; since 2026-11-16 cave drips in a long stone echo, the cave's air, lake water lapping, wind in long grass |
 | `make_themes.py` | The earlier themes (a different tune each, faster, and a heavier sudden death), replaced by `make_levels.py`; its note helpers (`midi`, `tune`, `chord`) are shared |
 | `make_music.py` | The music: the lobby loop, a battle loop per map (Picnic Plains, Desert, Rockslide Ridge) and its sudden-death version, the win and lose stings. One 4-bar theme runs through all of them in different modes and bands |
 | `make_crates.py` | Draft crate-opening sounds (2026-11-11, not approved yet): the reel's tick, landing and settle as crisp new synthesis, the crate, reveals and legendary calls on the classic samples; `out/crates/`, previewed in `../crates/` |
-| `make_preview.py` | `preview.html`: every piece and effect with a player (loops on repeat), where it plays and what it replaces, for review; given the update folder, the "Update 16 Nov" section at the top, and given the 17 Nov folder after it, the "Update 17 Nov" section above that |
+| `make_preview.py` | `preview.html`: every piece and effect with a player (loops on repeat), where it plays and what it replaces, for review; given the update folder, the "Update 16 Nov" section at the top, given the 17 Nov folder after it, the "Update 17 Nov" section above that, and given the 25 Nov folder last, the "Update 25 Nov" section above both |
 
 ## Build
 
@@ -44,6 +44,9 @@ python -I make_preview.py out/classic out/levels out/update_2026-11-16
 # The 17 Nov draft into its own folder (~5 s), then the preview with both sections:
 python -I make_classic.py out/update_2026-11-17 update17
 python -I make_preview.py out/classic out/levels out/update_2026-11-16 out/update_2026-11-17
+# The 25 Nov draft (~1 s), then the preview with all three sections (~30 s):
+python -I make_classic.py out/update_2026-11-25 update25
+python -I make_preview.py out/classic out/levels out/update_2026-11-16 out/update_2026-11-17 out/update_2026-11-25
 ```
 
 Loops render three times back to back and keep the middle pass, and their first 30 ms fade in from what really follows
@@ -59,6 +62,35 @@ Each effect writes `WB_<Name>.wav` (44.1 kHz, 16-bit mono) and `WB_<Name>.ogg` (
 length and peak. One-shots are levelled on their loudest 0.3 s (UI about -18 dB, weapons -14, big blasts -11) and
 soft-limited under -1 dBFS; the jetpack is a seamless loop levelled on its RMS. `out/` and `preview.html` aren't kept
 in the repo.
+
+## Update 25 Nov (2026-11-25, approved and uploaded)
+
+The diamonds payout (coins became diamonds): the lobby's burst of diamond icons out of the stage snail into the
+diamonds slot (Progression's `Payout`). Rendered into `out/update_2026-11-25/` (WAV and OGG) by `make_classic.py`'s
+`UPDATE_2026_11_25` and heard in `preview.html`'s "Update 25 Nov" section, with a card that plays a whole payout (the
+burst, then 24 clinks at volume 0.6 climbing from pitch 1.0 to 1.6). The clink is crisp new synthesis on a finger-chime
+body, as the 17 Nov ticks are; the burst is the classic swoosh and flashbulb with the finger chimes. Both chime on G,
+like the XP lines, and keep the lows empty (under 700 Hz and 1.5 kHz), so the "+amount" chime under them stays clear.
+Approved by the owner the same day and uploaded from `out/upload/2026-11-25-diamonds` ("Reviewing" at upload): Snail
+Diamond Clink is `Diamond_Collect` (128397948588694), Snail Diamond Burst is `Diamond_Burst` (93979449268444), both in
+`SoundsList.lua`.
+
+| SoundsList name | Length, level | What | Title |
+| --- | --- | --- | --- |
+| `Diamond_Collect` | 0.2 s, -21 dB | Each diamond landing (up to 30, pitch 1.0 to 1.6 across the burst): a crisp glassy clink, a glass strike on G7 over a softer one on G6, a smaller one settling on C8 22 ms later, a finger-chime body, no tail | Snail Diamond Clink |
+| `Diamond_Burst` | 0.75 s, -19 | The diamonds bursting out of the snail: the classic swoosh, quick and airy, a soft flashbulb pop, a finger-chime run up G major, a few glassy gem tings and glints, a fizz of light, all over 1.5 kHz | Snail Diamond Burst |
+
+## Update 24 Nov (2026-11-24, approved and uploaded)
+
+The round intro's two sounds, remade on the music's own samples (the owner: the numpy builds felt "too much AI…
+pixelated"; `make_sfx.py`'s versions were removed): `python -I make_classic.py out/update_2026-11-24 Match_DropIn
+Match_BattleBegins`. Approved the same day, staged in `out/upload/2026-11-24-classic/` and uploaded to The Snail Studio
+group in place of that day's numpy builds (72554309101299, 76198006025436, no longer used).
+
+| SoundsList name | Length, level | What |
+| --- | --- | --- |
+| `Match_DropIn` (Snail Drop In Drum Roll, 73647977085419) | 3.0 s, -17 dB | GET READY as the snails drop in: a snare roll on the classic kit, sparse into fast, bass drum beats closing in, low strings and a low choir swelling on D, two horns joining, the classic falling wind faint |
+| `Match_BattleBegins` (Snail Battle Fanfare, 123694173132397) | 2.6 s, -12 | THE BATTLE BEGINS on the landing: a bright-horn "da-da-DAAA" (two stabs, then a held D major chord 0.24 s in, with the words' slam), snare on the stabs, crash, bass drum, the big hit and the orchestra hit on the chord, a low horn |
 
 ## Update 17 Nov (2026-11-17, approved and uploaded)
 

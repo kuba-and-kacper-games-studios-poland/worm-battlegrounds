@@ -178,7 +178,9 @@ function Module.RunTurn()
 	if handOff then
 		Module._waitHandOff(participantId)
 	end
-	Module._setDeadline(turnSeconds or _settings.TURN_SECONDS)
+	-- The tutorial's player has no clock (its bot's turns keep theirs)
+	local untimed: boolean = Roster.GetMetadata().Kind == "Tutorial" and not participant.IsBot
+	Module._setDeadline(turnSeconds or if untimed then _settings.TUTORIAL_TURN_SECONDS else _settings.TURN_SECONDS)
 	setPhase("Turn")
 	I.Topic.Publish("Match_TurnStarted", participantId)
 
@@ -248,8 +250,8 @@ end
 
 --[[
 	Rolls a new wind on the first turn of every WIND_ROUNDS-th round, never the one before (the owner, 2026-11-15: "make
-	the wind last for 2 turns for everyone"), so every snail plays the same wind that many turns. The tutorial blows
-	TUTORIAL_WINDS first.
+	the wind last for 2 turns for everyone"), so every snail plays the same wind that many turns. A match without wind
+	(every one but a custom lobby's or local play's that turned it on: the owner, 2026-11-24) stays calm at 0.
 ]]
 function Module._rollWind()
 	--[[ Local Variables ]]
@@ -259,6 +261,12 @@ function Module._rollWind()
 
 	--[[ Checks ]]
 
+	-- Check if the match has wind
+	if not Roster.GetMetadata().Wind then
+		matchFolder:SetAttribute("Wind", 0)
+		return
+	end
+
 	-- Check if the wind still has rounds to blow
 	if last ~= nil and round < windRound + _settings.WIND_ROUNDS then
 		return
@@ -266,10 +274,9 @@ function Module._rollWind()
 
 	--[[ Rolling ]]
 
-	local tutorialWind: number? = if Roster.GetMetadata().Kind == "Tutorial" then _settings.TUTORIAL_WINDS[(round - 1) // _settings.WIND_ROUNDS + 1] else nil
-	local wind: number = tutorialWind or Module._getRandomWind()
+	local wind: number = Module._getRandomWind()
 	windRound = round
-	while wind == last and not tutorialWind do
+	while wind == last do
 		wind = Module._getRandomWind()
 	end
 	matchFolder:SetAttribute("Wind", wind)

@@ -59,6 +59,8 @@ function Module.Init()
 	--- @Network
 	I.Network.GetEvent("Tutorial_Step", { "Player", "string" }, { RateLimit = 5 })
 	I.Network.Fired("Tutorial_Step", Module._onStep)
+	I.Network.GetEvent("Tutorial_End", { "Player" }, { RateLimit = 1 })
+	I.Network.Fired("Tutorial_End", Module._onEnd)
 
 	----------------------------
 	---- ASSIGN TO INSTANCE ----
@@ -111,7 +113,7 @@ end
 
 --[[
 	**SERVER** |
-	Marks the tutorial match played and gives its coins and the starter weapons, once.
+	Marks the tutorial match played and gives the starter weapons, once; the diamonds wait for the lobby's equip step.
 ]]
 --- @return boolean
 function Module.CompleteMatch(player: Player)
@@ -136,7 +138,6 @@ function Module.CompleteMatch(player: Player)
 	--[[ Saving ]]
 
 	moduleData["MatchDone"] = true
-	I.Currency.Add(player, "Coins", _settings.MATCH_COINS)
 	Module._giveStarters(player)
 
 	--[[ Publishing ]]
@@ -152,7 +153,7 @@ end
 
 --[[
 	**SERVER** |
-	Marks the whole tutorial done without playing it (no match, no coins, no weapons, no equip step), for Studio
+	Marks the whole tutorial done without playing it (no match, no diamonds, no weapons, no equip step), for Studio
 	playtests that leave it off.
 ]]
 function Module.Skip(player: Player)
@@ -255,7 +256,7 @@ end
 
 --[[
 	A client reports a tutorial step: a hint it showed for the first time goes to the funnel, and "Equipped" finishes
-	the tutorial once both starter weapons are in the loadout.
+	the tutorial once a starter weapon is in the loadout (the owner, 2026-11-24: one equip, then the diamonds).
 ]]
 function Module._onStep(player: Player, step: string)
 	-- Check if player is valid | SERVER
@@ -282,18 +283,85 @@ function Module._onStep(player: Player, step: string)
 		return
 	end
 
-	-- Check if both starter weapons are equipped
+	-- Check if a starter weapon is equipped
 	local items = I.Loadout.GetMatchLoadout(player) --- @type { string }
+	local equipped: boolean = false
 	for _index: number, itemId: string in ipairs(_settings.STARTER_WEAPONS) do
-		if not table.find(items, itemId) then
-			return
-		end
+		equipped = equipped or table.find(items, itemId) ~= nil
+	end
+	if not equipped then
+		return
+	end
+
+	--[[ Finishing ]]
+
+	Module._logFunnel(player, "Equipped")
+	Module._finish(player)
+end
+
+--%%%%%%%%%%%%%%%%%%%% On End
+
+--[[
+	END TUTORIAL in the tutorial match: ends the whole tutorial at once, with the starter weapons and the diamonds (they fly
+	into the diamonds slot in the lobby) and no equip step, and saves it; the client then leaves the match.
+]]
+function Module._onEnd(player: Player)
+	-- Check if player is valid | SERVER
+	if not I.Player.Valid(player) then
+		return
+	end
+
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Tutorial"]
+
+	--[[ Checks ]]
+
+	-- Check if the player is in the tutorial match, and the tutorial isn't done
+	if moduleData["Done"] or not player:GetAttribute("InMatch") or I.Match.GetMetadata().Kind ~= _settings.MATCH_KIND then
+		return
 	end
 
 	--[[ Saving ]]
 
+	moduleData["MatchDone"] = true
+	Module._giveStarters(player)
+	Module._finish(player)
+
+	--[[ Persisting ]]
+
+	task.spawn(function()
+		local success: boolean
+		local result: any | string?
+		success, result = pcall(function()
+			I.Player.GetProfile(player):Save()
+		end)
+		if not success then
+			warn(`[{_localName}::{script.Name}]: Failed to save the ended tutorial for ({player.Name})! - ({result})`)
+		end
+	end)
+end
+
+--%%%%%%%%%%%%%%%%%%%% Finish
+
+--[[
+	Marks the whole tutorial done and pays its diamonds, which the lobby plays flying from the player's snail into the
+	diamonds slot (Progression's replay).
+]]
+function Module._finish(player: Player)
+	--[[ Data ]]
+
+	--- @type Player_ProfileData
+	local profileData = I.Player.GetProfile(player).Data
+	local moduleData = profileData["Tutorial"]
+
+	--[[ Saving ]]
+
 	moduleData["Done"] = true
-	Module._logFunnel(player, "Equipped")
+	I.Currency.Add(player, "Diamonds", _settings.MATCH_DIAMONDS)
+	I.Progression.AddReplayDiamonds(player, _settings.MATCH_DIAMONDS)
 
 	--[[ Publishing ]]
 

@@ -41,8 +41,8 @@ local Module = {
 --%%%%%%%%%%%%%%%%%%%% Apply
 
 --[[
-	Fills the column as the Party module does for a leader: the members (the first leads, the others with Kick), then
-	a + card per free place, and Leave while in a party.
+	Fills the column as the Party module does for a leader: the members' pictures (the first leads, the others with
+	Kick; their names stand over their snails on the stage), then a + card per free place, and Leave while in a party.
 ]]
 --- @param preview UmeGui_Preview
 function Module.Apply(preview)
@@ -56,9 +56,6 @@ function Module.Apply(preview)
 
 	--- @param member UmeGui_Subview
 	for index: number, member in ipairs(members) do
-		member:Get("S_Name").Instance.Text = `Player{index}`
-		member:Get("S_Username").Instance.Text = `@player{index}`
-		member:Get("S_Level").Instance.Text = `Lv {index * 7}`
 		member:Get("S_Crown").Instance.Visible = index == 1
 		member:Get("S_Kick").Instance.Visible = index > 1
 	end

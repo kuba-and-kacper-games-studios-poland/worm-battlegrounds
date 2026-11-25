@@ -10,7 +10,7 @@ TeleportGui's card for ume's transit lobby hop: "Getting things ready…".
 | Theme | `WormBattlegroundsBrawl` |
 | Modes | Night only |
 | Devices | Desktop at 0.75 of the kit's size, Mobile, Console and VR at full size (`Utils_PlatformScale`); Mobile sizes where Look says |
-| Export | A ScreenGui named `LobbyGui`: `Enabled` on, `DisplayOrder` 100, `ResetOnSpawn` off, `ScreenInsets` `None` |
+| Export | A ScreenGui named `LobbyGui`: `Enabled` on, `DisplayOrder` 100, `ResetOnSpawn` off, `ScreenInsets` `None`, `ClipToDeviceSafeArea` off (so it reaches a phone's notch sides: 2026-11-25) |
 
 ## Elements
 

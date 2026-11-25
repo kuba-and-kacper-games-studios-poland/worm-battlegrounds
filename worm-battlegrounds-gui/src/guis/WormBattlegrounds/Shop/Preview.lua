@@ -21,7 +21,7 @@ local PACKS = {
 local PASSES = {
 	{ "Slot 4", "Opens loadout slot 4", "149" },
 	{ "Slot 5", "Opens loadout slot 5, after slot 4", "299" },
-	{ "Double Coins", "Every coin reward from matches is doubled", "349" },
+	{ "Double Diamonds", "Every diamond reward from matches is doubled", "349" },
 	{ "VIP", "A gold name and VIP tag in chat, an exclusive VIP snail skin, and one free skin crate every day", "199" },
 }
 

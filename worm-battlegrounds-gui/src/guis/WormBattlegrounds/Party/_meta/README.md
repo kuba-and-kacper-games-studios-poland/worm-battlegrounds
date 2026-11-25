@@ -1,15 +1,17 @@
 # Party
 
-The lobby's **PARTY** column at the left: a card per party member (avatar, name, level, the leader's crown, Kick),
-then a **+** card per free place that opens the invite box, and the red Leave button just after the title (hung from its left edge so it never covers the title, 2026-11-15).
+The lobby's **PARTY** column at the left: a card per party member (their avatar in their prestige frame, the leader's
+crown, Kick), then a **+** card per free place that opens the invite box, and the red Leave button just after the title (hung from its left edge so it never covers the title, 2026-11-15).
+Since 2026-11-24 a card shows no name, username, badges or level: they stand over each snail on the lobby's stage
+instead (the `Nameplate` gui).
 
 **Look.** Ported 1:1 from the studio's `LobbyInventory` gui (its `Left` frame, 2026-11-09) as `Primitive` nodes: its
 dark slanted cards (a member's outlined orange, a + card grey), pictures and fonts, laid out in screen fractions with
 aspect-ratio constraints, so it scales with the screen by itself (no `S_ScreenScale`). Changed from the design: the
 cards are shorter (`0.2059` of the list since the gui maker's polish, no aspect constraint on the + card), so a full party of 4 fits above
-ACTIVE LOBBIES; added: the name, level, crown and Kick on a member card, and Leave (a copy of the design's red close),
-with button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker reworked the member card (2026-11-11): the name and
-"@username" at its right, left-aligned, and the level on a badge under the avatar.
+PUBLIC MATCHES; added: the crown and Kick on a member card, and Leave (a copy of the design's red close), with button
+tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The name, "@username", badges and the level badge the gui maker put
+on the member card (2026-11-11) were taken off on 2026-11-24.
 
 |  |  |
 | --- | --- |
@@ -30,7 +32,7 @@ with button tags (`Utils_ButtonScale`, `Utils_ButtonSound`). The gui maker rewor
 
 | Prefab | Parent | Elements |
 | --- | --- | --- |
-| `PREFAB \| Member` | `U_Members` | A Frame: `S_Avatar`, `S_Name` (with a `UITextSizeConstraint`), `S_Badges` (Frame: PlayerBadges clones its hidden `PREFAB \| Badge`, an ImageLabel with an `S_Glyph` TextLabel for Roblox's verified and Premium glyphs, once per badge and lays them out after the name, whose `UITextSizeConstraint` it lowers so the name stays on one line), `S_Level` (the level on the `LevelBadge` under the avatar; capitals by `TextCase_Upper`), `S_Username` ("@name", under the name), `S_Crown` (leader), `S_Kick` (ImageButton, the leader sees it on others). Party names it by user id; Cosmetics puts a played emote's label beside it |
+| `PREFAB \| Member` | `U_Members` | A Frame: `S_Avatar`, `S_Crown` (leader), `S_Kick` (ImageButton, the leader sees it on others); Party adds the `S_Prestige` UIGradient on the card's rim. Party names it by user id; Cosmetics pops a played emote's icon over the avatar |
 | `PREFAB \| Invite` | `U_Members` | An ImageButton with a +: opens `PartyInvite`, or the `CustomLobby` window while the column lists the player's custom lobby (up to its size, 8 at most) |
 
 ## Driven by

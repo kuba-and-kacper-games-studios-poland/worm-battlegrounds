@@ -9,17 +9,17 @@ local _localName: string = "EmoteShopPreview"
 
 --[[ Examples ]]
 
--- The 8 emotes bought with coins: name, level needed, price
+-- The 8 emotes bought with diamonds: name, level needed, price
 --- @type { { string } }
 local EMOTES = {
-	{ "Thumbs up", "1", "100" },
-	{ "Laugh", "1", "250" },
-	{ "Dance", "10", "500" },
-	{ "Flex", "20", "900" },
-	{ "Taunt", "35", "1,400" },
-	{ "Cry", "50", "1,900" },
-	{ "Backflip", "75", "2,400" },
-	{ "Victory Trumpet", "100", "3,000" },
+	{ "Thumbs up", "1", "50" },
+	{ "Laugh", "1", "125" },
+	{ "Dance", "10", "250" },
+	{ "Flex", "20", "450" },
+	{ "Taunt", "35", "700" },
+	{ "Cry", "50", "950" },
+	{ "Backflip", "75", "1,200" },
+	{ "Victory Trumpet", "100", "1,500" },
 }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

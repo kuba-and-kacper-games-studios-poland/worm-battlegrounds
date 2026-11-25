@@ -1,7 +1,7 @@
 # WidgetManager_Message
 
 System's `WidgetManager_Message` made the game's own: the dialog that tells the player something ("You can't open that
-crate right now. Check your coins and diamonds."), with a title, the message and one **OK**.
+crate right now. Check your diamonds."), with a title, the message and one **OK**.
 
 **Look.** The approved confirmation's (`WormBattlegrounds/WidgetManager_Confirmation`, 2026-11-11): one rounded dark
 panel in the screens' fill (25, 25, 35) with a dark outer line and the grey line inside it (130, 130, 130), **HEY!** and

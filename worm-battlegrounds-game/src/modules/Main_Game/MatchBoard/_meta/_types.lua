@@ -32,6 +32,7 @@ local _matchBoard_MapRow = {}
 --- @field Size number
 --- @field MapId string
 --- @field Difficulty string
+--- @field Wind boolean
 ---
 --- # Players #
 ---

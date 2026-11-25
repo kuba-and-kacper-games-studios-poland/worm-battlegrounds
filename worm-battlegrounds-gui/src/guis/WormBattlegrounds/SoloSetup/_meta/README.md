@@ -4,9 +4,9 @@
 code or button opens this gui any more. It stays until the owner says to remove it (the gui folder and its export in
 StarterGui).
 
-**Play solo**: a 1v1 against a bot. The player picks Easy, Medium or Hard (each with the coins a win pays) and presses **Start**.
+**Play solo**: a 1v1 against a bot. The player picks Easy, Medium or Hard (each with the diamonds a win pays; "Only a win pays diamonds.") and presses **Start**.
 
-**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The difficulties are slots with the bot's picture and the pay in the coins' colour (`Item` `Difficulty`), not rarity tiles; Start is the one yellow.
+**Look.** The GUI kit (`WormBattlegroundsBrawl`, the theme's README). The difficulties are slots with the bot's picture and the pay in the theme's `Coin` colour (`Item` `Difficulty`), not rarity tiles; Start is the one yellow.
 
 |  |  |
 | --- | --- |
@@ -20,7 +20,7 @@ StarterGui).
 
 | Element | Control | What game code does with it |
 | --- | --- | --- |
-| `U_Widget` › `S_Easy`, `S_Medium`, `S_Hard` | Item | The difficulties; `S_Info` holds the coins a win pays (20, 35, 60). MatchBoard marks the picked one |
+| `U_Widget` › `S_Easy`, `S_Medium`, `S_Hard` | Item | The difficulties; `S_Info` holds the diamonds a win pays ("Win: 10 diamonds", 18, 30). MatchBoard marks the picked one |
 | `U_Widget` › `S_Start` | Button (`Primary`) | Starts the match |
 
 ## Driven by

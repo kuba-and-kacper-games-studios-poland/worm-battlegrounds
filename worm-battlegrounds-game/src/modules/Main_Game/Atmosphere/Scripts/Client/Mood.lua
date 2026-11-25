@@ -14,6 +14,7 @@ local _settings = require(script:FindFirstAncestor(_localName):FindFirstChild("S
 
 local Ambient = require(script.Parent:FindFirstChild("Ambient")) --- @type Atmosphere_Client_Ambient
 local Wind = require(script.Parent:FindFirstChild("Wind")) --- @type Atmosphere_Client_Wind
+local Parallax = require(script.Parent:FindFirstChild("Parallax")) --- @type Atmosphere_Client_Parallax
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local Variables
 
@@ -30,6 +31,9 @@ local started: boolean = false
 
 -- Whether the sudden death layer is on the lighting
 local suddenDeath: boolean = false
+
+-- The effect and property of each value the mood's own sky layer set, to take off again
+local skyValues = {} --- @type { { string } }
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --   __       __                  __            __
@@ -112,10 +116,55 @@ function Module._refresh()
 
 	--[[ Following ]]
 
+	Module._refreshSky(profile)
 	Module._refreshArea()
 	Module._refreshSuddenDeath()
 	Module._refreshWind()
 	Module._refreshMusic()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Refresh Sky
+
+--[[
+	Puts the mood's own sky over its preset's as a lighting layer, with the atmosphere that lets all of it show, or
+	takes the last one off when the mood has none.
+]]
+--- @param profile Atmosphere_Profile
+function Module._refreshSky(profile)
+	--[[ Local Variables ]]
+
+	local weight: number = _settings.MAP_SKY_WEIGHT
+	local id: string = _settings.MAP_SKY_ID
+
+	--[[ Clearing ]]
+
+	-- A mood without a sky shows its preset's
+	if not profile.Sky then
+		local rows = {} --- @type { { any } }
+		--- @param value { string }
+		for _index: number, value in ipairs(skyValues) do
+			table.insert(rows, { value[1], value[2], weight, id })
+		end
+		I.Lighting.ClearValueBulk(rows)
+		skyValues = {}
+		return
+	end
+
+	--[[ Applying ]]
+
+	local rows = {} --- @type { { any } }
+	skyValues = {}
+	for property: string, value: string | boolean in pairs(profile.Sky) do
+		table.insert(rows, { "Sky", property, { Value = value, Weight = weight, Id = id } })
+		table.insert(skyValues, { "Sky", property })
+	end
+
+	-- An atmosphere with any density covers the sky under the horizon with its own colour
+	for property: string, value: number in pairs(_settings.MAP_SKY_ATMOSPHERE) do
+		table.insert(rows, { "Atmosphere", property, { Value = value, Weight = weight, Id = id } })
+		table.insert(skyValues, { "Atmosphere", property })
+	end
+	I.Lighting.SetValueBulk(rows)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Area
@@ -134,10 +183,11 @@ function Module._refreshArea()
 
 	--[[ Showing ]]
 
-	-- The lobby, with no wind
+	-- The lobby, with no wind or parallax layers
 	if current == _settings.LOBBY_PROFILE then
 		Ambient.ShowLobby(profile)
 		Wind.Show(nil, nil, nil)
+		Parallax.Show(nil, nil)
 		return
 	end
 
@@ -147,6 +197,7 @@ function Module._refreshArea()
 	local bounds: BasePart? = if found and found:IsA("BasePart") then found else nil
 	Ambient.ShowMap(profile, bounds)
 	Wind.Show(bounds, profile.WindColor, profile.WindSound)
+	Parallax.Show(profile, bounds)
 
 	--[[ Waiting ]]
 
@@ -199,12 +250,17 @@ function Module._refreshSuddenDeath()
 	local tint: Color3 = I.Lighting.GetValue("ColorCorrectionEffect", "TintColor")
 	local density: number = I.Lighting.GetValue("Atmosphere", "Density")
 	local warm: Color3 = _settings.SUDDEN_DEATH_TINT
-	I.Lighting.SetValueBulk({
+	local rows = {
 		{ "Lighting", "Brightness", { Value = brightness * _settings.SUDDEN_DEATH_BRIGHTNESS, Weight = weight, Id = id } },
 		{ "ColorCorrectionEffect", "Contrast", { Value = contrast + _settings.SUDDEN_DEATH_CONTRAST, Weight = weight, Id = id } },
 		{ "ColorCorrectionEffect", "TintColor", { Value = Color3.new(tint.R * warm.R, tint.G * warm.G, tint.B * warm.B), Weight = weight, Id = id } },
-		{ "Atmosphere", "Density", { Value = density + _settings.SUDDEN_DEATH_DENSITY, Weight = weight, Id = id } },
-	}, _settings.SUDDEN_DEATH_TWEENINFO)
+	} --- @type { { any } }
+
+	-- A map whose own sky cleared the atmosphere keeps it clear, so its sky still shows under the horizon
+	if density > 0 then
+		table.insert(rows, { "Atmosphere", "Density", { Value = density + _settings.SUDDEN_DEATH_DENSITY, Weight = weight, Id = id } })
+	end
+	I.Lighting.SetValueBulk(rows, _settings.SUDDEN_DEATH_TWEENINFO)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh Wind

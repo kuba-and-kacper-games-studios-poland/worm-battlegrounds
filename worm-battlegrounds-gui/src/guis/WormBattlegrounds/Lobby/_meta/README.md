@@ -6,8 +6,10 @@ and the tutorial's arrow layer. Under every other gui, so the lobby's backdrop m
 **Look.** The menu is ported 1:1 from the studio's `LobbyInventory` gui (its `TopRight` frame, 2026-11-09) as
 `Primitive` nodes, laid out in screen fractions with aspect-ratio constraints (no `S_ScreenScale`). The badge, which
 the design lacks, is the design's red close look behind a count. The design has no logo, so the game's name that
-stood at the top is gone. Each menu button carries an `Icon` (since 2026-11-11): a drawn picture from `art/crates`
-(STYLE a snail shell with a paintbrush, WEAPONS the weapon crate, SKINS the skin crate) over the button's art, behind its text. The
+stood at the top is gone. Each menu button carries an `Icon` over the button's art, behind its text: since 2026-11-24
+a white ink-outlined glyph from `art/ui_glyphs` (STYLE a paint brush, WEAPONS a rocket, SKINS a snail's shell), 0.54
+of the tile, at 0.545, 0.39 (the tile's slanted body is centred at about 0.54 of its width; the owner: "make sure the
+icons are centered"); from 2026-11-11 it was a drawn picture from `art/crates`. The
 arrow layer is the kit's (`WormBattlegroundsBrawl`), kept from before the port.
 
 |  |  |
@@ -21,7 +23,7 @@ arrow layer is the kit's (`WormBattlegroundsBrawl`), kept from before the port.
 
 | Element | Kind | What game code does with it |
 | --- | --- | --- |
-| `U_Menu` | Frame | The corner menu (the design's `TopRight`) |
+| `U_Menu` | Frame | The corner menu (the design's `TopRight`), at Y 0.14 since 2026-11-25, under the diamonds and the level plate (LevelPlate's `U_Rest`) |
 | `U_Menu` › `S_Style` | ImageButton | Opens `Skins` (its tags). Its `S_New` (the crate cards' red NEW! tag) is shown by Cosmetics while the player owns a piece they haven't seen |
 | `U_Menu` › `S_Weapons` | ImageButton | Crates binds it and opens `Crates` on the crate in its `Crates_CrateId` attribute (`"Weapon"`) |
 | `U_Menu` › `S_Skins` | ImageButton | The same, `Crates_CrateId` `"Skin"` |

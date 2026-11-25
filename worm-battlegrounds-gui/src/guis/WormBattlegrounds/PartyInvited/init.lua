@@ -82,7 +82,7 @@ local _gui = {
 								},
 								Children = {
 									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.0714 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.06 } },
 								},
 							},
 						},
@@ -130,7 +130,7 @@ local _gui = {
 								},
 								Children = {
 									{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 40 } },
-									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.0833 } },
+									{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.06 } },
 								},
 							},
 							-- Join party: the crate shop's green button (Gacha 1020_5); A presses it
@@ -238,7 +238,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-											{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.09 } },
+											{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
 										},
 									},
 									-- A (Cross) on the top right corner, on Console: A presses the button
@@ -366,7 +366,7 @@ local _gui = {
 										},
 										Children = {
 											{ Primitive = "UITextSizeConstraint", Props = { MaxTextSize = 100 } },
-											{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.09 } },
+											{ Primitive = "UIStroke", Props = { StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize, Thickness = 0.07 } },
 										},
 									},
 									-- B (Circle) on the top right corner, on Console: B presses the button
