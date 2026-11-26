@@ -78,7 +78,7 @@ A missing attribute uses the default in the tables below, so a tag added by UmeG
 | Tag | Tag on | What it does |
 | --- | --- | --- |
 | `Utils_ButtonKey` | `ImageButton` or `TextButton` | Gives the button a gamepad key and a keyboard key that press it while it is shown (every `Visible` up the tree and its gui `Enabled`), as a click would (`Scripts/ButtonPress.lua`); Interact binds the keys |
-| `Utils_ButtonScale` | `ImageButton` or `TextButton` | Plays its animation on hover, leave, press (click, touch or its key) and release. Plays no sound: add `Utils_ButtonSound` for that |
+| `Utils_ButtonScale` | `ImageButton` or `TextButton` | Plays its animation on hover (the mouse, or a gamepad's selection landing on it), leave, press (click, touch or its key) and release. Plays no sound: add `Utils_ButtonSound` for that |
 | `Utils_ButtonSound` | `ImageButton` or `TextButton` | Plays a sound on click, or when its key activates the button; never on hover (the game's testers, 2026-11-13: hover sounds were annoying), so `HoverSound_*` attributes are ignored |
 | `Utils_ButtonTransform` | `GuiObject` | Scale, position and rotation on hover and click (or its button's key), plus an optional idle float |
 

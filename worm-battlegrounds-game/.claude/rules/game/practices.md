@@ -198,11 +198,13 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   its distance the power, up to the power ring round the snail (full power). Letting go locks the aim; **FIRE**, over the weapon bar on every device (or F,
   Enter, the pad's RT), shoots it. Dragged back to no power, or Esc / the pad's B, clears it. **Each snail keeps its
   aim into its next turn**; its first starts at half power, 45° toward its nearest enemy. The right stick moves the
-  crosshair the same way, finer for a gentle lean. Guns and swings use the angle only; a weapon placed at the feet
+  crosshair the same way, finer for a gentle lean and faster on a long push; pushed through the snail it comes out
+  on the other side (the owner, 2026-11-26). Guns and swings use the angle only; a weapon placed at the feet
   fires on FIRE with no aim. **A homing missile locks its target, then aims its launch** (the owner, 2026-11-25: its
   launch had fired at the bazooka's last hidden aim): the first press places the target (a finger drags it until it
-  lifts), then the launch is dragged like an arced weapon's, and NEW TARGET (a copy of the lobby's
-  LOCAL button, left of FIRE) lets go of the target. **No path shows outside the tutorial** (the owner, 2026-11-25:
+  lifts; on a pad the right stick moves its open mark from the nearest enemy and FIRE or RT locks it, the owner,
+  2026-11-26: "there's no crosshair for me to put"), then the launch is dragged like an arced weapon's, and NEW TARGET
+  (a copy of the lobby's LOCAL button, left of FIRE), Esc or B lets go of the target. **No path shows outside the tutorial** (the owner, 2026-11-25:
   "the dots are making the game too easy", removing the short preview dots of 2026-11-24); **the 24 Nov preview is
   back, exactly** (the owner, the same evening: "very hard to predict the trajectory… the first aim dots… it was
   perfect", after dots past the crosshair were tried): 9 dots from the snail over a fifth of a full-power flight, no
@@ -308,7 +310,10 @@ mirrored in the bots' `Predict`); ponds still only slow it.
   its take-off height, the view zooming out to fit it and the map under it (`SHOT_ZOOM_OUT`), a little on each glide
   to the next snail (`TRAVEL_ZOOM_*`), and in for a moment at a blast (`BLAST_KICK`). On their own turn before the shot the pan reaches anywhere in the arena at any zoom, and eases back to their
   snail while it moves (the owner, 2026-11-12: zoomed in, the view couldn't go down to the map's bottom; it had been
-  kept within 70 % of half a screen of the snail). **On touch** one finger drags the view (on the player's own turn before the shot it points the aim instead) and
+  kept within 70 % of half a screen of the snail). **Zoomed out it stays round the snail** (the owner, 2026-11-26:
+  "the FIRE button hides my snail"): the view may sink half a view under the map's bottom (`FLOOR_EXTRA`). **During
+  the drop the right stick moves the camera on its own** (the owner, 2026-11-26: "I can't move the map"); the rest of
+  the match it needs LT, since it aims. **On touch** one finger drags the view (on the player's own turn before the shot it points the aim instead) and
   two fingers drag and pinch-zoom, read from raw touches, not Roblox's `TouchPan` and `TouchPinch`.
 - **Shots fly by the game's own simulation, not Roblox physics:** Combat's `Ballistics` (Scripts/Helpers) steps every
   flying shot the same on the server and every client, on the server's clock, with Worms' arcade rules (bounces that
@@ -423,6 +428,14 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   icon greyed but seen in the middle (the owner: "not centered… we cant see the icon… put it in the corner"), never more
   than the item's `Cooldown`, its card filling in blue from the bottom as the turns pass (the card's own fill picture cut by a
   gradient, `S_Charge`), and a white flash of the card as it's ready again (`S_ReadyFlash`).
+- **The selected slot always shows its white outline** (the owner, 2026-11-26: "the shiny and golden when seleted dont
+  have the outline"): a copy of the outline (MatchHud's `S_Selected`) is drawn over a Shiny foil or Golden rim on the
+  weapon bar, unlike the look tab's EQUIPPED card, where a gold rim hides the outline.
+- **Zoom has buttons on every device** (the owner, 2026-11-26: "make zoom in and out indicators somewhere… controls for
+  every platform"): + and − under EMOTES through the round (MatchHud's `U_Zoom`, copies of the EMOTES tile), a step a
+  press (MatchCamera's `ZOOM_BUTTON_STEP`), with the D-pad's badge on Console; the wheel, a pinch and the D-pad still
+  zoom. The farthest zoom shows a whole rotation map across 16:9 (MatchCamera's `ZOOM_MAX` 300, 200 before: "you can't
+  zoom out enough to see the other player").
 - **Dynamite is placed, not thrown:** it drops at the snail's feet (`Aim = "Feet"`, no launch speed), the stamina bar
   fills again and the player keeps moving for its `Retreat` (3 s) before the server takes the snail back, and the fuse
   (3.5 s) goes off after that.
@@ -661,7 +674,7 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   pivot in the middle of its floor. A ten-pack shares one set of effects and has no per-crate balls of light (Crates'
   `STAGE_LIGHT_COUNT`). A crate's colour and particles are its data row's look
   (`Glow`, `Accent`, `Ambient`). **One crate per kind, paid in diamonds** (the testers, 2026-11-13: one crate; coins or
-  diamonds until coins went on 2026-11-25): one row of buttons, 50, 150, 500 diamonds for 1, 3 or 10. VIP's free daily
+  diamonds until coins went on 2026-11-25): one row of buttons, 100, 300, 1,000 diamonds for 1, 3 or 10 (the owner, 2026-11-25; 50, 150, 500 before). VIP's free daily
   crate is its x1, shown alone where paid random items are restricted (diamonds are sold for Robux, so diamond crates
   are hidden there by policy). The Premium row stays hidden so its id is known. A crate marked
   `Premium` shows it's premium by small touches (a gold tab, a halo, the violet
@@ -745,13 +758,25 @@ nothing in the way, slides; one under a hole higher up, or stopped by a step, dr
   keyboard, mouse and touch stay with them. Start is Roblox's menu and never bound; A confirms, B backs out, LB / RB
   step weapons or tabs, the right stick aims and RT fires the locked aim. A gui button a pad presses carries its action's first button as
   `Utils_GamepadKey` and a `Console_Hint` badge naming the action (`Console_Action`; the theme Button's `Hint`), and a
-  screen of pad controls a hint strip of the same (MatchHud's `U_PadControls`); a pick list or panel that wants the
+  screen of pad controls a hint strip of the same (MatchHud's `U_PadControls`); FIRE wears RT (the owner, 2026-11-25:
+  "There's no shoot button"). A hint stands beside what it steps or presses (LB / RB beside the bar's end slots), and
+  a gui whose module is off (the place loader's `ALWAYS_OFF`) stays out of StarterGui, since the Console module shows
+  its hints anyway (the framework hotbar's keycaps sat behind the weapon bar). A pick list or panel that wants the
   selection asks for it (`I.Console.Focus`). **In the lobby and open windows a pad drives a free cursor** (the owner,
   2026-11-17: "in lobby we want a free cursor"): the Console module's `Cursor` (a white ring and dot drawn in code, no
   picture) moves with the left stick, speeding up when held and slowing over buttons; the button under it is Roblox's
   `GuiService.SelectedObject`, so A, B and the shortcuts work as with the selection; the right stick scrolls the list
-  under it and the D-pad hops the selection with the cursor following. A module never moves the cursor itself:
-  `I.Console.Focus` and `SetHome` send it. In a match it shows only while a widget is open. The game's own glyphs (`art/console_glyphs`) stay local until the owner
+  under it and the D-pad hops the selection with the cursor following. **Only the player moves the cursor** (the
+  owner, 2026-11-26: "it jumps around randomly… the mouse gets snapped out"): no pull onto a button, and a window
+  opening, `I.Console.Focus`, `SetHome` or a redrawn list leave it where it is; they place the D-pad's selection only.
+  **View turns it off and on in place** ("when you select to open virtual mouse, it doesn't snap anymore"): off, the
+  D-pad's selection drives from the button under it; on, the cursor shows over the selected button. **Roblox's own
+  virtual cursor stays off** (`GamepadService:DisableGamepadCursor` whenever it comes on): it fought the game's cursor,
+  made the pad read as a PC and stood as a dot in matches. **Under the cursor a button shows its own hover, not
+  Roblox's box** (the owner, 2026-11-26: "the selection is a bit weird and glitchy"): Roblox's square box sat crooked on
+  the kit's slanted buttons and jumped onto whole lists, so it's hidden while the cursor runs, ButtonScale and
+  ButtonTransform take a gamepad selection as a hover, and a list holding buttons isn't `Selectable`. In a match it shows only while a widget is open, and the
+  weapon bar's slots aren't `Selectable` (LB / RB step them), so the D-pad and sticks never highlight them. The game's own glyphs (`art/console_glyphs`) stay local until the owner
   approves them; then `HINT_STYLE` names their uploaded style.
 - **Chat shows in bubbles over the snails, never Roblox's** (the owner's pick, 2026-11-10: "Bubble Style B"): each
   client turns Roblox's bubble chat off and shows every player message it receives (the filtered

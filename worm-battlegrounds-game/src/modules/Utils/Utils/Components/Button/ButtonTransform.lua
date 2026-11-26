@@ -1,5 +1,6 @@
 --[[
     Created By:     Nari
+    Edited By:     HungryN00B
 ]]
 
 --- @type Ume
@@ -350,25 +351,31 @@ end
 --%%%%%%%%%%%%%%%%%%%% Connect Input
 
 --[[
-	Plays the hover, click and default states from the button's hover, a click or touch, and its key (Utils_ButtonKey).
+	Plays the hover, click and default states from the button's hover (the mouse, or a gamepad's selection), a click or
+	touch, and its key (Utils_ButtonKey).
 ]]
 function Component:ConnectInput()
 	--[[ Hover ]]
 
-	table.insert(
-		self.Connections,
-		self.Button.MouseEnter:Connect(function()
-			self.Hovered = true
-			self:PlayState("Hover")
-		end)
-	)
-	table.insert(
-		self.Connections,
-		self.Button.MouseLeave:Connect(function()
-			self.Hovered = false
-			self:PlayState("Default")
-		end)
-	)
+	-- A gamepad's selection is its hover: the D-pad's, and the Console module's cursor over the button
+	for _index: number, signal: RBXScriptSignal in ipairs({ self.Button.MouseEnter, self.Button.SelectionGained }) do
+		table.insert(
+			self.Connections,
+			signal:Connect(function()
+				self.Hovered = true
+				self:PlayState("Hover")
+			end)
+		)
+	end
+	for _index: number, signal: RBXScriptSignal in ipairs({ self.Button.MouseLeave, self.Button.SelectionLost }) do
+		table.insert(
+			self.Connections,
+			signal:Connect(function()
+				self.Hovered = false
+				self:PlayState("Default")
+			end)
+		)
+	end
 
 	--[[ Click ]]
 

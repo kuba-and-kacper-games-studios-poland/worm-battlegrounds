@@ -322,20 +322,39 @@ local _settings = {
 	]]
 	BAR_FILL = 1,
 
-	-- The readout over the snail with a homing missile in hand, before its target is picked: a click, or a tap on touch
+	--[[
+		The readout over the snail with a homing missile in hand, before its target is picked: a click, a tap on touch,
+		or on a pad the right stick and the Fire button (its name fills the %s)
+	]]
 	--- @type { [string]: string }
-	TARGET_HINTS = { Pick = "Click on a target", TouchPick = "Tap on a target" },
+	TARGET_HINTS = { Pick = "Click on a target", TouchPick = "Tap on a target", PadPick = "Move to a target, %s to lock" },
 
 	--%%%%%%%%%%%%%%%%%%%% Pad Aim
 
 	--[[
 		The right stick moves the crosshair like the drag does (2026-11-24): past STICK_DEADZONE of lean, up to
 		STICK_AIM_SPEED of the power's full length a second at full lean, slower for a gentle one (the lean to the power of
-		STICK_CURVE), so small leans aim finely
+		STICK_CURVE), so small leans aim finely. Pushing through the snail turns the aim to the other side
 	]]
 	STICK_DEADZONE = 0.2,
 	STICK_AIM_SPEED = 1.1,
 	STICK_CURVE = 2,
+
+	--[[
+		A push held past STICK_RAMP_DELAY seconds speeds up, to STICK_RAMP_MAX times STICK_AIM_SPEED over STICK_RAMP_TIME
+		more, so a short nudge stays fine and a sweep from one side to the other is quick (the owner, 2026-11-26)
+	]]
+	STICK_RAMP_DELAY = 0.35,
+	STICK_RAMP_TIME = 0.6,
+	STICK_RAMP_MAX = 2.5,
+
+	--[[
+		A homing missile's target on a pad (the owner, 2026-11-26: "there's no crosshair for me to put"): the right stick
+		moves its open mark from the nearest enemy, up to STICK_TARGET_SPEED screen heights a second at full lean (with
+		the stick's curve and speed-up), kept STICK_TARGET_MARGIN of the screen's height inside its edges
+	]]
+	STICK_TARGET_SPEED = 0.55,
+	STICK_TARGET_MARGIN = 0.05,
 
 	--%%%%%%%%%%%%%%%%%%%% Prediction
 

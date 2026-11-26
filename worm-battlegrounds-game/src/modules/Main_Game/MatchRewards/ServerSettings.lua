@@ -26,7 +26,7 @@ local _settings = {
 
 	-- A solo match pays only a win, by the bot's difficulty
 	--- @type { [string]: number }
-	SOLO_DIAMONDS = { Easy = 10, Medium = 18, Hard = 30 },
+	SOLO_DIAMONDS = { Easy = 20, Medium = 30, Hard = 40 },
 
 	-- A party match (friends only) pays like a public deathmatch of its size, times this share when it has no bots
 	PARTY_NO_BOTS_SHARE = 0.5,

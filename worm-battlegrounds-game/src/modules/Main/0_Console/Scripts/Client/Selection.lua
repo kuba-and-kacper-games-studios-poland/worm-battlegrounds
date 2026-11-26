@@ -152,25 +152,20 @@ end
 	Puts the selection where the player is, on Console: in the open widget when it has buttons no key presses (a widget
 	whose every button has a key is left to its keys), else in the focus, else on the home button. With nowhere to go,
 	or off Console, it clears it, unless forced (Navigate), which then tries NAVIGATION_GUIS. While the free cursor runs
-	it sends the cursor there instead (into any open widget), unless the cursor already points inside.
+	nothing moves: its selection is the button under it, and only the player moves it (the owner, 2026-11-26).
 ]]
 function Module._select(forced: boolean?)
+	--[[ Checks ]]
+
+	-- Leave the free cursor where the player put it
+	if Cursor.IsActive() then
+		return
+	end
+
 	--[[ Local Variables ]]
 
 	local current: GuiObject? = I.S.GuiService.SelectedObject
 	local target: Instance? = if I.Platform.Current == "Console" or forced then Module._getTarget(forced == true) else nil
-
-	--[[ Cursor ]]
-
-	-- The cursor selects what it points at: it goes onto the target's first button
-	if Cursor.IsActive() then
-		local hovered: GuiObject? = Cursor.GetHovered()
-		local first: GuiObject? = if target and not (hovered and Module._isInside(hovered, target)) then Module._getFirst(target) else nil
-		if first then
-			Cursor.MoveTo(first)
-		end
-		return
-	end
 
 	--[[ Checks ]]
 
@@ -194,8 +189,8 @@ end
 
 --[[
 	Backs out the way B would without a selection: the widget's B button closes it when that button is WidgetManager's
-	(or else is selected, or has the cursor sent onto it, so A presses it), the focus calls its onBack, and anywhere
-	else the selection comes back.
+	(with the free cursor, any B button is pressed as its key would; else it is selected, so A presses it), the focus
+	calls its onBack, and anywhere else the selection comes back.
 ]]
 function Module._back(widget: ScreenGui?)
 	--[[ Checks ]]
@@ -208,11 +203,14 @@ function Module._back(widget: ScreenGui?)
 	--[[ Widget ]]
 
 	if widget then
-		local backButton: GuiButton? = Module._getKeyButton(widget, Binds.GetAction("Back").Keys[1].Name)
+		local backKey: Enum.KeyCode = Binds.GetAction("Back").Keys[1]
+		local backButton: GuiButton? = Module._getKeyButton(widget, backKey.Name)
 		if backButton and backButton:GetAttribute("Interact_ModuleName") == "WidgetManager" then
 			I.WidgetManager.Close(widget.Name)
 		elseif backButton and Cursor.IsActive() then
-			Cursor.MoveTo(backButton)
+			-- Roblox's selection took the B press: press the B button here, never moving the cursor onto it
+			I.Utils.PressKey(backKey, true)
+			I.Utils.PressKey(backKey, false)
 		elseif backButton then
 			I.S.GuiService.SelectedObject = backButton
 		else
@@ -236,8 +234,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% On Navigate
 
 --[[
-	View: ends the selection, or starts it where the player is, in NAVIGATION_GUIS when nothing else wants it. While the
-	free cursor runs it brings the cursor there instead.
+	View: where the free cursor may run (the lobby, an open window), turns it off for the D-pad's selection or back on,
+	in place (the owner, 2026-11-26: "when you select to open virtual mouse, it doesn't snap anymore"). Elsewhere (a
+	match) it ends the selection, or starts it where the player is, in NAVIGATION_GUIS when nothing else wants it.
 ]]
 --- @return Enum.ContextActionResult
 function Module._onNavigate(_action: string, state: Enum.UserInputState, _input: InputObject)
@@ -248,10 +247,20 @@ function Module._onNavigate(_action: string, state: Enum.UserInputState, _input:
 		return Enum.ContextActionResult.Sink
 	end
 
+	--[[ Cursor ]]
+
+	-- With the cursor turned off and nothing under it, the selection starts where the player is
+	if Cursor.IsAllowed() then
+		Cursor.Toggle()
+		if not Cursor.IsActive() and not I.S.GuiService.SelectedObject then
+			Module._select(true)
+		end
+		return Enum.ContextActionResult.Sink
+	end
+
 	--[[ Toggling ]]
 
-	-- The cursor keeps its selection: View only brings it to where the selection starts
-	if I.S.GuiService.SelectedObject and not Cursor.IsActive() then
+	if I.S.GuiService.SelectedObject then
 		clearing = true
 		I.S.GuiService.SelectedObject = nil
 	else

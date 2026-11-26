@@ -2707,3 +2707,85 @@ Workspace's 151,260. No game code read it.
   was deleted from the place; the Workspace kept 14,628 parts, the maps players play among them.
 
 Rules: Maps and placeholders (The Workspace holds only the game).
+
+## The pad's match HUD (2026-11-25)
+
+The owner played a match on a PlayStation pad: no shoot button, and buttons behind the weapon bar and on its sides.
+Forced to Console in Studio (`I.Platform.Current` set and `Platform_Changed` published from a test LocalScript), all
+three showed.
+
+- **A module that's off still leaves its gui.** Two big LB / RB keycaps behind the bar were the framework hotbar's
+  (`BackpackPlus`): its module is in the place loader's `ALWAYS_OFF`, but its ScreenGui stayed in StarterGui,
+  enabled, and the Console module shows every `Console_Hint` on Console. Only the hotbar's own module hides its
+  bumpers over an empty toolbar. The gui went to `ServerStorage.!dump`.
+- **Hints go with what they point at.** LB / RB sat at the bar frame's fixed ends, set for a full row of seven
+  slots; with two weapons they floated far from the cards. LoadoutBar now places them beside the end slots.
+- **Every button a pad presses shows its button.** FIRE had no badge, so RT was only in the hint strip at the bottom
+  left. It now carries an RT badge, a copy of the EMOTES button's X.
+
+Rules: Guis (The pad goes through the Console module).
+
+## Console polish from a recording (2026-11-26)
+
+The owner recorded a lobby visit and a solo match on a PlayStation pad (PC, `art/recordings`), with notes. Frames
+pulled from it every three seconds showed what the notes meant.
+
+- **Two cursors at once.** The dot "in the middle of the screen" and the ring over the weapon slots were Roblox's own
+  virtual cursor (`GamepadService`), not the game's: a dot that grows a ring over buttons. Its mouse input also made
+  `I.Platform` read Desktop for the whole match (the T on EMOTES, the slot numbers, no pad badges), and where the
+  sticks walk and aim it sat still as a dot. The Console module now turns it off whenever it comes on.
+- **Snapping came from helping.** With the game's cursor running, every `_select` (a widget opening, a focus, the home
+  button, the platform refresh) glided the cursor onto a target, and let go near a button it was pulled onto it, so it
+  "jumps around randomly". Now only the player moves it; View turns it off for the D-pad's selection and back on, in
+  place.
+- **Selectable things get selected.** The weapon slots were Selectable buttons, so once anything left a selection on
+  one, the D-pad and stick moved it along the bar (and the D-pad zoom passed its input on to the selection). LB / RB
+  pick the slots, so they aren't Selectable now.
+- **A layer over the outline hides it.** The Golden rim and Shiny holo are drawn over the slot's `Stroke`, so a
+  selected Golden slot looked unselected. The selected outline is a copy drawn above them.
+- **One column, two owners.** EMOTES hangs under the Loadout column, whose length is the player's slots; the gear tile
+  sat over PLAY SOLO's right end, in the same column. With seven cards they met. The gear tile moved to PLAY SOLO's
+  left end.
+- **Zoom out to the map.** `ZOOM_MAX` 200 showed 190 studs across 16:9; the rotation maps are up to 282 wide. 300 fits
+  them, and the camera's bounds clamp centres a view wider than the arena.
+
+Rules: Snails (The selected slot always shows its white outline; Zoom has buttons on every device), Guis (The pad goes
+through the Console module).
+
+## The pad's aim through the snail (2026-11-26)
+
+The owner, after playing on a pad: aiming the other way meant going down to low power and across, which "sets it to 0
+and doesn't let you shoot anymore", and a long push across was slow.
+
+- **A hole in the middle traps a moving point.** The stick moved the crosshair on the screen, where no power sits at
+  the power's start, a ring clear of the snail. A push back toward the snail landed inside that ring, which reads as
+  no power, so the next frame started from no power along the same angle and pushed inside again: stuck at 0 for
+  good. Now a push into the ring crosses it with the ring shrunk away, so the aim comes out on the other side; outside
+  it the stick moves the crosshair as before, so turning feels the same.
+- **Fine and fast from one stick.** The lean curve keeps small leans precise; a push held past 0.35 s now speeds up to
+  2.5 times over 0.6 s more, so a nudge stays fine and a sweep across is quick.
+
+Rules: Snails (The right stick moves the crosshair the same way).
+
+## Pad selection, homing missile, drop camera and zoom framing (2026-11-26)
+
+The owner's second pair of pad recordings (`art/recordings/1.mp4`, `2.mp4`).
+
+- **Two pointers at once look glitchy.** With the free cursor on, the button under it was Roblox's selection, so
+  Roblox drew its square selection box too: crooked on the kit's slanted buttons, a beat behind the ring, and once
+  on the whole public-matches list (a ScrollingFrame is Selectable by default, and a D-pad press hopped the selection
+  onto it, the cursor gliding to the list's middle). Now the box is hidden while the cursor runs
+  (`PlayerGui.SelectionImageObject` set to an empty Frame), the button's own hover plays instead (ButtonScale and
+  ButtonTransform listen to `SelectionGained` / `SelectionLost` as well as the mouse), the list isn't Selectable, and
+  the D-pad's glide follows buttons only.
+- **A weapon that asks for a click needs a pad path.** The homing missile waited for a click or a tap on its
+  target, which a pad never sends. Its target now has a pad pick: the right stick moves the open lock-on mark from the
+  nearest enemy (the stick's curve and speed-up shared with aiming, `_getStickPush`), FIRE or RT locks it, B lets it
+  go. Any new "press on the world" action needs the same.
+- **The camera's floor was the map's floor.** The view clamped its bottom edge to the map's bounds, so zoomed out it
+  rose until the snail sat by the screen's bottom, under FIRE. `FLOOR_EXTRA` lets it sink half a view lower; the snail
+  stayed at 54% of the screen's height from the start zoom to `ZOOM_MAX`.
+- **One stick, one job per phase.** The right stick aims, so panning took LT; in the drop nothing aims, and the
+  owner didn't find LT. During the drop the right stick pans on its own.
+
+Rules: Snails (A homing missile locks its target; the match camera), Guis (The pad goes through the Console module).

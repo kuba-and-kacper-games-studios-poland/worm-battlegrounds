@@ -56,7 +56,7 @@ Writes the `MatchesPlayed`, `Wins`, `Knockouts` and `DamageDealt` statistics, an
 | `DEATHMATCH_DIAMONDS` | 2: 25, 8 · 4: 50, 25, 13, 8 · 6: 63 … 8 · 8: 75 … 8 | Public deathmatch diamonds by size, then place (the old coin rewards halved, rounded up) |
 | `TEAM_DIAMONDS` | 2 teams: 50, 8 · 3: 50, 25, 8 · 4: 50, 30, 15, 8 | Public team diamonds by number of teams, then place |
 | `TEAM_2V2_WIN` | `38` | A won 2v2 pays this instead |
-| `SOLO_DIAMONDS` | Easy 10, Medium 18, Hard 30 | A solo win |
+| `SOLO_DIAMONDS` | Easy 20, Medium 30, Hard 40 | A solo win |
 | `PARTY_NO_BOTS_SHARE` | `0.5` | The share of a deathmatch's diamonds a party match without bots pays |
 | `ANTI_FARM_ROUNDS` | `2` | Rounds the last two places must play to be paid |
 | `DOUBLE_DIAMONDS_PASS` | `"DoubleCoins"` | The pass that doubles diamonds; its Marketplace key keeps the old name, since gifted passes are saved by it |

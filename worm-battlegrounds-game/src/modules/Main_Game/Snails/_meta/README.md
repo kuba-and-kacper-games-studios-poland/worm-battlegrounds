@@ -96,7 +96,7 @@ No remotes: clients read the snail models' attributes. The server also writes `L
 
 | Key | Default | What |
 | --- | --- | --- |
-| `MAX_HEALTH` | `250` | Starting health, and the most healing reaches (200 until 2026-11-25) |
+| `MAX_HEALTH` | `200` | Starting health, and the most healing reaches (250 for a short while on 2026-11-25) |
 | `SAFE_FALL_HEIGHT` | `10` | A fall costs 1 health per stud above this |
 | `MAX_FALL_DAMAGE` | `40` | The most one fall costs |
 | `BURN_DELAY`, `BURN_DAMAGE`, `BURN_INTERVAL`, `BURN_TICKS` | `2`, `8`, `1`, `3` | Dipping into lava that doesn't knock a snail out (a pool on the map, or the lava sea in a small hole) sets it `Burning`: `BURN_DELAY` seconds later it loses `BURN_DAMAGE` (its turn ends then), and again every `BURN_INTERVAL` seconds, `BURN_TICKS` times (24 in all). Once a dip: staying in, or dipping again while burning, adds nothing || `ROOT_SIZE` | `2.6` | The ball's size, in studs across |

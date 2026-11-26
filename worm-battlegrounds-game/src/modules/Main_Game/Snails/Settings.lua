@@ -3,8 +3,8 @@ local _settings = {
 
 	--%%%%%%%%%%%%%%%%%%%% Health
 
-	-- Every snail starts with this much health, which healing never goes above (250 since 2026-11-25, was 200)
-	MAX_HEALTH = 250,
+	-- Every snail starts with this much health, which healing never goes above (200 again since 2026-11-25, briefly 250)
+	MAX_HEALTH = 200,
 
 	-- A fall costs 1 health per stud above SAFE_FALL_HEIGHT, MAX_FALL_DAMAGE at most
 	SAFE_FALL_HEIGHT = 10,

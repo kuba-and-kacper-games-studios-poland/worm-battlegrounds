@@ -23,8 +23,8 @@ before the other Main modules; its hints, selection and cursor start in `Start`,
 | `Client.lua` | The entry: starts the handlers, `I.Console` |
 | `Scripts/Client/Binds.lua` | The scheme's actions: binding a module's callback to an action's buttons, and reading them |
 | `Scripts/Client/Hints.lua` | The `Console_Hint` hints, their icons and texts, the pad's kind, button names |
-| `Scripts/Client/Selection.lua` | The gui selection on Console: View, widgets, focus, home, B backing out; with the cursor running, it sends the cursor where the selection would go |
-| `Scripts/Client/Cursor.lua` | The free cursor: when it runs, its picture, moving it with the left stick, the button under it as the selection, scrolling with the right stick |
+| `Scripts/Client/Selection.lua` | The gui selection on Console: View (the cursor on or off), widgets, focus, home, B backing out; with the cursor running it leaves the cursor where the player put it |
+| `Scripts/Client/Cursor.lua` | The free cursor: when it runs (and View turning it off), its picture, moving it with the left stick, the button under it as the selection, scrolling with the right stick; keeps Roblox's own virtual cursor off |
 | `Settings.lua` | The hint tag and style, the scheme, the selection's guis, the buttons' names, both pads' icons |
 | `_meta/_types.lua` | `Console_Action` (an `ACTIONS` row), `Console_ActionCallback` |
 
@@ -79,7 +79,7 @@ a window is open (Results, a confirmation, the settings), so it never takes the 
 | Crates | RB | R1 | `Crates` (Gui) | `Lobby`'s `S_Weapons` |
 | Invite to the party | Y | Triangle | `Invite` (Gui) | `Party`'s invite slots |
 | Loadout slots, emotes, public matches, kick, leave the party | Selection and A | Selection and Cross | | Their guis' buttons |
-| The cursor back to where the selection starts (in a match with no window open: the selection on or off) | View | Touchpad | `Navigate` | Console |
+| The free cursor off (the D-pad's selection drives, from the button under it) or back on (over the selected button), in place; in a match with no window open: the selection on or off | View | Touchpad | `Navigate` | Console |
 | Scroll the list under the cursor | Right stick | Right stick | `Scroll` | Console (Cursor) |
 
 ### Why these buttons
@@ -96,7 +96,7 @@ From what Roblox reserves and how popular Roblox and console games map pads (202
 | Aim never shares an input with walking | Worms W.M.D. players' complaints about D-pad aiming | Right stick aims, left stick and D-pad ← → walk |
 | Emotes on a face or D-pad button, scoreboard on another | Fortnite (D-pad ↓), Rivals (D-pad ←) | D-pad ← → walk in a match, so emotes are X and ↑ ↓ zoom |
 | Every menu reachable with the D-pad, A and B; text at least 26 px at 1080p | Roblox's console guidelines, XAG 101 | Selection starts where the player is; hints use 48 px glyphs |
-| Menus made for a mouse get a pointer that slows over buttons; Roblox's own (`GamepadService`'s virtual cursor) can't be tuned, scrolls only at a list's edge, draws its own picture and doesn't run with `AutoSelectGuiEnabled` off | Roblox's virtual cursor announcements and API (DevForum, 2021, 2022) | The module's own cursor (Cursor): acceleration, a slow-down and pull on buttons, the right stick scrolls, Roblox's selection under it so A and B work as before |
+| Menus made for a mouse get a pointer that slows over buttons; Roblox's own (`GamepadService`'s virtual cursor) can't be tuned, scrolls only at a list's edge, draws its own picture and doesn't run with `AutoSelectGuiEnabled` off | Roblox's virtual cursor announcements and API (DevForum, 2021, 2022) | The module's own cursor (Cursor): acceleration, a slow-down on buttons, the right stick scrolls, Roblox's selection under it so A and B work as before |
 
 ## API
 
@@ -123,8 +123,9 @@ On Console (`I.Platform.Current`), the selection goes, in order: into the open w
 presses (its A button first; a widget whose every button has a key, such as Results or a confirmation, is left to its
 keys, so A and B do what their badges say), into the focus, back to what was selected before the first widget opened,
 onto the home button. With nowhere to go it is cleared (a match). It moves when a widget opens or closes, a module
-focuses or sets home, the platform changes, or the selected button goes away (a list redrawn). View (`Navigate`, with
-Roblox's `AutoSelectGuiEnabled` off) clears it, or starts it there, or in the first shown gui of `NAVIGATION_GUIS`.
+focuses or sets home, the platform changes, or the selected button goes away (a list redrawn). In a match View
+(`Navigate`, with Roblox's `AutoSelectGuiEnabled` off) clears it, or starts it there, or in the first shown gui of
+`NAVIGATION_GUIS`; where the free cursor may run, View turns the cursor off or on (Cursor, below).
 
 Roblox clears a selection on B before scripts see the press. When a selection ends while B is down or was pressed in
 the last `BACK_WINDOW` seconds, the module backs out: in a widget, its B button closes it when that button is
@@ -132,11 +133,11 @@ WidgetManager's (else the B button is selected, so A presses it); in a focus, it
 selection comes back. While there is a selection, a key other than A still presses its `Utils_ButtonKey` button
 (Utils' ButtonPress), so the shortcuts work beside the selection.
 
-While the cursor runs, the selection is the button under it, and this order sends the cursor instead: a widget that
-opens (any widget, its A button first), a focus, what was selected before the first widget opened, the home button.
-It goes only when it doesn't already point inside the target. B over a button backs out as above, sending the cursor
-onto a widget's own B button; B over nothing presses the screen's B button (a close), as without a selection. View
-brings the cursor to where the selection starts.
+While the cursor runs, the selection is the button under it and nothing moves the cursor but the player (the owner,
+2026-11-26: "it jumps around randomly… the mouse gets snapped out"): a widget opening, a focus, the home button and a
+redrawn list leave it where it is. B over a button backs out as above, pressing a widget's own B button as its key would
+(`I.Utils.PressKey`) instead of moving the cursor onto it; B over nothing presses the screen's B button (a close), as
+without a selection.
 
 ### Cursor
 
@@ -147,17 +148,27 @@ edged dark, `CURSOR_SIZE` of the screen's height, built from Frames, UICorners a
 every gui; no image. While it runs it binds `Cursor` (left stick) and `Scroll` (right stick) over the bindings under
 them and sinks both.
 
+- **View:** turns it off where it may run, for the D-pad's selection (Roblox's), which starts on the button it pointed
+  at (or where the selection starts, over nothing); pressed again it comes back over the selected button. Off lasts the
+  session, through windows opening and closing. Nothing on screen jumps either way.
+- **The look over a button:** Roblox's selection box is hidden while it runs (`PlayerGui.SelectionImageObject` is an
+  empty Frame; back to Roblox's own when it stops): the box is square on the kit's slanted buttons and doubled the
+  cursor. The button under it plays its own hover instead (Utils' `ButtonScale` and `ButtonTransform` take a gamepad
+  selection as a hover). The D-pad's hop follows buttons only, never a list it selected.
+- **Roblox's virtual cursor** (`GamepadService`, the player's Roblox setting or the Select button) is turned off whenever
+  it comes on (`DisableGamepadCursor`): it fought this cursor, its mouse input made the pad read as a PC (`I.Platform`
+  Desktop, the keyboard hints), and in a match, where the sticks walk and aim, it stood as a dot in the screen.
+
 - **Moving:** past `CURSOR_DEADZONE`, at `CURSOR_SPEED` screen heights a second (the lean to the power of `CURSOR_CURVE`),
   speeding up to `CURSOR_BOOST` times that while held past `CURSOR_BOOST_LEAN` (over `CURSOR_BOOST_TIME`), and at
-  `CURSOR_BUTTON_SLOW` of it over a button. Let go over a button within `CURSOR_MAGNET_REACH`, it drifts to the button's
-  middle (`CURSOR_MAGNET`).
+  `CURSOR_BUTTON_SLOW` of it over a button. Let go, it stays where it is (no pull onto a button since 2026-11-26).
 - **Pointing:** the frontmost button under it (`PlayerGui:GetGuiObjectsAtPosition`) that is `Selectable`,
   `Interactable` and shown, with the cursor inside every frame that clips it, becomes `GuiService.SelectedObject`, so A
   presses it through Roblox's selection (`Activated`, which `I.Interact.OnPress` hears) and the shortcuts beside a
   selection work as before. With a widget open, only the widget and guis drawn over it (a higher `DisplayOrder`) count.
   Over nothing it clears the selection.
-- **Gliding:** sent onto a button (Selection, above) or after the D-pad hopped the selection (within
-  `CURSOR_DPAD_FOLLOW` seconds of a D-pad press), it glides there (`CURSOR_GLIDE`) until it arrives or the stick moves.
+- **Gliding:** after the D-pad hopped the selection (within `CURSOR_DPAD_FOLLOW` seconds of a D-pad press), it glides
+  onto that button (`CURSOR_GLIDE`) until it arrives or the stick moves. Nothing else sends it.
 - **Scrolling:** the right stick, past `SCROLL_DEADZONE`, scrolls the frontmost scrolling list under it the ways the
   list scrolls, up to `SCROLL_SPEED` screen heights a second.
 
@@ -211,8 +222,7 @@ The module uses no remotes and no Topics of its own: everything it does is on th
 | `CURSOR_SPEED`, `CURSOR_DEADZONE`, `CURSOR_CURVE` | `{ 0.18, 0.9 }`, `0.15`, `2` | Screen heights a second from just past the dead zone to full lean, along the lean to this power |
 | `CURSOR_BOOST`, `CURSOR_BOOST_LEAN`, `CURSOR_BOOST_TIME` | `1.9`, `0.9`, `0.5` | Held past this lean, the speed grows to this many times over this many seconds, and fades three times as fast once it eases off |
 | `CURSOR_BUTTON_SLOW` | `0.45` | The share of its speed over a button |
-| `CURSOR_MAGNET`, `CURSOR_MAGNET_REACH` | `6`, `0.08` | Let go over a button, it drifts to the button's middle this quickly (higher is snappier) when the middle is within this share of the screen's height |
-| `CURSOR_GLIDE`, `CURSOR_DPAD_FOLLOW` | `16`, `0.4` | How quickly it glides onto a button it's sent to, and how long after a D-pad press a selection that moves counts as the D-pad's hop it follows |
+| `CURSOR_GLIDE`, `CURSOR_DPAD_FOLLOW` | `16`, `0.4` | How quickly it glides onto the button the D-pad hopped to, and how long after a D-pad press a selection that moves counts as the D-pad's hop it follows |
 | `SCROLL_DEADZONE`, `SCROLL_SPEED` | `0.2`, `1.5` | The right stick scrolls the list under the cursor past this lean, up to this many screen heights a second |
 | `BUTTON_NAMES` | Xbox ("A", "RT", "View"), PlayStation ("Cross", "R2", "the touchpad") | What texts call each button, by pad and `Enum.KeyCode` name |
 | `GAMEPAD_ICONS` | `Xbox` and `PlayStation`, each in `Color`, `White`, `Bold` and `BoldWhite`, with `ColorThick` (`ButtonA`, `ButtonB`, `ButtonX`) and `WhiteBorder` (`ButtonB`) | Gamepad icon images by pad, icon style and `Enum.KeyCode` name: a copy of the System theme's `Gamepad.lua` in ume-gui. Update it when that file changes |

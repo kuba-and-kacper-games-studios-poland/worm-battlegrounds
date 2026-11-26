@@ -114,6 +114,7 @@ function Module.Init()
 
 		Freeze = Module.Freeze,
 		PunchIn = Module.PunchIn,
+		ZoomStep = Module.ZoomStep,
 	}
 end
 
@@ -230,6 +231,19 @@ function Module.PunchIn(point: Vector3)
 	punchUntil = os.clock() + _settings.PUNCH_SECONDS
 end
 
+--%%%%%%%%%%%%%%%%%%%% Zoom Step
+
+--[[
+	**CLIENT** |
+	Zooms one press of the HUD's zoom buttons: out with a positive direction, in with a negative one, by
+	ZOOM_BUTTON_STEP of the distance.
+]]
+function Module.ZoomStep(direction: number)
+	--[[ Zooming ]]
+
+	Module._zoomTo(zoomGoal * (1 + math.sign(direction) * _settings.ZOOM_BUTTON_STEP))
+end
+
 --%%%%%%%%%%%%%%%%%%%% Update
 
 --[[
@@ -304,7 +318,9 @@ function Module._update(deltaTime: number)
 	end
 
 	-- LT with the right stick pans (the Console module's CameraPan and Aim), as fast across the screen at any zoom, and so does the mouse at the screen's left or right edge
-	if stickPan.Magnitude >= _settings.STICK_DEADZONE and I.Console.IsHeld("CameraPan") then
+	-- During the drop nothing aims, so the right stick pans on its own (the owner, 2026-11-26: "I can't move the map")
+	local stickPanning: boolean = stickPan.Magnitude >= _settings.STICK_DEADZONE and (I.Console.IsHeld("CameraPan") or I.Match.GetPhase() == "Drop")
+	if stickPanning then
 		Module._addPan(Vector3.new(stickPan.X, stickPan.Y, 0) * _settings.STICK_PAN_SPEED * zoom / _settings.DISTANCE * deltaTime)
 	end
 	-- A mouse left at the edge once the view can't go further that way isn't a move, or it would hold the view there forever
@@ -387,7 +403,7 @@ function Module._update(deltaTime: number)
 	pan = Vector3.new(goal.X - base.X, goal.Y - base.Y, 0)
 
 	-- A view moved by hand stays while the player holds the pan, and MANUAL_HOLD after their last move; then it glides back
-	if manualPoint and (dragging or next(touches) ~= nil or I.Console.IsHeld("CameraPan")) then
+	if manualPoint and (dragging or next(touches) ~= nil or I.Console.IsHeld("CameraPan") or stickPanning) then
 		manualUntil = math.max(manualUntil, os.clock() + _settings.MANUAL_HOLD)
 	end
 	local manual: boolean = false
@@ -749,7 +765,8 @@ end
 --[[
 	Returns a point moved just enough that the view centered on it stays inside the bounds (their top raised by
 	`ceiling` studs, their sides widened by SIDE_EXTRA of half the view's width, so a snail at the map's edge can sit
-	mid-screen), on the bounds' plane; along an axis where the view is wider than that, the bounds' middle.
+	mid-screen, and their bottom lowered by FLOOR_EXTRA of half the view's height, so zoomed out the view stays round the
+	snail), on the bounds' plane; along an axis where the view is wider than that, the bounds' middle.
 ]]
 --- @return Vector3
 function Module._getClamped(point: Vector3, bounds: BasePart, camera: Camera, ceiling: number)
@@ -758,7 +775,7 @@ function Module._getClamped(point: Vector3, bounds: BasePart, camera: Camera, ce
 	local halfHeight: number = Module._getHalfHeight()
 	local halfWidth: number = halfHeight * camera.ViewportSize.X / camera.ViewportSize.Y
 	local side: Vector3 = Vector3.xAxis * halfWidth * _settings.SIDE_EXTRA
-	local low: Vector3 = bounds.Position - bounds.Size / 2 - side
+	local low: Vector3 = bounds.Position - bounds.Size / 2 - side - Vector3.yAxis * halfHeight * _settings.FLOOR_EXTRA
 	local high: Vector3 = bounds.Position + bounds.Size / 2 + side
 
 	-- The top on its own, since an endless ceiling (math.huge) times the other axes' zeros would be NaN

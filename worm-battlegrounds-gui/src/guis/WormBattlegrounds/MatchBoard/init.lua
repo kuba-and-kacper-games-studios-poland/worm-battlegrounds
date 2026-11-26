@@ -262,6 +262,7 @@ local _gui = {
 																	ScrollingDirection = Enum.ScrollingDirection.X,
 																	AutomaticCanvasSize = Enum.AutomaticSize.X,
 																	ScrollBarImageTransparency = 0.5,
+																	Selectable = false,
 																},
 																Attributes = {
 																	_ScrollAutoLayoutNormalized = true,
@@ -321,12 +322,13 @@ local _gui = {
 									{
 										Primitive = "ImageButton",
 										Id = "S_Friends",
+										-- Over PLAY SOLO's left end, clear of the Loadout column's EMOTES on a full loadout (2026-11-26)
 										Props = {
-											AnchorPoint = Vector2.new(1, 1),
+											AnchorPoint = Vector2.new(0, 1),
 											BackgroundTransparency = 1,
 											BorderSizePixel = 0,
 											LayoutOrder = 0,
-											Position = UDim2.fromScale(1, 0.1256),
+											Position = UDim2.fromScale(0, 0.1256),
 											Size = UDim2.fromScale(0.5, 0.33),
 											ZIndex = 3,
 										},

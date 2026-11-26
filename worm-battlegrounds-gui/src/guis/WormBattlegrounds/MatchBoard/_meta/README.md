@@ -43,7 +43,7 @@ into the buttons (PLAY SOLO, JOIN) and the mode carry `TextCase_Upper`.
 | --- | --- | --- |
 | `U_Play` | Frame, full screen | The board: `BottomBar`, a right-aligned row holding `BottomLeft` (PUBLIC MATCHES) and `BottomRight` (the gear tile over PLAY SOLO) a fixed gap apart, so the gap holds on screens wider than 16:9; slides away as one while the setup or the custom lobby shows |
 | `U_Play` › `S_Solo` | ImageButton (gold: the design's `Background` › `Main`, `Stroke2`, `Mask`, `Stroke`) | Opens the setup (`MatchSetup`); its `Name1` reads "Play solo", or "Play with party" in a party, or "Waiting for host" for a party member (greyed out) |
-| `U_Play` › `S_Friends` | ImageButton (the gear tile) | Opens `FriendsMatch` (its tags: `Interact_Button` → WidgetManager `Toggle`, the pad's X) |
+| `U_Play` › `S_Friends` | ImageButton (the gear tile), over PLAY SOLO's left end (its right end until 2026-11-26, where a full Loadout column's EMOTES met it) | Opens `FriendsMatch` (its tags: `Interact_Button` → WidgetManager `Toggle`, the pad's X) |
 | `U_Play` › `S_SoloIcon` | ImageLabel, left in `S_Solo` | The mode icon: `MODE_ICONS` Bots, or Party in a party (both the `play` glyph since 2026-11-24) |
 | `U_Rows` | ScrollingFrame (horizontal) | Holds one `Row` per public match |
 

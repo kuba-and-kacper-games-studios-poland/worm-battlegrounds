@@ -20,10 +20,12 @@ local elems = {} --- @type { [string]: Instance }
 --[[ State ]]
 
 --[[
-	Whether the cursor runs, whether it was placed yet (it first shows in the screen's middle), where it points (in gui
+	Whether the cursor runs, whether the player turned it off with View (the D-pad's selection drives instead), whether
+	it was placed yet (it first shows in the screen's middle), where it points (in gui
 	pixels, the space of AbsolutePosition), where it was last drawn, the element it points at, and its loop
 ]]
 local running: boolean = false
+local turnedOff: boolean = false
 local placed: boolean = false
 local position: Vector2 = Vector2.zero
 local drawnAt: Vector2? = nil
@@ -93,7 +95,8 @@ end
 --[[
 	Builds the cursor's picture, hidden: its own ScreenGui over every gui and the whole screen, a full-screen root it
 	sits in, and the cursor, a white ring with a dot in the middle, each edged dark, sized by the screen's height (the
-	lines by Scale Look).
+	lines by Scale Look), and
+	the empty look that stands in for Roblox's selection box while it runs.
 ]]
 function Module._build()
 	--[[ Gui ]]
@@ -168,6 +171,15 @@ function Module._build()
 		Parent = dot,
 	})
 
+	--[[ Selection Look ]]
+
+	-- Roblox draws this in place of its selection box while the cursor runs: nothing, as the button's own hover shows it
+	local noSelection: Frame = I.Create("Frame")({
+		Name = "NoSelection",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+	})
+
 	--[[ Saving ]]
 
 	elems["Gui"] = gui
@@ -177,13 +189,15 @@ function Module._build()
 	elems["EdgeStroke"] = edgeStroke
 	elems["RingStroke"] = ringStroke
 	elems["DotStroke"] = dotStroke
+	elems["NoSelection"] = noSelection
 end
 
 --%%%%%%%%%%%%%%%%%%%% Create Connections
 
 --[[
 	Starts or stops the cursor when the platform, the open window or the player's InMatch changes, follows the D-pad's
-	presses (it hops the selection, which the cursor follows), and scales the cursor's lines with its size.
+	presses (it hops the selection, which the cursor follows), keeps Roblox's virtual cursor off, and scales the
+	cursor's lines with its size.
 ]]
 function Module._createConnections()
 	--[[ Running ]]
@@ -209,6 +223,12 @@ function Module._createConnections()
 		end
 	end)
 
+	--[[ Roblox's Cursor ]]
+
+	-- Roblox's own virtual cursor fights this one and the match's sticks, and its mouse input reads as a PC: keep it off
+	I.S.GamepadService:GetPropertyChangedSignal("GamepadCursorEnabled"):Connect(Module._disableRobloxCursor)
+	Module._disableRobloxCursor()
+
 	--[[ Look ]]
 
 	elems["Cursor"]:GetPropertyChangedSignal("AbsoluteSize"):Connect(Module._scaleLook)
@@ -217,28 +237,63 @@ end
 
 --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Control
 
---%%%%%%%%%%%%%%%%%%%% Move To
+--%%%%%%%%%%%%%%%%%%%% Toggle
 
 --[[
-	Sends the cursor onto a gui element, where the selection would go (a window opening, a focus, B backing out): it
-	glides there while it runs, and starts there when it doesn't run yet.
+	View, where the cursor may run: turns it off for the D-pad's selection, which starts on the button it pointed at, or
+	back on over the selected button. What the player sees never jumps (the owner, 2026-11-26: "it doesn't snap anymore").
 ]]
-function Module.MoveTo(element: GuiObject)
-	--[[ Moving ]]
+function Module.Toggle()
+	--[[ Local Variables ]]
 
-	if running then
-		glideTarget = element
+	local selected: GuiObject? = I.S.GuiService.SelectedObject
+	local pointed: GuiObject? = hovered
+
+	--[[ Saving ]]
+
+	turnedOff = not turnedOff
+
+	-- Back on, it shows over the button the D-pad selected
+	if not turnedOff and selected and I.Utils.IsGuiShown(selected) then
+		position = getMiddle(selected)
+		placed = true
+	end
+
+	--[[ Refreshing ]]
+
+	Module._refresh()
+
+	-- Off, the selection starts on the button the cursor pointed at
+	if turnedOff and pointed and I.Utils.IsGuiShown(pointed) then
+		I.S.GuiService.SelectedObject = pointed
+	end
+end
+
+--%%%%%%%%%%%%%%%%%%%% Disable Roblox Cursor
+
+--[[
+	Turns Roblox's own gamepad virtual cursor off whenever it comes on (the player's Roblox setting, the Select button):
+	this module's cursor does its job, and Roblox's left a dot in matches and made the pad read as a mouse.
+]]
+function Module._disableRobloxCursor()
+	--[[ Checks ]]
+
+	-- Skip while it's off
+	if not I.S.GamepadService.GamepadCursorEnabled then
 		return
 	end
-	position = getMiddle(element)
-	placed = true
+
+	--[[ Disabling ]]
+
+	I.S.GamepadService:DisableGamepadCursor()
 end
 
 --%%%%%%%%%%%%%%%%%%%% Refresh
 
 --[[
 	Starts the cursor where it may run (Is Active) and stops it elsewhere: running, it shows, takes both sticks from the
-	bindings under it and moves every frame; stopped, it hides, lets them go and drops the selection it made.
+	bindings under it, hides Roblox's selection box (the button under it shows its own hover) and moves every frame;
+	stopped, it hides, lets them go, brings the box back for the D-pad and drops the selection it made.
 ]]
 function Module._refresh()
 	--[[ Local Variables ]]
@@ -256,6 +311,7 @@ function Module._refresh()
 
 	running = active
 	elems["Gui"].Enabled = active
+	I.Env.PlayerGui.SelectionImageObject = if active then elems["NoSelection"] else nil
 	if active then
 		Binds.Bind("Cursor", Module._onStick)
 		Binds.Bind("Scroll", Module._onStick)
@@ -311,9 +367,9 @@ end
 --%%%%%%%%%%%%%%%%%%%% Step
 
 --[[
-	Every frame while it runs: a glide (the selection sending it, the D-pad's hop) carries the cursor onto an element,
-	else the left stick moves it, faster the further it leans and the longer it's held near full lean, slower over a
-	button, and let go over a button it drifts to the button's middle. The button it points at becomes the selection,
+	Every frame while it runs: the D-pad's hop glides the cursor onto the button it selected, else the left stick moves
+	it, faster the further it leans and the longer it's held near full lean, slower over a button; let go, it stays
+	where it is. The button it points at becomes the selection,
 	so A presses it as Roblox's selection does, and the right stick scrolls the list under it.
 ]]
 function Module._step(deltaTime: number)
@@ -335,12 +391,12 @@ function Module._step(deltaTime: number)
 
 	--[[ Following ]]
 
-	-- The D-pad hopped the selection to another element: the cursor glides after it
-	if selected and selected ~= hovered and os.clock() - lastDPad <= _settings.CURSOR_DPAD_FOLLOW then
+	-- The D-pad hopped the selection to another button: the cursor glides after it (never onto a list it selected)
+	if selected and selected ~= hovered and selected:IsA("GuiButton") and os.clock() - lastDPad <= _settings.CURSOR_DPAD_FOLLOW then
 		glideTarget = selected
 	end
 
-	-- The stick takes over from a glide, and an element that went away ends it
+	-- The stick takes over from the D-pad's glide, and an element that went away ends it
 	if glideTarget and (leaning or not I.Utils.IsGuiShown(glideTarget)) then
 		glideTarget = nil
 	end
@@ -367,12 +423,6 @@ function Module._step(deltaTime: number)
 			speed *= _settings.CURSOR_BUTTON_SLOW
 		end
 		position += Vector2.new(moveStick.X, -moveStick.Y).Unit * speed * deltaTime
-	elseif hovered then
-		-- Let go over a button, it drifts to the button's middle when that's near
-		local toMiddle: Vector2 = getMiddle(hovered) - position
-		if toMiddle.Magnitude <= _settings.CURSOR_MAGNET_REACH * height then
-			position += toMiddle * (1 - math.exp(-_settings.CURSOR_MAGNET * deltaTime))
-		end
 	end
 	position = Vector2.new(math.clamp(position.X, screenMin.X, screenMin.X + screenSize.X), math.clamp(position.Y, screenMin.Y, screenMin.Y + screenSize.Y))
 
@@ -482,11 +532,21 @@ end
 --%%%%%%%%%%%%%%%%%%%% Is Active
 
 --[[
+	Returns whether the cursor runs now: where it may (Is Allowed), unless the player turned it off with View.
+]]
+--- @return boolean
+function Module.IsActive()
+	return Module.IsAllowed() and not turnedOff
+end
+
+--%%%%%%%%%%%%%%%%%%%% Is Allowed
+
+--[[
 	Returns whether the cursor may run now: on Console (a pad was used last; a mouse or touch ends it), in the lobby, and
 	in a match only while a window is open, so it never takes the sticks from aiming and walking.
 ]]
 --- @return boolean
-function Module.IsActive()
+function Module.IsAllowed()
 	--[[ Local Variables ]]
 
 	local inMatch: boolean = I.Config.PlaceLoader.MapId == _settings.MATCH_MAP_ID or I.S.Players.LocalPlayer:GetAttribute("InMatch") == true

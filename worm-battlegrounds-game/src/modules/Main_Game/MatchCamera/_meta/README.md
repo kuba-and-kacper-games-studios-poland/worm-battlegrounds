@@ -5,7 +5,7 @@ with a narrow `FOV`, so the arena reads as flat. It follows a flying shot (parts
 while the player's `CameraFollowsShot` setting is on, staying on the same shot while it flies (never hopping between
 a cluster bomb's bomblets), else the active snail (its `Active` attribute), else between turns the snail it followed
 last, else the local player's snail, else the arena's middle, and stays inside the arena's bounds, except that the view may
-rise `CEILING_EXTRA` studs above their top and go `SIDE_EXTRA` of half a view past their sides, so a snail high up or at an edge sits mid-screen, and has no ceiling at all while it
+rise `CEILING_EXTRA` studs above their top, go `SIDE_EXTRA` of half a view past their sides and sink `FLOOR_EXTRA` of half a view under their bottom, so a snail high up or at an edge sits mid-screen and zoomed out the view stays round it, and has no ceiling at all while it
 follows a shot in flight. A flying shot is led
 `LEAD_SECONDS` along its smoothed velocity (`LEAD_SMOOTH`), at most `LEAD_MAX` studs, so where it lands comes into
 view sooner, and it (like a snail a blow sent flying) moves the view only once it leaves the middle `DEAD_ZONE` of the
@@ -25,7 +25,7 @@ the zoom), except a hand move and a shot in flight, which it must keep up with. 
 by dragging with the right mouse button, holding the mouse at the screen's left or right edge (inside the window, and
 only while the view can still go that way), a finger dragged on
 the arena (one finger, except on the player's own turn before the shot, when one finger points the aim; two fingers
-always), or the right stick while LT is held (the Console module's `Aim` and `CameraPan`; held on any connected pad), at
+always), or the right stick while LT is held (the Console module's `Aim` and `CameraPan`; held on any connected pad; during the drop, when nothing aims, the right stick alone), at
 `STICK_PAN_SPEED` scaled with the zoom, so it crosses the screen as fast zoomed in as out. Outside the player's own
 turn before the shot, moving the view by hand leaves what the camera follows: it stays where the player puts it
 (catching up at `MANUAL_SPEED`) while they hold the pan (the right mouse button, a finger, LT) and until
@@ -69,6 +69,7 @@ Match's `Match_TurnStarted`.
 | Function | Returns | What it does |
 | --- | --- | --- |
 | `Freeze(seconds)` | | Holds the view where it is for that many seconds (a later end wins over an earlier one); nothing while the camera hasn't taken the view yet. Combat's hit stop uses it |
+| `ZoomStep(direction: number)` | | Zooms one press of MatchHud's zoom buttons: out for a positive direction, in for a negative one, by `ZOOM_BUTTON_STEP` of the distance, within `ZOOM_MIN` and `ZOOM_MAX` |
 | `PunchIn(point)` | | Moves the view to `point` (plus the player's pan) and zooms to `PUNCH_ZOOM` of the player's zoom for `PUNCH_SECONDS`, then goes back to what it followed. Combat uses it on a knockout blow |
 
 ## Settings
@@ -77,7 +78,8 @@ Match's `Match_TurnStarted`.
 | --- | --- | --- |
 | `FOV` | `30` | Field of view, before an open widget's FOV change |
 | `DISTANCE` | `110` | How far in front of the plane the camera sits at start |
-| `ZOOM_MIN`, `ZOOM_MAX` | `45`, `200` | The nearest and farthest the zoom goes, in studs from the plane |
+| `ZOOM_MIN`, `ZOOM_MAX` | `45`, `300` | The nearest and farthest the zoom goes, in studs from the plane; 300 shows a whole 282-stud rotation map across 16:9 (200 until 2026-11-26) |
+| `ZOOM_BUTTON_STEP` | `0.25` | One press of the HUD's zoom buttons changes the distance by this share of itself (`ZoomStep`) |
 | `ZOOM_STEP`, `ZOOM_SPEED` | `0.15`, `6` | Each wheel notch changes the distance by this share of itself; how quickly the zoom eases there |
 | `PAD_ZOOM_RATE` | `0.9` | Holding D-pad up or down zooms by this share of the distance each second |
 | `FOLLOW_SPEED`, `SHOT_FOLLOW_SPEED` | `3.5`, `5` | How quickly it catches up with what it follows, and with a shot in flight (the spring settles in about 1 / this seconds) |
@@ -86,6 +88,7 @@ Match's `Match_TurnStarted`.
 | `TRAVEL_SPEED`, `TRAVEL_MAX`, `TRAVEL_DONE` | `1.6`, `2.5`, `1.5` | Moving on to the next snail, or to where bullets landed, it glides this quickly (slower than `FOLLOW_SPEED`, so the move reads) for at most this many seconds, or until it's within this many studs |
 | `CEILING_EXTRA` | `60` | How many studs above the map's `Bounds` top the view may rise (none while it follows a shot in flight) |
 | `SIDE_EXTRA` | `1` | How far past each side of the map's `Bounds` the view may go, as a share of half its width: at 1 a snail at the edge can sit mid-screen |
+| `FLOOR_EXTRA` | `0.5` | How far under the map's `Bounds` the view may sink, as a share of half its height, so zoomed out it stays round the snail (FIRE no longer covers it) |
 | `RECENTER_SPEED`, `RECENTER_MOVE_SPEED` | `2.5`, `3` | On the player's own turn: the pan eases back to their snail this quickly (higher is snappier) while the snail moves faster than this many studs a second |
 | `BLAST_HOLD`, `BIG_BLAST_HOLD`, `BIG_BLAST_RADIUS` | `1`, `1.6`, `6` | The least seconds it stays on a blast (it stays until the next turn starts), for small blasts and for blasts at least `BIG_BLAST_RADIUS` studs big; `BLAST_HOLD` also for where bullets landed and a shot that ended without a blast |
 | `CHASE_SPEED`, `CHASE_HOLD` | `25`, `0.6` | While it holds after a shot, a snail moving faster than this many studs a second is followed, and the hold lasts this many seconds after it slows |
@@ -95,7 +98,7 @@ Match's `Match_TurnStarted`.
 | `TRAVEL_ZOOM_OUT`, `TRAVEL_ZOOM_DISTANCE` | `0.2`, `80` | Gliding to the next snail, the view zooms out by up to this share of the player's zoom, in full from this many studs away, and back in as it arrives |
 | `BLAST_KICK`, `BIG_BLAST_KICK`, `BLAST_KICK_SECONDS` | `0.06`, `0.12`, `0.6` | A blast the camera follows pushes the view in by this share of the zoom (the second for a blast of `BIG_BLAST_RADIUS` or more), easing back over this many seconds |
 | `MANUAL_HOLD`, `MANUAL_SPEED` | `5`, `15` | A view moved by hand (outside the player's own turn before the shot) stays where they put it while they hold the pan and until this many seconds after their last move, or until the next turn starts (whose glide to its snail ignores the hand until it arrives), catching up this quickly |
-| `STICK_PAN_SPEED` | `60` | Right-stick panning speed at full lean, in studs per second at `DISTANCE`, times the zoom over `DISTANCE` (about 25 at `ZOOM_MIN`, 109 at `ZOOM_MAX`) |
+| `STICK_PAN_SPEED` | `60` | Right-stick panning speed at full lean, in studs per second at `DISTANCE`, times the zoom over `DISTANCE` (about 25 at `ZOOM_MIN`, 164 at `ZOOM_MAX`) |
 | `EDGE_PAN_MARGIN`, `EDGE_PAN_SPEED` | `0.015`, `60` | The mouse this close to the screen's left or right edge (a share of its height) pans the view sideways, in studs per second; not while the left button is held (an aim) |
 | `STICK_DEADZONE` | `0.2` | How far the right stick must lean |
 

@@ -59,6 +59,9 @@ function Module.Start(gui: ScreenGui)
 	elems["Leave"] = elems["KnockedOut"]:FindFirstChild("S_Leave", true) --- @type ImageButton
 	elems["LoadoutBar"] = gui:FindFirstChild("U_LoadoutBar") --- @type Frame
 	elems["EmoteButton"] = gui:FindFirstChild("U_EmoteButton") --- @type Frame
+	elems["Zoom"] = gui:FindFirstChild("U_Zoom") --- @type Frame
+	elems["ZoomIn"] = elems["Zoom"]:FindFirstChild("S_ZoomIn") --- @type ImageButton
+	elems["ZoomOut"] = elems["Zoom"]:FindFirstChild("S_ZoomOut") --- @type ImageButton
 
 	--[[ Connections ]]
 
@@ -72,6 +75,12 @@ function Module.Start(gui: ScreenGui)
 	I.Topic.Subscribe("Match_PhaseChanged", Module._onPhaseChanged)
 	I.Interact.OnPress(elems["Spectate"], Module._spectate)
 	I.Interact.OnPress(elems["Leave"], Module._leave)
+	I.Interact.OnPress(elems["ZoomIn"], function()
+		I.MatchCamera.ZoomStep(-1)
+	end)
+	I.Interact.OnPress(elems["ZoomOut"], function()
+		I.MatchCamera.ZoomStep(1)
+	end)
 	Module._refresh()
 end
 
@@ -110,8 +119,8 @@ end
 
 --[[
 	Shows each phase's panel: who has arrived while waiting (a public match's waiting room is Match's own panel), the
-	drop timer, the knocked-out panel once the player's snail is out, and the loadout bar while the player's snail is
-	in play.
+	drop timer, the knocked-out panel once the player's snail is out, the loadout bar while the player's snail is in
+	play, and the zoom buttons through the round (watching on too).
 ]]
 function Module._refresh()
 	--[[ Data ]]
@@ -119,6 +128,7 @@ function Module._refresh()
 	local phase: string = I.Match.GetPhase()
 	local entry: Configuration? = I.Match.GetParticipantInfo(I.Match.GetMyParticipantId())
 	local out: boolean = entry ~= nil and entry:GetAttribute("Out") == true
+	local fighting: boolean = phase == "Turn" or phase == "Flight" or phase == "Settle" or phase == "Landing" or phase == "Battle"
 
 	--[[ Visibility ]]
 
@@ -128,8 +138,9 @@ function Module._refresh()
 	elems["DropPlate"].Visible = matchFolder:GetAttribute("Kind") ~= "Tutorial"
 	elems["DropTitle"].Visible = elems["DropPlate"].Visible
 	elems["KnockedOut"].Visible = out and not spectating and phase ~= "Ended"
-	elems["LoadoutBar"].Visible = entry ~= nil and not out and (phase == "Turn" or phase == "Flight" or phase == "Settle" or phase == "Landing" or phase == "Battle")
+	elems["LoadoutBar"].Visible = entry ~= nil and not out and fighting
 	elems["EmoteButton"].Visible = elems["LoadoutBar"].Visible
+	elems["Zoom"].Visible = fighting and not elems["KnockedOut"].Visible
 
 	--[[ Texts ]]
 

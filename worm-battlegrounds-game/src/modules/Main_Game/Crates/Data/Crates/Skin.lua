@@ -23,7 +23,7 @@ local _data = {
 
 	-- Diamonds for one crate, a 3-pack and a 10-pack
 	Prices = {
-		Diamonds = { One = "50", Three = "150", Ten = "500" },
+		Diamonds = { One = "100", Three = "300", Ten = "1000" },
 	},
 
 	--[[ Odds ]]

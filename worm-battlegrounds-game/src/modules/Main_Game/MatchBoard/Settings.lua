@@ -197,7 +197,7 @@ local _settings = {
 
 	-- The diamonds a solo win pays by the bots' difficulty, shown in the setup (MatchRewards' SOLO_DIAMONDS, which pays them)
 	--- @type { [string]: number }
-	SOLO_WIN_DIAMONDS = { Easy = 10, Medium = 18, Hard = 30 },
+	SOLO_WIN_DIAMONDS = { Easy = 20, Medium = 30, Hard = 40 },
 
 	-- A party match with bots adds this many bots per party member, up to PARTY_MAX_SIZE snails in all
 	PARTY_BOTS_PER_PLAYER = 1,

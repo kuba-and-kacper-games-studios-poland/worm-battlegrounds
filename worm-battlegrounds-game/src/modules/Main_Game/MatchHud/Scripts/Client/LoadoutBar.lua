@@ -62,6 +62,8 @@ function Module.Start(gui: ScreenGui)
 
 	elems["Bar"] = gui:FindFirstChild("U_LoadoutBar") --- @type Frame
 	elems["Slots"] = elems["Bar"]:FindFirstChild("U_Slots", true) --- @type Frame
+	elems["PrevHint"] = elems["Bar"]:FindFirstChild("S_PrevHint") --- @type ImageLabel
+	elems["NextHint"] = elems["Bar"]:FindFirstChild("S_NextHint") --- @type ImageLabel
 	prefabs["BarSlot"] = elems["Slots"]:FindFirstChild("PREFAB | BarSlot") --- @type ImageButton
 
 	--[[ Connections ]]
@@ -155,7 +157,8 @@ end
 
 --[[
 	Makes one box per item in the player's loadout (the Bazooka's first) when it changed, and no empty ones (the owner,
-	2026-11-24: "remove any slots from the bottom bar that are not occupied"), then refreshes them all.
+	2026-11-24: "remove any slots from the bottom bar that are not occupied"), puts the pad's LB and RB beside the end
+	boxes, then refreshes them all.
 ]]
 function Module._rebuild()
 	--[[ Data ]]
@@ -223,6 +226,13 @@ function Module._rebuild()
 		end)
 	end
 
+	--[[ Hints ]]
+
+	-- The pad's LB and RB sit right outside the first and last box, which the bar centres
+	local edge: number = 0.5 - (#items * prefabs["BarSlot"].Size.X.Scale + elems["PrevHint"].Size.X.Scale) / 2
+	elems["PrevHint"].Position = UDim2.fromScale(edge, 0.5)
+	elems["NextHint"].Position = UDim2.fromScale(1 - edge, 0.5)
+
 	--[[ Refreshing ]]
 
 	if not boxes[selected] then
@@ -272,7 +282,8 @@ end
 	Shows each box's uses left, its Shiny foil or Golden rim (Combat's Variant_<ItemId>), its cooldown (Draw Cooldown), a lock over one used up for the
 	rest of the match (darkened the same way; the Jetpack only once its fuel is gone too, its box showing the fuel left
 	meanwhile, and a turn's cooldown while it rests after flying) and whether it's the selected one (the design's white outline, from the box's Look_ attributes; the
-	pad's utility box instead while LB or RB rest there, with its Y hint); the key numbers only on Desktop.
+	pad's utility box instead while LB or RB rest there, with its Y hint; S_Selected draws it over a Shiny foil or a Golden
+	rim, which cover the outline); the key numbers only on Desktop.
 ]]
 function Module._refreshBoxes()
 	--[[ Checks ]]
@@ -317,6 +328,7 @@ function Module._refreshBoxes()
 			model.ImageTransparency = iconFade
 		end
 		background:FindFirstChild("Stroke").ImageColor3 = box:GetAttribute(if itemId == picked then "Look_SelectedStrokeColor" else "Look_StrokeColor")
+		background:FindFirstChild("S_Selected").Visible = itemId == picked
 	end
 end
 

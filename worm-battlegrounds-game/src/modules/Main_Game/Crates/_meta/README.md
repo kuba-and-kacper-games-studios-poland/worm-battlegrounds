@@ -101,10 +101,10 @@ the old tutorial crate uses `Crate_Starter`). The models are `art/crates`' (its 
 
 | Crate | Prices (1, 3, 10) | Odds | Look |
 | --- | --- | --- | --- |
-| `Weapon` | 50, 150, 500 diamonds | Uzi, Golf Club 26.82 % each; Cluster Bomb, Spider Bomb 18.18 %; Homing Missile 9.09 %; Variety Grenade 0.91 % (the disabled items left on 2026-11-25, the rest scaled up) | Amber glow, embers |
+| `Weapon` | 100, 300, 1,000 diamonds (50, 150, 500 until 2026-11-25) | Uzi, Golf Club 26.82 % each; Cluster Bomb, Spider Bomb 18.18 %; Homing Missile 9.09 %; Variety Grenade 0.91 % (the disabled items left on 2026-11-25, the rest scaled up) | Amber glow, embers |
 | `Premium` | 250, 750, 2,250 diamonds | Cluster, Spider 41.27 % each; Homing 15.87 %; Variety 1.59 %. Hidden since 2026-11-13 (the testers: one crate per kind), kept so its id stays known | Cyan glow, gold accent, glints, premium |
-| `Utility` | 50, 150, 500 diamonds | Bandage 52.38 %; Jetpack 28.57 %; Medkit 19.05 % | Mint glow, bubbles |
-| `Skin` | 50, 150, 500 diamonds | Snail pieces, each set sharing what its whole skin had: Frontline, High Seas, Wild West 20 % each (6.67 % a piece); Shadow Clan, Round Table, Big Top 10 %; Inferno 7 %; Circuit 2 %; Crypt 1 % | Pink glow, sparkles |
+| `Utility` | 100, 300, 1,000 diamonds (50, 150, 500 until 2026-11-25) | Bandage 52.38 %; Jetpack 28.57 %; Medkit 19.05 % | Mint glow, bubbles |
+| `Skin` | 100, 300, 1,000 diamonds (50, 150, 500 until 2026-11-25) | Snail pieces, each set sharing what its whole skin had: Frontline, High Seas, Wild West 20 % each (6.67 % a piece); Shadow Clan, Round Table, Big Top 10 %; Inferno 7 %; Circuit 2 %; Crypt 1 % | Pink glow, sparkles |
 | `Tutorial` | 50 diamonds (each pack) | Fixed: Grenade and Shotgun. Hidden: the tutorial gave it once until 2026-11-15, when it began giving the two weapons straight away (the testers: no crate opening in the tutorial); kept so its id stays known | Green glow, sparkles |
 
 A 3-pack costs three single crates (no discount, unlike the 10-pack's 10 %).

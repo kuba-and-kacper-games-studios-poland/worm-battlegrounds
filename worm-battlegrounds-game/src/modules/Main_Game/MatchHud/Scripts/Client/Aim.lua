@@ -44,8 +44,18 @@ local targetTouch: InputObject? = nil
 local stick: Vector2 = Vector2.zero
 local stickLocked: boolean = false
 
+--[[
+	How long the stick has leaned past its dead zone without letting go (a long push speeds up), and the power it has
+	built under AIM_DEADZONE, kept so a push through the snail comes out on the other side
+]]
+local stickHeld: number = 0
+local stickSlack: number = 0
+
 local target: Vector3? = nil
 local targetPlacedAt: number = 0
+
+-- Where the pad's stick points a homing missile's target before it's locked, on the arena's plane
+local pickAt: Vector3? = nil
 local lastSent: number = 0
 local stepConnection: RBXScriptConnection?
 
@@ -417,13 +427,20 @@ end
 --%%%%%%%%%%%%%%%%%%%% Clear Aim
 
 --[[
-	Clears the aim (Esc, the pad's CancelAim): nothing to fire until the player aims again.
+	Clears the aim (Esc, the pad's CancelAim): nothing to fire until the player aims again. With a homing missile's target
+	locked, it lets go of the target first (as New target does).
 ]]
 function Module._clearAim()
 	--[[ Checks ]]
 
 	-- Check if it's the player's turn
 	if not I.Match.IsMyTurn() or I.Match.GetPhase() ~= "Turn" then
+		return
+	end
+
+	-- A locked target goes first
+	if target and I.G_Arsenal.Get(LoadoutBar.GetSelected()).Aim == "Target" then
+		Module._clearTarget()
 		return
 	end
 
@@ -480,7 +497,10 @@ function Module._step(deltaTime: number)
 
 	--[[ Aiming ]]
 
-	if not picking then
+	if picking then
+		Module._pickWithStick(mine, deltaTime)
+	else
+		pickAt = nil
 		Module._aimWithStick(mine, deltaTime)
 	end
 
@@ -500,7 +520,8 @@ function Module._step(deltaTime: number)
 
 	--[[ Fire ]]
 
-	elems["Fire"].Visible = ready and dragInput == nil and Module._canFire(itemId)
+	-- On a pad FIRE (and RT) first locks the target the stick points at
+	elems["Fire"].Visible = ready and dragInput == nil and (Module._canFire(itemId) or pickAt ~= nil)
 	elems["Retarget"].Visible = aimKind == "Target" and target ~= nil
 
 	--[[ Sending ]]
@@ -514,43 +535,91 @@ end
 --%%%%%%%%%%%%%%%%%%%% Aim With Stick
 
 --[[
-	Moves the crosshair with the right stick's lean, like a drag: past STICK_DEADZONE, faster the further it leans (to
-	STICK_AIM_SPEED of the power's length a second), never while CameraPan's button (LT) moves the camera, nor after
-	it until the stick is back in the middle.
+	Moves the crosshair with the right stick's lean, like a drag: up to STICK_AIM_SPEED of the power's length a second
+	(Get Stick Push), and through the snail to aim the other way.
 ]]
 function Module._aimWithStick(mine: Model, deltaTime: number)
-	--[[ Local Variables ]]
-
-	local lean: number = math.min(stick.Magnitude, 1)
-
-	-- The stick moved the camera: it aims again once it's back in the middle
-	if I.Console.IsHeld("CameraPan") then
-		stickLocked = true
-	elseif lean < _settings.STICK_DEADZONE then
-		stickLocked = false
-	end
-
-	--[[ Checks ]]
-
-	-- Check if the stick leans past its dead zone and isn't moving the camera
-	if stickLocked or lean < _settings.STICK_DEADZONE or dragInput then
-		return
-	end
-
 	--[[ Data ]]
 
 	local scales = Module._getScales(mine) --- @type MatchHud_AimScales?
-	if not scales then
+	local push: number? = Module._getStickPush(deltaTime)
+
+	--[[ Checks ]]
+
+	-- Check if the stick pushes and the snail shows
+	if not push or not scales then
+		stickSlack = 0
 		return
 	end
 
+	--[[ Local Variables ]]
+
+	local speed: number = push * _settings.STICK_AIM_SPEED
+
 	--[[ Aiming ]]
 
-	local speed: number = ((lean - _settings.STICK_DEADZONE) / (1 - _settings.STICK_DEADZONE)) ^ _settings.STICK_CURVE * _settings.STICK_AIM_SPEED * scales.Length
-	local from: Vector2 = Module._getCrosshairOffset(scales, if aimed then power else 0)
-	Module._setFromOffset(scales, from + Vector2.new(stick.X, -stick.Y).Unit * speed * deltaTime)
+	-- In power's lengths: the crosshair moves on the screen, and a push into the power's start crosses the snail with it shrunk away, so it turns the aim round
+	local way: Vector2 = Vector2.new(math.cos(angle), -math.sin(angle))
+	local base: number = scales.Base / scales.Length
+	local held: number = if aimed then power else stickSlack
+	local step: Vector2 = Vector2.new(stick.X, -stick.Y).Unit * speed * deltaTime
+	local to: Vector2 = way * (base + held) + step
+	if to.Magnitude >= base then
+		to = to.Unit * (to.Magnitude - base)
+	else
+		to = way * held + step
+	end
+	if to.Magnitude > 1e-3 then
+		angle = math.atan2(-to.Y, to.X)
+	end
+	power = math.min(to.Magnitude, 1)
+	aimed = power >= _settings.AIM_DEADZONE
+	stickSlack = if aimed then 0 else power
+	if not aimed then
+		power = 0
+	end
+
+	--[[ Saving ]]
+
 	aimedThisTurn = true
 	Module._remember()
+end
+
+--%%%%%%%%%%%%%%%%%%%% Pick With Stick
+
+--[[
+	On a pad, a homing missile's target is picked with the right stick: its mark starts on the nearest enemy and moves
+	up to STICK_TARGET_SPEED screen heights a second (Get Stick Push), staying on the screen; FIRE or RT locks it.
+]]
+function Module._pickWithStick(mine: Model, deltaTime: number)
+	--[[ Checks ]]
+
+	-- Check if the player uses a pad
+	if I.Platform.Current ~= "Console" then
+		pickAt = nil
+		return
+	end
+
+	--[[ Local Variables ]]
+
+	local camera: Camera = I.S.Workspace.CurrentCamera
+	local push: number? = Module._getStickPush(deltaTime)
+	local enemy: Model? = Module._getNearestEnemy()
+
+	--[[ Picking ]]
+
+	-- It starts on the nearest enemy (the player's snail without one)
+	local point: Vector3 = pickAt or (if enemy then enemy.PrimaryPart.Position else mine:GetPivot().Position)
+	local screen: Vector3 = camera:WorldToScreenPoint(point)
+	local at: Vector2 = Vector2.new(screen.X, screen.Y)
+	if push then
+		at += Vector2.new(stick.X, -stick.Y).Unit * push * _settings.STICK_TARGET_SPEED * camera.ViewportSize.Y * deltaTime
+	end
+
+	-- Kept on the screen, its mark whole
+	local margin: number = camera.ViewportSize.Y * _settings.STICK_TARGET_MARGIN
+	at = Vector2.new(math.clamp(at.X, margin, camera.ViewportSize.X - margin), math.clamp(at.Y, margin, camera.ViewportSize.Y - margin))
+	pickAt = Module._getPlanePoint(at)
 end
 
 --%%%%%%%%%%%%%%%%%%%% Draw
@@ -652,7 +721,10 @@ function Module._drawTarget(mine: Model)
 		return
 	end
 	local over: Vector2 = scales.Origin - Vector2.new(0, (scales.Base + scales.Length) * 0.6)
-	elems["Readout"].Text = if I.Platform.Current == "Mobile" then _settings.TARGET_HINTS.TouchPick else _settings.TARGET_HINTS.Pick
+	elems["Readout"].Text = if I.Platform.Current == "Mobile"
+		then _settings.TARGET_HINTS.TouchPick
+		elseif I.Platform.Current == "Console" then string.format(_settings.TARGET_HINTS.PadPick, I.Console.GetButtonName("Fire"))
+		else _settings.TARGET_HINTS.Pick
 	elems["Readout"].Position = UDim2.fromOffset(over.X, over.Y)
 	elems["Readout"].Visible = true
 end
@@ -661,28 +733,30 @@ end
 
 --[[
 	A homing missile's locked target: its lock-on mark (S_TargetMark) on its spot, TARGET_MARK_SIZE units across, its
-	brackets turning and closing in as it's placed; hidden with no target, or with nil (another weapon in hand).
+	brackets turning and closing in as it's placed; open where a pad's stick picks one; hidden with no target, or with
+	nil (another weapon in hand).
 ]]
 function Module._drawTargetMark(mine: Model?)
 	--[[ Data ]]
 
 	local scales = Module._getScales(mine) --- @type MatchHud_AimScales?
+	local point: Vector3? = target or pickAt
 
 	--[[ Checks ]]
 
-	-- Check if a target is placed and the snail shows
-	if not target or not scales then
+	-- Check if a target is placed or picked, and the snail shows
+	if not point or not scales then
 		elems["TargetMark"].Visible = false
 		return
 	end
 
 	--[[ Applying ]]
 
-	local screen: Vector3 = I.S.Workspace.CurrentCamera:WorldToScreenPoint(target)
+	local screen: Vector3 = I.S.Workspace.CurrentCamera:WorldToScreenPoint(point)
 	local size: number = _settings.TARGET_MARK_SIZE * scales.Unit
 
-	-- The brackets close in from TARGET_LOCK_SCALE as the target is placed, then breathe by TARGET_MARK_PULSE
-	local locking: number = math.clamp((os.clock() - targetPlacedAt) / _settings.TARGET_LOCK_SECONDS, 0, 1)
+	-- The brackets close in from TARGET_LOCK_SCALE as the target is placed (open while a pad picks), then breathe by TARGET_MARK_PULSE
+	local locking: number = if target then math.clamp((os.clock() - targetPlacedAt) / _settings.TARGET_LOCK_SECONDS, 0, 1) else 0
 	local closing: number = 1 + (_settings.TARGET_LOCK_SCALE - 1) * (1 - locking) ^ 3
 	local pulse: number = 1 + _settings.TARGET_MARK_PULSE * math.sin(os.clock() * _settings.TARGET_MARK_PULSE_SPEED * 2 * math.pi)
 
@@ -907,6 +981,15 @@ end
 	server answers. The aim stays kept for the snail's next turn.
 ]]
 function Module._fire()
+	--[[ Target ]]
+
+	-- A pad's picked target locks first (FIRE or RT), and the launch aims next
+	if pickAt and not target then
+		Module._setTarget(pickAt)
+		pickAt = nil
+		return
+	end
+
 	--[[ Local Variables ]]
 
 	local itemId: string = LoadoutBar.GetSelected()
@@ -986,6 +1069,8 @@ end
 function Module._clearTarget()
 	--[[ Clearing ]]
 
+	-- A pad picks the next one from where this one was
+	pickAt = target
 	target = nil
 	targetTouch = nil
 end
@@ -1004,6 +1089,7 @@ function Module._onMyTurn(myTurn: boolean)
 	aimedThisTurn = false
 	Module._hideLook()
 	target = nil
+	pickAt = nil
 	elems["Fire"].Visible = false
 	if stepConnection then
 		stepConnection:Disconnect()
@@ -1239,30 +1325,98 @@ function Module._getEnemySide()
 	--[[ Data ]]
 
 	local mine: Model? = I.Snails.GetMine()
+	local enemy: Model? = Module._getNearestEnemy()
+
+	--[[ Checks ]]
+
+	-- Check if there's a snail to measure from
+	if not mine or not mine.PrimaryPart then
+		return 1
+	end
+
+	-- With no enemy, the way the snail faces
+	if not enemy then
+		return if mine:GetAttribute("Facing") == -1 then -1 else 1
+	end
+
+	--[[ Returning ]]
+
+	return if enemy.PrimaryPart.Position.X < mine.PrimaryPart.Position.X then -1 else 1
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Nearest Enemy
+
+--[[
+	Returns the snail of the player's nearest enemy still in play, by distance along the arena, or nil when there's none.
+]]
+--- @return Model?
+function Module._getNearestEnemy()
+	--[[ Data ]]
+
+	local mine: Model? = I.Snails.GetMine()
 	local me: Configuration? = I.Match.GetParticipantInfo(I.Match.GetMyParticipantId())
 	if not mine or not mine.PrimaryPart or not me then
-		return 1
+		return nil
 	end
 
 	--[[ Searching ]]
 
 	local nearest: number = math.huge
-	local side: number = if mine:GetAttribute("Facing") == -1 then -1 else 1
+	local found: Model? = nil
 	for _index: number, entry: Instance in ipairs(I.Match.GetFolder():FindFirstChild("Participants"):GetChildren()) do
 		local model: Model? = I.Snails.Get(entry.Name)
 		local enemy: boolean = entry:GetAttribute("Team") ~= me:GetAttribute("Team") and not entry:GetAttribute("Out")
 		if enemy and model and model.PrimaryPart then
-			local dx: number = model.PrimaryPart.Position.X - mine.PrimaryPart.Position.X
-			if math.abs(dx) < nearest then
-				nearest = math.abs(dx)
-				side = if dx < 0 then -1 else 1
+			local dx: number = math.abs(model.PrimaryPart.Position.X - mine.PrimaryPart.Position.X)
+			if dx < nearest then
+				nearest = dx
+				found = model
 			end
 		end
 	end
 
 	--[[ Returning ]]
 
-	return side
+	return found
+end
+
+--%%%%%%%%%%%%%%%%%%%% Get Stick Push
+
+--[[
+	Returns how hard the right stick pushes this frame: past STICK_DEADZONE, the lean to the power of STICK_CURVE (small
+	leans move finely), times up to STICK_RAMP_MAX on a push held past STICK_RAMP_DELAY; nil while it rests, while
+	CameraPan's button (LT) moves the camera and after until it's back in the middle, or during a drag.
+]]
+--- @return number?
+function Module._getStickPush(deltaTime: number)
+	--[[ Local Variables ]]
+
+	local lean: number = math.min(stick.Magnitude, 1)
+
+	-- The stick moved the camera: it aims again once it's back in the middle
+	if I.Console.IsHeld("CameraPan") then
+		stickLocked = true
+	elseif lean < _settings.STICK_DEADZONE then
+		stickLocked = false
+	end
+
+	--[[ Checks ]]
+
+	-- Check if the stick leans past its dead zone and isn't moving the camera
+	if stickLocked or lean < _settings.STICK_DEADZONE or dragInput then
+		stickHeld = 0
+		return nil
+	end
+
+	--[[ Calculating ]]
+
+	-- A push held past STICK_RAMP_DELAY speeds up, reaching STICK_RAMP_MAX times over STICK_RAMP_TIME
+	stickHeld += deltaTime
+	local ramp: number = 1 + math.clamp((stickHeld - _settings.STICK_RAMP_DELAY) / _settings.STICK_RAMP_TIME, 0, 1) * (_settings.STICK_RAMP_MAX - 1)
+
+	--[[ Returning ]]
+
+	return ((lean - _settings.STICK_DEADZONE) / (1 - _settings.STICK_DEADZONE)) ^ _settings.STICK_CURVE * ramp
 end
 
 --%%%%%%%%%%%%%%%%%%%% Get Plane Point

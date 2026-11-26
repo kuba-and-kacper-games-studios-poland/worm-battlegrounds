@@ -1,5 +1,6 @@
 --[[
     Created By:     Nari
+    Edited By:     HungryN00B
 ]]
 
 --- @type Ume
@@ -192,25 +193,31 @@ end
 --%%%%%%%%%%%%%%%%%%%% Connect Input
 
 --[[
-	Plays the animation's phases on hover, on a click or touch, and while a key holds the button (Utils_ButtonKey).
+	Plays the animation's phases on hover (the mouse, or a gamepad's selection), on a click or touch, and while a key
+	holds the button (Utils_ButtonKey).
 ]]
 function Component:ConnectInput()
 	--[[ Hover ]]
 
-	table.insert(
-		self.Connections,
-		self.Instance.MouseEnter:Connect(function()
-			self.Hovered = true
-			self:PlayPhase("Hover")
-		end)
-	)
-	table.insert(
-		self.Connections,
-		self.Instance.MouseLeave:Connect(function()
-			self.Hovered = false
-			self:PlayPhase("Leave")
-		end)
-	)
+	-- A gamepad's selection is its hover: the D-pad's, and the Console module's cursor over the button
+	for _index: number, signal: RBXScriptSignal in ipairs({ self.Instance.MouseEnter, self.Instance.SelectionGained }) do
+		table.insert(
+			self.Connections,
+			signal:Connect(function()
+				self.Hovered = true
+				self:PlayPhase("Hover")
+			end)
+		)
+	end
+	for _index: number, signal: RBXScriptSignal in ipairs({ self.Instance.MouseLeave, self.Instance.SelectionLost }) do
+		table.insert(
+			self.Connections,
+			signal:Connect(function()
+				self.Hovered = false
+				self:PlayPhase("Leave")
+			end)
+		)
+	end
 
 	--[[ Click ]]
 

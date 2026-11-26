@@ -706,7 +706,7 @@ local _gui = {
 						},
 					},
 					{
-						-- The pad button that steps to the previous or next slot, on Console (the Console module draws it)
+						-- The pad button that steps to the previous or next slot, on Console (the Console module draws it; LoadoutBar puts it beside the end slot)
 						Primitive = "ImageLabel",
 						Id = "S_PrevHint",
 						Props = {
@@ -727,7 +727,7 @@ local _gui = {
 						},
 					},
 					{
-						-- The pad button that steps to the previous or next slot, on Console (the Console module draws it)
+						-- The pad button that steps to the previous or next slot, on Console (the Console module draws it; LoadoutBar puts it beside the end slot)
 						Primitive = "ImageLabel",
 						Id = "S_NextHint",
 						Props = {
@@ -2217,6 +2217,400 @@ local _gui = {
 					},
 				},
 			},
+			--[[
+				Zoom in and out (the owner, 2026-11-26: "make zoom in and out indicators somewhere"), under EMOTES through the
+				round: two copies of the EMOTES tile, smaller, with + and −, pressed to zoom a step (MatchHud's Panels,
+				I.MatchCamera.ZoomStep), and on Console the D-pad button that zooms that way
+			]]
+			{
+				Primitive = "Frame",
+				Id = "U_Zoom",
+				Props = {
+					AnchorPoint = Vector2.new(0.5, 0),
+					BackgroundTransparency = 1,
+					BorderSizePixel = 0,
+					LayoutOrder = 7,
+					Position = UDim2.fromScale(0.9376, 0.565),
+					Size = UDim2.fromScale(0.0474, 0.16),
+					Visible = false,
+					ZIndex = 7,
+				},
+				Children = {
+					{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 0.6 } },
+					{
+						Primitive = "UIListLayout",
+						Props = {
+							HorizontalAlignment = Enum.HorizontalAlignment.Center,
+							Padding = UDim.new(0.04, 0),
+							SortOrder = Enum.SortOrder.LayoutOrder,
+						},
+					},
+					{
+						Primitive = "ImageButton",
+						Id = "S_ZoomIn",
+						Props = {
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 1,
+							Size = UDim2.fromScale(1, 0.47),
+						},
+						Attributes = {
+							HoverSound_SoundGroup = "UI",
+							ClickSound_PitchMax = 1,
+							Utils_ClickScale = 0.92,
+							Utils_HoverScale = 1.04,
+							HoverSound_PitchMax = 1,
+							ClickSound_TimePosition = 0,
+							Utils_ScaleAnimation = "Bouncy",
+							HoverSound_Name = "Button_Hover",
+							ClickSound_Volume = 1,
+							HoverSound_Volume = 1,
+							HoverSound_TimePosition = 0,
+							ClickSound_PlaybackSpeed = 1,
+							HoverSound_PlaybackSpeed = 1,
+							ClickSound_PitchMin = 1,
+							ClickSound_SoundGroup = "UI",
+							HoverSound_PitchMin = 1,
+							ClickSound_Name = "Button_Click",
+						},
+						Tags = {
+							["Utils_ButtonScale"] = {},
+							["Utils_ButtonSound"] = {},
+						},
+						Children = {
+							{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 1.2498 } },
+							-- The D-pad button that zooms this way (the Console module's ZoomIn), shown on Console
+							{
+								Primitive = "ImageLabel",
+								Props = {
+									Name = "PadHint",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									Image = "rbxassetid://96798501786319",
+									Position = UDim2.fromScale(0.9, 0.2),
+									ScaleType = Enum.ScaleType.Fit,
+									Size = UDim2.fromScale(0.44, 0.44),
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									Visible = false,
+									ZIndex = 8,
+								},
+								Attributes = { Console_Action = "ZoomIn" },
+								Tags = { Console_Hint = {} },
+							},
+							{
+								Primitive = "TextLabel",
+								Props = {
+									Name = "Glyph",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.56, 0.47),
+									Size = UDim2.fromScale(0.6, 0.72),
+									ZIndex = 4,
+									Text = "+",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextSize = 48,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{
+										Primitive = "UIStroke",
+										Props = {
+											Thickness = 0.06,
+											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+										},
+									},
+								},
+							},
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Background",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Position = UDim2.fromScale(0.1284, 0),
+									Size = UDim2.fromScale(0.8716, 0.9464),
+								},
+								Children = {
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0083, 0.0472),
+											Size = UDim2.fromScale(0.9833, 0.9057),
+											Image = "rbxassetid://124280522035091",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1095_10__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0083, 0.0472),
+											Size = UDim2.fromScale(0.9833, 0.9057),
+											Image = "rbxassetid://124280522035091",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1095_10__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0083, 0.0472),
+											Size = UDim2.fromScale(0.9833, 0.9057),
+											Image = "rbxassetid://124280522035091",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1095_10__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke2",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 1,
+											Size = UDim2.fromScale(1, 1),
+											ZIndex = 2,
+											Image = "rbxassetid://98436890421039",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_41__Frame__Stroke2_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 2,
+											Position = UDim2.fromScale(0.0164, 0.0189),
+											Size = UDim2.fromScale(0.9672, 0.9623),
+											ZIndex = 3,
+											Image = "rbxassetid://100794772551035",
+											ImageColor3 = Color3.fromRGB(130, 130, 130),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_42__Frame__Stroke_gray",
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						Primitive = "ImageButton",
+						Id = "S_ZoomOut",
+						Props = {
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							LayoutOrder = 2,
+							Size = UDim2.fromScale(1, 0.47),
+						},
+						Attributes = {
+							HoverSound_SoundGroup = "UI",
+							ClickSound_PitchMax = 1,
+							Utils_ClickScale = 0.92,
+							Utils_HoverScale = 1.04,
+							HoverSound_PitchMax = 1,
+							ClickSound_TimePosition = 0,
+							Utils_ScaleAnimation = "Bouncy",
+							HoverSound_Name = "Button_Hover",
+							ClickSound_Volume = 1,
+							HoverSound_Volume = 1,
+							HoverSound_TimePosition = 0,
+							ClickSound_PlaybackSpeed = 1,
+							HoverSound_PlaybackSpeed = 1,
+							ClickSound_PitchMin = 1,
+							ClickSound_SoundGroup = "UI",
+							HoverSound_PitchMin = 1,
+							ClickSound_Name = "Button_Click",
+						},
+						Tags = {
+							["Utils_ButtonScale"] = {},
+							["Utils_ButtonSound"] = {},
+						},
+						Children = {
+							{ Primitive = "UIAspectRatioConstraint", Props = { AspectRatio = 1.2498 } },
+							-- The D-pad button that zooms this way (the Console module's ZoomOut), shown on Console
+							{
+								Primitive = "ImageLabel",
+								Props = {
+									Name = "PadHint",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									Image = "rbxassetid://118675586273862",
+									Position = UDim2.fromScale(0.9, 0.2),
+									ScaleType = Enum.ScaleType.Fit,
+									Size = UDim2.fromScale(0.44, 0.44),
+									SizeConstraint = Enum.SizeConstraint.RelativeYY,
+									Visible = false,
+									ZIndex = 8,
+								},
+								Attributes = { Console_Action = "ZoomOut" },
+								Tags = { Console_Hint = {} },
+							},
+							{
+								Primitive = "TextLabel",
+								Props = {
+									Name = "Glyph",
+									AnchorPoint = Vector2.new(0.5, 0.5),
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									Position = UDim2.fromScale(0.56, 0.47),
+									Size = UDim2.fromScale(0.6, 0.72),
+									ZIndex = 4,
+									Text = "−",
+									TextColor3 = Color3.fromRGB(255, 255, 255),
+									TextSize = 48,
+									FontFace = Font.new("rbxassetid://12187365977", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+									RichText = true,
+									TextScaled = true,
+								},
+								Children = {
+									{
+										Primitive = "UIStroke",
+										Props = {
+											Thickness = 0.06,
+											StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize,
+										},
+									},
+								},
+							},
+							{
+								Primitive = "Frame",
+								Props = {
+									Name = "Background",
+									BackgroundTransparency = 1,
+									BorderSizePixel = 0,
+									LayoutOrder = 0,
+									Position = UDim2.fromScale(0.1284, 0),
+									Size = UDim2.fromScale(0.8716, 0.9464),
+								},
+								Children = {
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Main",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0083, 0.0472),
+											Size = UDim2.fromScale(0.9833, 0.9057),
+											Image = "rbxassetid://124280522035091",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1095_10__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0083, 0.0472),
+											Size = UDim2.fromScale(0.9833, 0.9057),
+											Image = "rbxassetid://124280522035091",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1095_10__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "MainFill",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											LayoutOrder = 0,
+											Position = UDim2.fromScale(0.0083, 0.0472),
+											Size = UDim2.fromScale(0.9833, 0.9057),
+											Image = "rbxassetid://124280522035091",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1095_10__Frame__Main_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke2",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 1,
+											Size = UDim2.fromScale(1, 1),
+											ZIndex = 2,
+											Image = "rbxassetid://98436890421039",
+											ImageColor3 = Color3.fromRGB(25, 25, 35),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_41__Frame__Stroke2_gray",
+										},
+									},
+									{
+										Primitive = "ImageLabel",
+										Props = {
+											Name = "Stroke",
+											BackgroundTransparency = 1,
+											BorderSizePixel = 0,
+											ClipsDescendants = true,
+											LayoutOrder = 2,
+											Position = UDim2.fromScale(0.0164, 0.0189),
+											Size = UDim2.fromScale(0.9672, 0.9623),
+											ZIndex = 3,
+											Image = "rbxassetid://100794772551035",
+											ImageColor3 = Color3.fromRGB(130, 130, 130),
+											ScaleType = Enum.ScaleType.Fit,
+										},
+										Attributes = {
+											_ImageName = "1106_42__Frame__Stroke_gray",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			{
 				Primitive = "Frame",
 				Id = "U_Turn",
@@ -3355,6 +3749,24 @@ local _gui = {
 					["Utils_ButtonSound"] = {},
 				},
 				Children = {
+					-- RT fires on a pad (the Console module's Fire), shown on Console: a copy of the emote button's X badge
+					{
+						Primitive = "ImageLabel",
+						Props = {
+							Name = "PadHint",
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							BackgroundTransparency = 1,
+							Image = "rbxassetid://127037190736029",
+							Position = UDim2.fromScale(0.95, 0.15),
+							ScaleType = Enum.ScaleType.Fit,
+							Size = UDim2.fromScale(0.46, 0.46),
+							SizeConstraint = Enum.SizeConstraint.RelativeYY,
+							Visible = false,
+							ZIndex = 8,
+						},
+						Attributes = { Console_Action = "Fire" },
+						Tags = { Console_Hint = {} },
+					},
 					{
 						Primitive = "Frame",
 						Props = {
@@ -5415,6 +5827,7 @@ local _gui = {
 	--[[ Prefabs ]]
 
 	Templates = {
+		-- Not Selectable: a pad steps the slots with LB / RB, so the D-pad and sticks never select them (2026-11-26)
 		["PREFAB | BarSlot"] = {
 			Parent = "U_Slots",
 			Primitive = "ImageButton",
@@ -5423,6 +5836,7 @@ local _gui = {
 				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
 				LayoutOrder = 0,
+				Selectable = false,
 				Size = UDim2.fromScale(0.1429, 1),
 			},
 			Attributes = {
@@ -5595,6 +6009,29 @@ local _gui = {
 								Position = UDim2.fromScale(0.0133, 0.0185),
 								Size = UDim2.fromScale(0.9735, 0.963),
 								ZIndex = 3,
+								Image = "rbxassetid://81979878629232",
+								ScaleType = Enum.ScaleType.Fit,
+							},
+							Attributes = {
+								_ImageName = "1106_48__Frame__Stroke_gray",
+							},
+						},
+						--[[
+							The selected box's white outline over its Shiny foil or Golden rim, which cover Stroke: a copy of
+							Stroke drawn above them (LoadoutBar shows it on the selected box, 2026-11-26)
+						]]
+						{
+							Primitive = "ImageLabel",
+							Id = "S_Selected",
+							Props = {
+								BackgroundTransparency = 1,
+								BorderSizePixel = 0,
+								ClipsDescendants = true,
+								LayoutOrder = 5,
+								Position = UDim2.fromScale(0.0133, 0.0185),
+								Size = UDim2.fromScale(0.9735, 0.963),
+								Visible = false,
+								ZIndex = 5,
 								Image = "rbxassetid://81979878629232",
 								ScaleType = Enum.ScaleType.Fit,
 							},

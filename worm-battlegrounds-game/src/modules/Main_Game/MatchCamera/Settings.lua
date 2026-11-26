@@ -38,6 +38,13 @@ local _settings = {
 	SIDE_EXTRA = 1,
 
 	--[[
+		How far under the map's bottom the view may sink, as a share of half the view's height: zoomed out, the view stays
+		round the snail instead of rising until its bottom meets the map's (the owner, 2026-11-26: zoomed out, "the FIRE
+		button hides my snail")
+	]]
+	FLOOR_EXTRA = 0.5,
+
+	--[[
 		On the player's own turn the pan eases back to their snail at RECENTER_SPEED (higher is snappier) while the snail
 		moves faster than RECENTER_MOVE_SPEED studs a second
 	]]
@@ -99,10 +106,15 @@ local _settings = {
 
 	--[[
 		The mouse wheel and a pinch move the camera between ZOOM_MIN and ZOOM_MAX studs from the plane (DISTANCE at
-		start); each wheel notch changes the distance by ZOOM_STEP of itself, eased at ZOOM_SPEED (higher is snappier)
+		start); each wheel notch changes the distance by ZOOM_STEP of itself, eased at ZOOM_SPEED (higher is snappier).
+		ZOOM_MAX shows a whole 282-stud rotation map across a 16:9 screen (200 until 2026-11-26, the owner: "you can't
+		zoom out enough to see the other player")
 	]]
 	ZOOM_MIN = 45,
-	ZOOM_MAX = 200,
+	ZOOM_MAX = 300,
+
+	-- One press of the HUD's zoom buttons (MatchHud's U_Zoom) changes the distance by this share of itself
+	ZOOM_BUTTON_STEP = 0.25,
 	ZOOM_STEP = 0.15,
 	ZOOM_SPEED = 6,
 

@@ -126,16 +126,14 @@ local _settings = {
 	CURSOR_BOOST_TIME = 0.5,
 
 	--[[
-		Over a button it moves at CURSOR_BUTTON_SLOW of its speed, and with the stick let go it drifts to the button's
-		middle at CURSOR_MAGNET (higher is snappier) when that is within CURSOR_MAGNET_REACH of the screen's height
+		Over a button it moves at CURSOR_BUTTON_SLOW of its speed; let go, it stays where it is (no pull onto the button,
+		the owner, 2026-11-26: "it doesn't snap anymore")
 	]]
 	CURSOR_BUTTON_SLOW = 0.45,
-	CURSOR_MAGNET = 6,
-	CURSOR_MAGNET_REACH = 0.08,
 
 	--[[
-		Sent onto a button (a window opening, the D-pad hopping the selection there in the last CURSOR_DPAD_FOLLOW
-		seconds) it glides at CURSOR_GLIDE (higher is snappier)
+		After the D-pad hopped the selection onto a button (within CURSOR_DPAD_FOLLOW seconds of the press), it glides
+		there at CURSOR_GLIDE (higher is snappier); nothing else moves it
 	]]
 	CURSOR_GLIDE = 16,
 	CURSOR_DPAD_FOLLOW = 0.4,
